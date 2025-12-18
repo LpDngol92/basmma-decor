@@ -3,111 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير للديكور - الإدارة الاحترافية</title>
+    <title>بصمة غير - نظام الروابط السريع</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <style>
         :root { --primary: #111; --accent: #c5a059; --light: #fdfdfd; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 0; color: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--light); margin: 0; padding: 0; }
+        header { background: var(--primary); color: white; padding: 30px 20px; text-align: center; border-bottom: 5px solid var(--accent); }
         
-        header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--accent); }
-        header h1 { margin: 0; font-size: 2.5rem; color: var(--accent); }
-        header p { opacity: 0.8; margin-top: 10px; }
-
-        .main-nav { display: flex; justify-content: center; background: #1a1a1a; padding: 10px; position: sticky; top: 0; z-index: 1000; gap: 15px; }
-        .nav-link { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 10px 30px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .main-nav { display: flex; justify-content: center; background: #1a1a1a; padding: 10px; position: sticky; top: 0; z-index: 1000; gap: 8px; flex-wrap: wrap; }
+        .nav-link { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .nav-link.active { background: var(--accent); color: white; }
 
-        .page-section { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: none; }
+        .page-section { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: none; }
         .page-section.active { display: block; }
 
-        .about-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; line-height: 2; font-size: 1.1rem; }
+        /* عرض الصور والاقسام */
+        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .item-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .item-card img { width: 100%; height: 350px; object-fit: cover; background: #eee; }
+        .item-desc { padding: 15px; text-align: center; font-weight: bold; }
+        .reaction-bar { display: flex; justify-content: center; gap: 15px; padding: 10px; background: #f9f9f9; }
+        .react-btn { border: 1px solid #ddd; background: white; padding: 5px 15px; border-radius: 20px; cursor: pointer; }
 
-        .albums-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
-        .album-item { background: white; border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.4s; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-bottom: 3px solid var(--accent); }
-        .album-item:hover { transform: translateY(-10px); }
-        .album-item img { width: 100%; height: 220px; object-fit: cover; }
-        .album-details { padding: 15px; text-align: center; }
+        .album-card { background: white; border-radius: 12px; overflow: hidden; cursor: pointer; border-bottom: 3px solid var(--accent); text-align: center; padding-bottom: 10px; }
+        .album-card img { width: 100%; height: 220px; object-fit: cover; }
 
-        .gallery-viewer { display: none; animation: fadeIn 0.5s; }
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 20px; }
-        .gallery-img { width: 100%; height: 300px; object-fit: cover; border-radius: 8px; }
-
+        /* لوحة التحكم */
         #adminPanel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 20px; box-sizing: border-box; }
-        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
-        .admin-flex { display: flex; flex-wrap: wrap; gap: 20px; }
-        .admin-side { flex: 1; min-width: 300px; background: #f9f9f9; padding: 20px; border-radius: 10px; border: 1px solid #eee; }
-        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-action { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
-        
-        .up-progress-bg { width: 100%; background: #ddd; height: 12px; border-radius: 6px; margin: 15px 0; display: none; overflow: hidden; position: relative; }
-        .up-progress-bar { height: 100%; background: #28a745; width: 0%; transition: 0.2s; }
-        
-        .admin-btn-toggle { position: fixed; bottom: 20px; left: 20px; background: var(--primary); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10000; font-size: 20px; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .admin-box { background: #f4f4f4; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn-save { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
+        .admin-toggle { position: fixed; bottom: 20px; left: 20px; background: var(--primary); color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10000; opacity: 0.5; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1 id="topName">بصمة غير للديكور</h1>
-    <p id="topSub">نصمم لك الجمال</p>
+    <h1 id="siteName">بصمة غير للديكور</h1>
+    <p id="siteSub">نظام إدارة الروابط</p>
 </header>
 
-<div class="main-nav">
-    <button class="nav-link active" onclick="navTo('about')">نبذة عنا</button>
-    <button class="nav-link" onclick="navTo('works')">أعمالنا</button>
+<div class="main-nav" id="navBar">
+    <button class="nav-link active" onclick="showSec('about')">نبذة عنا</button>
+    <button class="nav-link" onclick="showSec('works')">أعمالنا</button>
 </div>
 
 <section id="aboutSec" class="page-section active">
-    <div class="about-card">
+    <div style="background:white; padding:40px; border-radius:15px; text-align:center;">
         <h2 style="color:var(--accent)">من نحن</h2>
-        <p id="aboutTextContent">جاري التحميل...</p>
+        <p id="aboutTxt">جاري تحميل البيانات...</p>
     </div>
 </section>
 
 <section id="worksSec" class="page-section">
-    <div id="albumsList" class="albums-grid"></div>
+    <div id="albumsList" class="items-grid"></div>
 </section>
 
-<section id="gallerySec" class="page-section gallery-viewer">
-    <button onclick="navTo('works')" style="margin-bottom:20px; cursor:pointer; padding:8px 15px; border-radius:5px;">⬅ العودة للمجموعات</button>
-    <h2 id="currentAlbumTitle" style="color:var(--accent); text-align:center;"></h2>
-    <div id="photosGrid" class="gallery-grid"></div>
+<section id="albumViewer" class="page-section">
+    <button onclick="showSec('works')" style="margin-bottom:20px; cursor:pointer;">⬅ رجوع للأعمال</button>
+    <div id="albumPhotos" class="items-grid"></div>
 </section>
 
-<div class="admin-btn-toggle" onclick="openAdmin()">⚙️</div>
+<section id="dynamicSec" class="page-section">
+    <h2 id="dynTitle" style="text-align:center; color:var(--accent)"></h2>
+    <div id="dynGrid" class="items-grid"></div>
+</section>
+
+<div class="admin-toggle" onclick="openAdmin()">⚙️</div>
 
 <div id="adminPanel">
-    <div class="admin-header">
-        <h2>لوحة إدارة بصمة غير</h2>
-        <button onclick="closeAdmin()" style="background:red; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">إغلاق</button>
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+        <h2>لوحة التحكم بالروابط</h2>
+        <button onclick="closeAdmin()" style="background:red; color:white; border:none; padding:5px 15px; cursor:pointer;">إغلاق</button>
     </div>
 
-    <div class="admin-flex">
-        <div class="admin-side">
-            <h3 style="color:var(--accent)">إعدادات النبذة والاسم</h3>
-            <input type="text" id="editTitleInput" placeholder="اسم الموقع">
-            <input type="text" id="editSubInput" placeholder="العبارة الترحيبية">
-            <textarea id="editAboutInput" rows="5" placeholder="اكتب نبذة عن الشركة هنا"></textarea>
-            <button class="btn-action" onclick="saveSiteInfo()">حفظ التعديلات</button>
-        </div>
-
-        <div class="admin-side">
-            <h3 style="color:var(--accent)">إضافة مجموعة صور جديدة</h3>
-            <input type="text" id="newAlbumName" placeholder="اسم المجموعة (مثلاً: مطابخ مودرن)">
-            <label>اختر صور المجموعة:</label>
-            <input type="file" id="imageFiles" multiple accept="image/*">
-            <div class="up-progress-bg" id="progBg"><div class="up-progress-bar" id="progBar"></div></div>
-            <p id="progText" style="text-align:center; font-size:13px; margin-top:5px;"></p>
-            <button class="btn-action" id="uploadBtn" onclick="handleAlbumUpload()" style="background:#28a745;">رفع المجموعة الآن</button>
-        </div>
+    <div class="admin-box">
+        <h3>1. النصوص العامة</h3>
+        <input type="text" id="inName" placeholder="اسم الموقع">
+        <input type="text" id="inAbout" placeholder="نبذة عن الشركة">
+        <button class="btn-save" onclick="saveInfo()">حفظ</button>
     </div>
 
-    <div class="admin-side" style="margin-top:20px; width:100%;">
-        <h3>المجموعات الحالية</h3>
-        <div id="adminAlbumsList"></div>
+    <div class="admin-box">
+        <h3 style="color:var(--accent)">2. إضافة مجموعة لـ "أعمالنا" (5 روابط)</h3>
+        <input type="text" id="albName" placeholder="اسم المجموعة">
+        <input type="text" id="r1" placeholder="رابط الصورة 1 (سيكون الغلاف)">
+        <input type="text" id="r2" placeholder="رابط الصورة 2">
+        <input type="text" id="r3" placeholder="رابط الصورة 3">
+        <input type="text" id="r4" placeholder="رابط الصورة 4">
+        <input type="text" id="r5" placeholder="رابط الصورة 5">
+        <button class="btn-save" onclick="addAlbum()" style="background:#28a745">إنشاء المجموعة</button>
+    </div>
+
+    <div class="admin-box">
+        <h3 style="color:var(--accent)">3. إضافة قسم مستقل (دواليب، إلخ)</h3>
+        <input type="text" id="secName" placeholder="اسم القسم">
+        <input type="text" id="oneUrl" placeholder="رابط الصورة">
+        <input type="text" id="oneDesc" placeholder="وصف الصورة">
+        <button class="btn-save" onclick="addSingle()" style="background:#007bff">إضافة للقسم</button>
+    </div>
+
+    <div class="admin-box">
+        <h3>المحتوى الحالي</h3>
+        <div id="adminList"></div>
     </div>
 </div>
 
@@ -118,131 +117,116 @@
         databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "mydecor-b29bd",
         storageBucket: "mydecor-b29bd.appspot.com",
-        messagingSenderId: "302609299720",
-        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const storage = firebase.storage();
+    let state = { info:{}, albums:{}, singles:[] };
 
-    let dataState = { info: {}, albums: {} };
-
-    db.ref('app_content').on('value', (snap) => {
-        const val = snap.val();
-        if(val) {
-            dataState = val;
-            updateUI();
-        }
+    db.ref('link_system').on('value', snap => {
+        if(snap.val()) { state = snap.val(); render(); }
     });
 
-    function updateUI() {
-        document.getElementById('topName').innerText = dataState.info.title || "بصمة غير للديكور";
-        document.getElementById('topSub').innerText = dataState.info.subtitle || "";
-        document.getElementById('aboutTextContent').innerText = dataState.info.about || "النبذة ستظهر هنا";
+    function render() {
+        document.getElementById('siteName').innerText = state.info.name || "بصمة غير";
+        document.getElementById('aboutTxt').innerText = state.info.about || "";
+        
+        const nav = document.getElementById('navBar');
+        nav.innerHTML = '<button class="nav-link active" id="btn-about" onclick="showSec(\'about\')">نبذة عنا</button><button class="nav-link" id="btn-works" onclick="showSec(\'works\')">أعمالنا</button>';
+        
+        let cats = [...new Set((state.singles || []).map(s => s.cat))];
+        cats.forEach(c => {
+            nav.innerHTML += `<button class="nav-link" onclick="showDyn('${c}')">${c}</button>`;
+        });
 
-        const albumsList = document.getElementById('albumsList');
-        const adminList = document.getElementById('adminAlbumsList');
-        albumsList.innerHTML = '';
-        adminList.innerHTML = '';
+        const albList = document.getElementById('albumsList');
+        albList.innerHTML = '';
+        Object.keys(state.albums || {}).forEach(k => {
+            const a = state.albums[k];
+            albList.innerHTML += `<div class="album-card" onclick="viewAlb('${k}')"><img src="${a.photos[0]}"><h3>${a.name}</h3><p>${a.photos.length} صور</p></div>`;
+        });
 
-        const albums = dataState.albums || {};
-        Object.keys(albums).forEach(key => {
-            const alb = albums[key];
-            albumsList.innerHTML += `
-                <div class="album-item" onclick="openGallery('${key}')">
-                    <img src="${alb.cover}">
-                    <div class="album-details"><h3>${alb.name}</h3><p>${alb.images.length} صورة</p></div>
-                </div>`;
-            adminList.innerHTML += `
-                <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #ddd; background:white;">
-                    <span>${alb.name}</span>
-                    <button onclick="deleteAlbum('${key}')" style="color:red; cursor:pointer; border:none; background:none;">حذف</button>
-                </div>`;
+        const adm = document.getElementById('adminList');
+        adm.innerHTML = '';
+        (state.singles || []).forEach((s, i) => {
+            adm.innerHTML += `<div style="padding:5px; border-bottom:1px solid #ddd;">[${s.cat}] ${s.desc} <button onclick="delS(${i})" style="color:red">حذف</button></div>`;
+        });
+        Object.keys(state.albums || {}).forEach(k => {
+            adm.innerHTML += `<div style="padding:5px; border-bottom:1px solid #ddd;">[ألبوم] ${state.albums[k].name} <button onclick="delA('${k}')" style="color:red">حذف</button></div>`;
         });
     }
 
-    async function handleAlbumUpload() {
-        const name = document.getElementById('newAlbumName').value;
-        const files = document.getElementById('imageFiles').files;
-        if(!name || files.length === 0) return alert("أكمل البيانات أولاً");
-
-        const btn = document.getElementById('uploadBtn');
-        const progBg = document.getElementById('progBg');
-        const progBar = document.getElementById('progBar');
-        const progText = document.getElementById('progText');
-
-        btn.disabled = true;
-        progBg.style.display = 'block';
-
-        let imageUrls = [];
-        const total = files.length;
-
-        // تنفيذ الرفع المتوازي
-        const uploadPromises = Array.from(files).map(async (file, i) => {
-            const ref = storage.ref(`projects/${name}/${Date.now()}_${i}`);
-            try {
-                const uploadTask = await ref.put(file);
-                const url = await uploadTask.ref.getDownloadURL();
-                // تحديث بسيط للنسبة لكل صورة تخلص
-                let currentProgress = Math.round(((imageUrls.length + 1) / total) * 100);
-                progBar.style.width = currentProgress + '%';
-                progText.innerText = `تم رفع ${imageUrls.length + 1} من ${total}`;
-                imageUrls.push(url);
-                return url;
-            } catch (e) { return null; }
-        });
-
-        await Promise.all(uploadPromises);
-
-        if(imageUrls.length > 0) {
-            await db.ref('app_content/albums').push({
-                name: name,
-                cover: imageUrls[0],
-                images: imageUrls
-            });
-            alert("تم الرفع بنجاح");
-            document.getElementById('newAlbumName').value = '';
-            document.getElementById('imageFiles').value = '';
-        }
-
-        btn.disabled = false;
-        progBg.style.display = 'none';
-        progText.innerText = '';
+    function addAlbum() {
+        const name = document.getElementById('albName').value;
+        const photos = [
+            document.getElementById('r1').value,
+            document.getElementById('r2').value,
+            document.getElementById('r3').value,
+            document.getElementById('r4').value,
+            document.getElementById('r5').value
+        ].filter(r => r !== "");
+        if(!name || photos.length === 0) return alert("أدخل الاسم ورابط واحد على الأقل");
+        db.ref('link_system/albums').push({ name, photos });
+        alert("تم إنشاء المجموعة");
     }
 
-    function openGallery(key) {
-        const alb = dataState.albums[key];
-        navTo('none');
-        document.getElementById('gallerySec').classList.add('active');
-        document.getElementById('currentAlbumTitle').innerText = alb.name;
-        const grid = document.getElementById('photosGrid');
+    function addSingle() {
+        const cat = document.getElementById('secName').value;
+        const url = document.getElementById('oneUrl').value;
+        const desc = document.getElementById('oneDesc').value;
+        if(!cat || !url) return alert("أدخل القسم والرابط");
+        const singles = state.singles || [];
+        singles.push({ cat, desc, img: url, likes:0, dislikes:0, id: Date.now() });
+        db.ref('link_system/singles').set(singles);
+        alert("تمت الإضافة");
+    }
+
+    function showDyn(cat) {
+        showSec('dynamic');
+        document.getElementById('dynTitle').innerText = cat;
+        const grid = document.getElementById('dynGrid');
         grid.innerHTML = '';
-        alb.images.forEach(img => { grid.innerHTML += `<img src="${img}" class="gallery-img">`; });
+        state.singles.filter(s => s.cat === cat).forEach(s => {
+            grid.innerHTML += `<div class="item-card"><img src="${s.img}"><div class="item-desc">${s.desc}</div>
+            <div class="reaction-bar">
+                <button class="react-btn" onclick="react(${s.id},'likes')">👍 ${s.likes}</button>
+                <button class="react-btn" onclick="react(${s.id},'dislikes')">👎 ${s.dislikes}</button>
+            </div></div>`;
+        });
     }
 
-    function navTo(page) {
+    function react(id, type) {
+        const i = state.singles.findIndex(s => s.id === id);
+        state.singles[i][type]++;
+        db.ref('link_system/singles').set(state.singles);
+    }
+
+    function viewAlb(k) {
+        showSec('albumViewer');
+        const grid = document.getElementById('albumPhotos');
+        grid.innerHTML = '';
+        state.albums[k].photos.forEach(p => {
+            grid.innerHTML += `<div class="item-card"><img src="${p}"></div>`;
+        });
+    }
+
+    function showSec(id) {
         document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        if(page === 'about') {
-            document.getElementById('aboutSec').classList.add('active');
-            document.querySelectorAll('.nav-link')[0].classList.add('active');
-        } else if(page === 'works') {
-            document.getElementById('worksSec').classList.add('active');
-            document.querySelectorAll('.nav-link')[1].classList.add('active');
-        }
+        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+        const sec = document.getElementById(id + 'Sec') || document.getElementById(id);
+        if(sec) sec.classList.add('active');
     }
 
-    function saveSiteInfo() {
-        const title = document.getElementById('editTitleInput').value;
-        const subtitle = document.getElementById('editSubInput').value;
-        const about = document.getElementById('editAboutInput').value;
-        db.ref('app_content/info').set({ title, subtitle, about });
+    function saveInfo() {
+        const name = document.getElementById('inName').value;
+        const about = document.getElementById('inAbout').value;
+        db.ref('link_system/info').set({ name, about });
         alert("تم الحفظ");
     }
 
-    function deleteAlbum(key) { if(confirm("حذف؟")) db.ref('app_content/albums/' + key).remove(); }
-    function openAdmin() { if(prompt("كلمة السر:") === "1234") document.getElementById('adminPanel').style.display='block'; }
+    function delS(i) { if(confirm("حذف؟")) { state.singles.splice(i,1); db.ref('link_system/singles').set(state.singles); } }
+    function delA(k) { if(confirm("حذف؟")) db.ref('link_system/albums/'+k).remove(); }
+    function openAdmin() { if(prompt("الباسورد:")==="1234") document.getElementById('adminPanel').style.display='block'; }
     function closeAdmin() { document.getElementById('adminPanel').style.display='none'; }
 </script>
 </body>
