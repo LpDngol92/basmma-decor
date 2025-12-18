@@ -14,12 +14,20 @@
         .container { max-width: 1000px; margin: auto; padding: 20px; }
         .bio { background: #111; padding: 20px; border-radius: 10px; margin-bottom: 30px; border-right: 5px solid var(--gold); white-space: pre-wrap; }
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: var(--dark); border-radius: 15px; overflow: hidden; border: 1px solid #333; }
+        .card { background: var(--dark); border-radius: 15px; overflow: hidden; border: 1px solid #333; display: flex; flex-direction: column; }
         .card img { width: 100%; height: 250px; object-fit: cover; }
-        .card-body { padding: 15px; text-align: center; }
-        .price { color: var(--gold); font-size: 1.2rem; font-weight: bold; }
+        .card-body { padding: 15px; text-align: center; flex-grow: 1; }
+        
+        /* أزرار الإعجاب الجديدة */
+        .reaction-bar { display: flex; justify-content: center; gap: 15px; padding: 10px; background: #151515; border-top: 1px solid #333; }
+        .react-btn { background: #222; border: 1px solid #444; color: white; cursor: pointer; padding: 5px 15px; border-radius: 20px; transition: 0.3s; font-size: 0.9rem; }
+        .react-btn:hover { border-color: var(--gold); }
+        .like-num { color: #4CAF50; font-weight: bold; margin-right: 5px; }
+        .dislike-num { color: #f44336; font-weight: bold; margin-right: 5px; }
+
+        /* لوحة الإدارة (نفس واجهتك القديمة) */
         .admin-panel { display: none; background: #222; padding: 20px; border-radius: 10px; margin-top: 50px; border: 1px dashed var(--gold); }
-        input, textarea, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; }
+        input, textarea, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; font-family: 'Tajawal'; }
         .btn-gold { background: var(--gold); color: #fff; cursor: pointer; font-weight: bold; }
         .footer { text-align: center; padding: 50px; opacity: 0.3; }
     </style>
@@ -33,7 +41,7 @@
 
 <div class="container">
     <div class="bio" id="bio-text">جاري التحميل...</div>
-    <div class="grid" id="products-grid"></div>
+    <div id="products-grid" class="grid"></div>
 
     <div class="admin-panel" id="admin-panel">
         <h3>لوحة التحكم</h3>
@@ -42,7 +50,7 @@
         <hr>
         <input type="text" id="p-title" placeholder="اسم التصميم">
         <input type="text" id="p-img" placeholder="رابط الصورة">
-        <input type="text" id="p-price" placeholder="السعر">
+        <input type="text" id="p-price" placeholder="السعر أو ملاحظة">
         <button class="btn-gold" onclick="addProduct()">إضافة للواجهة</button>
     </div>
 </div>
@@ -52,27 +60,34 @@
 </div>
 
 <script>
-    const firebaseConfig = {
-        databaseURL: "https://fakhama-decor-default-rtdb.firebaseio.com/"
-    };
+    const firebaseConfig = { databaseURL: "https://fakhama-decor-default-rtdb.firebaseio.com/" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // جلب البيانات مع دعم الصور القديمة والجديدة
     db.ref('siteData').on('value', (snapshot) => {
         const data = snapshot.val();
         if(data) {
-            document.getElementById('bio-text').innerText = data.bio || "مرحباً بكم";
+            document.getElementById('bio-text').innerText = data.bio || "مرحباً بكم في بصمة غير";
             const grid = document.getElementById('products-grid');
             grid.innerHTML = '';
             if(data.products) {
                 Object.keys(data.products).forEach(key => {
                     const p = data.products[key];
+                    // التأكد من وجود قيم افتراضية للايكات عشان ما يختفي شي
+                    const likes = p.likes || 0;
+                    const dislikes = p.dislikes || 0;
+                    
                     grid.innerHTML += `
                         <div class="card">
                             <img src="${p.img}">
                             <div class="card-body">
                                 <h3>${p.title}</h3>
-                                <p class="price">${p.price}</p>
+                                <p style="color:var(--gold)">${p.price || ''}</p>
+                            </div>
+                            <div class="reaction-bar">
+                                <button class="react-btn" onclick="react('${key}', 'likes')">👍 <span class="like-num">${likes}</span></button>
+                                <button class="react-btn" onclick="react('${key}', 'dislikes')">👎 <span class="dislike-num">${dislikes}</span></button>
                             </div>
                         </div>`;
                 });
@@ -80,14 +95,19 @@
         }
     });
 
+    // وظيفة اللايك - تحدث البيانات في الخلفية بدون إعادة تحميل الصفحة
+    function react(id, type) {
+        db.ref('siteData/products/' + id + '/' + type).transaction(c => (c || 0) + 1);
+    }
+
+    // وظائف الإدارة كما هي
     function checkPass() {
         if(prompt("كلمة السر:") === "1234") document.getElementById('admin-panel').style.display = 'block';
     }
 
     function updateBio() {
         const txt = document.getElementById('new-bio').value;
-        db.ref('siteData/bio').set(txt);
-        alert("تم التحديث");
+        if(txt) db.ref('siteData/bio').set(txt).then(() => alert("تم التحديث"));
     }
 
     function addProduct() {
@@ -95,8 +115,12 @@
         const img = document.getElementById('p-img').value;
         const price = document.getElementById('p-price').value;
         if(title && img) {
-            db.ref('siteData/products').push({ title, img, price });
-            alert("تمت الإضافة");
+            db.ref('siteData/products').push({ title, img, price, likes: 0, dislikes: 0 })
+            .then(() => {
+                alert("تمت الإضافة");
+                document.getElementById('p-title').value = '';
+                document.getElementById('p-img').value = '';
+            });
         }
     }
 </script>
