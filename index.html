@@ -3,116 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير للديكور</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <title>معرض الفخامة - الإدارة السحابية</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        :root { --gold: #c5a059; --dark: #1a1a1a; }
-        body { font-family: 'Tajawal', sans-serif; background: #000; color: #fff; margin: 0; padding: 0; }
-        header { background: var(--dark); padding: 40px 20px; text-align: center; border-bottom: 3px solid var(--gold); }
-        .container { max-width: 1000px; margin: auto; padding: 20px; }
-        .bio { background: #111; padding: 20px; border-radius: 10px; margin-bottom: 30px; border-right: 5px solid var(--gold); white-space: pre-wrap; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-        .card { background: var(--dark); border-radius: 15px; overflow: hidden; border: 1px solid #333; display: flex; flex-direction: column; }
-        .card img { width: 100%; height: 250px; object-fit: cover; }
-        .card-body { padding: 15px; text-align: center; flex-grow: 1; }
-        .reaction-bar { display: flex; justify-content: center; gap: 15px; padding: 10px; background: #151515; border-top: 1px solid #333; }
-        .react-btn { background: #222; border: 1px solid #444; color: white; cursor: pointer; padding: 5px 15px; border-radius: 20px; transition: 0.3s; }
-        .react-btn:hover { border-color: var(--gold); }
-        .admin-panel { display: none; background: #222; padding: 20px; border-radius: 10px; margin-top: 50px; border: 1px dashed var(--gold); }
-        input, textarea, button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 5px; border: none; box-sizing: border-box; font-family: 'Tajawal'; }
-        .btn-gold { background: var(--gold); color: #fff; cursor: pointer; font-weight: bold; }
-        .footer { text-align: center; padding: 50px; opacity: 0.3; }
+        :root { --primary: #111; --accent: #c5a059; --light: #fdfdfd; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 0; color: #333; }
+        header { background: var(--primary); color: white; padding: 60px 20px 0 20px; text-align: center; position: relative; border-bottom: 5px solid var(--accent); }
+        header h1 { margin: 0; font-size: 2.8rem; color: var(--accent); }
+        header p { opacity: 0.8; font-size: 1.2rem; margin-top: 10px; margin-bottom: 40px; }
+        #filterContainer { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; padding-bottom: 10px; }
+        .tab-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(197, 160, 89, 0.3); color: #ddd; padding: 8px 25px; border-radius: 5px 5px 0 0; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-2px); }
+        #aboutSection { max-width: 900px; margin: 50px auto; padding: 40px; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; line-height: 1.8; }
+        .gallery-container { max-width: 1400px; margin: 40px auto; padding: 0 20px; display: none; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
+        .item-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); cursor: pointer; transition: 0.4s; }
+        .item-card img { width: 100%; height: 380px; object-fit: cover; }
+        .item-info { padding: 15px; text-align: center; }
+        #lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; justify-content: center; align-items: center; flex-direction: column; color: white; }
+        #lightbox img { max-width: 90%; max-height: 75%; border: 2px solid var(--accent); }
+        #adminBox { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 4000; width: 95%; max-width: 650px; max-height: 90vh; overflow-y: auto; }
+        .overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 3500; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
+        .admin-toggle { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 6000; opacity: 0.1; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1>بصمة غير للديكور</h1>
-    <p>متخصصون في الخشب - تنفيذ وإشراف</p>
+    <h1 id="displayTitle">معرض الفخامة</h1>
+    <p id="displaySubtitle">نصمم لك الجمال في كل زاوية</p>
+    <div id="filterContainer">
+        <button class="tab-btn active" onclick="showAbout()">نبذة عنا</button>
+    </div>
 </header>
 
-<div class="container">
-    <div class="bio" id="bio-text">جاري التحميل...</div>
-    <div id="products-grid" class="grid"></div>
+<div id="aboutSection">
+    <h2 id="aboutTitleDisplay">مرحباً بكم</h2>
+    <div id="aboutText">نحن متخصصون في تنفيذ أرقى الديكورات..</div>
+</div>
 
-    <div class="admin-panel" id="admin-panel">
-        <h3>لوحة التحكم</h3>
-        <textarea id="new-bio" placeholder="تعديل النبذة..."></textarea>
-        <button class="btn-gold" onclick="updateBio()">تحديث النبذة</button>
-        <hr>
-        <input type="text" id="p-title" placeholder="اسم التصميم">
-        <input type="text" id="p-img" placeholder="رابط الصورة">
-        <input type="text" id="p-price" placeholder="السعر">
-        <button class="btn-gold" onclick="addProduct()">إضافة للواجهة</button>
+<div class="gallery-container" id="galleryContainer">
+    <div class="gallery-grid" id="mainGallery"></div>
+</div>
+
+<div id="lightbox" onclick="this.style.display='none'">
+    <img id="lbImg" src="">
+    <div style="padding:20px; text-align:center;"><h2 id="lbTitle"></h2><p id="lbDesc"></p></div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeAdmin()"></div>
+
+<div id="adminBox">
+    <h2 style="color:var(--accent)">لوحة التحكم السحابية</h2>
+    <input type="text" id="editMainTitle" placeholder="اسم المعرض">
+    <textarea id="editAboutText" rows="3" placeholder="تعديل النبذة..."></textarea>
+    <button onclick="updateSettings()" style="background:var(--primary); color:white; border:none; padding:10px; width:100%; cursor:pointer; border-radius:5px;">تحديث الواجهة للجميع</button>
+
+    <h4 style="margin-top:20px;">إضافة منتج جديد:</h4>
+    <input type="text" id="fImgUrl" placeholder="رابط الصورة المباشر">
+    <div style="display:flex; gap:10px;">
+        <input type="text" id="newCatName" placeholder="قسم جديد">
+        <select id="fCatSelect" style="flex:2;"><option value="">أو اختر قسم</option></select>
     </div>
+    <input type="text" id="fTitle" placeholder="اسم المنتج">
+    <textarea id="fDesc" rows="2" placeholder="وصف المنتج"></textarea>
+    <button onclick="saveProduct()" style="background:var(--accent); color:white; border:none; padding:15px; width:100%; cursor:pointer; font-weight:bold; border-radius:5px;">حفظ ونشر فوري</button>
+
+    <h4 style="margin-top:20px;">المنتجات الحالية:</h4>
+    <div id="adminList" style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 10px;"></div>
+    <button onclick="closeAdmin()" style="margin-top:20px; color:#999; border:none; background:none; cursor:pointer;">إغلاق</button>
 </div>
 
-<div class="footer">
-    <span onclick="checkPass()" style="cursor:pointer">⚙️</span>
-</div>
+<div class="admin-toggle" onclick="checkPass()">⚙️</div>
 
 <script>
-    // تم تحديث الرابط هنا بناءً على طلبك
-    const firebaseConfig = { 
-        databaseURL: "https://mydecor-b29bd-default-rtdb.firebaseio.com/" 
+    // بياناتك الخاصة من Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+        authDomain: "mydecor-b29bd.firebaseapp.com",
+        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mydecor-b29bd",
+        storageBucket: "mydecor-b29bd.firebasestorage.app",
+        messagingSenderId: "302609299720",
+        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    db.ref('siteData').on('value', (snapshot) => {
+    let products = [];
+    let categories = new Set();
+    let siteInfo = { title: "معرض الفخامة", about: "أهلاً بكم في موقعنا" };
+
+    // جلب البيانات تلقائياً
+    db.ref('site_data').on('value', (snapshot) => {
         const data = snapshot.val();
-        if(data) {
-            document.getElementById('bio-text').innerText = data.bio || "مرحباً بكم";
-            const grid = document.getElementById('products-grid');
-            grid.innerHTML = '';
-            if(data.products) {
-                Object.keys(data.products).forEach(key => {
-                    const p = data.products[key];
-                    grid.innerHTML += `
-                        <div class="card">
-                            <img src="${p.img}">
-                            <div class="card-body">
-                                <h3>${p.title}</h3>
-                                <p style="color:var(--gold)">${p.price || ''}</p>
-                            </div>
-                            <div class="reaction-bar">
-                                <button class="react-btn" onclick="react('${key}', 'likes')">👍 <span>${p.likes || 0}</span></button>
-                                <button class="react-btn" onclick="react('${key}', 'dislikes')">👎 <span>${p.dislikes || 0}</span></button>
-                            </div>
-                        </div>`;
-                });
-            }
+        if (data) {
+            products = data.products || [];
+            categories = new Set(data.categories || []);
+            siteInfo = data.siteInfo || siteInfo;
+            document.getElementById('displayTitle').innerText = siteInfo.title;
+            document.getElementById('aboutText').innerText = siteInfo.about;
+            updateUI_NoSave();
         }
     });
 
-    function react(id, type) {
-        db.ref('siteData/products/' + id + '/' + type).transaction(c => (c || 0) + 1);
+    function saveToCloud() {
+        db.ref('site_data').set({
+            products: products,
+            categories: Array.from(categories),
+            siteInfo: siteInfo
+        });
     }
 
     function checkPass() {
-        if(prompt("كلمة السر:") === "1234") document.getElementById('admin-panel').style.display = 'block';
-    }
-
-    function updateBio() {
-        const txt = document.getElementById('new-bio').value;
-        db.ref('siteData/bio').set(txt).then(() => alert("تم التحديث"));
-    }
-
-    function addProduct() {
-        const title = document.getElementById('p-title').value;
-        const img = document.getElementById('p-img').value;
-        const price = document.getElementById('p-price').value;
-        if(title && img) {
-            db.ref('siteData/products').push({ title, img, price, likes: 0, dislikes: 0 })
-            .then(() => {
-                alert("تمت الإضافة");
-                document.getElementById('p-title').value = '';
-                document.getElementById('p-img').value = '';
-            });
+        if(prompt("كلمة المرور:") === "1234") {
+            document.getElementById('adminBox').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
         }
     }
+
+    function updateSettings() {
+        const t = document.getElementById('editMainTitle').value;
+        const ab = document.getElementById('editAboutText').value;
+        if(t) siteInfo.title = t;
+        if(ab) siteInfo.about = ab;
+        saveToCloud();
+        alert("تم التحديث السحابي!");
+    }
+
+    function saveProduct() {
+        const url = document.getElementById('fImgUrl').value.trim();
+        const cat = document.getElementById('newCatName').value.trim() || document.getElementById('fCatSelect').value || "عام";
+        const title = document.getElementById('fTitle').value;
+        const desc = document.getElementById('fDesc').value;
+
+        if(!url || !title) return alert("أكمل البيانات");
+
+        products.push({ id: Date.now(), img: url, title, desc, cat: cat });
+        categories.add(cat);
+        saveToCloud();
+        
+        document.getElementById('fImgUrl').value = "";
+        document.getElementById('fTitle').value = "";
+        document.getElementById('fDesc').value = "";
+        document.getElementById('newCatName').value = "";
+    }
+
+    function deleteP(id) {
+        if(confirm("حذف؟")) {
+            products = products.filter(x => x.id !== id);
+            saveToCloud();
+        }
+    }
+
+    function updateUI_NoSave() {
+        renderGallery();
+        renderAdminTable();
+        updateFilterButtons();
+        updateCategoryDropdown();
+    }
+
+    function renderGallery() {
+        const gallery = document.getElementById('mainGallery');
+        gallery.innerHTML = '';
+        products.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'item-card'; card.setAttribute('data-cat', p.cat);
+            card.onclick = () => {
+                document.getElementById('lbImg').src = p.img;
+                document.getElementById('lbTitle').innerText = p.title;
+                document.getElementById('lbDesc').innerText = p.desc;
+                document.getElementById('lightbox').style.display = 'flex';
+            };
+            card.innerHTML = `<img src="${p.img}"><div class="item-info"><h3>${p.title}</h3><small style="color:var(--accent)">${p.cat}</small></div>`;
+            gallery.appendChild(card);
+        });
+    }
+
+    function renderAdminTable() {
+        const list = document.getElementById('adminList');
+        list.innerHTML = '';
+        products.forEach(p => {
+            list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;"><span>${p.title}</span><button onclick="deleteP(${p.id})" style="color:red; background:none; border:none; cursor:pointer;">حذف</button></div>`;
+        });
+    }
+
+    function updateFilterButtons() {
+        const container = document.getElementById('filterContainer');
+        let btns = '<button class="tab-btn active" onclick="showAbout()">نبذة عنا</button>';
+        categories.forEach(c => { btns += `<button class="tab-btn" onclick="filterData('${c}')">${c}</button>`; });
+        container.innerHTML = btns;
+    }
+
+    function updateCategoryDropdown() {
+        const select = document.getElementById('fCatSelect');
+        select.innerHTML = '<option value="">أو اختر قسم</option>';
+        categories.forEach(c => { select.innerHTML += `<option value="${c}">${c}</option>`; });
+    }
+
+    function showAbout() {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('aboutSection').style.display = 'block';
+        document.getElementById('galleryContainer').style.display = 'none';
+    }
+
+    function filterData(cat) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById('aboutSection').style.display = 'none';
+        document.getElementById('galleryContainer').style.display = 'block';
+        document.querySelectorAll('.item-card').forEach(card => {
+            card.style.display = (card.getAttribute('data-cat') === cat) ? 'block' : 'none';
+        });
+    }
+
+    function closeAdmin() { document.getElementById('adminBox').style.display = 'none'; document.getElementById('overlay').style.display = 'none'; }
 </script>
 </body>
 </html>
