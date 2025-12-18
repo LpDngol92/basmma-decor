@@ -24,16 +24,17 @@
         .item-card img { width: 100%; height: 380px; object-fit: cover; }
         .item-info { padding: 15px; text-align: center; }
 
-        /* أزرار التفاعل 👍 👎 */
         .reaction-bar { display: flex; justify-content: center; gap: 15px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
         .react-btn { background: #f8f8f8; border: 1px solid #ddd; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
         .react-btn:hover { background: #eee; }
 
-        /* لوحة التحكم */
         #adminBox { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 4000; width: 95%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
         .overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 3500; }
         input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         .admin-toggle { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 6000; opacity: 0.2; }
+        
+        /* تنسيق منطقة الرفع الجماعي */
+        .upload-zone { border: 2px dashed var(--accent); padding: 20px; text-align: center; background: #fffcf5; margin-bottom: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -66,21 +67,19 @@
     
     <hr style="margin:20px 0;">
     
-    <h4 style="margin-bottom:10px;">إضافة عمل جديد:</h4>
-    <label style="color:red; font-weight:bold;">1. اختر صورة من جهازك:</label>
-    <input type="file" id="fFile" accept="image/*" style="border: 2px dashed var(--accent); padding: 20px;">
+    <h4 style="margin-bottom:10px;">رفع "أعمالنا" (دفعة واحدة):</h4>
     
-    <label>2. اسم العمل:</label>
-    <input type="text" id="fTitle" placeholder="مثال: ديكور خشبي مودرن">
-    
-    <label>3. القسم:</label>
+    <label>1. اختر القسم (معارض أحذية، سوبرماركت...):</label>
     <div style="display:flex; gap:10px;">
         <input type="text" id="newCatName" placeholder="قسم جديد">
         <select id="fCatSelect" style="flex:2;"><option value="">أو اختر قسم موجود</option></select>
     </div>
 
-    <button onclick="uploadAndSave()" id="saveBtn" style="background:var(--accent); color:white; width:100%; padding:15px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:10px;">رفع الصورة ونشر العمل الآن</button>
-    <p id="upStatus" style="display:none; color:var(--accent); text-align:center; font-weight:bold;">جاري الرفع... الرجاء الانتظار</p>
+    <label>2. حدد الصور من جهازك (يمكنك اختيار صور كثيرة):</label>
+    <input type="file" id="batchFiles" multiple accept="image/*" class="upload-zone">
+    
+    <button onclick="startBatchUpload()" id="saveBtn" style="background:var(--accent); color:white; width:100%; padding:15px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:10px;">بدء رفع كافة الصور المحددة</button>
+    <p id="upStatus" style="display:none; color:var(--accent); text-align:center; font-weight:bold; margin-top:10px;"></p>
 
     <h4 style="margin-top:20px;">إدارة الأعمال الحالية:</h4>
     <div id="adminList" style="border:1px solid #eee; padding:10px; max-height:150px; overflow-y:auto;"></div>
@@ -121,36 +120,48 @@
         }
     });
 
-    async function uploadAndSave() {
-        const file = document.getElementById('fFile').files[0];
-        const title = document.getElementById('fTitle').value;
+    // وظيفة الرفع الجماعي المحدثة
+    async function startBatchUpload() {
+        const files = document.getElementById('batchFiles').files;
         const cat = document.getElementById('newCatName').value.trim() || document.getElementById('fCatSelect').value || "عام";
         
-        if(!file || !title) return alert("يرجى اختيار صورة وكتابة اسم العمل");
+        if(files.length === 0) return alert("يرجى اختيار صورة واحدة على الأقل");
 
         const status = document.getElementById('upStatus');
         const btn = document.getElementById('saveBtn');
         status.style.display = 'block';
         btn.disabled = true;
 
-        try {
-            const ref = storage.ref('uploads/' + Date.now() + "_" + file.name);
-            await ref.put(file);
-            const url = await ref.getDownloadURL();
+        for (let i = 0; i < files.length; i++) {
+            status.innerText = `جاري رفع صورة ${i+1} من ${files.length}...`;
+            try {
+                const file = files[i];
+                const storageRef = storage.ref(`works/${cat}/${Date.now()}_${file.name}`);
+                await storageRef.put(file);
+                const url = await storageRef.getDownloadURL();
 
-            products.push({ id: Date.now(), img: url, title, cat, likes: 0, dislikes: 0 });
-            categories.add(cat);
-            await db.ref('site_data').set({ products, categories: Array.from(categories), siteInfo });
-            
-            alert("تم الرفع والحفظ!");
-            document.getElementById('fFile').value = "";
-            document.getElementById('fTitle').value = "";
-        } catch (e) {
-            alert("خطأ: تأكد من تفعيل Storage في Firebase وتعديل Rules لـ true");
-        } finally {
-            status.style.display = 'none';
-            btn.disabled = false;
+                products.push({
+                    id: Date.now() + i,
+                    img: url,
+                    title: cat + " - " + (i + 1), // اسم تلقائي بناء على القسم
+                    cat: cat,
+                    likes: 0,
+                    dislikes: 0
+                });
+                categories.add(cat);
+            } catch (e) {
+                console.error("Error uploading file:", e);
+            }
         }
+
+        // حفظ الكل مرة واحدة في قاعدة البيانات بعد انتهاء الدورة
+        await db.ref('site_data').set({ products, categories: Array.from(categories), siteInfo });
+        
+        status.innerText = "تم رفع كافة الصور بنجاح!";
+        document.getElementById('batchFiles').value = "";
+        document.getElementById('newCatName').value = "";
+        btn.disabled = false;
+        setTimeout(() => { status.style.display = 'none'; }, 3000);
     }
 
     function handleReact(id, type) {
@@ -163,7 +174,6 @@
     }
 
     function updateUI() {
-        // رندر المعرض
         const gallery = document.getElementById('mainGallery');
         gallery.innerHTML = '';
         products.forEach(p => {
@@ -180,40 +190,43 @@
                 </div>`;
         });
 
-        // رندر الأزرار والأقسام
         const filter = document.getElementById('filterContainer');
         let html = '<button class="tab-btn active" onclick="showAbout()">نبذة عنا</button>';
         categories.forEach(c => html += `<button class="tab-btn" onclick="filterData(event, '${c}')">${c}</button>`);
         filter.innerHTML = html;
 
         const select = document.getElementById('fCatSelect');
-        select.innerHTML = '<option value="">أو اختر قسم</option>';
+        select.innerHTML = '<option value="">أو اختر قسم موجود</option>';
         categories.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
 
         const list = document.getElementById('adminList');
         list.innerHTML = '';
-        products.forEach(p => {
+        products.slice().reverse().forEach(p => {
             list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;">
-                <span>${p.title}</span><button onclick="deleteP(${p.id})" style="color:red; border:none; background:none; cursor:pointer;">حذف</button>
+                <span>[${p.cat}] - ${p.title}</span><button onclick="deleteP(${p.id})" style="color:red; border:none; background:none; cursor:pointer;">حذف</button>
             </div>`;
         });
     }
 
-    function deleteP(id) { if(confirm("حذف؟")) { products = products.filter(x => x.id !== id); db.ref('site_data/products').set(products); } }
+    function deleteP(id) { if(confirm("حذف؟")) { products = products.filter(x => x.id !== id); db.ref('site_data').set({ products, categories: Array.from(categories), siteInfo }); } }
+    
     function updateSettings() {
         siteInfo.title = document.getElementById('editMainTitle').value || siteInfo.title;
         siteInfo.about = document.getElementById('editAboutText').value || siteInfo.about;
         db.ref('site_data/siteInfo').set(siteInfo);
         alert("تم التحديث");
     }
+
     function checkPass() { if(prompt("الباسورد:") === "1234") { document.getElementById('adminBox').style.display='block'; document.getElementById('overlay').style.display='block'; } }
     function closeAdmin() { document.getElementById('adminBox').style.display='none'; document.getElementById('overlay').style.display='none'; }
+    
     function showAbout() {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         if(event) event.target.classList.add('active');
         document.getElementById('aboutSection').style.display = 'block';
         document.getElementById('galleryContainer').style.display = 'none';
     }
+
     function filterData(e, cat) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
