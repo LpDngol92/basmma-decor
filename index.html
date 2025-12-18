@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير - نظام الروابط السريع</title>
+    <title>بصمة غير - نظام إدارة الأقسام الذكي</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -18,7 +18,6 @@
         .page-section { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: none; }
         .page-section.active { display: block; }
 
-        /* عرض الصور والاقسام */
         .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
         .item-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .item-card img { width: 100%; height: 350px; object-fit: cover; background: #eee; }
@@ -29,19 +28,18 @@
         .album-card { background: white; border-radius: 12px; overflow: hidden; cursor: pointer; border-bottom: 3px solid var(--accent); text-align: center; padding-bottom: 10px; }
         .album-card img { width: 100%; height: 220px; object-fit: cover; }
 
-        /* لوحة التحكم */
         #adminPanel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 20px; box-sizing: border-box; }
         .admin-box { background: #f4f4f4; padding: 15px; border-radius: 10px; margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         .btn-save { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; }
-        .admin-toggle { position: fixed; bottom: 20px; left: 20px; background: var(--primary); color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10000; opacity: 0.5; }
+        .admin-toggle { position: fixed; bottom: 20px; left: 20px; background: var(--primary); color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10000; opacity: 0.7; }
     </style>
 </head>
 <body>
 
 <header>
     <h1 id="siteName">بصمة غير للديكور</h1>
-    <p id="siteSub">نظام إدارة الروابط</p>
+    <p id="siteSub">نظام إدارة الأقسام المتطور</p>
 </header>
 
 <div class="main-nav" id="navBar">
@@ -52,7 +50,7 @@
 <section id="aboutSec" class="page-section active">
     <div style="background:white; padding:40px; border-radius:15px; text-align:center;">
         <h2 style="color:var(--accent)">من نحن</h2>
-        <p id="aboutTxt">جاري تحميل البيانات...</p>
+        <p id="aboutTxt">جاري التحميل...</p>
     </div>
 </section>
 
@@ -74,21 +72,14 @@
 
 <div id="adminPanel">
     <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-        <h2>لوحة التحكم بالروابط</h2>
+        <h2>لوحة التحكم الذكية</h2>
         <button onclick="closeAdmin()" style="background:red; color:white; border:none; padding:5px 15px; cursor:pointer;">إغلاق</button>
     </div>
 
     <div class="admin-box">
-        <h3>1. النصوص العامة</h3>
-        <input type="text" id="inName" placeholder="اسم الموقع">
-        <input type="text" id="inAbout" placeholder="نبذة عن الشركة">
-        <button class="btn-save" onclick="saveInfo()">حفظ</button>
-    </div>
-
-    <div class="admin-box">
-        <h3 style="color:var(--accent)">2. إضافة مجموعة لـ "أعمالنا" (5 روابط)</h3>
+        <h3 style="color:var(--accent)">1. إضافة مجموعة لـ "أعمالنا" (5 روابط)</h3>
         <input type="text" id="albName" placeholder="اسم المجموعة">
-        <input type="text" id="r1" placeholder="رابط الصورة 1 (سيكون الغلاف)">
+        <input type="text" id="r1" placeholder="رابط الصورة 1 (الغلاف)">
         <input type="text" id="r2" placeholder="رابط الصورة 2">
         <input type="text" id="r3" placeholder="رابط الصورة 3">
         <input type="text" id="r4" placeholder="رابط الصورة 4">
@@ -97,15 +88,21 @@
     </div>
 
     <div class="admin-box">
-        <h3 style="color:var(--accent)">3. إضافة قسم مستقل (دواليب، إلخ)</h3>
-        <input type="text" id="secName" placeholder="اسم القسم">
+        <h3 style="color:var(--accent)">2. إضافة قسم مستقل وصور (دواليب، إلخ)</h3>
+        <label>اختر القسم أو أنشئ جديداً:</label>
+        <select id="secSelector" onchange="toggleNewSec()">
+            <option value="">-- اختر قسماً موجوداً --</option>
+            <option value="NEW">+ إضافة قسم جديد تماماً</option>
+        </select>
+        <input type="text" id="newSecName" placeholder="اكتب اسم القسم الجديد هنا" style="display:none; border: 2px solid var(--accent);">
+        
         <input type="text" id="oneUrl" placeholder="رابط الصورة">
         <input type="text" id="oneDesc" placeholder="وصف الصورة">
-        <button class="btn-save" onclick="addSingle()" style="background:#007bff">إضافة للقسم</button>
+        <button class="btn-save" onclick="addSingle()" style="background:#007bff">حفظ الصورة في القسم</button>
     </div>
 
     <div class="admin-box">
-        <h3>المحتوى الحالي</h3>
+        <h3>إدارة المحتوى (حذف)</h3>
         <div id="adminList"></div>
     </div>
 </div>
@@ -123,21 +120,27 @@
     const db = firebase.database();
     let state = { info:{}, albums:{}, singles:[] };
 
-    db.ref('link_system').on('value', snap => {
+    db.ref('smart_link_system').on('value', snap => {
         if(snap.val()) { state = snap.val(); render(); }
     });
 
     function render() {
-        document.getElementById('siteName').innerText = state.info.name || "بصمة غير";
-        document.getElementById('aboutTxt').innerText = state.info.about || "";
+        document.getElementById('siteName').innerText = state.info?.name || "بصمة غير";
+        document.getElementById('aboutTxt').innerText = state.info?.about || "نبذة الشركة ستظهر هنا";
         
         const nav = document.getElementById('navBar');
-        nav.innerHTML = '<button class="nav-link active" id="btn-about" onclick="showSec(\'about\')">نبذة عنا</button><button class="nav-link" id="btn-works" onclick="showSec(\'works\')">أعمالنا</button>';
+        nav.innerHTML = '<button class="nav-link active" onclick="showSec(\'about\')">نبذة عنا</button><button class="nav-link" onclick="showSec(\'works\')">أعمالنا</button>';
         
+        const selector = document.getElementById('secSelector');
+        const currentSelected = selector.value;
+        selector.innerHTML = '<option value="">-- اختر قسماً موجوداً --</option><option value="NEW">+ إضافة قسم جديد تماماً</option>';
+
         let cats = [...new Set((state.singles || []).map(s => s.cat))];
         cats.forEach(c => {
             nav.innerHTML += `<button class="nav-link" onclick="showDyn('${c}')">${c}</button>`;
+            selector.innerHTML += `<option value="${c}">${c}</option>`;
         });
+        selector.value = currentSelected;
 
         const albList = document.getElementById('albumsList');
         albList.innerHTML = '';
@@ -149,36 +152,51 @@
         const adm = document.getElementById('adminList');
         adm.innerHTML = '';
         (state.singles || []).forEach((s, i) => {
-            adm.innerHTML += `<div style="padding:5px; border-bottom:1px solid #ddd;">[${s.cat}] ${s.desc} <button onclick="delS(${i})" style="color:red">حذف</button></div>`;
+            adm.innerHTML += `<div style="padding:5px; border-bottom:1px solid #ddd;">[${s.cat}] ${s.desc} <button onclick="delS(${i})" style="color:red; background:none; border:none; cursor:pointer;">حذف</button></div>`;
         });
         Object.keys(state.albums || {}).forEach(k => {
-            adm.innerHTML += `<div style="padding:5px; border-bottom:1px solid #ddd;">[ألبوم] ${state.albums[k].name} <button onclick="delA('${k}')" style="color:red">حذف</button></div>`;
+            adm.innerHTML += `<div style="padding:5px; border-bottom:1px solid #ddd;">[ألبوم] ${state.albums[k].name} <button onclick="delA('${k}')" style="color:red; background:none; border:none; cursor:pointer;">حذف</button></div>`;
         });
+    }
+
+    function toggleNewSec() {
+        const val = document.getElementById('secSelector').value;
+        document.getElementById('newSecName').style.display = (val === 'NEW') ? 'block' : 'none';
     }
 
     function addAlbum() {
         const name = document.getElementById('albName').value;
         const photos = [
-            document.getElementById('r1').value,
-            document.getElementById('r2').value,
-            document.getElementById('r3').value,
-            document.getElementById('r4').value,
+            document.getElementById('r1').value, document.getElementById('r2').value,
+            document.getElementById('r3').value, document.getElementById('r4').value,
             document.getElementById('r5').value
         ].filter(r => r !== "");
-        if(!name || photos.length === 0) return alert("أدخل الاسم ورابط واحد على الأقل");
-        db.ref('link_system/albums').push({ name, photos });
+        if(!name || photos.length === 0) return alert("أكمل البيانات");
+        db.ref('smart_link_system/albums').push({ name, photos });
         alert("تم إنشاء المجموعة");
+        document.getElementById('albName').value = "";
     }
 
     function addSingle() {
-        const cat = document.getElementById('secName').value;
+        const selector = document.getElementById('secSelector');
+        let cat = selector.value;
+        if(cat === 'NEW') cat = document.getElementById('newSecName').value;
+        
         const url = document.getElementById('oneUrl').value;
         const desc = document.getElementById('oneDesc').value;
-        if(!cat || !url) return alert("أدخل القسم والرابط");
+        
+        if(!cat || !url) return alert("اختر القسم وضع رابط الصورة");
+        
         const singles = state.singles || [];
         singles.push({ cat, desc, img: url, likes:0, dislikes:0, id: Date.now() });
-        db.ref('link_system/singles').set(singles);
-        alert("تمت الإضافة");
+        db.ref('smart_link_system/singles').set(singles);
+        
+        alert("تم الحفظ بنجاح!");
+        document.getElementById('oneUrl').value = "";
+        document.getElementById('oneDesc').value = "";
+        document.getElementById('newSecName').value = "";
+        selector.value = cat; 
+        toggleNewSec();
     }
 
     function showDyn(cat) {
@@ -198,7 +216,7 @@
     function react(id, type) {
         const i = state.singles.findIndex(s => s.id === id);
         state.singles[i][type]++;
-        db.ref('link_system/singles').set(state.singles);
+        db.ref('smart_link_system/singles').set(state.singles);
     }
 
     function viewAlb(k) {
@@ -212,20 +230,12 @@
 
     function showSec(id) {
         document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
         const sec = document.getElementById(id + 'Sec') || document.getElementById(id);
         if(sec) sec.classList.add('active');
     }
 
-    function saveInfo() {
-        const name = document.getElementById('inName').value;
-        const about = document.getElementById('inAbout').value;
-        db.ref('link_system/info').set({ name, about });
-        alert("تم الحفظ");
-    }
-
-    function delS(i) { if(confirm("حذف؟")) { state.singles.splice(i,1); db.ref('link_system/singles').set(state.singles); } }
-    function delA(k) { if(confirm("حذف؟")) db.ref('link_system/albums/'+k).remove(); }
+    function delS(i) { if(confirm("حذف الصورة؟")) { state.singles.splice(i,1); db.ref('smart_link_system/singles').set(state.singles); } }
+    function delA(k) { if(confirm("حذف المجموعة؟")) db.ref('smart_link_system/albums/'+k).remove(); }
     function openAdmin() { if(prompt("الباسورد:")==="1234") document.getElementById('adminPanel').style.display='block'; }
     function closeAdmin() { document.getElementById('adminPanel').style.display='none'; }
 </script>
