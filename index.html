@@ -3,57 +3,126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">بصمة غير للديكور - جودة عالية</title>
+    <title id="pageTitle">بصمة غير للديكور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #111; --accent: #c5a059; --light: #fdfdfd; --success: #28a745; --danger: #dc3545; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 0; text-align: right; color: #333; }
+        :root {
+            --primary-bg: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --accent: #d4af37; /* ذهبي ملكي */
+            --accent-hover: #f1c40f;
+            --text-main: #ffffff;
+            --text-dim: #b3b3b3;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            margin: 0; padding: 0; line-height: 1.6;
+        }
+
+        /* هيدر بتصميم فخم */
+        header {
+            background: linear-gradient(145deg, #1a1a1a, #000000);
+            padding: 60px 20px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        header h1 {
+            margin: 0; font-size: 3rem; color: var(--accent);
+            text-transform: uppercase; letter-spacing: 2px;
+            text-shadow: 2px 2px 10px rgba(212, 175, 55, 0.3);
+        }
+        .welcome-msg { color: var(--text-dim); margin-top: 10px; font-size: 1.1rem; }
+
+        /* نافبار زجاجي */
+        .main-nav {
+            display: flex; justify-content: center; gap: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 15px; position: sticky; top: 0; z-index: 1000;
+            border-bottom: 1px solid var(--glass);
+        }
+        .nav-link {
+            background: transparent; border: 1px solid var(--glass);
+            color: var(--text-main); padding: 10px 25px; border-radius: 30px;
+            cursor: pointer; font-weight: 600; transition: 0.4s;
+        }
+        .nav-link.active, .nav-link:hover {
+            background: var(--accent); color: #000; border-color: var(--accent);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+        }
+
+        /* الأقسام والصور */
+        .page-section { max-width: 1400px; margin: 40px auto; padding: 20px; display: none; }
+        .page-section.active { display: block; animation: fadeIn 0.8s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .items-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+        .item-card {
+            background: var(--card-bg); border-radius: 20px; overflow: hidden;
+            border: 1px solid var(--glass); transition: 0.4s; position: relative;
+        }
+        .item-card:hover { transform: scale(1.03); border-color: var(--accent); }
+        .item-card img { width: 100%; height: 400px; object-fit: cover; filter: brightness(0.9); transition: 0.5s; }
+        .item-card:hover img { filter: brightness(1.1); }
         
-        header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--accent); }
-        header h1 { margin: 0; font-size: 2.5em; color: var(--accent); }
-        .welcome-msg { background: #1a1a1a; color: #eee; padding: 15px; font-style: italic; text-align: center; }
-
-        .main-nav { display: flex; justify-content: center; background: #222; padding: 10px; position: sticky; top: 0; z-index: 1000; gap: 10px; flex-wrap: wrap; }
-        .nav-link { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .nav-link.active, .nav-link:hover { background: var(--accent); color: white; }
-
-        .page-section { max-width: 1400px; margin: 30px auto; padding: 20px; display: none; }
-        .page-section.active { display: block; }
-
-        /* تحسين جودة وعرض الصور */
-        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px; }
-        .item-card { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-bottom: 4px solid var(--accent); transition: 0.4s; }
-        .item-card:hover { transform: translateY(-10px); }
-        .item-card img { width: 100%; height: auto; max-height: 500px; object-fit: cover; display: block; background: #000; }
-        
-        .item-info { padding: 20px; text-align: center; }
-        .item-info p { font-size: 1.1em; font-weight: bold; margin-bottom: 15px; }
-
-        /* أزرار اللايك والدسلايك */
-        .reaction-bar { display: flex; justify-content: center; gap: 20px; border-top: 1px solid #eee; padding-top: 15px; }
-        .react-btn { border: 1px solid #ddd; background: #fff; padding: 8px 18px; border-radius: 25px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold; transition: 0.2s; }
-        .react-btn:hover { background: #f0f0f0; border-color: var(--accent); }
-        .react-btn.like:active { color: var(--success); transform: scale(1.2); }
-        .react-btn.dislike:active { color: var(--danger); transform: scale(1.2); }
+        .item-info { padding: 20px; text-align: center; background: linear-gradient(to top, #000, transparent); }
+        .reaction-bar { display: flex; justify-content: center; gap: 20px; margin-top: 15px; }
+        .react-btn {
+            background: var(--glass); border: 1px solid var(--glass);
+            color: var(--text-main); padding: 8px 20px; border-radius: 20px;
+            cursor: pointer; transition: 0.3s; font-size: 0.9rem;
+        }
+        .react-btn:hover { background: var(--accent); color: #000; }
 
         /* لوحة التحكم */
-        #adminPanel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 30px; box-sizing: border-box; }
-        .admin-box { background: #f9f9f9; padding: 20px; border-radius: 12px; margin-bottom: 25px; border: 1px solid #eee; }
-        .input-group { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-        input, select, textarea { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .add-btn { background: var(--primary); color: var(--accent); border: 2px solid var(--accent); padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-save { background: var(--success); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
-        .btn-close { background: var(--danger); color: white; border: none; padding: 12px 25px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .admin-toggle { position: fixed; bottom: 25px; left: 25px; background: var(--primary); color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .hidden-inp { display: none; margin-top: 10px; background: #fffde7; border: 1px dashed var(--accent); }
+        #adminPanel {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0a0a0a; z-index: 9999; overflow-y: auto; padding: 40px;
+        }
+        .admin-box {
+            background: #151515; padding: 25px; border-radius: 15px;
+            margin-bottom: 30px; border: 1px solid var(--glass);
+        }
+        input, select, textarea {
+            width: 100%; padding: 14px; margin: 10px 0;
+            background: #000; border: 1px solid var(--glass);
+            color: #fff; border-radius: 8px;
+        }
+        .btn-save {
+            background: var(--accent); color: #000; border: none;
+            padding: 15px; border-radius: 8px; cursor: pointer;
+            font-weight: bold; width: 100%; font-size: 1rem;
+        }
+        .admin-toggle {
+            position: fixed; bottom: 30px; left: 30px;
+            background: var(--accent); color: #000; width: 60px; height: 60px;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 10000; box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+        .btn-close { background: #ff4444; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+
+        /* قسم الحذف بتصميم أنيق */
+        .del-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px; border-bottom: 1px solid var(--glass);
+        }
     </style>
 </head>
 <body>
 
 <header>
-    <h1 id="siteNameDisplay">بصمة غير للديكور</h1>
-    <div class="welcome-msg" id="welcomeDisplay">تصاميمنا بجودة عالية</div>
+    <h1 id="siteNameDisplay">بصمة غير</h1>
+    <div class="welcome-msg" id="welcomeDisplay">للفخامة عنوان</div>
 </header>
 
 <div class="main-nav" id="navBar">
@@ -62,9 +131,9 @@
 </div>
 
 <section id="aboutSec" class="page-section active">
-    <div style="background:white; padding:50px; border-radius:20px; text-align:center; box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
-        <h2 style="color:var(--accent)">من نحن</h2>
-        <p id="aboutTxt" style="line-height: 1.8; font-size: 1.3em;">جاري التحميل...</p>
+    <div style="text-align:center; max-width: 800px; margin: auto;">
+        <h2 style="color:var(--accent); font-size: 2.5rem;">عن تميزنا</h2>
+        <p id="aboutTxt" style="font-size: 1.3rem; color: var(--text-dim); line-height: 2;"></p>
     </div>
 </section>
 
@@ -73,57 +142,63 @@
 </section>
 
 <section id="albumViewer" class="page-section">
-    <button onclick="showSec('works')" class="nav-link">⬅ عودة للمعرض</button>
-    <h2 id="viewingTitle" style="text-align:center; color:var(--accent); margin-top:20px;"></h2>
+    <button onclick="showSec('works')" class="nav-link" style="margin-bottom: 30px;"><i class="fas fa-arrow-right"></i> عودة للمجموعات</button>
+    <h2 id="viewingTitle" style="text-align:center; color:var(--accent); margin-bottom: 30px;"></h2>
     <div id="albumPhotos" class="items-grid"></div>
 </section>
 
 <section id="dynamicSec" class="page-section">
-    <h2 id="dynTitle" style="text-align:center; color:var(--accent)"></h2>
+    <h2 id="dynTitle" style="text-align:center; color:var(--accent); margin-bottom: 30px;"></h2>
     <div id="dynGrid" class="items-grid"></div>
 </section>
 
-<div class="admin-toggle" onclick="openAdmin()">⚙️</div>
+<div class="admin-toggle" onclick="requestAdmin()"><i class="fas fa-user-shield"></i></div>
 
 <div id="adminPanel">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; border-bottom:3px solid var(--accent); padding-bottom:15px;">
-        <h2>لوحة التحكم الاحترافية</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:40px;">
+        <h2 style="color:var(--accent); margin:0;">لوحة التحكم الأمنية</h2>
         <button onclick="closeAdmin()" class="btn-close">إغلاق</button>
+    </div>
+
+    <div class="admin-box" style="border: 1px solid #c5a059;">
+        <h3 style="color:var(--accent); margin-top:0;"><i class="fas fa-lock"></i> حماية لوحة التحكم</h3>
+        <input type="password" id="passChange" placeholder="كلمة المرور الجديدة">
+        <button class="btn-save" style="background:#444; color:#fff;" onclick="changePassword()">تحديث رمز الدخول</button>
     </div>
 
     <div class="admin-box">
         <h3>🏠 نصوص الموقع</h3>
         <input type="text" id="siteNameInp" placeholder="اسم الموقع">
         <input type="text" id="welcomeInp" placeholder="رسالة الترحيب">
-        <textarea id="aboutInp" placeholder="نبذة عن الشركة"></textarea>
+        <textarea id="aboutInp" placeholder="نبذة عن الشركة (يفضل نص طويل)" rows="4"></textarea>
         <button class="btn-save" onclick="saveGeneralInfo()">حفظ النصوص</button>
     </div>
 
     <div class="admin-box">
         <h3>📁 إدارة المجموعات (أعمالنا)</h3>
-        <div class="input-group">
+        <div style="display:flex; gap:10px;">
             <select id="albSelect"></select>
-            <button class="add-btn" onclick="toggleInput('newAlbInp')">+ مجموعة جديدة</button>
+            <button class="nav-link" onclick="toggleInput('newAlbInp')" style="white-space:nowrap;">+ جديد</button>
         </div>
-        <input type="text" id="newAlbInp" class="hidden-inp" placeholder="اسم المجموعة الجديدة">
+        <input type="text" id="newAlbInp" style="display:none; border-color:var(--accent);" placeholder="اسم المجموعة الجديدة">
         <input type="text" id="albUrls" placeholder="روابط الصور (افصل بفاصلة ,)">
-        <button class="btn-save" onclick="saveAlbum()">تحديث المجموعات</button>
+        <button class="btn-save" onclick="saveAlbum()">حفظ الصور في المجموعة</button>
     </div>
 
     <div class="admin-box">
-        <h3>📂 إدارة الأقسام (أقسامنا)</h3>
-        <div class="input-group">
+        <h3>📂 إدارة الأقسام (مستقلة)</h3>
+        <div style="display:flex; gap:10px;">
             <select id="secSelect"></select>
-            <button class="add-btn" onclick="toggleInput('newSecInp')">+ قسم جديد</button>
+            <button class="nav-link" onclick="toggleInput('newSecInp')" style="white-space:nowrap;">+ جديد</button>
         </div>
-        <input type="text" id="newSecInp" class="hidden-inp" placeholder="اسم القسم الجديد">
-        <input type="text" id="oneUrl" placeholder="رابط الصورة المباشر">
+        <input type="text" id="newSecInp" style="display:none; border-color:var(--accent);" placeholder="اسم القسم الجديد">
+        <input type="text" id="oneUrl" placeholder="رابط الصورة">
         <input type="text" id="oneDesc" placeholder="وصف الصورة">
-        <button class="btn-save" onclick="saveSingle()" style="background:#007bff">إضافة الصورة للقسم</button>
+        <button class="btn-save" onclick="saveSingle()">إضافة للقسم</button>
     </div>
 
     <div class="admin-box">
-        <h3>🗑️ قائمة الحذف</h3>
+        <h3>🗑️ حذف المحتوى</h3>
         <div id="deleteList"></div>
     </div>
 </div>
@@ -139,10 +214,12 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    let siteData = { info: {}, albums: {}, singles: [] };
+    let siteData = {};
 
-    db.ref('basma_hq_v4').on('value', snap => {
-        if(snap.val()) { siteData = snap.val(); renderAll(); }
+    // تحميل البيانات
+    db.ref('basma_pro_v5').on('value', snap => {
+        siteData = snap.val() || { admin: { pass: "1234" } };
+        renderAll();
     });
 
     function renderAll() {
@@ -150,6 +227,8 @@
         document.getElementById('siteNameDisplay').innerText = info.name || "بصمة غير";
         document.getElementById('welcomeDisplay').innerText = info.welcome || "";
         document.getElementById('aboutTxt').innerText = info.about || "";
+        
+        // تعبئة المدخلات
         document.getElementById('siteNameInp').value = info.name || "";
         document.getElementById('welcomeInp').value = info.welcome || "";
         document.getElementById('aboutInp').value = info.about || "";
@@ -157,10 +236,12 @@
         const nav = document.getElementById('navBar');
         const albSel = document.getElementById('albSelect');
         const secSel = document.getElementById('secSelect');
+        
         nav.innerHTML = '<button class="nav-link active" onclick="showSec(\'about\')">نبذة عنا</button><button class="nav-link" onclick="showSec(\'works\')">أعمالنا</button>';
         albSel.innerHTML = '<option value="">-- اختر مجموعة --</option>';
         secSel.innerHTML = '<option value="">-- اختر قسماً --</option>';
 
+        // المجموعات
         const albGrid = document.getElementById('albumsList');
         albGrid.innerHTML = '';
         if(siteData.albums) {
@@ -171,6 +252,7 @@
             });
         }
 
+        // الأقسام
         const delList = document.getElementById('deleteList');
         delList.innerHTML = '';
         let cats = [...new Set((siteData.singles || []).map(s => s.cat))];
@@ -180,21 +262,34 @@
         });
 
         (siteData.singles || []).forEach((s, i) => {
-            delList.innerHTML += `<div style="padding:10px; border-bottom:1px solid #ddd;">[${s.cat}] ${s.desc} <button onclick="delSingle(${i})" style="color:red; float:left;">حذف</button></div>`;
+            delList.innerHTML += `<div class="del-item">${s.cat} - ${s.desc} <button onclick="delSingle(${i})" style="color:red; background:none; border:none; cursor:pointer;">حذف</button></div>`;
         });
     }
 
-    function toggleInput(id) {
-        const el = document.getElementById(id);
-        el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    function requestAdmin() {
+        const pass = prompt("الرجاء إدخال رمز الدخول الآمن:");
+        if (pass === siteData.admin.pass) {
+            document.getElementById('adminPanel').style.display = 'block';
+        } else {
+            alert("عذراً، الرمز غير صحيح.");
+        }
+    }
+
+    function changePassword() {
+        const newPass = document.getElementById('passChange').value;
+        if (newPass.length < 4) return alert("الرمز يجب أن يكون 4 أرقام أو حروف على الأقل");
+        db.ref('basma_pro_v5/admin/pass').set(newPass).then(() => {
+            alert("تم تغيير كلمة المرور بنجاح! سيتم استخدام الرمز الجديد من الآن.");
+            document.getElementById('passChange').value = "";
+        });
     }
 
     function saveGeneralInfo() {
-        db.ref('basma_hq_v4/info').set({
+        db.ref('basma_pro_v5/info').set({
             name: document.getElementById('siteNameInp').value,
             welcome: document.getElementById('welcomeInp').value,
             about: document.getElementById('aboutInp').value
-        }).then(() => alert("تم الحفظ بنجاح"));
+        }).then(() => alert("تم حفظ البيانات"));
     }
 
     function saveAlbum() {
@@ -203,15 +298,14 @@
         const urls = document.getElementById('albUrls').value.split(',').map(u => u.trim()).filter(u => u !== "");
 
         if(newName) {
-            db.ref('basma_hq_v4/albums').push({ name: newName, images: urls });
-            document.getElementById('newAlbInp').value = "";
+            db.ref('basma_pro_v5/albums').push({ name: newName, images: urls });
             document.getElementById('newAlbInp').style.display = "none";
         } else if(sel) {
             const existing = siteData.albums[sel].images || [];
-            db.ref('basma_hq_v4/albums/' + sel + '/images').set([...existing, ...urls]);
+            db.ref('basma_pro_v5/albums/' + sel + '/images').set([...existing, ...urls]);
         }
         document.getElementById('albUrls').value = "";
-        alert("تم تحديث المجموعات");
+        alert("تم التحديث");
     }
 
     function saveSingle() {
@@ -220,23 +314,20 @@
         const url = document.getElementById('oneUrl').value;
         const desc = document.getElementById('oneDesc').value;
         let cat = newCat || sel;
-        if(!cat || !url) return alert("البيانات غير مكتملة");
+        if(!cat || !url) return alert("أكمل البيانات");
 
         const singles = siteData.singles || [];
         singles.push({ cat, desc, img: url, likes: 0, dislikes: 0, id: Date.now() });
-        db.ref('basma_hq_v4/singles').set(singles);
+        db.ref('basma_pro_v5/singles').set(singles);
         document.getElementById('oneUrl').value = "";
-        document.getElementById('oneDesc').value = "";
         document.getElementById('newSecInp').style.display = "none";
-        alert("تمت الإضافة للقسم");
+        alert("تمت الإضافة");
     }
 
     function react(id, type) {
         const i = siteData.singles.findIndex(s => s.id === id);
-        if(i > -1) {
-            siteData.singles[i][type] = (siteData.singles[i][type] || 0) + 1;
-            db.ref('basma_hq_v4/singles').set(siteData.singles);
-        }
+        siteData.singles[i][type] = (siteData.singles[i][type] || 0) + 1;
+        db.ref('basma_pro_v5/singles').set(siteData.singles);
     }
 
     function viewAlb(id) {
@@ -245,7 +336,9 @@
         document.getElementById('viewingTitle').innerText = alb.name;
         const grid = document.getElementById('albumPhotos');
         grid.innerHTML = '';
-        alb.images.forEach(img => { grid.innerHTML += `<div class="item-card"><img src="${img}"></div>`; });
+        alb.images.forEach(img => {
+            grid.innerHTML += `<div class="item-card"><img src="${img}"></div>`;
+        });
     }
 
     function showDyn(cat) {
@@ -258,10 +351,10 @@
             <div class="item-card">
                 <img src="${s.img}">
                 <div class="item-info">
-                    <p>${s.desc || ''}</p>
+                    <p>${s.desc}</p>
                     <div class="reaction-bar">
-                        <button class="react-btn like" onclick="react(${s.id}, 'likes')">👍 ${s.likes || 0}</button>
-                        <button class="react-btn dislike" onclick="react(${s.id}, 'dislikes')">👎 ${s.dislikes || 0}</button>
+                        <button class="react-btn" onclick="react(${s.id}, 'likes')"><i class="fas fa-thumbs-up"></i> ${s.likes || 0}</button>
+                        <button class="react-btn" onclick="react(${s.id}, 'dislikes')"><i class="fas fa-thumbs-down"></i> ${s.dislikes || 0}</button>
                     </div>
                 </div>
             </div>`;
@@ -272,12 +365,15 @@
         document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
         const target = (id === 'dynamic') ? 'dynamicSec' : (id === 'albumViewer' ? 'albumViewer' : id + 'Sec');
-        const el = document.getElementById(target);
-        if(el) el.classList.add('active');
+        document.getElementById(target).classList.add('active');
     }
 
-    function delSingle(i) { if(confirm("حذف؟")) { siteData.singles.splice(i,1); db.ref('basma_hq_v4/singles').set(siteData.singles); } }
-    function openAdmin() { if(prompt("الرمز:") === "1234") document.getElementById('adminPanel').style.display = 'block'; }
+    function toggleInput(id) {
+        const el = document.getElementById(id);
+        el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+    }
+
+    function delSingle(i) { if(confirm("حذف؟")) { siteData.singles.splice(i,1); db.ref('basma_pro_v5/singles').set(siteData.singles); } }
     function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
 </script>
 </body>
