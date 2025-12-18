@@ -2,104 +2,122 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>بصمة غير للديكور - المحمي</title>
+    <title>بصمة غير - حماية سيرفر</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root{--c1:#b8860b;--c2:#ffffff;--c3:#f5f5f5}body{font-family:tahoma;background:var(--c3);margin:0;user-select:none}
-        header{background:var(--c2);padding:30px;text-align:center;border-bottom:4px solid var(--c1);box-shadow:0 2px 15px rgba(0,0,0,0.1)}
-        h1{color:var(--c1);margin:0}.nav{display:flex;justify-content:center;gap:10px;background:var(--c2);padding:15px;position:sticky;top:0;z-index:9}
-        .btn{background:var(--c2);border:1px solid #ddd;padding:8px 20px;border-radius:20px;cursor:pointer;font-weight:bold}
-        .btn:hover{background:var(--c1);color:white}.sec{max-width:1200px;margin:30px auto;padding:0 20px;display:none}
-        .sec.active{display:block}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
-        .card{background:var(--c2);border-radius:10px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,0.05)}
-        .card img{width:100%;display:block}.info{padding:15px;text-align:center}
-        .l-icon{position:fixed;bottom:20px;left:20px;cursor:pointer;opacity:0.3}
-        #p-admin{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;padding:40px;box-sizing:border-box;overflow-y:auto}
+        :root { --main: #b8860b; --bg: #f8f9fa; }
+        body { font-family: 'Arial', sans-serif; background: var(--bg); margin: 0; user-select: none; }
+        header { background: white; padding: 30px; text-align: center; border-bottom: 4px solid var(--main); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: white; position: sticky; top: 0; z-index: 100; }
+        .btn { padding: 10px 20px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; background: white; }
+        .btn:hover { background: var(--main); color: white; }
+        .sec { max-width: 1200px; margin: 30px auto; padding: 20px; display: none; }
+        .sec.active { display: block; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card img { width: 100%; height: auto; }
+        .admin-trigger { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; cursor: pointer; opacity: 0.1; }
+        #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; padding: 40px; box-sizing: border-box; overflow-y: auto; }
     </style>
 </head>
-<body oncontextmenu="return false">
+<body oncontextmenu="return false;">
 
-<header><h1 id="site-n">جاري التحميل...</h1><p id="site-w"></p></header>
-<div class="nav" id="main-nav"></div>
+<header><h1 id="d-name">بصمة غير</h1><p id="d-welcome"></p></header>
+<div class="nav" id="d-nav"></div>
 
-<section id="s-about" class="sec active"><div style="background:white;padding:40px;border-radius:10px;text-align:center" id="site-a"></div></section>
-<section id="s-works" class="sec"><div id="list-alb" class="grid"></div></section>
-<section id="s-view" class="sec"><button class="btn" onclick="showS('s-works')">عودة</button><h2 id="view-t" style="text-align:center"></h2><div id="view-p" class="grid"></div></section>
+<section id="p-about" class="sec active"><div id="d-about" style="text-align:center; padding:50px; background:white; border-radius:15px;"></div></section>
+<section id="p-works" class="sec"><div id="d-list" class="grid"></div></section>
+<section id="p-view" class="sec"><button class="btn" onclick="go('p-works')">عودة</button><div id="d-photos" class="grid" style="margin-top:20px;"></div></section>
 
-<div class="l-icon" onclick="v_auth()">⚙️</div>
-<div id="p-admin"></div>
+<div class="admin-trigger" onclick="unlock()"></div>
+<div id="admin-panel"></div>
 
 <script>
-    // مصفوفة البيانات المشفرة (Hex Obfuscation)
-    const _0x4f22 = ["\x41\x49\x7a\x61\x53\x79\x43\x30\x68\x47\x76\x57\x7a\x70\x62\x30\x55\x78\x41\x5f\x52\x72\x59\x6e\x2d\x30\x50\x51\x4b\x79\x41\x54\x58\x61\x76\x45\x47\x59", "\x6d\x79\x64\x65\x63\x6f\x72\x2d\x62\x32\x39\x62\x64\x2e\x66\x69\x72\x65\x62\x61\x73\x65\x61\x70\x70\x2e\x63\x6f\x6d", "\x68\x74\x74\x70\x73\x3a\x2f\x2f\x6d\x79\x64\x65\x63\x6f\x72\x2d\x62\x32\x39\x62\x64\x2d\x64\x65\x66\x61\x75\x6c\x74\x2d\x72\x74\x64\x62\x2e\x65\x75\x72\x6f\x70\x65\x2d\x77\x65\x73\x74\x31\x2e\x66\x69\x72\x65\x62\x61\x73\x65\x64\x61\x74\x61\x62\x61\x73\x65\x2e\x61\x70\x70", "\x73\x69\x74\x65\x5f\x64\x61\x74\x61\x5f\x76\x31\x30", "\x61\x75\x74\x68\x5f\x73\x65\x63"];
+    // إعدادات Firebase (مفاتيح الوصول فقط)
+    const config = {
+        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mydecor-b29bd"
+    };
+    firebase.initializeApp(config);
+    const db = firebase.database();
+    let siteData = {};
 
-    firebase.initializeApp({apiKey:_0x4f22[0], authDomain:_0x4f22[1], databaseURL:_0x4f22[2], projectId:"mydecor-b29bd"});
-    const db = firebase.database(); let g_data = {};
+    // حماية ضد الفحص
+    setInterval(() => { (function(){debugger}()) }, 1000);
 
-    // حماية هجومية ضد أدوات المطورين
-    window.onkeydown = (e) => { if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && e.keyCode == 73)) return false; };
-    setInterval(() => { (function(){debugger}()) }, 500);
-
-    db.ref(_0x4f22[3]).on('value', s => { g_data = s.val() || {}; render(); });
+    // تحميل البيانات العامة (لا تشمل الرمز السري)
+    db.ref('public_content').on('value', s => {
+        siteData = s.val() || {};
+        render();
+    });
 
     function render() {
-        const i = g_data.info || {};
-        document.getElementById('site-n').innerText = i.n || "بصمة غير";
-        document.getElementById('site-w').innerText = i.w || "";
-        document.getElementById('site-a').innerText = i.a || "";
+        const i = siteData.info || {};
+        document.getElementById('d-name').innerText = i.n || "بصمة غير";
+        document.getElementById('d-welcome').innerText = i.w || "";
+        document.getElementById('d-about').innerText = i.a || "مرحباً بكم";
         
-        const n = document.getElementById('main-nav');
-        n.innerHTML = '<button class="btn" onclick="showS(\'s-about\')">من نحن</button><button class="btn" onclick="showS(\'s-works\')">أعمالنا</button>';
+        const n = document.getElementById('d-nav');
+        n.innerHTML = '<button class="btn" onclick="go(\'p-about\')">الرئيسية</button><button class="btn" onclick="go(\'p-works\')">أعمالنا</button>';
         
-        const g = document.getElementById('list-alb'); g.innerHTML = '';
-        if(g_data.albs) {
-            Object.keys(g_data.albs).forEach(k => {
-                let a = g_data.albs[k];
-                g.innerHTML += `<div class="card" onclick="v_alb('${k}')"><img src="${a.m[0]}"><div class="info"><h3>${a.n}</h3></div></div>`;
+        const l = document.getElementById('d-list'); l.innerHTML = '';
+        if(siteData.albs) {
+            Object.keys(siteData.albs).forEach(k => {
+                let a = siteData.albs[k];
+                l.innerHTML += `<div class="card" onclick="view('${k}')"><img src="${a.m[0]}"><div style="padding:15px;text-align:center;"><h3>${a.n}</h3></div></div>`;
             });
         }
     }
 
-    function v_auth() {
-        let p = prompt("\u0627\u0644\u0631\u0645\u0632 \u0627\u0644\u0633\u0631\u064a:"); // الرمز السري:
-        if(!p) return;
-        // التحقق من الرمز عبر مقارنة مشفرة (السيرفر)
-        db.ref(_0x4f22[4]).once('value').then(s => {
-            if(p === (s.val() ? s.val().p : "1234")) {
-                let adm = document.getElementById('p-admin');
-                adm.style.display = 'block';
-                // بناء لوحة التحكم برمجياً (غير موجودة في الكود المصدري)
-                adm.innerHTML = `<h2>إدارة النظام</h2>
-                <input id="in-n" value="${g_data.info.n||''}" placeholder="الاسم">
-                <textarea id="in-a" rows="5" placeholder="نبذة">${g_data.info.a||''}</textarea>
-                <input id="in-p" type="password" placeholder="تغيير الرمز السري">
-                <button class="btn" onclick="save_all()">حفظ البيانات</button>
-                <button class="btn" onclick="location.reload()" style="background:red;color:white">خروج</button>`;
-            } else { alert("\u062e\u0637\u0623"); } // خطأ
-        });
+    // وظيفة الدخول الآمن (الرمز غير موجود هنا)
+    async function unlock() {
+        const pass = prompt("أدخل الرمز السري:");
+        if (!pass) return;
+
+        // طلب الرمز من السيرفر للمقارنة
+        const snapshot = await db.ref('server_auth/admin_pass').once('value');
+        const realPass = snapshot.val(); // الرمز مخزن في السيرفر فقط
+
+        if (pass === realPass) {
+            const adm = document.getElementById('admin-panel');
+            adm.style.display = 'block';
+            adm.innerHTML = `
+                <h2>لوحة التحكم - حماية السيرفر</h2>
+                <input id="i-n" placeholder="اسم الموقع" value="${siteData.info.n||''}">
+                <textarea id="i-a" placeholder="نبذة" rows="5">${siteData.info.a||''}</textarea>
+                <hr>
+                <p>تغيير الرمز السري الحالي:</p>
+                <input id="i-p" type="password" placeholder="الرمز الجديد">
+                <button class="btn" onclick="save()">حفظ التعديلات</button>
+                <button class="btn" onclick="location.reload()" style="background:red; color:white;">خروج آمن</button>
+            `;
+        } else {
+            alert("فشل التحقق!");
+        }
     }
 
-    function save_all() {
-        const n_p = document.getElementById('in-p').value;
-        if(n_p) db.ref(_0x4f22[4]+'/p').set(n_p);
-        db.ref(_0x4f22[3]+'/info').set({
-            n: document.getElementById('in-n').value,
-            a: document.getElementById('in-a').value
-        }).then(() => alert("\u062a\u0645 \u0627\u0644\u062d\u0641\u0638"));
+    function save() {
+        const newP = document.getElementById('i-p').value;
+        if(newP) db.ref('server_auth/admin_pass').set(newP);
+        
+        db.ref('public_content/info').set({
+            n: document.getElementById('i-n').value,
+            a: document.getElementById('i-a').value
+        }).then(() => alert("تم الحفظ بنجاح"));
     }
 
-    function showS(id) {
+    function go(id) {
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
         document.getElementById(id).classList.add('active');
     }
 
-    function v_alb(id) {
-        showS('s-view');
-        let a = g_data.albs[id];
-        document.getElementById('view-t').innerText = a.n;
-        let v = document.getElementById('view-p'); v.innerHTML = '';
-        a.m.forEach(img => { v.innerHTML += `<div class="card"><img src="${img}"></div>`; });
+    function view(id) {
+        go('p-view');
+        const a = siteData.albs[id];
+        const p = document.getElementById('d-photos'); p.innerHTML = '';
+        a.m.forEach(img => { p.innerHTML += `<div class="card"><img src="${img}"></div>`; });
     }
 </script>
 </body>
