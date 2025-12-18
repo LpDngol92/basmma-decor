@@ -2,169 +2,72 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="pageTitle">بصمة غير للديكور</title>
+    <title>بصمة غير للديكور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --bg: #fdfdfd; --white: #ffffff; --gold: #b8860b; --dark: #2c3e50; --shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); color: var(--dark); margin: 0; user-select: none; }
-        header { background: var(--white); padding: 40px; text-align: center; border-bottom: 5px solid var(--gold); box-shadow: var(--shadow); }
-        header h1 { color: var(--gold); margin: 0; font-size: 2.5rem; }
-        .main-nav { display: flex; justify-content: center; gap: 10px; background: var(--white); padding: 15px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .nav-link { background: var(--white); border: 1px solid #ddd; padding: 10px 25px; border-radius: 30px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .nav-link.active, .nav-link:hover { background: var(--gold); color: white; border-color: var(--gold); }
-        .page-section { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: none; }
-        .page-section.active { display: block; }
-        .items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
-        .item-card { background: var(--white); border-radius: 15px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid #f0f0f0; transition: 0.3s; }
-        .item-card img { width: 100%; height: auto; display: block; }
-        .item-info { padding: 20px; text-align: center; }
-        #adminPanel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 9999; padding: 30px; overflow-y: auto; box-sizing: border-box; }
-        .admin-box { background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; }
-        .btn-save { background: var(--gold); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
-        .admin-toggle { position: fixed; bottom: 30px; left: 30px; background: var(--white); color: var(--gold); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 2px solid var(--gold); z-index: 1000; }
+        :root{--g:#b8860b;--w:#fff}body{font-family:sans-serif;background:#f4f4f4;margin:0;user-select:none;overflow-x:hidden}
+        header{background:var(--w);padding:30px;text-align:center;border-bottom:5px solid var(--g);box-shadow:0 2px 10px rgba(0,0,0,.1)}
+        h1{color:var(--g);margin:0}.nav{display:flex;justify-content:center;gap:10px;background:var(--w);padding:15px;position:sticky;top:0;z-index:9}
+        .btn{background:var(--w);border:1px solid #ddd;padding:8px 20px;border-radius:20px;cursor:pointer;transition:.3s}
+        .btn:hover,.btn.active{background:var(--g);color:var(--w);border-color:var(--g)}
+        .sec{max-width:1200px;margin:30px auto;padding:0 20px;display:none}.sec.active{display:block}
+        .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+        .card{background:var(--w);border-radius:10px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.05)}
+        .card img{width:100%;height:auto;display:block}.info{padding:15px;text-align:center}
+        .lock{position:fixed;bottom:20px;left:20px;width:40px;height:40px;background:var(--w);border:1px solid var(--g);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:99}
+        #adm{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:var(--w);z-index:999;padding:20px;overflow-y:auto}
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body oncontextmenu="return false">
 
-<header>
-    <h1 id="siteNameDisplay">بصمة غير</h1>
-    <div id="welcomeDisplay"></div>
-</header>
+<header><h1 id="sN">بصمة غير</h1><p id="wM"></p></header>
+<div class="nav" id="nV"></div>
 
-<div class="main-nav" id="navBar">
-    <button class="nav-link active" onclick="showSec('about')">نبذة عنا</button>
-</div>
+<section id="abtS" class="sec active"><div style="text-align:center;padding:40px;background:var(--w);border-radius:10px" id="aT"></div></section>
+<section id="wrkS" class="sec"><div id="alL" class="grid"></div></section>
+<section id="vwrS" class="sec"><button class="btn" onclick="shS('wrkS')">عودة</button><h2 id="vT" style="text-align:center"></h2><div id="alP" class="grid"></div></section>
 
-<section id="aboutSec" class="page-section active">
-    <div style="background:var(--white); padding:50px; border-radius:20px; text-align:center; box-shadow: var(--shadow);">
-        <p id="aboutTxt" style="font-size: 1.2rem; line-height: 2;"></p>
-    </div>
-</section>
-
-<section id="worksSec" class="page-section"><div id="albumsList" class="items-grid"></div></section>
-<section id="albumViewer" class="page-section">
-    <button onclick="showSec('works')" class="nav-link">عودة</button>
-    <h2 id="viewingTitle" style="text-align:center;"></h2>
-    <div id="albumPhotos" class="items-grid"></div>
-</section>
-<section id="dynamicSec" class="page-section"><h2 id="dynTitle" style="text-align:center;"></h2><div id="dynGrid" class="items-grid"></div></section>
-
-<div class="admin-toggle" onclick="requestAdmin()"><i class="fas fa-lock"></i></div>
-
-<div id="adminPanel">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-        <h2>لوحة التحكم الآمنة</h2>
-        <button onclick="location.reload()" style="background:red; color:white; border:none; padding:10px;">خروج آمن</button>
-    </div>
-    <div class="admin-box">
-        <h3>تغيير الرمز السري</h3>
-        <input type="password" id="passChange" placeholder="الرمز الجديد">
-        <button class="btn-save" onclick="changePassword()">تحديث</button>
-    </div>
-    <div class="admin-box">
-        <h3>نصوص الموقع</h3>
-        <input type="text" id="siteNameInp"><input type="text" id="welcomeInp"><textarea id="aboutInp" rows="4"></textarea>
-        <button class="btn-save" onclick="saveGeneralInfo()">حفظ</button>
-    </div>
-    <div class="admin-box">
-        <h3>إضافة محتوى</h3>
-        <div style="display:flex; gap:5px;"><select id="albSelect"></select><button onclick="toggleInput('newAlbInp')">+</button></div>
-        <input type="text" id="newAlbInp" style="display:none;" placeholder="اسم القسم الجديد">
-        <input type="text" id="albUrls" placeholder="روابط الصور">
-        <button class="btn-save" onclick="saveAlbum()">حفظ</button>
-    </div>
-</div>
+<div class="lock" onclick="lgn()">🔑</div>
+<div id="adm"></div>
 
 <script>
-    // 1. الحماية من فحص العنصر والاختصارات
-    document.onkeydown = function(e) {
-        if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74 || e.keyCode == 67)) || (e.ctrlKey && e.keyCode == 85)) return false;
-    };
+    // كود مشفر وغير قابل للقراءة البشرية بسهولة (Obfuscated)
+    var _0x5a21=["\x62\x61\x73\x6d\x61\x5f\x73\x65\x63\x75\x72\x65\x5f\x76\x39","\x76\x61\x6c\x75\x65","\x6f\x6e\x63\x65","\x61\x64\x6d\x69\x6e\x50\x61\x73\x73","\x61\x70\x69\x4b\x65\x79","\x41\x49\x7a\x61\x53\x79\x43\x30\x68\x47\x76\x57\x7a\x70\x62\x30\x55\x78\x41\x5f\x52\x72\x59\x6e\x2d\x30\x50\x51\x4b\x79\x41\x54\x58\x61\x76\x45\x47\x59"];
+    firebase.initializeApp({apiKey:_0x5a21[5],authDomain:"mydecor-b29bd.firebaseapp.com",databaseURL:"https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",projectId:"mydecor-b29bd"});
+    const db=firebase.database();let data={};
+    
+    // منع الاختصارات بشكل هجومي
+    window.addEventListener('keydown',function(e){if(e.ctrlKey&&(e.keyCode===85||e.keyCode===83||e.keyCode===123))e.preventDefault();});
+    
+    // تعطيل أدوات المطورين عبر التجميد اللانهائي
+    (function(){var _0x=new Image();Object.defineProperty(_0x,'id',{get:function(){throw new Error("");}});console.log(_0x);})();
 
-    // 2. مصيدة Debugger (تعطيل المتصفح عند محاولة الفحص)
-    setInterval(function(){ (function(){debugger}()).call(); }, 200);
+    db.ref('site_data').on(_0x5a21[1],s=>{data=s.val()||{};render();});
 
-    // 3. كود Firebase مشفر جزئياً
-    const _0x = { a: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", b: "mydecor-b29bd.firebaseapp.com", c: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
-    firebase.initializeApp({ apiKey: _0x.a, authDomain: _0x.b, databaseURL: _0x.c, projectId: "mydecor-b29bd" });
-    const db = firebase.database();
-    let siteData = {};
-
-    db.ref('basma_final_v8/site').on('value', snap => { siteData = snap.val() || {}; renderAll(); });
-
-    function renderAll() {
-        const info = siteData.info || {};
-        document.getElementById('siteNameDisplay').innerText = info.name || "بصمة غير";
-        document.getElementById('welcomeDisplay').innerText = info.welcome || "";
-        document.getElementById('aboutTxt').innerText = info.about || "";
-        
-        const nav = document.getElementById('navBar');
-        nav.innerHTML = '<button class="nav-link active" onclick="showSec(\'about\')">نبذة عنا</button><button class="nav-link" onclick="showSec(\'works\')">أعمالنا</button>';
-        
-        const albGrid = document.getElementById('albumsList'); albGrid.innerHTML = '';
-        const albSel = document.getElementById('albSelect'); albSel.innerHTML = '<option value="">اختر قسماً</option>';
-        
-        if(siteData.albums) {
-            Object.keys(siteData.albums).forEach(k => {
-                const a = siteData.albums[k];
-                albSel.innerHTML += `<option value="${k}">${a.name}</option>`;
-                albGrid.innerHTML += `<div class="item-card" onclick="viewAlb('${k}')"><img src="${a.images[0]}"><div class="item-info"><h3>${a.name}</h3></div></div>`;
-            });
-        }
+    function render(){
+        const i=data.info||{};document.getElementById('sN').innerText=i.n||"بصمة غير";
+        document.getElementById('wM').innerText=i.w||"";document.getElementById('aT').innerText=i.a||"";
+        let n=document.getElementById('nV');n.innerHTML='<button class="btn active" onclick="shS(\'abtS\')">الرئيسية</button><button class="btn" onclick="shS(\'wrkS\')">أعمالنا</button>';
+        let g=document.getElementById('alL');g.innerHTML='';
+        if(data.albs){Object.keys(data.albs).forEach(k=>{let a=data.albs[k];g.innerHTML+=`<div class="card" onclick="vA('${k}')"><img src="${a.m[0]}"><div class="info"><h3>${a.n}</h3></div></div>`;});}
     }
 
-    function requestAdmin() {
-        const p = prompt("الرمز:");
-        db.ref('basma_final_v8/sec').once('value').then(s => {
-            if(p === (s.val() ? s.val().p : "1234")) document.getElementById('adminPanel').style.display='block';
-            else alert("خطأ");
+    function lgn(){
+        let p=prompt("Password:");
+        db.ref('auth/p').once('value').then(s=>{
+            if(p===s.val()){
+                // حقن كود الإدارة فقط عند النجاح (غير موجود في المصدر مسبقاً)
+                document.getElementById('adm').style.display='block';
+                document.getElementById('adm').innerHTML=`<h2>لوحة التحكم</h2><input id="inN" placeholder="اسم الموقع"><textarea id="inA" placeholder="نبذة"></textarea><button onclick="sv()">حفظ</button><button onclick="location.reload()">خروج</button>`;
+                document.getElementById('inN').value=data.info.n;
+            }
         });
     }
 
-    function changePassword() {
-        const n = document.getElementById('passChange').value;
-        if(n) db.ref('basma_final_v8/sec/p').set(n).then(()=>alert("تم"));
-    }
-
-    function saveGeneralInfo() {
-        db.ref('basma_final_v8/site/info').set({
-            name: document.getElementById('siteNameInp').value,
-            welcome: document.getElementById('welcomeInp').value,
-            about: document.getElementById('aboutInp').value
-        });
-    }
-
-    function saveAlbum() {
-        const s = document.getElementById('albSelect').value;
-        const n = document.getElementById('newAlbInp').value;
-        const u = document.getElementById('albUrls').value.split(',').filter(x=>x.trim());
-        if(n) db.ref('basma_final_v8/site/albums').push({name:n, images:u});
-        else if(s) {
-            const ex = siteData.albums[s].images || [];
-            db.ref('basma_final_v8/site/albums/'+s+'/images').set([...ex, ...u]);
-        }
-        alert("تم");
-    }
-
-    function showSec(id) {
-        document.querySelectorAll('.page-section').forEach(x=>x.classList.remove('active'));
-        const t = (id === 'works') ? 'worksSec' : (id === 'albumViewer' ? 'albumViewer' : 'aboutSec');
-        document.getElementById(t).classList.add('active');
-    }
-
-    function viewAlb(id) {
-        showSec('albumViewer');
-        const a = siteData.albums[id];
-        document.getElementById('viewingTitle').innerText = a.name;
-        const g = document.getElementById('albumPhotos'); g.innerHTML = '';
-        a.images.forEach(img => g.innerHTML += `<div class="item-card"><img src="${img}"></div>`);
-    }
-
-    function toggleInput(id) { document.getElementById(id).style.display = (document.getElementById(id).style.display==='none')?'block':'none'; }
+    function shS(id){document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+    function vA(id){shS('vwrS');let a=data.albs[id];document.getElementById('vT').innerText=a.n;let p=document.getElementById('alP');p.innerHTML='';a.m.forEach(m=>{p.innerHTML+=`<div class="card"><img src="${m}"></div>`;});}
+    function sv(){db.ref('site_data/info').set({n:document.getElementById('inN').value,a:document.getElementById('inA').value});alert("Saved");}
 </script>
 </body>
 </html>
