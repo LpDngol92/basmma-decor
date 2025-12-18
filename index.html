@@ -3,40 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير للديكور - النظام الذكي</title>
+    <title>بصمة غير للديكور - نظام الإدارة المتكامل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #b8860b; --bg: #fdfdfd; --white: #ffffff; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; user-select: none; color: #333; }
+        :root { --gold: #b8860b; --bg: #f8f9fa; --white: #ffffff; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; user-select: none; }
         header { background: var(--white); padding: 30px; text-align: center; border-bottom: 4px solid var(--gold); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        h1 { color: var(--gold); margin: 0; }
-        
-        /* نظام التبويبات (Nav) */
         .nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); flex-wrap: wrap; }
         .btn { padding: 10px 20px; border: 1px solid #eee; border-radius: 25px; cursor: pointer; background: white; font-weight: bold; transition: 0.3s; }
         .btn:hover, .btn.active { background: var(--gold); color: white; border-color: var(--gold); }
-
-        .sec { max-width: 1200px; margin: 30px auto; padding: 20px; display: none; animation: fadeIn 0.4s; }
+        .sec { max-width: 1200px; margin: 30px auto; padding: 20px; display: none; }
         .sec.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* تنسيق الأقسام المنفصلة */
-        .page-content { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.02); }
-        .page-img { width: 100%; max-height: 450px; object-fit: cover; border-radius: 10px; margin-bottom: 25px; }
-
-        /* تنسيق الشبكة للمجموعات والصور */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); cursor: pointer; transition: 0.3s; border: 1px solid #f0f0f0; }
-        .card:hover { transform: translateY(-5px); }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); cursor: pointer; transition: 0.3s; }
         .card img { width: 100%; height: 220px; object-fit: cover; }
-        .card-title { padding: 15px; text-align: center; font-weight: bold; color: var(--gold); }
-
         /* لوحة التحكم */
         #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; padding: 30px; box-sizing: border-box; overflow-y: auto; }
         .admin-box { background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
-        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
-        .save-btn { background: var(--gold); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .save-btn { background: var(--gold); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; }
         .admin-trigger { position: fixed; bottom: 5px; left: 5px; width: 30px; height: 30px; cursor: pointer; opacity: 0.01; }
     </style>
 </head>
@@ -50,170 +36,149 @@
 </div>
 
 <section id="sec-home" class="sec active">
-    <div class="page-content">
-        <h2 style="color:var(--gold)">مرحباً بكم</h2>
-        <p style="line-height:1.8;">استخدم لوحة التحكم لإضافة أقسام جديدة هنا.</p>
+    <div style="background:white; padding:40px; border-radius:15px; text-align:center;">
+        <h2 style="color:var(--gold)">أهلاً بكم في بصمة غير</h2>
+        <p>قم بإضافة الأقسام والتبويبات من لوحة التحكم لتظهر هنا.</p>
     </div>
 </section>
 
-<div id="custom-pages-container"></div>
+<div id="dynamic-pages"></div>
 
 <section id="sec-works" class="sec">
-    <h2 style="text-align:center; color:var(--gold); margin-bottom:30px;">مجموعاتنا المتميزة</h2>
+    <h2 style="text-align:center; color:var(--gold);">مجموعات أعمالنا</h2>
     <div id="albums-grid" class="grid"></div>
 </section>
 
 <section id="sec-gallery" class="sec">
     <button class="btn" onclick="showSec('works')">← العودة للمجموعات</button>
-    <h2 id="gallery-title" style="text-align:center; color:var(--gold); margin:20px 0;"></h2>
+    <h2 id="gallery-title" style="text-align:center; color:var(--gold);"></h2>
     <div id="photos-grid" class="grid"></div>
 </section>
 
-<div class="admin-trigger" onclick="checkLogin()"></div>
+<div class="admin-trigger" onclick="checkAuth()"></div>
 
 <div id="admin-panel">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>لوحة التحكم الاحترافية</h2>
-        <button onclick="location.reload()" style="background:#d63031; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">خروج</button>
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+        <h2>لوحة التحكم - إدارة التبويبات والمجموعات</h2>
+        <button onclick="location.reload()" style="background:red; color:white; border:none; padding:10px; border-radius:5px;">خروج</button>
     </div>
 
     <div class="admin-box">
-        <h3 style="color:var(--gold)">1. إضافة "قسم/تبويب" مستقل جديد</h3>
-        <input type="text" id="p-title" placeholder="اسم التبويب (مثلاً: خدماتنا)">
-        <textarea id="p-desc" rows="3" placeholder="نص الصفحة..."></textarea>
+        <h3>1. إدارة الأقسام (التبويبات العلوية)</h3>
+        <select id="sel-page" onchange="toggleP()">
+            <option value="new">+ إضافة تبويب/قسم جديد</option>
+        </select>
+        <input type="text" id="p-title" placeholder="اسم التبويب الجديد">
+        <textarea id="p-desc" rows="3" placeholder="نص/وصف القسم"></textarea>
         <input type="text" id="p-img" placeholder="رابط الصورة الرئيسية">
-        <button class="save-btn" onclick="addNewPage()">نشر التبويب الجديد</button>
+        <button class="save-btn" onclick="savePage()">حفظ القسم</button>
     </div>
 
     <div class="admin-box">
-        <h3 style="color:var(--gold)">2. إدارة مجموعات الصور (أعمالنا)</h3>
-        <input type="text" id="g-name" placeholder="اسم المجموعة (مثلاً: مجالس ملكية)">
-        <textarea id="g-imgs" rows="3" placeholder="روابط الصور بداخل المجموعة (افصل بفاصلة ,)"></textarea>
-        <button class="save-btn" style="background:#444;" onclick="addNewAlbum()">إضافة المجموعة</button>
-    </div>
-
-    <div class="admin-box">
-        <h3>تعديل اسم الموقع</h3>
-        <input type="text" id="site-title-input" placeholder="اسم الموقع">
-        <button class="save-btn" style="background:#2c3e50;" onclick="saveName()">حفظ</button>
+        <h3>2. إدارة أعمالنا (المجموعات والصور)</h3>
+        <select id="sel-alb" onchange="toggleA()">
+            <option value="new">+ إنشاء مجموعة صور جديدة</option>
+        </select>
+        <input type="text" id="a-name" placeholder="اسم المجموعة (مثل: مطابخ كلاسيك)">
+        <textarea id="a-urls" rows="3" placeholder="روابط الصور (افصل بفاصلة ,)"></textarea>
+        <button class="save-btn" style="background:#444;" onclick="saveAlbum()">حفظ المجموعة/الصور</button>
     </div>
 </div>
 
 <script>
-    const firebaseConfig = {
+    const config = {
         apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
         databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
         projectId: "mydecor-b29bd"
     };
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(config);
     const db = firebase.database();
     let siteData = {};
 
-    setInterval(() => { (function(){debugger}()) }, 1000);
-
-    db.ref('site_v14_tabs').on('value', snap => {
+    db.ref('site_v15').on('value', snap => {
         siteData = snap.val() || {};
-        renderSite();
+        render();
     });
 
-    function renderSite() {
-        document.getElementById('site-name').innerText = siteData.name || "بصمة غير للديكور";
-        
-        // 1. بناء التبويبات (Buttons) والصفحات (Sections)
+    function render() {
         const nav = document.getElementById('main-nav');
-        const pagesContainer = document.getElementById('custom-pages-container');
+        const pages = document.getElementById('dynamic-pages');
+        const sPage = document.getElementById('sel-page');
+        const sAlb = document.getElementById('sel-alb');
         
-        // تنظيف وحفظ الأزرار الأساسية
         nav.innerHTML = '<button class="btn active" id="btn-home" onclick="showSec(\'home\')">الرئيسية</button>';
-        pagesContainer.innerHTML = "";
+        pages.innerHTML = "";
+        sPage.innerHTML = '<option value="new">+ إضافة تبويب/قسم جديد</option>';
+        sAlb.innerHTML = '<option value="new">+ إنشاء مجموعة صور جديدة</option>';
 
+        // رندر التبويبات
         if(siteData.pages) {
             Object.keys(siteData.pages).forEach(id => {
                 const p = siteData.pages[id];
-                // إضافة الزر في الـ Nav
                 nav.innerHTML += `<button class="btn" id="btn-${id}" onclick="showSec('${id}')">${p.title}</button>`;
-                // إضافة محتوى الصفحة
-                pagesContainer.innerHTML += `
-                    <section id="sec-${id}" class="sec">
-                        <div class="page-content">
-                            <img src="${p.img}" class="page-img" onerror="this.style.display='none'">
-                            <h2 style="color:var(--gold)">${p.title}</h2>
-                            <p style="line-height:2; font-size:1.15rem;">${p.desc}</p>
-                        </div>
-                    </section>`;
+                pages.innerHTML += `<section id="sec-${id}" class="sec"><div style="background:white; padding:40px; border-radius:15px; text-align:center;"><img src="${p.img}" style="width:100%; max-height:400px; object-fit:cover; border-radius:10px;"><h2 style="color:var(--gold)">${p.title}</h2><p style="line-height:2;">${p.desc}</p></div></section>`;
+                sPage.innerHTML += `<option value="${id}">${p.title} (تعديل)</option>`;
             });
         }
         nav.innerHTML += '<button class="btn" id="btn-works" onclick="showSec(\'works\')">أعمالنا</button>';
 
-        // 2. بناء مجموعات الأعمال
+        // رندر المجموعات
         const albGrid = document.getElementById('albums-grid');
         albGrid.innerHTML = "";
         if(siteData.albums) {
             Object.keys(siteData.albums).forEach(id => {
                 const a = siteData.albums[id];
-                albGrid.innerHTML += `
-                    <div class="card" onclick="openAlbum('${id}')">
-                        <img src="${a.imgs ? a.imgs[0] : ''}">
-                        <div class="card-title">${a.name}</div>
-                    </div>`;
+                sAlb.innerHTML += `<option value="${id}">${a.name} (إضافة صور له)</option>`;
+                albGrid.innerHTML += `<div class="card" onclick="openAlb('${id}')"><img src="${a.imgs?a.imgs[0]:''}"> <div style="padding:15px; text-align:center; font-weight:bold; color:var(--gold);">${a.name}</div></div>`;
             });
         }
     }
 
-    async function checkLogin() {
-        const p = prompt("رمز الإدارة:");
+    async function checkAuth() {
+        const p = prompt("رمز الدخول:");
         const s = await db.ref('server_auth/admin_pass').once('value');
         if(p === s.val().toString()) document.getElementById('admin-panel').style.display='block';
     }
 
-    function addNewPage() {
-        const t = document.getElementById('p-title').value;
-        const d = document.getElementById('p-desc').value;
-        const i = document.getElementById('p-img').value;
-        if(t && d) {
-            db.ref('site_v14_tabs/pages').push({ title: t, desc: d, img: i });
-            alert("تم إنشاء التبويب الجديد بنجاح!");
-            document.getElementById('p-title').value = "";
-            document.getElementById('p-desc').value = "";
-            document.getElementById('p-img').value = "";
-        }
+    function savePage() {
+        const sel = document.getElementById('sel-page').value;
+        const data = { title: document.getElementById('p-title').value, desc: document.getElementById('p-desc').value, img: document.getElementById('p-img').value };
+        if(sel === 'new') db.ref('site_v15/pages').push(data);
+        else db.ref('site_v15/pages/' + sel).update(data);
+        alert("تم الحفظ");
     }
 
-    function addNewAlbum() {
-        const n = document.getElementById('g-name').value;
-        const i = document.getElementById('g-imgs').value.split(',').map(src => src.trim());
-        if(n && i.length > 0) {
-            db.ref('site_v14_tabs/albums').push({ name: n, imgs: i });
-            alert("تمت إضافة مجموعة الصور");
-            document.getElementById('g-name').value = "";
-            document.getElementById('g-imgs').value = "";
+    function saveAlbum() {
+        const sel = document.getElementById('sel-alb').value;
+        const name = document.getElementById('a-name').value;
+        const newImgs = document.getElementById('a-urls').value.split(',').map(u => u.trim()).filter(u => u !== "");
+        if(sel === 'new') db.ref('site_v15/albums').push({ name: name, imgs: newImgs });
+        else {
+            const oldImgs = siteData.albums[sel].imgs || [];
+            db.ref('site_v15/albums/' + sel + '/imgs').set([...oldImgs, ...newImgs]);
         }
-    }
-
-    function saveName() {
-        const n = document.getElementById('site-title-input').value;
-        if(n) db.ref('site_v14_tabs/name').set(n).then(() => alert("تم الحفظ"));
+        alert("تم التحديث");
+        document.getElementById('a-urls').value = "";
     }
 
     function showSec(id) {
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav .btn').forEach(b => b.classList.remove('active'));
-        const target = document.getElementById('sec-' + id);
-        if(target) target.classList.add('active');
-        const btn = document.getElementById('btn-' + id);
-        if(btn) btn.classList.add('active');
+        if(document.getElementById('sec-'+id)) document.getElementById('sec-'+id).classList.add('active');
+        if(document.getElementById('btn-'+id)) document.getElementById('btn-'+id).classList.add('active');
     }
 
-    function openAlbum(id) {
+    function openAlb(id) {
         showSec('gallery');
         const a = siteData.albums[id];
         document.getElementById('gallery-title').innerText = a.name;
         const pg = document.getElementById('photos-grid');
         pg.innerHTML = "";
-        a.imgs.forEach(src => {
-            pg.innerHTML += `<div class="card"><img src="${src}"></div>`;
-        });
+        a.imgs.forEach(src => { pg.innerHTML += `<div class="card"><img src="${src}"></div>`; });
     }
+
+    function toggleP() { if(document.getElementById('sel-page').value !== 'new') { /* تعبئة تلقائية للتعديل */ } }
+    function toggleA() { if(document.getElementById('sel-alb').value !== 'new') { /* تعبئة تلقائية للتعديل */ } }
 </script>
 </body>
 </html>
