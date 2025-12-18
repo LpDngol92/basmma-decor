@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير للديكور</title>
+    <title>بصمة غير للديكور - الإدارة الاحترافية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
@@ -11,85 +11,108 @@
     <style>
         :root { --primary: #111; --accent: #c5a059; --light: #fdfdfd; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 0; color: #333; }
-        header { background: var(--primary); color: white; padding: 60px 20px 0 20px; text-align: center; position: relative; border-bottom: 5px solid var(--accent); }
-        header h1 { margin: 0; font-size: 2.8rem; color: var(--accent); }
-        header p { opacity: 0.8; font-size: 1.2rem; margin-top: 10px; margin-bottom: 40px; }
-        #filterContainer { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; padding-bottom: 10px; }
-        .tab-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(197, 160, 89, 0.3); color: #ddd; padding: 8px 25px; border-radius: 5px 5px 0 0; cursor: pointer; transition: 0.3s; font-weight: bold; }
-        .tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-2px); }
-        #aboutSection { max-width: 900px; margin: 50px auto; padding: 40px; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; line-height: 1.8; }
-        .gallery-container { max-width: 1400px; margin: 40px auto; padding: 0 20px; display: none; }
-        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; }
-        .item-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); cursor: pointer; transition: 0.4s; position: relative; }
-        .item-card img { width: 100%; height: 380px; object-fit: cover; }
-        .item-info { padding: 15px; text-align: center; }
-
-        .reaction-bar { display: flex; justify-content: center; gap: 15px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px; }
-        .react-btn { background: #f8f8f8; border: 1px solid #ddd; padding: 5px 12px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
-        .react-btn:hover { background: #eee; }
-
-        #adminBox { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 4000; width: 95%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-        .overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 3500; }
-        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .admin-toggle { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 6000; opacity: 0.2; }
         
-        /* تنسيق منطقة الرفع الجماعي */
-        .upload-zone { border: 2px dashed var(--accent); padding: 20px; text-align: center; background: #fffcf5; margin-bottom: 10px; cursor: pointer; }
+        /* الهيدر */
+        header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--accent); }
+        header h1 { margin: 0; font-size: 2.5rem; color: var(--accent); }
+        header p { opacity: 0.8; margin-bottom: 20px; }
+
+        /* شريط التنقّل والأقسام */
+        .nav-tabs { display: flex; justify-content: center; background: #1a1a1a; padding: 10px; flex-wrap: wrap; gap: 10px; position: sticky; top: 0; z-index: 1000; }
+        .tab-btn { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 8px 25px; border-radius: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .tab-btn.active { background: var(--accent); color: white; }
+
+        /* الأقسام الرئيسية */
+        .section-content { max-width: 1400px; margin: 40px auto; padding: 0 20px; display: none; }
+        .section-content.active { display: block; }
+
+        #aboutSection { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; line-height: 1.8; }
+
+        /* شبكة معرض الأعمال */
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; margin-top: 20px; }
+        .item-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); transition: 0.4s; }
+        .item-card img { width: 100%; height: 380px; object-fit: cover; border-bottom: 2px solid #eee; }
+        
+        .reaction-bar { display: flex; justify-content: center; gap: 15px; padding: 15px; background: #fafafa; }
+        .react-btn { background: white; border: 1px solid #ddd; padding: 6px 15px; border-radius: 20px; cursor: pointer; transition: 0.2s; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+        .react-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* لوحة التحكم */
+        #adminBox { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 5000; width: 95%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
+        .overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 4000; }
+        .admin-section { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-save { background: var(--accent); color: white; width: 100%; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        .admin-toggle { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 6000; opacity: 0.3; }
+        .upload-area { border: 2px dashed var(--accent); padding: 20px; text-align: center; background: #fffcf5; margin: 10px 0; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1 id="displayTitle">بصمة غير للديكور</h1>
-    <p id="displaySubtitle">نصمم لك الجمال في كل زاوية</p>
-    <div id="filterContainer"></div>
+    <h1 id="dispTitle">بصمة غير للديكور</h1>
+    <p id="dispSubtitle">نصمم لك الجمال في كل زاوية</p>
 </header>
 
-<div id="aboutSection">
-    <h2 id="aboutTitleDisplay">مرحباً بكم</h2>
-    <div id="aboutText">جاري التحميل...</div>
+<div class="nav-tabs" id="tabsBar">
+    <button class="tab-btn active" onclick="switchSection('about')">نبذة عنا</button>
 </div>
 
-<div class="gallery-container" id="galleryContainer">
+<div id="aboutSectionContent" class="section-content active">
+    <div id="aboutSection">
+        <h2 id="aboutTitleDisp">مرحباً بكم</h2>
+        <div id="aboutTextDisp">جاري تحميل البيانات...</div>
+    </div>
+</div>
+
+<div id="gallerySectionContent" class="section-content">
+    <h2 id="currentCategoryTitle" style="text-align:center; color:var(--accent); margin-bottom:30px;"></h2>
     <div class="gallery-grid" id="mainGallery"></div>
 </div>
 
 <div class="overlay" id="overlay" onclick="closeAdmin()"></div>
 
 <div id="adminBox">
-    <h2 style="color:var(--accent)">لوحة التحكم</h2>
-    
-    <label>اسم المعرض:</label>
-    <input type="text" id="editMainTitle">
-    <label>النبذة التعريفية:</label>
-    <textarea id="editAboutText" rows="3"></textarea>
-    <button onclick="updateSettings()" style="background:var(--primary); color:white; width:100%; padding:10px; border:none; border-radius:5px; cursor:pointer;">تحديث المعلومات</button>
-    
-    <hr style="margin:20px 0;">
-    
-    <h4 style="margin-bottom:10px;">رفع "أعمالنا" (دفعة واحدة):</h4>
-    
-    <label>1. اختر القسم (معارض أحذية، سوبرماركت...):</label>
-    <div style="display:flex; gap:10px;">
-        <input type="text" id="newCatName" placeholder="قسم جديد">
-        <select id="fCatSelect" style="flex:2;"><option value="">أو اختر قسم موجود</option></select>
+    <h2 style="text-align:center; color:var(--accent);">لوحة التحكم الاحترافية</h2>
+
+    <div class="admin-section">
+        <h4>إعدادات الموقع العامة</h4>
+        <input type="text" id="editTitle" placeholder="اسم الموقع">
+        <textarea id="editAbout" rows="3" placeholder="نبذة عن الشركة"></textarea>
+        <button class="btn-save" onclick="saveGeneralInfo()" style="background:#444;">تحديث النصوص العامة</button>
     </div>
 
-    <label>2. حدد الصور من جهازك (يمكنك اختيار صور كثيرة):</label>
-    <input type="file" id="batchFiles" multiple accept="image/*" class="upload-zone">
-    
-    <button onclick="startBatchUpload()" id="saveBtn" style="background:var(--accent); color:white; width:100%; padding:15px; border:none; border-radius:5px; cursor:pointer; font-weight:bold; margin-top:10px;">بدء رفع كافة الصور المحددة</button>
-    <p id="upStatus" style="display:none; color:var(--accent); text-align:center; font-weight:bold; margin-top:10px;"></p>
+    <div class="admin-section">
+        <h4 style="color:var(--accent);">إدارة قسم "أعمالنا" (رفع جماعي)</h4>
+        
+        <label>اسم القسم الفرعي (مثلاً: معارض أحذية):</label>
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="newCatInput" placeholder="قسم جديد">
+            <select id="catDropdown" style="flex:2;"><option value="">أو اختر قسم موجود</option></select>
+        </div>
 
-    <h4 style="margin-top:20px;">إدارة الأعمال الحالية:</h4>
-    <div id="adminList" style="border:1px solid #eee; padding:10px; max-height:150px; overflow-y:auto;"></div>
-    
-    <button onclick="closeAdmin()" style="margin-top:20px; width:100%; background:#eee; border:none; padding:10px; cursor:pointer;">إغلاق</button>
+        <div class="upload-area">
+            <label>حدد صور من جهازك للرفع دفعة واحدة:</label>
+            <input type="file" id="batchUploadInput" multiple accept="image/*">
+        </div>
+
+        <button class="btn-save" id="upBtn" onclick="doBatchUpload()">بدء الرفع الجماعي للقسم المحدد</button>
+        <div id="upProgress" style="display:none; text-align:center; margin-top:10px; font-weight:bold; color:var(--accent);"></div>
+    </div>
+
+    <div class="admin-section">
+        <h4>الأعمال المرفوعة حالياً</h4>
+        <div id="adminItemsList" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; font-size: 13px;"></div>
+    </div>
+
+    <button onclick="closeAdmin()" style="width:100%; padding:10px; background:none; border:none; cursor:pointer; color:#888;">إغلاق اللوحة</button>
 </div>
 
-<div class="admin-toggle" onclick="checkPass()">⚙️</div>
+<div class="admin-toggle" onclick="checkAuth()">⚙️</div>
 
 <script>
+    // تكوين Firebase (نفس إعداداتك الأصلية)
     const firebaseConfig = {
         apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
         authDomain: "mydecor-b29bd.firebaseapp.com",
@@ -105,135 +128,144 @@
     const storage = firebase.storage();
 
     let products = [];
-    let categories = new Set();
-    let siteInfo = { title: "بصمة غير للديكور", about: "أهلاً بكم" };
+    let categories = [];
+    let siteInfo = { title: "بصمة غير للديكور", about: "أهلاً بكم في موقعنا" };
 
-    db.ref('site_data').on('value', (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
+    // مزامنة البيانات من Firebase
+    db.ref('site_data').on('value', (snap) => {
+        const data = snap.val();
+        if(data) {
             products = data.products || [];
-            categories = new Set(data.categories || []);
+            categories = data.categories || [];
             siteInfo = data.siteInfo || siteInfo;
-            document.getElementById('displayTitle').innerText = siteInfo.title;
-            document.getElementById('aboutText').innerText = siteInfo.about;
-            updateUI();
+            refreshUI();
         }
     });
 
-    // وظيفة الرفع الجماعي المحدثة
-    async function startBatchUpload() {
-        const files = document.getElementById('batchFiles').files;
-        const cat = document.getElementById('newCatName').value.trim() || document.getElementById('fCatSelect').value || "عام";
+    // الرفع الجماعي للصور في قسم فرعي
+    async function doBatchUpload() {
+        const files = document.getElementById('batchUploadInput').files;
+        const catName = document.getElementById('newCatInput').value.trim() || document.getElementById('catDropdown').value;
         
-        if(files.length === 0) return alert("يرجى اختيار صورة واحدة على الأقل");
+        if(!catName) return alert("يرجى تحديد أو كتابة اسم القسم (مثلاً: معارض أحذية)");
+        if(files.length === 0) return alert("يرجى اختيار صور للرفع");
 
-        const status = document.getElementById('upStatus');
-        const btn = document.getElementById('saveBtn');
-        status.style.display = 'block';
+        const progress = document.getElementById('upProgress');
+        const btn = document.getElementById('upBtn');
+        progress.style.display = 'block';
         btn.disabled = true;
 
         for (let i = 0; i < files.length; i++) {
-            status.innerText = `جاري رفع صورة ${i+1} من ${files.length}...`;
+            progress.innerText = `جاري رفع صورة ${i+1} من ${files.length}...`;
             try {
                 const file = files[i];
-                const storageRef = storage.ref(`works/${cat}/${Date.now()}_${file.name}`);
-                await storageRef.put(file);
-                const url = await storageRef.getDownloadURL();
+                const ref = storage.ref(`works/${catName}/${Date.now()}_${file.name}`);
+                await ref.put(file);
+                const url = await ref.getDownloadURL();
 
                 products.push({
                     id: Date.now() + i,
                     img: url,
-                    title: cat + " - " + (i + 1), // اسم تلقائي بناء على القسم
-                    cat: cat,
+                    cat: catName,
                     likes: 0,
                     dislikes: 0
                 });
-                categories.add(cat);
-            } catch (e) {
-                console.error("Error uploading file:", e);
-            }
+
+                if(!categories.includes(catName)) categories.push(catName);
+            } catch (err) { console.error(err); }
         }
 
-        // حفظ الكل مرة واحدة في قاعدة البيانات بعد انتهاء الدورة
-        await db.ref('site_data').set({ products, categories: Array.from(categories), siteInfo });
-        
-        status.innerText = "تم رفع كافة الصور بنجاح!";
-        document.getElementById('batchFiles').value = "";
-        document.getElementById('newCatName').value = "";
+        await db.ref('site_data').set({ products, categories, siteInfo });
+        progress.innerText = "✅ تم رفع المجموعة بنجاح!";
+        document.getElementById('batchUploadInput').value = "";
+        document.getElementById('newCatInput').value = "";
         btn.disabled = false;
-        setTimeout(() => { status.style.display = 'none'; }, 3000);
+        setTimeout(() => progress.style.display = 'none', 3000);
     }
 
-    function handleReact(id, type) {
-        const idx = products.findIndex(p => p.id === id);
-        if(idx !== -1) {
-            if(!products[idx][type]) products[idx][type] = 0;
-            products[idx][type]++;
-            db.ref('site_data/products').set(products);
-        }
-    }
+    // تحديث الواجهة
+    function refreshUI() {
+        document.getElementById('dispTitle').innerText = siteInfo.title;
+        document.getElementById('aboutTextDisp').innerText = siteInfo.about;
 
-    function updateUI() {
-        const gallery = document.getElementById('mainGallery');
-        gallery.innerHTML = '';
-        products.forEach(p => {
-            gallery.innerHTML += `
-                <div class="item-card" data-cat="${p.cat}">
-                    <img src="${p.img}">
-                    <div class="item-info">
-                        <h3>${p.title}</h3>
-                        <div class="reaction-bar">
-                            <button class="react-btn" onclick="handleReact(${p.id}, 'likes')">👍 ${p.likes || 0}</button>
-                            <button class="react-btn" onclick="handleReact(${p.id}, 'dislikes')">👎 ${p.dislikes || 0}</button>
-                        </div>
-                    </div>
-                </div>`;
+        // توليد أزرار الأقسام (Tabs)
+        const tabsBar = document.getElementById('tabsBar');
+        let tabsHtml = `<button class="tab-btn" id="btn-about" onclick="switchSection('about')">نبذة عنا</button>`;
+        categories.forEach(cat => {
+            tabsHtml += `<button class="tab-btn" onclick="switchSection('gallery', '${cat}')">${cat}</button>`;
         });
+        tabsBar.innerHTML = tabsHtml;
 
-        const filter = document.getElementById('filterContainer');
-        let html = '<button class="tab-btn active" onclick="showAbout()">نبذة عنا</button>';
-        categories.forEach(c => html += `<button class="tab-btn" onclick="filterData(event, '${c}')">${c}</button>`);
-        filter.innerHTML = html;
+        // تحديث القائمة المنسدلة في الإدارة
+        const dropdown = document.getElementById('catDropdown');
+        dropdown.innerHTML = '<option value="">أو اختر قسم موجود</option>';
+        categories.forEach(cat => dropdown.innerHTML += `<option value="${cat}">${cat}</option>`);
 
-        const select = document.getElementById('fCatSelect');
-        select.innerHTML = '<option value="">أو اختر قسم موجود</option>';
-        categories.forEach(c => select.innerHTML += `<option value="${c}">${c}</option>`);
-
-        const list = document.getElementById('adminList');
+        // تحديث قائمة الحذف في الإدارة
+        const list = document.getElementById('adminItemsList');
         list.innerHTML = '';
         products.slice().reverse().forEach(p => {
             list.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;">
-                <span>[${p.cat}] - ${p.title}</span><button onclick="deleteP(${p.id})" style="color:red; border:none; background:none; cursor:pointer;">حذف</button>
+                <span>[${p.cat}] - صورة</span>
+                <button onclick="deleteItem(${p.id})" style="color:red; background:none; border:none; cursor:pointer;">حذف</button>
             </div>`;
         });
     }
 
-    function deleteP(id) { if(confirm("حذف؟")) { products = products.filter(x => x.id !== id); db.ref('site_data').set({ products, categories: Array.from(categories), siteInfo }); } }
-    
-    function updateSettings() {
-        siteInfo.title = document.getElementById('editMainTitle').value || siteInfo.title;
-        siteInfo.about = document.getElementById('editAboutText').value || siteInfo.about;
+    // التنقل بين الأقسام
+    function switchSection(type, catName = '') {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+
+        if(type === 'about') {
+            document.getElementById('aboutSectionContent').classList.add('active');
+            // تمييز زر "نبذة عنا"
+            document.getElementById('btn-about').classList.add('active');
+        } else {
+            document.getElementById('gallerySectionContent').classList.add('active');
+            document.getElementById('currentCategoryTitle').innerText = "أعمالنا في " + catName;
+            
+            // فلترة الصور حسب القسم المحدد
+            const gallery = document.getElementById('mainGallery');
+            gallery.innerHTML = '';
+            products.filter(p => p.cat === catName).forEach(p => {
+                gallery.innerHTML += `
+                    <div class="item-card">
+                        <img src="${p.img}">
+                        <div class="reaction-bar">
+                            <button class="react-btn" onclick="addReaction(${p.id}, 'likes')">👍 <span>${p.likes || 0}</span></button>
+                            <button class="react-btn" onclick="addReaction(${p.id}, 'dislikes')">👎 <span>${p.dislikes || 0}</span></button>
+                        </div>
+                    </div>`;
+            });
+        }
+    }
+
+    function addReaction(id, type) {
+        const idx = products.findIndex(p => p.id === id);
+        if(idx !== -1) {
+            products[idx][type] = (products[idx][type] || 0) + 1;
+            db.ref('site_data/products').set(products);
+        }
+    }
+
+    function deleteItem(id) {
+        if(confirm("حذف هذه الصورة نهائياً؟")) {
+            products = products.filter(p => p.id !== id);
+            db.ref('site_data/products').set(products);
+        }
+    }
+
+    function saveGeneralInfo() {
+        siteInfo.title = document.getElementById('editTitle').value || siteInfo.title;
+        siteInfo.about = document.getElementById('editAbout').value || siteInfo.about;
         db.ref('site_data/siteInfo').set(siteInfo);
-        alert("تم التحديث");
+        alert("تم التحديث بنجاح");
     }
 
-    function checkPass() { if(prompt("الباسورد:") === "1234") { document.getElementById('adminBox').style.display='block'; document.getElementById('overlay').style.display='block'; } }
+    function checkAuth() { if(prompt("كلمة المرور:") === "1234") { document.getElementById('adminBox').style.display='block'; document.getElementById('overlay').style.display='block'; } }
     function closeAdmin() { document.getElementById('adminBox').style.display='none'; document.getElementById('overlay').style.display='none'; }
-    
-    function showAbout() {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        if(event) event.target.classList.add('active');
-        document.getElementById('aboutSection').style.display = 'block';
-        document.getElementById('galleryContainer').style.display = 'none';
-    }
-
-    function filterData(e, cat) {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        document.getElementById('aboutSection').style.display = 'none';
-        document.getElementById('galleryContainer').style.display = 'block';
-        document.querySelectorAll('.item-card').forEach(card => card.style.display = (card.getAttribute('data-cat') === cat) ? 'block' : 'none');
-    }
 </script>
+
 </body>
 </html>
