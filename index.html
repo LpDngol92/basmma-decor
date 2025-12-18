@@ -3,119 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير للديكور - لوحة التحكم الشاملة</title>
+    <title>بصمة غير للديكور - الإدارة الاحترافية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <style>
         :root { --primary: #111; --accent: #c5a059; --light: #fdfdfd; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 0; color: #333; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--light); margin: 0; padding: 0; color: #333; overflow-x: hidden; }
         
-        /* الهيدر والتنقل */
+        /* الهيدر */
         header { background: var(--primary); color: white; padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--accent); }
-        header h1 { margin: 0; color: var(--accent); font-size: 2.5rem; }
-        .nav-bar { display: flex; justify-content: center; background: #1a1a1a; padding: 10px; sticky; top: 0; z-index: 1000; gap: 15px; }
-        .nav-btn { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 10px 25px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
-        .nav-btn.active { background: var(--accent); color: white; }
+        header h1 { margin: 0; font-size: 2.5rem; color: var(--accent); }
+        header p { opacity: 0.8; margin: 10px 0 0; }
 
-        /* المحتوى */
-        .content-section { max-width: 1200px; margin: 40px auto; padding: 20px; display: none; }
-        .content-section.active { display: block; }
+        /* القائمة العلوية */
+        .main-nav { display: flex; justify-content: center; background: #1a1a1a; padding: 10px; sticky; top: 0; z-index: 1000; gap: 15px; }
+        .nav-link { background: none; border: 1px solid var(--accent); color: var(--accent); padding: 10px 30px; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .nav-link.active { background: var(--accent); color: white; }
+
+        /* الأقسام */
+        .page-section { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: none; }
+        .page-section.active { display: block; }
+
+        /* قسم النبذة */
+        .about-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; line-height: 2; font-size: 1.2rem; }
+
+        /* شبكة ألبومات أعمالنا */
+        .albums-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
+        .album-item { background: white; border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.4s; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-bottom: 3px solid var(--accent); position: relative; }
+        .album-item:hover { transform: translateY(-10px); }
+        .album-item img { width: 100%; height: 220px; object-fit: cover; }
+        .album-details { padding: 15px; text-align: center; }
+        .album-details h3 { margin: 0; color: var(--primary); }
+
+        /* عارض الصور داخل المجموعة */
+        .gallery-viewer { display: none; animation: fadeIn 0.5s; }
+        .gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 20px; }
+        .gallery-img { width: 100%; height: 300px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* لوحة التحكم المحسنة */
+        #adminPanel { display: none; position: fixed; top: 0; right: 0; width: 100%; height: 100%; background: white; z-index: 9999; overflow-y: auto; padding: 20px; box-sizing: border-box; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-bottom: 20px; }
+        .admin-flex { display: flex; flex-wrap: wrap; gap: 20px; }
+        .admin-side { flex: 1; min-width: 300px; background: #f9f9f9; padding: 20px; border-radius: 10px; border: 1px solid #eee; }
+        input, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-action { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
         
-        /* قسم نبذة عنا */
-        #aboutContent { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; line-height: 1.8; }
+        /* شريط النسبة المئوية */
+        .up-progress-bg { width: 100%; background: #ddd; height: 10px; border-radius: 5px; margin: 10px 0; display: none; overflow: hidden; }
+        .up-progress-bar { height: 100%; background: #28a745; width: 0%; transition: 0.2s; }
 
-        /* قسم أعمالنا (الألبومات) */
-        .album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-        .album-card { background: white; border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-bottom: 4px solid var(--accent); }
-        .album-card:hover { transform: translateY(-5px); }
-        .album-card img { width: 100%; height: 250px; object-fit: cover; }
-        .album-info { padding: 15px; text-align: center; }
-
-        /* عرض الصور داخل الألبوم */
-        .photo-viewer { display: none; }
-        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 20px; }
-        .photo-item { border-radius: 8px; overflow: hidden; height: 300px; }
-        .photo-item img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* لوحة التحكم */
-        #adminBox { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 20px; box-shadow: 0 0 100px rgba(0,0,0,0.8); z-index: 5000; width: 90%; max-width: 650px; max-height: 85vh; overflow-y: auto; }
-        .overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index: 4000; }
-        .admin-block { background: #f8f8f8; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
-        input, textarea, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; }
-        .btn-main { background: var(--accent); color: white; width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        
-        /* شريط التقدم */
-        .progress-box { width: 100%; background: #eee; height: 15px; border-radius: 10px; margin: 10px 0; display: none; position: relative; }
-        .progress-fill { height: 100%; background: var(--accent); width: 0%; border-radius: 10px; transition: 0.2s; }
-        
-        .admin-toggle { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; opacity: 0.2; }
+        .admin-btn-toggle { position: fixed; bottom: 20px; left: 20px; background: var(--primary); color: white; width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 10000; font-size: 20px; }
     </style>
 </head>
 <body>
 
 <header>
-    <h1 id="siteTitle">بصمة غير للديكور</h1>
-    <p id="siteSubtitle">نصمم لك الجمال</p>
+    <h1 id="topName">بصمة غير للديكور</h1>
+    <p id="topSub">نصمم لك الجمال في كل زاوية</p>
 </header>
 
-<div class="nav-bar">
-    <button class="nav-btn active" onclick="showTab('about')">نبذة عنا</button>
-    <button class="nav-btn" onclick="showTab('works')">أعمالنا</button>
+<div class="main-nav">
+    <button class="nav-link active" onclick="navTo('about')">نبذة عنا</button>
+    <button class="nav-link" onclick="navTo('works')">أعمالنا</button>
 </div>
 
-<section id="aboutTab" class="content-section active">
-    <div id="aboutContent">
-        <h2 id="aboutHead">من نحن</h2>
-        <p id="aboutBody">جاري التحميل...</p>
+<section id="aboutSec" class="page-section active">
+    <div class="about-card">
+        <h2 style="color:var(--accent)">من نحن</h2>
+        <p id="aboutTextContent">جاري التحميل...</p>
     </div>
 </section>
 
-<section id="worksTab" class="content-section">
-    <div id="albumsGrid" class="album-grid"></div>
+<section id="worksSec" class="page-section">
+    <div id="albumsList" class="albums-grid">
+        </div>
 </section>
 
-<section id="photoViewer" class="content-section photo-viewer">
-    <button onclick="showTab('works')" style="margin-bottom:20px; cursor:pointer;">⬅ رجوع للأعمال</button>
-    <h2 id="viewerTitle" style="color:var(--accent)"></h2>
-    <div id="photosList" class="photo-grid"></div>
+<section id="gallerySec" class="page-section gallery-viewer">
+    <button onclick="navTo('works')" style="margin-bottom:20px; cursor:pointer; padding:8px 15px; border-radius:5px; border:1px solid #ccc;">⬅ العودة للمجموعات</button>
+    <h2 id="currentAlbumTitle" style="color:var(--accent); text-align:center;"></h2>
+    <div id="photosGrid" class="gallery-grid"></div>
 </section>
 
-<div class="overlay" id="overlay" onclick="closeAdmin()"></div>
+<div class="admin-btn-toggle" onclick="openAdmin()">⚙️</div>
 
-<div id="adminBox">
-    <h2 style="text-align:center; color:var(--accent)">إدارة الموقع</h2>
-
-    <div class="admin-block">
-        <h4>1. الاسم والعبارة والنبذة</h4>
-        <input type="text" id="inTitle" placeholder="اسم الموقع">
-        <input type="text" id="inSub" placeholder="العبارة أسفل الاسم">
-        <textarea id="inAbout" rows="3" placeholder="نبذة عن الشركة"></textarea>
-        <button class="btn-main" onclick="saveInfo()">تحديث المعلومات العامة</button>
+<div id="adminPanel">
+    <div class="admin-header">
+        <h2>لوحة إدارة المحتوى</h2>
+        <button onclick="closeAdmin()" style="background:red; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">إغلاق وحفظ</button>
     </div>
 
-    <div class="admin-block">
-        <h4>2. إضافة "مجموعة أعمال" جديدة</h4>
-        <input type="text" id="inAlbumName" placeholder="اسم المجموعة (مثلاً: معارض أحذية)">
-        <textarea id="inAlbumDesc" placeholder="وصف بسيط للمجموعة"></textarea>
-        <label>اختر صور المجموعة (رفع جماعي):</label>
-        <input type="file" id="inFiles" multiple accept="image/*">
-        
-        <div class="progress-box" id="pBox"><div class="progress-fill" id="pFill"></div></div>
-        <p id="pText" style="text-align:center; font-size:12px;"></p>
+    <div class="admin-flex">
+        <div class="admin-side">
+            <h3 style="color:var(--accent)">1. النصوص العامة والنبذة</h3>
+            <label>اسم الموقع:</label>
+            <input type="text" id="editTitleInput">
+            <label>العبارة الترحيبية:</label>
+            <input type="text" id="editSubInput">
+            <label>نص "نبذة عنا":</label>
+            <textarea id="editAboutInput" rows="5"></textarea>
+            <button class="btn-action" onclick="saveSiteInfo()">تحديث النصوص</button>
+        </div>
 
-        <button class="btn-main" id="upBtn" onclick="uploadAlbum()">رفع المجموعة كاملة</button>
+        <div class="admin-side">
+            <h3 style="color:var(--accent)">2. إضافة مجموعة أعمال جديدة</h3>
+            <label>اسم المجموعة (مثلاً: ديكورات مطاعم):</label>
+            <input type="text" id="newAlbumName" placeholder="أدخل اسم المجموعة">
+            <label>اختر صور المجموعة (رفع جماعي):</label>
+            <input type="file" id="imageFiles" multiple accept="image/*">
+            
+            <div class="up-progress-bg" id="progBg"><div class="up-progress-bar" id="progBar"></div></div>
+            <p id="progText" style="text-align:center; font-weight:bold; font-size:14px;"></p>
+
+            <button class="btn-action" id="uploadBtn" onclick="handleAlbumUpload()" style="background:#28a745;">بدء الرفع المتوازي للصور</button>
+        </div>
     </div>
 
-    <div class="admin-block">
-        <h4>المجموعات الحالية</h4>
+    <div class="admin-side" style="margin-top:20px; width:100%;">
+        <h3>المجموعات الحالية (للحذف)</h3>
         <div id="adminAlbumsList"></div>
     </div>
 </div>
 
-<div class="admin-toggle" onclick="authAdmin()">⚙️</div>
-
 <script>
+    // إعدادات Firebase
     const firebaseConfig = {
         apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
         authDomain: "mydecor-b29bd.firebaseapp.com",
@@ -125,137 +138,151 @@
         messagingSenderId: "302609299720",
         appId: "1:302609299720:web:e086b600c3ee824acd54bd"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const storage = firebase.storage();
 
-    let siteData = { info: {}, albums: [] };
+    let dataState = { info: {}, albums: {} };
 
-    // جلب البيانات
-    db.ref('basma_data').on('value', (snap) => {
-        const d = snap.val();
-        if(d) {
-            siteData = d;
-            renderUI();
+    // جلب البيانات ومراقبتها
+    db.ref('app_content').on('value', (snap) => {
+        const val = snap.val();
+        if(val) {
+            dataState = val;
+            updateUI();
         }
     });
 
-    function renderUI() {
-        // تحديث النصوص
-        document.getElementById('siteTitle').innerText = siteData.info.title || "بصمة غير";
-        document.getElementById('siteSubtitle').innerText = siteData.info.subtitle || "";
-        document.getElementById('aboutBody').innerText = siteData.info.about || "";
-        
-        // تحديث شبكة الألبومات (أعمالنا)
-        const grid = document.getElementById('albumsGrid');
-        grid.innerHTML = '';
-        const albums = siteData.albums || {};
-        Object.keys(albums).forEach(id => {
-            const alb = albums[id];
-            grid.innerHTML += `
-                <div class="album-card" onclick="viewAlbum('${id}')">
+    function updateUI() {
+        // تحديث الهيدر والنبذة
+        document.getElementById('topName').innerText = dataState.info.title || "بصمة غير للديكور";
+        document.getElementById('topSub').innerText = dataState.info.subtitle || "";
+        document.getElementById('aboutTextContent').innerText = dataState.info.about || "نبذة عنا ستظهر هنا";
+
+        // تحديث شبكة المجموعات (أعمالنا)
+        const albumsList = document.getElementById('albumsList');
+        const adminAlbumsList = document.getElementById('adminAlbumsList');
+        albumsList.innerHTML = '';
+        adminAlbumsList.innerHTML = '';
+
+        const albums = dataState.albums || {};
+        Object.keys(albums).forEach(key => {
+            const alb = albums[key];
+            // عرض للعملاء
+            albumsList.innerHTML += `
+                <div class="album-item" onclick="openGallery('${key}')">
                     <img src="${alb.cover}">
-                    <div class="album-info">
+                    <div class="album-details">
                         <h3>${alb.name}</h3>
-                        <p>${alb.desc}</p>
+                        <p>${alb.images.length} صورة</p>
                     </div>
                 </div>`;
-        });
-
-        // قائمة الحذف في الإدارة
-        const adminList = document.getElementById('adminAlbumsList');
-        adminList.innerHTML = '';
-        Object.keys(albums).forEach(id => {
-            adminList.innerHTML += `<div style="display:flex; justify-content:space-between; padding:5px; border-bottom:1px solid #eee;">
-                <span>${albums[id].name}</span>
-                <button onclick="deleteAlb('${id}')" style="color:red; cursor:pointer; border:none; background:none;">حذف</button>
-            </div>`;
+            // عرض في الإدارة للحذف
+            adminAlbumsList.innerHTML += `
+                <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #ddd; background:white;">
+                    <span>${alb.name}</span>
+                    <button onclick="deleteAlbum('${key}')" style="color:red; cursor:pointer; border:none; background:none;">حذف المجموعة</button>
+                </div>`;
         });
     }
 
-    async function uploadAlbum() {
-        const name = document.getElementById('inAlbumName').value;
-        const desc = document.getElementById('inAlbumDesc').value;
-        const files = document.getElementById('inFiles').files;
+    // وظيفة الرفع المتوازي السريع مع شريط النسبة
+    async function handleAlbumUpload() {
+        const name = document.getElementById('newAlbumName').value;
+        const files = document.getElementById('imageFiles').files;
 
-        if(!name || files.length === 0) return alert("أكمل البيانات");
+        if(!name || files.length === 0) return alert("يرجى كتابة اسم المجموعة واختيار الصور");
 
-        const btn = document.getElementById('upBtn');
-        const pBox = document.getElementById('pBox');
-        const pFill = document.getElementById('pFill');
-        const pText = document.getElementById('pText');
+        const btn = document.getElementById('uploadBtn');
+        const progBg = document.getElementById('progBg');
+        const progBar = document.getElementById('progBar');
+        const progText = document.getElementById('progText');
 
         btn.disabled = true;
-        pBox.style.display = 'block';
+        progBg.style.display = 'block';
+        
+        let imageUrls = [];
+        let completed = 0;
 
-        let urls = [];
-        for(let i=0; i < files.length; i++) {
-            const f = files[i];
-            const ref = storage.ref(`albums/${name}/${Date.now()}_${f.name}`);
-            const task = ref.put(f);
+        // تنفيذ الرفع المتوازي لجميع الصور في وقت واحد
+        const uploadPromises = Array.from(files).map(async (file, i) => {
+            const ref = storage.ref(`projects/${name}/${Date.now()}_${i}`);
+            const uploadTask = ref.put(file);
 
-            // مراقبة النسبة المئوية
-            task.on('state_changed', (s) => {
-                let p = Math.round((s.bytesTransferred / s.totalBytes) * 100);
-                pText.innerText = `جاري رفع صورة ${i+1} من ${files.length} (${p}%)`;
-                pFill.style.width = p + '%';
+            return new Promise((resolve) => {
+                uploadTask.on('state_changed', 
+                    (snap) => {
+                        // تحديث النسبة المئوية بشكل مرئي
+                        let p = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+                        progText.innerText = `جاري رفع صورة ${completed + 1} بتقدم ${p}%`;
+                        progBar.style.width = p + '%';
+                    },
+                    (err) => resolve(null),
+                    async () => {
+                        const url = await uploadTask.snapshot.ref.getDownloadURL();
+                        completed++;
+                        progText.innerText = `اكتمل رفع ${completed} من ${files.length}`;
+                        resolve(url);
+                    }
+                );
             });
-
-            await task;
-            const url = await ref.getDownloadURL();
-            urls.push(url);
-        }
-
-        const newKey = db.ref('basma_data/albums').push().key;
-        await db.ref('basma_data/albums/' + newKey).set({
-            name: name,
-            desc: desc,
-            cover: urls[0], // أول صورة هي الغلاف
-            images: urls
         });
+
+        const results = await Promise.all(uploadPromises);
+        imageUrls = results.filter(u => u !== null);
+
+        if(imageUrls.length > 0) {
+            await db.ref('app_content/albums').push({
+                name: name,
+                cover: imageUrls[0],
+                images: imageUrls
+            });
+            alert("تم إنشاء المجموعة بنجاح");
+            document.getElementById('newAlbumName').value = '';
+            document.getElementById('imageFiles').value = '';
+        }
 
         btn.disabled = false;
-        pBox.style.display = 'none';
-        alert("تم رفع المجموعة بنجاح");
-        document.getElementById('inAlbumName').value = '';
-        document.getElementById('inFiles').value = '';
+        progBg.style.display = 'none';
+        progText.innerText = '';
     }
 
-    function viewAlbum(id) {
-        const alb = siteData.albums[id];
-        showTab('none');
-        document.getElementById('photoViewer').classList.add('active');
-        document.getElementById('viewerTitle').innerText = alb.name;
-        const list = document.getElementById('photosList');
-        list.innerHTML = '';
+    function openGallery(key) {
+        const alb = dataState.albums[key];
+        navTo('none');
+        document.getElementById('gallerySec').classList.add('active');
+        document.getElementById('currentAlbumTitle').innerText = alb.name;
+        const grid = document.getElementById('photosGrid');
+        grid.innerHTML = '';
         alb.images.forEach(img => {
-            list.innerHTML += `<div class="photo-item"><img src="${img}"></div>`;
+            grid.innerHTML += `<img src="${img}" class="gallery-img">`;
         });
     }
 
-    function showTab(tab) {
-        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        if(tab === 'about') {
-            document.getElementById('aboutTab').classList.add('active');
-            document.querySelectorAll('.nav-btn')[0].classList.add('active');
-        } else if(tab === 'works') {
-            document.getElementById('worksTab').classList.add('active');
-            document.querySelectorAll('.nav-btn')[1].classList.add('active');
+    function navTo(page) {
+        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        if(page === 'about') {
+            document.getElementById('aboutSec').classList.add('active');
+            document.querySelectorAll('.nav-link')[0].classList.add('active');
+        } else if(page === 'works') {
+            document.getElementById('worksSec').classList.add('active');
+            document.querySelectorAll('.nav-link')[1].classList.add('active');
         }
     }
 
-    function saveInfo() {
-        const title = document.getElementById('inTitle').value;
-        const sub = document.getElementById('inSub').value;
-        const about = document.getElementById('inAbout').value;
-        db.ref('basma_data/info').update({ title, subtitle: sub, about });
-        alert("تم حفظ البيانات");
+    function saveSiteInfo() {
+        const title = document.getElementById('editTitleInput').value;
+        const subtitle = document.getElementById('editSubInput').value;
+        const about = document.getElementById('editAboutInput').value;
+        db.ref('app_content/info').set({ title, subtitle, about });
+        alert("تم تحديث البيانات بنجاح");
     }
 
-    function deleteAlb(id) { if(confirm("حذف المجموعة؟")) db.ref('basma_data/albums/' + id).remove(); }
-    function authAdmin() { if(prompt("الباسورد:") === "1234") { document.getElementById('adminBox').style.display='block'; document.getElementById('overlay').style.display='block'; } }
-    function closeAdmin() { document.getElementById('adminBox').style.display='none'; document.getElementById('overlay').style.display='none'; }
+    function deleteAlbum(key) { if(confirm("حذف هذه المجموعة بالكامل؟")) db.ref('app_content/albums/' + key).remove(); }
+    function openAdmin() { if(prompt("كلمة السر:") === "1234") document.getElementById('adminPanel').style.display='block'; }
+    function closeAdmin() { document.getElementById('adminPanel').style.display='none'; }
 </script>
 </body>
 </html>
