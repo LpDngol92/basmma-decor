@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير - الإدارة الاحترافية</title>
+    <title id="tab-title">بصمة غير للديكور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -11,28 +11,29 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; user-select: none; }
         header { background: var(--white); padding: 25px; text-align: center; border-bottom: 4px solid var(--gold); }
         .nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: white; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); flex-wrap: wrap; }
-        .btn { padding: 10px 20px; border: 1px solid #ddd; border-radius: 25px; cursor: pointer; background: white; font-weight: bold; transition: 0.3s; }
+        .btn { padding: 10px 20px; border: 1px solid #ddd; border-radius: 25px; cursor: pointer; background: white; font-weight: bold; }
         .btn.active { background: var(--gold); color: white; border-color: var(--gold); }
         .sec { max-width: 1200px; margin: 30px auto; padding: 20px; display: none; }
         .sec.active { display: block; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        
-        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .card img { width: 100%; height: 250px; object-fit: cover; }
-        .reactions { display: flex; justify-content: space-around; padding: 10px; background: #fff; border-top: 1px solid #eee; }
-        .react-btn { border: none; background: none; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; gap: 5px; }
+        .reactions { display: flex; justify-content: space-around; padding: 10px; border-top: 1px solid #eee; }
+        .react-btn { border: none; background: none; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; gap: 5px; }
         
+        /* لوحة التحكم */
         #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; padding: 30px; box-sizing: border-box; overflow-y: auto; }
-        .admin-box { background: #fdfdfd; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        .admin-box { background: #fdfdfd; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #eee; }
         .flex-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
         input, textarea, select { padding: 12px; border: 1px solid #ccc; border-radius: 8px; flex: 1; min-width: 200px; }
         .action-btn { background: #27ae60; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .stats-badge { background: #2c3e50; color: white; padding: 15px; border-radius: 10px; display: inline-block; margin-bottom: 20px; font-size: 1.2rem; }
         .admin-trigger { position: fixed; bottom: 5px; left: 5px; width: 30px; height: 30px; cursor: pointer; opacity: 0.01; }
     </style>
 </head>
 <body>
 
-<header><h1>بصمة غير للديكور</h1></header>
+<header><h1 id="display-site-name">جاري التحميل...</h1></header>
 
 <div class="nav" id="main-nav">
     <button class="btn active" id="btn-home" onclick="showSec('home')">الرئيسية</button>
@@ -40,8 +41,8 @@
 
 <section id="sec-home" class="sec active">
     <div style="text-align:center; padding:80px 20px; background:white; border-radius:20px;">
-        <h2 style="color:var(--gold)">بصمة إبداع في كل زاوية</h2>
-        <p>تحكم في محتوى موقعك بالكامل من لوحة الإدارة</p>
+        <h2 id="display-home-title" style="color:var(--gold)">...</h2>
+        <p id="display-home-desc">...</p>
     </div>
 </section>
 
@@ -51,35 +52,53 @@
 
 <div id="admin-panel">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>لوحة التحكم المحدثة</h2>
-        <button onclick="location.reload()" style="background:#c0392b; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">خروج</button>
+        <h2>إدارة الموقع المتكاملة</h2>
+        <button onclick="location.reload()" style="background:#c0392b; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">خروج وحفظ</button>
     </div>
 
     <div class="admin-box">
-        <h3 style="color:var(--gold)">قسم التبويبات (المنيو العلوي)</h3>
+        <h3>تحليلات الموقع</h3>
+        <div class="stats-badge">👥 عدد الزيارات الكلي: <span id="visit-count">0</span></div>
+    </div>
+
+    <div class="admin-box">
+        <h3 style="color:#8e44ad">إعدادات النصوص الرئيسية</h3>
         <div class="flex-row">
-            <input type="text" id="new-p-title" placeholder="اسم القسم الجديد (مثل: ديكوراتنا)">
-            <button class="action-btn" onclick="addPage()">+ إنشاء القسم</button>
+            <input type="text" id="set-site-name" placeholder="تعديل اسم الموقع بالأعلى">
+            <button class="action-btn" style="background:#8e44ad" onclick="updateSiteName()">تحديث الاسم</button>
+        </div>
+        <div class="flex-row">
+            <input type="text" id="set-home-title" placeholder="عنوان الترحيب في الرئيسية">
+            <textarea id="set-home-desc" placeholder="وصف الرئيسية"></textarea>
+            <button class="action-btn" style="background:#8e44ad" onclick="updateHomeText()">تحديث الرئيسية</button>
+        </div>
+    </div>
+
+    <div class="admin-box">
+        <h3 style="color:var(--gold)">إدارة التبويبات</h3>
+        <div class="flex-row">
+            <input type="text" id="new-p-title" placeholder="اسم قسم جديد">
+            <button class="action-btn" onclick="addPage()">+ إنشاء</button>
         </div>
         <hr>
         <div class="flex-row">
             <select id="sel-page-to-add"></select>
-            <input type="text" id="img-to-page" placeholder="رابط صورة لإضافتها في هذا القسم">
-            <button class="action-btn" style="background:var(--gold)" onclick="addImgToPage()">حفظ الصورة في القسم</button>
+            <input type="text" id="img-to-page" placeholder="رابط الصورة">
+            <button class="action-btn" style="background:var(--gold)" onclick="addImgToPage()">إضافة صورة</button>
         </div>
     </div>
 
     <div class="admin-box">
-        <h3 style="color:#2980b9">قسم أعمالنا (مجموعات الصور)</h3>
+        <h3 style="color:#2980b9">إدارة مجموعات أعمالنا</h3>
         <div class="flex-row">
-            <input type="text" id="new-alb-name" placeholder="اسم المجموعة الجديدة (مثل: تصاميم 2024)">
-            <button class="action-btn" style="background:#2980b9" onclick="addAlbum()">+ إنشاء المجموعة</button>
+            <input type="text" id="new-alb-name" placeholder="اسم مجموعة جديدة">
+            <button class="action-btn" style="background:#2980b9" onclick="addAlbum()">+ إنشاء</button>
         </div>
         <hr>
         <div class="flex-row">
             <select id="sel-alb-to-add"></select>
-            <textarea id="imgs-to-alb" placeholder="روابط صور المجموعة (افصل بينها بفاصلة ,)"></textarea>
-            <button class="action-btn" style="background:var(--gold)" onclick="addImgsToAlb()">تحديث صور المجموعة</button>
+            <textarea id="imgs-to-alb" placeholder="روابط صور جديدة (فاصلة ,)"></textarea>
+            <button class="action-btn" style="background:var(--gold)" onclick="appendImgsToAlb()">إضافة للمجموعة</button>
         </div>
     </div>
 </div>
@@ -94,12 +113,22 @@
     const db = firebase.database();
     let siteData = {};
 
-    db.ref('site_v18').on('value', snap => {
+    // 1. حساب الزيارات عند دخول أي شخص للموقع
+    db.ref('site_v20/visits').transaction(current => (current || 0) + 1);
+
+    db.ref('site_v20').on('value', snap => {
         siteData = snap.val() || {};
         render();
     });
 
     function render() {
+        // تحديث النصوص الأساسية
+        document.getElementById('display-site-name').innerText = siteData.site_name || "بصمة غير";
+        document.getElementById('tab-title').innerText = siteData.site_name || "بصمة غير";
+        document.getElementById('display-home-title').innerText = siteData.home_title || "مرحباً بكم";
+        document.getElementById('display-home-desc').innerText = siteData.home_desc || "وصف الموقع هنا";
+        document.getElementById('visit-count').innerText = siteData.visits || 0;
+
         const nav = document.getElementById('main-nav');
         const content = document.getElementById('pages-content');
         const selP = document.getElementById('sel-page-to-add');
@@ -107,15 +136,15 @@
 
         nav.innerHTML = '<button class="btn active" id="btn-home" onclick="showSec(\'home\')">الرئيسية</button>';
         content.innerHTML = "";
-        selP.innerHTML = '<option value="">-- اختر القسم --</option>'; 
+        selP.innerHTML = '<option value="">-- اختر القسم --</option>';
         selA.innerHTML = '<option value="">-- اختر المجموعة --</option>';
 
+        // رندر الأقسام
         if(siteData.pages) {
             Object.keys(siteData.pages).forEach(id => {
                 const p = siteData.pages[id];
                 nav.innerHTML += `<button class="btn" id="btn-${id}" onclick="showSec('${id}')">${p.title}</button>`;
                 selP.innerHTML += `<option value="${id}">${p.title}</option>`;
-                
                 let imgsHTML = "";
                 if(p.imgs) {
                     Object.keys(p.imgs).forEach(imgId => {
@@ -127,6 +156,7 @@
             });
         }
 
+        // رندر أعمالنا
         nav.innerHTML += '<button class="btn" id="btn-works" onclick="showSec(\'works\')">أعمالنا</button>';
         let albsHTML = "";
         if(siteData.albums) {
@@ -135,73 +165,72 @@
                 selA.innerHTML += `<option value="${id}">${a.name}</option>`;
                 let groupImgs = "";
                 if(a.imgs) {
-                    a.imgs.forEach((url, idx) => {
-                        groupImgs += createCard(id, idx, url, 0, 0, 'albums', true);
+                    a.imgs.forEach((imgObj, idx) => {
+                        groupImgs += createCard(id, idx, imgObj.url, imgObj.likes||0, imgObj.dislikes||0, 'albums');
                     });
                 }
-                albsHTML += `<div style="margin-bottom:50px;"><h3 style="background:#eee; padding:10px; border-radius:8px;">📁 ${a.name}</h3><div class="grid">${groupImgs}</div></div>`;
+                albsHTML += `<div style="margin-bottom:50px;"><h3 style="background:#eee; padding:10px; border-radius:8px;">📂 ${a.name}</h3><div class="grid">${groupImgs}</div></div>`;
             });
         }
-        content.innerHTML += `<section id="sec-works" class="sec"><h2 style="text-align:center; color:#2980b9">معرض مجموعات الأعمال</h2>${albsHTML}</section>`;
+        content.innerHTML += `<section id="sec-works" class="sec"><h2 style="text-align:center; color:#2980b9">معرض أعمالنا</h2>${albsHTML}</section>`;
     }
 
-    function createCard(parentId, imgId, url, likes, dislikes, type) {
-        return `
-            <div class="card">
-                <img src="${url}">
-                <div class="reactions">
-                    <button class="react-btn" onclick="react('${parentId}','${imgId}','likes','${type}')">👍 <span>${likes}</span></button>
-                    <button class="react-btn" onclick="react('${parentId}','${imgId}','dislikes','${type}')">👎 <span>${dislikes}</span></button>
-                </div>
-            </div>`;
+    // وظائف التحديث مع مسح الخانات
+    function updateSiteName() {
+        const val = document.getElementById('set-site-name');
+        if(val.value) db.ref('site_v20/site_name').set(val.value).then(() => { val.value = ""; alert("تم تحديث اسم الموقع"); });
     }
 
-    // وظائف الإضافة مع تفريغ الخانات
+    function updateHomeText() {
+        const t = document.getElementById('set-home-title');
+        const d = document.getElementById('set-home-desc');
+        if(t.value || d.value) {
+            if(t.value) db.ref('site_v20/home_title').set(t.value);
+            if(d.value) db.ref('site_v20/home_desc').set(d.value);
+            alert("تم تحديث نصوص الرئيسية");
+            t.value = ""; d.value = "";
+        }
+    }
+
     function addPage() {
         const t = document.getElementById('new-p-title');
-        if(t.value) {
-            db.ref('site_v18/pages').push({ title: t.value }).then(() => {
-                t.value = ""; // مسح الخانة
-                alert("تم إنشاء القسم بنجاح");
-            });
-        }
+        if(t.value) db.ref('site_v20/pages').push({ title: t.value }).then(() => { t.value = ""; });
     }
 
     function addImgToPage() {
         const pId = document.getElementById('sel-page-to-add').value;
         const url = document.getElementById('img-to-page');
-        if(pId && url.value) {
-            db.ref(`site_v18/pages/${pId}/imgs`).push({ url: url.value, likes: 0, dislikes: 0 }).then(() => {
-                url.value = ""; // مسح الخانة
-                alert("تمت إضافة الصورة للقسم");
-            });
-        }
+        if(pId && url.value) db.ref(`site_v20/pages/${pId}/imgs`).push({ url: url.value, likes: 0, dislikes: 0 }).then(() => { url.value = ""; });
     }
 
     function addAlbum() {
         const n = document.getElementById('new-alb-name');
-        if(n.value) {
-            db.ref('site_v18/albums').push({ name: n.value }).then(() => {
-                n.value = ""; // مسح الخانة
-                alert("تم إنشاء المجموعة");
-            });
-        }
+        if(n.value) db.ref('site_v20/albums').push({ name: n.value }).then(() => { n.value = ""; });
     }
 
-    function addImgsToAlb() {
+    function appendImgsToAlb() {
         const aId = document.getElementById('sel-alb-to-add').value;
-        const urls = document.getElementById('imgs-to-alb');
-        if(aId && urls.value) {
-            const urlArray = urls.value.split(',').map(u => u.trim());
-            db.ref(`site_v18/albums/${aId}/imgs`).set(urlArray).then(() => {
-                urls.value = ""; // مسح الخانة
-                alert("تم تحديث صور المجموعة");
-            });
-        }
+        const inputUrls = document.getElementById('imgs-to-alb');
+        if(!aId || !inputUrls.value) return;
+        const newUrls = inputUrls.value.split(',').map(u => u.trim()).filter(u => u !== "");
+        const oldImgs = siteData.albums[aId].imgs || [];
+        const newObjs = newUrls.map(url => ({ url: url, likes: 0, dislikes: 0 }));
+        db.ref(`site_v20/albums/${aId}/imgs`).set([...oldImgs, ...newObjs]).then(() => { inputUrls.value = ""; alert("تمت الإضافة للمجموعة"); });
+    }
+
+    function createCard(parentId, imgId, url, likes, dislikes, path) {
+        return `
+            <div class="card">
+                <img src="${url}">
+                <div class="reactions">
+                    <button class="react-btn" onclick="react('${parentId}','${imgId}','likes','${path}')">👍 <span>${likes}</span></button>
+                    <button class="react-btn" onclick="react('${parentId}','${imgId}','dislikes','${path}')">👎 <span>${dislikes}</span></button>
+                </div>
+            </div>`;
     }
 
     function react(pId, imgId, type, path) {
-        db.ref(`site_v18/${path}/${pId}/imgs/${imgId}/${type}`).transaction(c => (c || 0) + 1);
+        db.ref(`site_v20/${path}/${pId}/imgs/${imgId}/${type}`).transaction(c => (c || 0) + 1);
     }
 
     async function checkAuth() {
