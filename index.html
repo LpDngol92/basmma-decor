@@ -2,47 +2,97 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>بصمة غير - النسخة المحمية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بصمة غير للديكور - الإدارة الكاملة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #b8860b; --bg: #f4f4f4; }
-        body { font-family: sans-serif; background: var(--bg); margin: 0; user-select: none; }
-        header { background: white; padding: 30px; text-align: center; border-bottom: 4px solid var(--gold); }
-        .nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: white; }
-        .btn { padding: 10px 20px; border: 1px solid #ddd; border-radius: 20px; cursor: pointer; }
-        .sec { max-width: 1200px; margin: 30px auto; display: none; text-align: center; }
+        :root { --gold: #b8860b; --white: #ffffff; --bg: #f4f4f4; --dark: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; user-select: none; }
+        header { background: var(--white); padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--gold); box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: var(--gold); margin: 0; font-size: 2.2rem; }
+        .nav { display: flex; justify-content: center; gap: 10px; background: var(--white); padding: 15px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .btn { padding: 10px 25px; border: 1px solid #ddd; border-radius: 30px; cursor: pointer; background: var(--white); font-weight: bold; transition: 0.3s; }
+        .btn:hover, .btn.active { background: var(--gold); color: white; border-color: var(--gold); }
+        .sec { max-width: 1200px; margin: 30px auto; padding: 0 20px; display: none; }
         .sec.active { display: block; }
-        #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 1000; padding: 40px; box-sizing: border-box; }
-        .admin-trigger { position: fixed; bottom: 10px; left: 10px; width: 30px; height: 30px; cursor: pointer; opacity: 0.05; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .card { background: var(--white); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transition: 0.3s; cursor: pointer; }
+        .card img { width: 100%; height: 200px; object-fit: cover; }
+        .card-info { padding: 15px; text-align: center; }
+        /* لوحة التحكم */
+        #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; padding: 30px; box-sizing: border-box; overflow-y: auto; }
+        .admin-box { background: #f9f9f9; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .save-btn { background: var(--gold); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .admin-trigger { position: fixed; bottom: 10px; left: 10px; width: 30px; height: 30px; cursor: pointer; opacity: 0.02; z-index: 1001; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
-<header><h1 id="d-name">بصمة غير للديكور</h1></header>
-<div class="nav">
-    <button class="btn" onclick="show('p-about')">الرئيسية</button>
-    <button class="btn" onclick="show('p-works')">أعمالنا</button>
+<header>
+    <h1 id="view-site-name">بصمة غير للديكور</h1>
+    <p id="view-welcome"></p>
+</header>
+
+<div class="nav" id="nav-container">
+    <button class="btn active" onclick="showSec('about')">من نحن</button>
+    <button class="btn" onclick="showSec('works')">أعمالنا</button>
 </div>
 
-<section id="p-about" class="sec active"><h2>مرحباً بكم في موقعنا</h2></section>
-<section id="p-works" class="sec"><h2>معرض الصور يظهر هنا</h2></section>
+<section id="sec-about" class="sec active">
+    <div style="background:white; padding:40px; border-radius:15px; text-align:center;">
+        <p id="view-about-text" style="line-height:1.8; font-size:1.2rem;"></p>
+    </div>
+</section>
 
-<div class="admin-trigger" onclick="unlock()"></div>
+<section id="sec-works" class="sec">
+    <div id="albums-grid" class="grid"></div>
+</section>
+
+<section id="sec-gallery" class="sec">
+    <button class="btn" onclick="showSec('works')">← عودة للأقسام</button>
+    <h2 id="gallery-title" style="color:var(--gold); margin-top:20px;"></h2>
+    <div id="photos-grid" class="grid"></div>
+</section>
+
+<div class="admin-trigger" onclick="checkAuth()"></div>
 
 <div id="admin-panel">
-    <h2>لوحة التحكم</h2>
-    <input id="in-name" placeholder="اسم الموقع">
-    <textarea id="in-about" placeholder="نبذة عنا" rows="5"></textarea>
-    <hr>
-    <input id="in-pass" type="password" placeholder="تغيير الرقم السري (اختياري)">
-    <button class="btn" onclick="saveData()" style="background:var(--gold); color:white; width:100%">حفظ</button>
-    <button class="btn" onclick="location.reload()" style="width:100%; margin-top:10px;">خروج</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2 style="color:var(--gold)">لوحة التحكم الشاملة</h2>
+        <button onclick="location.reload()" style="background:#d63031; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">خروج آمن</button>
+    </div>
+
+    <div class="admin-box">
+        <h3>1. النصوص الأساسية</h3>
+        <input type="text" id="in-site-name" placeholder="اسم الموقع">
+        <input type="text" id="in-welcome" placeholder="رسالة الترحيب">
+        <textarea id="in-about" rows="3" placeholder="نبذة عن الشركة"></textarea>
+        <button class="save-btn" onclick="saveBasic()">حفظ النصوص</button>
+    </div>
+
+    <div class="admin-box">
+        <h3>2. إدارة الأقسام والصور</h3>
+        <div style="display:flex; gap:10px;">
+            <select id="select-album" onchange="toggleNewAlbInp()">
+                <option value="">-- اختر قسماً أو أضف جديداً --</option>
+                <option value="new">+ إضافة قسم جديد</option>
+            </select>
+        </div>
+        <input type="text" id="in-new-album" style="display:none;" placeholder="اسم القسم الجديد (مثلاً: مطابخ)">
+        <textarea id="in-urls" rows="3" placeholder="روابط الصور (ضع فاصلة , بين كل رابط)"></textarea>
+        <button class="save-btn" onclick="saveAlbum()">حفظ القسم/الصور</button>
+    </div>
+
+    <div class="admin-box" style="border: 2px solid #fab1a0;">
+        <h3>3. الأمن وتغيير الرمز السري</h3>
+        <input type="password" id="in-new-pass" placeholder="الرمز السري الجديد">
+        <button class="save-btn" style="background:#e17055;" onclick="changePass()">تحديث الرمز السري</button>
+    </div>
 </div>
 
 <script>
-    // إعدادات فايربيس الخاصة بك
     const firebaseConfig = {
         apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
         databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
@@ -50,47 +100,104 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    let mainData = {};
 
-    // منع فحص العنصر
+    // تجميد الفحص
     setInterval(() => { (function(){debugger}()) }, 1000);
 
-    async function unlock() {
-        const userPass = prompt("أدخل الرمز السري:");
-        if (!userPass) return;
+    // جلب البيانات
+    db.ref('site_content_v10').on('value', snap => {
+        mainData = snap.val() || {};
+        renderUI();
+    });
 
-        try {
-            // جلب الرمز من السيرفر (المكان البعيد)
-            const snap = await db.ref('server_auth/admin_pass').once('value');
-            const realPass = snap.val();
+    function renderUI() {
+        const info = mainData.info || {};
+        document.getElementById('view-site-name').innerText = info.name || "بصمة غير";
+        document.getElementById('view-welcome').innerText = info.welcome || "";
+        document.getElementById('view-about-text').innerText = info.about || "نبذة عنا...";
+        
+        // تعبئة المدخلات في لوحة التحكم
+        document.getElementById('in-site-name').value = info.name || "";
+        document.getElementById('in-welcome').value = info.welcome || "";
+        document.getElementById('in-about').value = info.about || "";
 
-            if (realPass === null) {
-                alert("خطأ: لم نجد 'admin_pass' في فايربيس! تأكد من ترتيب الكلمات.");
-                return;
-            }
+        const albumGrid = document.getElementById('albums-grid');
+        const albumSelect = document.getElementById('select-album');
+        albumGrid.innerHTML = "";
+        albumSelect.innerHTML = '<option value="">-- اختر قسماً أو أضف جديداً --</option><option value="new">+ إضافة قسم جديد</option>';
 
-            if (userPass.toString() === realPass.toString()) {
-                document.getElementById('admin-panel').style.display = 'block';
-            } else {
-                alert("الرمز غير صحيح!");
-            }
-        } catch (e) {
-            alert("فشل الاتصال: " + e.message);
+        if(mainData.albums) {
+            Object.keys(mainData.albums).forEach(id => {
+                const alb = mainData.albums[id];
+                albumSelect.innerHTML += `<option value="${id}">${alb.name}</option>`;
+                albumGrid.innerHTML += `
+                    <div class="card" onclick="openGallery('${id}')">
+                        <img src="${alb.images ? alb.images[0] : ''}">
+                        <div class="card-info"><h3>${alb.name}</h3></div>
+                    </div>`;
+            });
         }
     }
 
-    function saveData() {
-        const newP = document.getElementById('in-pass').value;
-        if(newP) db.ref('server_auth/admin_pass').set(newP);
-        
-        db.ref('public_info').set({
-            name: document.getElementById('in-name').value,
-            about: document.getElementById('in-about').value
-        }).then(() => alert("تم الحفظ"));
+    async function checkAuth() {
+        const p = prompt("الرمز السري للإدارة:");
+        if(!p) return;
+        const snap = await db.ref('server_auth/admin_pass').once('value');
+        if(p.toString() === snap.val().toString()) {
+            document.getElementById('admin-panel').style.display = 'block';
+        } else { alert("خطأ في الرمز!"); }
     }
 
-    function show(id) {
+    function saveBasic() {
+        db.ref('site_content_v10/info').set({
+            name: document.getElementById('in-site-name').value,
+            welcome: document.getElementById('in-welcome').value,
+            about: document.getElementById('in-about').value
+        }).then(() => alert("تم حفظ النصوص"));
+    }
+
+    function saveAlbum() {
+        const sel = document.getElementById('select-album').value;
+        const newName = document.getElementById('in-new-album').value;
+        const urls = document.getElementById('in-urls').value.split(',').map(u => u.trim()).filter(u => u !== "");
+
+        if(sel === 'new' && newName) {
+            db.ref('site_content_v10/albums').push({ name: newName, images: urls });
+        } else if(sel && sel !== 'new') {
+            const existing = mainData.albums[sel].images || [];
+            db.ref('site_content_v10/albums/' + sel + '/images').set([...existing, ...urls]);
+        }
+        alert("تم التحديث بنجاح");
+        document.getElementById('in-urls').value = "";
+    }
+
+    function changePass() {
+        const newP = document.getElementById('in-new-pass').value;
+        if(newP) {
+            db.ref('server_auth/admin_pass').set(newP).then(() => alert("تم تغيير الرمز السري بنجاح!"));
+        }
+    }
+
+    function toggleNewAlbInp() {
+        document.getElementById('in-new-album').style.display = 
+            (document.getElementById('select-album').value === 'new') ? 'block' : 'none';
+    }
+
+    function showSec(id) {
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+        document.getElementById('sec-' + id).classList.add('active');
+    }
+
+    function openGallery(id) {
+        showSec('gallery');
+        const alb = mainData.albums[id];
+        document.getElementById('gallery-title').innerText = alb.name;
+        const photoGrid = document.getElementById('photos-grid');
+        photoGrid.innerHTML = "";
+        alb.images.forEach(img => {
+            photoGrid.innerHTML += `<div class="card"><img src="${img}"></div>`;
+        });
     }
 </script>
 </body>
