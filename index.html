@@ -12,94 +12,78 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Noto Sans Arabic', sans-serif; margin: 0; background: var(--bg); color: var(--text-main); overflow-x: hidden; width: 100%; }
         
-        /* شاشة الصيانة القصوى */
-        #maintenance-screen {
-            position: fixed; inset: 0; background: #000 !important; z-index: 999999 !important;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 20px;
-        }
-        /* إظهار الشاشة وإخفاء المحتوى بقوة CSS */
-        body.is-off #maintenance-screen { display: flex !important; }
-        body.is-off #site-content { opacity: 0 !important; pointer-events: none !important; }
-
         #dynamic-header { height: 75vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; position: relative; background-color: #000; background-position: center; background-size: cover; transition: background-image 1.5s ease-in-out; }
         #dynamic-header::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), var(--bg)); z-index: 1; }
         #dynamic-header h1 { position: relative; z-index: 2; font-size: clamp(2.5rem, 10vw, 5.5rem); font-weight: 900; margin: 0; text-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        nav { position: sticky; top: 0; background: rgba(8, 8, 8, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; z-index: 5000; overflow-x: auto; scrollbar-width: none; }
-        .nav-btn { padding: 12px 22px; border: none; background: none; color: var(--text-dim); font-weight: 700; cursor: pointer; border-radius: 8px; font-size: 0.95rem; flex-shrink: 0; transition: 0.3s; }
+        
+        /* التبويبات في المنتصف */
+        nav { position: sticky; top: 0; background: rgba(8, 8, 8, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: center; align-items: center; z-index: 5000; overflow-x: auto; scrollbar-width: none; gap: 5px; }
+        nav::-webkit-scrollbar { display: none; }
+        
+        .nav-btn { padding: 12px 20px; border: none; background: none; color: var(--text-dim); font-weight: 700; cursor: pointer; border-radius: 8px; font-size: 0.95rem; flex-shrink: 0; transition: 0.3s; }
         .nav-btn.active { color: var(--accent); background: rgba(197, 160, 89, 0.1); }
+        
         .sec { width: 95%; max-width: 1400px; margin: 40px auto; display: none; }
         .sec.active { display: block; animation: fadeIn 0.6s ease; }
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
         .work-item { background: var(--card-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03); }
         .img-box { width: 100%; aspect-ratio: 1/1; cursor: zoom-in; background: #000; overflow: hidden; }
-        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
         .item-content { padding: 18px; }
+        .item-content h3 { margin: 0 0 15px 0; font-size: 1.05rem; min-height: 1.5em; }
         .vote-bar { display: flex; gap: 10px; margin-bottom: 12px; }
-        .vote-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; border-radius: 10px; cursor: pointer; }
+        .vote-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; border-radius: 10px; cursor: pointer; font-size: 0.9rem; }
         .vote-btn.voted { border-color: var(--accent); color: var(--accent); }
-        .order-btn { width: 100%; padding: 15px; border-radius: 10px; background: var(--accent); color: black; border: none; font-weight: 800; cursor: pointer; }
-        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 15px; }
-        #modal img { max-width: 100%; max-height: 95vh; object-fit: contain; }
+        .order-btn { width: 100%; padding: 15px; border-radius: 10px; background: var(--accent); color: black; border: none; font-weight: 800; cursor: pointer; font-size: 1rem; }
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 15px; cursor: zoom-out; }
+        #modal img { max-width: 100%; max-height: 95vh; object-fit: contain; border-radius: 8px; }
         
-        /* الزر المخفي - دائماً فوق كل شيء */
-        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 2000000; opacity: 0; cursor: pointer; }
-        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 1500000; padding: 25px; overflow-y: auto; }
+        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; z-index: 10000; opacity: 0; }
+        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 11000; padding: 25px; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 10px; }
-        .reset-btn { background: #ff4444; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; margin: 10px 0; cursor: pointer; font-weight: bold; }
+        .reset-btn { background: #ff4444; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin: 10px 0; cursor: pointer; }
+        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body id="body-tag">
+<body>
 
-<div id="maintenance-screen">
-    <div style="font-size: 4rem; margin-bottom: 20px;">⏳</div>
-    <h1 style="color: var(--accent); margin: 0;">الموقع مغلق للصيانة</h1>
-    <p style="color: var(--text-dim); font-size: 1.2rem;">نعود لخدمتكم قريباً جداً..</p>
-</div>
+<div id="modal" onclick="this.style.display='none'"><img src="" id="modal-img"></div>
+<header id="dynamic-header"><h1 id="view-name">بصمة غير</h1></header>
+<nav id="main-nav"></nav>
 
-<div id="site-content">
-    <div id="modal" onclick="this.style.display='none'"><img src="" id="modal-img"></div>
-    <header id="dynamic-header"><h1 id="view-name">بصمة غير</h1></header>
-    <nav id="main-nav"></nav>
-    <section id="sec-home" class="sec active">
-        <div style="max-width: 650px; margin: 0 auto; text-align: center;">
-            <p id="view-desc" style="color: var(--text-dim); font-size: 1.2rem; line-height: 1.8;"></p>
-            <div id="view-hours" style="margin: 20px 0; color: var(--accent); font-weight: bold;"></div>
-            <div id="map-btn-wrapper" style="margin-bottom: 30px;"></div>
-            <a id="wa-main-link" href="#" target="_blank" style="display:inline-block; background:white; color:black; padding:15px 45px; border-radius:50px; text-decoration:none; font-weight: 900;">للتواصل اضغط هنا</a>
-        </div>
-    </section>
-    <section id="sec-works" class="sec"><div id="folders-grid" class="grid"></div></section>
-    <div id="dynamic-pages"></div>
-</div>
+<section id="sec-home" class="sec active">
+    <div style="max-width: 650px; margin: 0 auto; text-align: center;">
+        <p id="view-desc" style="color: var(--text-dim); font-size: 1.2rem; line-height: 1.8;"></p>
+        <div id="view-hours" style="margin: 20px 0; color: var(--accent); font-weight: bold;"></div>
+        <div id="map-btn-wrapper" style="margin-bottom: 30px;"></div>
+        <a id="wa-main-link" href="#" target="_blank" style="display:inline-block; background:white; color:black; padding:15px 45px; border-radius:50px; text-decoration:none; font-weight: 900; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">للتواصل اضغط هنا</a>
+    </div>
+</section>
+
+<section id="sec-works" class="sec"><div id="folders-grid" class="grid"></div></section>
+<div id="dynamic-pages"></div>
 
 <div class="admin-trigger" onclick="checkAdmin()"></div>
-
 <div id="admin-panel">
     <div style="max-width: 500px; margin: 0 auto;">
-        <h2 style="color:var(--accent)">إدارة الموقع</h2>
-        <button onclick="location.reload()" style="width:100%; padding:10px; background:red; color:white; border:none; border-radius:8px;">إغلاق لوحة الإدارة</button>
+        <h2 style="color:var(--accent)">إدارة الموقع - v28</h2>
+        <button onclick="location.reload()" style="width:100%; padding:10px; background:red; color:white; border:none; border-radius:8px;">خروج</button>
         
-        <div style="background: #222; padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid var(--accent);">
-            <p style="margin-top:0">وضع الصيانة:</p>
-            <button onclick="setMaintenance(true)" style="background:#e67e22; color:white; padding:12px; border:none; border-radius:5px; width:48%; cursor:pointer;">إيقاف الموقع</button>
-            <button onclick="setMaintenance(false)" style="background:#27ae60; color:white; padding:12px; border:none; border-radius:5px; width:48%; cursor:pointer;">تشغيل الموقع</button>
-        </div>
+        <button class="reset-btn" onclick="resetAllVotes()">تصفير جميع اللايكات</button>
 
-        <button class="reset-btn" onclick="resetAllVotes()">تصفير اللايكات</button>
         <input type="text" id="in-name" placeholder="اسم الموقع">
         <input type="text" id="in-wa" placeholder="رقم الواتساب">
         <input type="text" id="in-map" placeholder="رابط قوقل ماب">
         <textarea id="in-hours" placeholder="ساعات العمل"></textarea>
         <textarea id="in-desc" placeholder="وصف الصفحة"></textarea>
-        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--accent); color:black; font-weight:bold; border:none; border-radius:8px;">حفظ التغييرات</button>
+        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--accent); font-weight:bold; border:none; border-radius:8px;">حفظ البيانات</button>
         <hr style="margin:30px 0; opacity:0.1;">
-        <input type="text" id="new-p" placeholder="اسم قسم جديد"><button onclick="addP()" style="width:100%; padding:10px;">+ إضافة قسم</button>
+        <input type="text" id="new-p" placeholder="اسم قسم جديد"><button onclick="addP()" style="width:100%; padding:10px; border-radius:8px;">+ إضافة القسم</button>
         <hr style="margin:30px 0; opacity:0.1;">
         <select id="target"><optgroup label="الأقسام" id="opt-p"></optgroup><optgroup label="المجلدات" id="opt-a"></optgroup></select>
         <input type="text" id="img-url" placeholder="رابط الصورة"><input type="text" id="img-txt" placeholder="وصف الصورة">
-        <button onclick="upload()" style="width:100%; padding:18px; background:white; color:black; font-weight:bold; border:none; border-radius:8px;">نشر الآن</button>
+        <button onclick="upload()" style="width:100%; padding:18px; background:white; color:black; font-weight:bold; border:none; border-radius:8px;">نشر الصورة</button>
     </div>
 </div>
 
@@ -118,56 +102,127 @@
 
     db.ref(DB_PATH).on('value', snap => {
         const data = snap.val() || {};
-        
-        // فحص وضع الصيانة بقوة
-        if (data.is_maintenance === true || data.is_maintenance === "true") {
-            document.getElementById('body-tag').classList.add('is-off');
-        } else {
-            document.getElementById('body-tag').classList.remove('is-off');
-        }
-
         renderStatic(data);
     });
 
-    function setMaintenance(status) {
-        db.ref(DB_PATH).update({ is_maintenance: status }).then(() => {
-            alert(status ? "تم إغلاق الموقع" : "تم تشغيل الموقع");
-        });
-    }
+    db.ref(`${DB_PATH}/current_reset_id`).on('value', snap => {
+        if(snap.val()) localStorage.setItem('site_reset_id', snap.val());
+    });
 
-    // نفس بقية الوظائف المستقرة (renderStatic, tab, handleVote, الخ)
     function renderStatic(data) {
         allWorksImages = [];
         const waNum = data.whatsapp_num || "";
         document.getElementById('view-name').innerText = data.site_name || "بصمة غير";
         document.getElementById('view-desc').innerText = data.home_desc || "";
         document.getElementById('view-hours').innerText = data.work_hours || "";
+        
         const helloMsg = encodeURIComponent("السلام عليكم، تحية طيبة لبصمة غير للديكور، حاب أتواصل معكم بخصوص أعمالكم الخشبية.");
         document.getElementById('wa-main-link').href = `https://wa.me/${waNum}?text=${helloMsg}`;
+        
         const mapDiv = document.getElementById('map-btn-wrapper');
-        if(data.map_url) { mapDiv.innerHTML = `<a href="${data.map_url}" target="_blank" style="color:var(--accent); text-decoration:none;">📍 موقعنا على الخريطة</a>`; }
+        if(data.map_url) { mapDiv.innerHTML = `<a href="${data.map_url}" target="_blank" style="color:var(--accent); text-decoration:none; font-size:0.9rem;">📍 موقعنا على الخريطة</a>`; }
         else { mapDiv.innerHTML = ''; }
+
         const nav = document.getElementById('main-nav');
         const dPages = document.getElementById('dynamic-pages');
         const fGrid = document.getElementById('folders-grid');
         const opP = document.getElementById('opt-p');
         const opA = document.getElementById('opt-a');
+
         nav.innerHTML = `<button class="nav-btn active" onclick="tab('home', this)">الرئيسية</button>`;
-        if(data.pages) { Object.keys(data.pages).forEach(id => { const p = data.pages[id]; nav.innerHTML += `<button class="nav-btn" onclick="tab('${id}', this)">${p.title}</button>`; opP.innerHTML += `<option value="pages/${id}">${p.title}</option>`; dPages.innerHTML += `<section id="sec-${id}" class="sec"><div class="grid">${renderImgs(p.imgs, waNum, `pages/${id}/imgs`)}</div></section>`; }); }
+        if(data.pages) {
+            Object.keys(data.pages).forEach(id => {
+                const p = data.pages[id];
+                nav.innerHTML += `<button class="nav-btn" onclick="tab('${id}', this)">${p.title}</button>`;
+                opP.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
+                dPages.innerHTML += `<section id="sec-${id}" class="sec"><div class="grid">${renderImgs(p.imgs, waNum, `pages/${id}/imgs`)}</div></section>`;
+            });
+        }
         nav.innerHTML += `<button class="nav-btn" onclick="tab('works', this)">أعمالنا</button>`;
-        if(data.albums) { Object.keys(data.albums).forEach(id => { const a = data.albums[id]; opA.innerHTML += `<option value="albums/${id}">${a.name}</option>`; fGrid.innerHTML += `<div class="work-item" style="padding:50px 20px; text-align:center; cursor:pointer;" onclick="tab('alb-${id}')"><h3>📁 ${a.name}</h3></div>`; dPages.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="nav-btn" style="border:1px solid #333; margin-bottom:20px;" onclick="tab('works')">← العودة</button><div class="grid">${renderImgs(a.imgs, waNum, `albums/${id}/imgs`)}</div></section>`; if(a.imgs) Object.values(a.imgs).forEach(img => { if(img.url) allWorksImages.push(img.url); }); }); }
+        if(data.albums) {
+            Object.keys(data.albums).forEach(id => {
+                const a = data.albums[id];
+                opA.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
+                fGrid.innerHTML += `<div class="work-item" style="padding:50px 20px; text-align:center; cursor:pointer;" onclick="tab('alb-${id}')"><h3>📁 ${a.name}</h3></div>`;
+                dPages.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="nav-btn" style="border:1px solid #333; margin-bottom:20px;" onclick="tab('works')">← العودة</button><div class="grid">${renderImgs(a.imgs, waNum, `albums/${id}/imgs`)}</div></section>`;
+                if(a.imgs) Object.values(a.imgs).forEach(img => { if(img.url) allWorksImages.push(img.url); });
+            });
+        }
         if(allWorksImages.length > 0) startDynamicHeader();
     }
-    function renderImgs(imgs, wa, basePath) { if(!imgs) return ''; const resetKey = localStorage.getItem('site_reset_id') || '0'; return Object.keys(imgs).map(id => { const img = imgs[id]; const path = `${basePath}/${id}`; const voted = localStorage.getItem('voted_'+path+'_'+resetKey); const orderMsg = encodeURIComponent(`مرحباً، حاب استفسر عن هذا العمل: ${img.desc || ''}`); return `<div class="work-item"><div class="img-box" onclick="viewImg('${img.url}')"><img src="${img.url}" loading="lazy"></div><div class="item-content"><h3>${img.desc || ''}</h3><div class="vote-bar"><button class="vote-btn ${voted==='likes'?'voted':''}" onclick="handleVote(event, '${path}', 'likes', '${id}')">👍 <span id="count-likes-${id}">${img.likes || 0}</span></button><button class="vote-btn ${voted==='dislikes'?'voted':''}" onclick="handleVote(event, '${path}', 'dislikes', '${id}')">👎 <span id="count-dislikes-${id}">${img.dislikes || 0}</span></button></div><button class="order-btn" onclick="window.open('https://wa.me/${wa}?text=${orderMsg}')">استفسر الآن</button></div></div>`; }).join(''); }
-    function startDynamicHeader() { if(headerInterval) clearInterval(headerInterval); const header = document.getElementById('dynamic-header'); const changeBg = () => { if (allWorksImages.length > 0) { const randomImg = allWorksImages[Math.floor(Math.random() * allWorksImages.length)]; header.style.backgroundImage = `url('${randomImg}')`; } }; changeBg(); headerInterval = setInterval(changeBg, 5000); }
+
+    function startDynamicHeader() {
+        if(headerInterval) clearInterval(headerInterval);
+        const header = document.getElementById('dynamic-header');
+        const changeBg = () => {
+            if (allWorksImages.length > 0) {
+                const randomImg = allWorksImages[Math.floor(Math.random() * allWorksImages.length)];
+                header.style.backgroundImage = `url('${randomImg}')`;
+            }
+        };
+        changeBg();
+        headerInterval = setInterval(changeBg, 5000);
+    }
+
+    function renderImgs(imgs, wa, basePath) {
+        if(!imgs) return '';
+        const resetKey = localStorage.getItem('site_reset_id') || '0';
+        return Object.keys(imgs).map(id => {
+            const img = imgs[id];
+            const path = `${basePath}/${id}`;
+            const voted = localStorage.getItem('voted_'+path+'_'+resetKey);
+            const orderMsg = encodeURIComponent(`مرحباً، حاب استفسر عن هذا العمل: ${img.desc || ''}`);
+            return `<div class="work-item">
+                <div class="img-box" onclick="viewImg('${img.url}')"><img src="${img.url}" loading="lazy"></div>
+                <div class="item-content">
+                    <h3>${img.desc || ''}</h3>
+                    <div class="vote-bar">
+                        <button class="vote-btn ${voted==='likes'?'voted':''}" id="btn-likes-${id}" onclick="handleVote(event, '${path}', 'likes', '${id}')">👍 <span id="count-likes-${id}">${img.likes || 0}</span></button>
+                        <button class="vote-btn ${voted==='dislikes'?'voted':''}" id="btn-dislikes-${id}" onclick="handleVote(event, '${path}', 'dislikes', '${id}')">👎 <span id="count-dislikes-${id}">${img.dislikes || 0}</span></button>
+                    </div>
+                    <button class="order-btn" onclick="window.open('https://wa.me/${wa}?text=${orderMsg}')">استفسر الآن</button>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
     function viewImg(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
-    function handleVote(e, path, type, id) { e.preventDefault(); e.stopPropagation(); const rK = localStorage.getItem('site_reset_id') || '0'; if(localStorage.getItem('voted_'+path+'_'+rK)) return; db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1).then(() => { localStorage.setItem('voted_'+path+'_'+rK, type); location.reload(); }); }
-    function tab(id, btn) { document.querySelectorAll('.sec').forEach(s => s.classList.remove('active')); const target = document.getElementById('sec-'+id); if(target) target.classList.add('active'); if(btn) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); } }
+    
+    function handleVote(e, path, type, id) {
+        e.preventDefault(); e.stopPropagation();
+        const resetKey = localStorage.getItem('site_reset_id') || '0';
+        if(localStorage.getItem('voted_'+path+'_'+resetKey)) return;
+        db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1).then(() => {
+            localStorage.setItem('voted_'+path+'_'+resetKey, type);
+            document.getElementById(`btn-${type}-${id}`).classList.add('voted');
+        });
+    }
+
+    function resetAllVotes() {
+        if(!confirm("هل أنت متأكد؟")) return;
+        const newResetKey = Date.now().toString();
+        db.ref(DB_PATH).once('value', snap => {
+            const data = snap.val();
+            const updates = {};
+            updates[`${DB_PATH}/current_reset_id`] = newResetKey;
+            if(data.pages) Object.keys(data.pages).forEach(pId => { if(data.pages[pId].imgs) Object.keys(data.pages[pId].imgs).forEach(iId => { updates[`${DB_PATH}/pages/${pId}/imgs/${iId}/likes`] = 0; updates[`${DB_PATH}/pages/${pId}/imgs/${iId}/dislikes`] = 0; }); });
+            if(data.albums) Object.keys(data.albums).forEach(aId => { if(data.albums[aId].imgs) Object.keys(data.albums[aId].imgs).forEach(iId => { updates[`${DB_PATH}/albums/${aId}/imgs/${iId}/likes`] = 0; updates[`${DB_PATH}/albums/${aId}/imgs/${iId}/dislikes`] = 0; }); });
+            db.ref().update(updates).then(() => alert("تم التصفير!"));
+        });
+    }
+
+    function tab(id, btn) {
+        document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById('sec-'+id);
+        if(target) target.classList.add('active');
+        if(btn) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+        window.scrollTo({top: (id==='home' ? 0 : 400), behavior:'smooth'});
+    }
+    
     function checkAdmin() { if(prompt("الرمز:") === '808090') document.getElementById('admin-panel').style.display='block'; }
     function saveData() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, map_url: document.getElementById('in-map').value, work_hours: document.getElementById('in-hours').value, home_desc: document.getElementById('in-desc').value }).then(() => alert("تم الحفظ")); }
     function addP() { const t = document.getElementById('new-p').value; if(t) db.ref(`${DB_PATH}/pages`).push({ title: t }); }
     function upload() { const t = document.getElementById('target').value, u = document.getElementById('img-url').value, d = document.getElementById('img-txt').value; if(t && u) db.ref(`${DB_PATH}/${t}/imgs`).push({ url: u, desc: d, likes: 0, dislikes: 0 }).then(()=>alert("نُشر")); }
-    function resetAllVotes() { if(!confirm("هل أنت متأكد؟")) return; const nK = Date.now().toString(); db.ref(DB_PATH).update({ current_reset_id: nK }).then(() => alert("تم التصفير")); }
 </script>
 </body>
 </html>
