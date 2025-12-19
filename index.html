@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير | النسخة المطورة v28</title>
+    <title>بصمة غير للديكور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -20,18 +20,28 @@
         .sec { width: 92%; max-width: 1200px; margin: 60px auto; display: none; }
         .sec.active { display: block; animation: fadeUp 0.6s ease-out; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .hub-container { display: flex; justify-content: center; gap: 15px; margin-top: 40px; flex-wrap: wrap; }
+        .hub-link { flex: 1; min-width: 200px; max-width: 280px; height: 60px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 900; border-radius: 12px; transition: 0.3s; border: 1px solid var(--border); }
+        .link-map { background: white; color: black; }
+        .link-wa { background: rgba(255,255,255,0.05); color: white; }
+
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+        .folder-card { padding: 50px 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); text-align: center; cursor: pointer; transition: 0.4s; border-radius: 8px; }
+        .folder-card:hover { background: white; color: black; }
+        
         .work-item { background: #080808; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
         .img-box { width: 100%; aspect-ratio: 1/1; cursor: pointer; overflow: hidden; }
         .img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        .work-item:hover img { transform: scale(1.05); }
+        
         .vote-bar { display: flex; gap: 10px; margin-top: 15px; }
         .vote-btn { flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; cursor: pointer; border-radius: 5px; font-weight: bold; }
         .vote-btn.voted { border-color: var(--neon); color: var(--neon); }
         .order-btn { width: 100%; padding: 15px; background: var(--neon); color: black; border: none; font-weight: 900; margin-top: 10px; cursor: pointer; border-radius: 5px; }
+
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 7000; padding: 20px; overflow-y: auto; }
         .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; opacity: 0; z-index: 6500; }
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #111; color: #fff; border: 1px solid #333; border-radius: 5px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #111; color: #fff; border: 1px solid #333; }
     </style>
 </head>
 <body onmousemove="updateGlow(event)">
@@ -40,50 +50,59 @@
 
 <header>
     <h1 id="view-name">بصمة غير</h1>
-    <p style="color: var(--neon); font-weight: 900; margin-top: 10px;">ديكورات عصرية</p>
+    <p style="color: var(--neon); font-weight: 900; margin-top: 10px;">فخامة التصميم الحديث</p>
 </header>
 
 <nav class="nav-scroller" id="main-nav"></nav>
 
 <section id="sec-home" class="sec active">
     <div style="text-align: center;">
-        <p id="view-desc" style="font-size: 1.2rem; color: #ccc;"></p>
-        <div id="wa-container" style="margin-top:30px;">
-            <a id="wa-link" href="#" target="_blank" style="padding: 20px 40px; background: #25d366; color: white; text-decoration: none; border-radius: 50px; font-weight: 900;">تواصل عبر واتساب</a>
+        <p id="view-desc" style="font-size: 1.3rem; color: #aaa;"></p>
+        <div id="view-hours" style="color: var(--neon); margin: 20px 0; font-weight: 900;"></div>
+        <div class="hub-container">
+            <div id="map-btn-wrapper" style="display:contents;"></div>
+            <a id="wa-main-link" href="#" target="_blank" class="hub-link link-wa">تواصل معنا الآن</a>
         </div>
     </div>
 </section>
 
-<section id="sec-works" class="sec"><div id="folders-grid" class="grid"></div></section>
+<section id="sec-works" class="sec">
+    <div id="folders-grid" class="grid"></div>
+</section>
+
 <div id="dynamic-pages"></div>
 
 <div class="admin-trigger" onclick="checkAdmin()"></div>
 
 <div id="admin-panel">
-    <div style="max-width: 500px; margin: 0 auto;">
-        <h2 style="color: var(--neon);">لوحة الإدارة</h2>
+    <div style="max-width: 600px; margin: 0 auto;">
+        <h2 style="color: var(--neon);">لوحة التحكم v28</h2>
         <button onclick="location.reload()" style="background:red; color:white; padding:10px; border:none; width:100%; margin-bottom:20px;">خروج</button>
         
-        <div style="background:#111; padding:15px; border-radius:10px; margin-bottom:20px; border: 1px solid red;">
-            <h4 style="margin:0 0 10px 0; color:red;">قسم تصفير التفاعلات</h4>
-            <p style="font-size:0.8rem; color:#888;">سيؤدي هذا لحذف جميع اللايكات والديسلايكات من كافة الصور.</p>
-            <button onclick="resetAllVotes()" style="background:red; color:white; padding:10px; border:none; cursor:pointer; width:100%; font-weight:bold;">تصفير كافة اللايكات الآن</button>
+        <div style="background:#111; padding:15px; border-radius:10px; margin-bottom:20px; border: 1px solid red; text-align:center;">
+            <h4 style="margin:0 0 10px 0; color:red;">إدارة التفاعلات</h4>
+            <button onclick="resetAllVotes()" style="background:red; color:white; padding:10px; border:none; cursor:pointer; width:100%; font-weight:bold;">تصفير كافة اللايكات والديسلايكات</button>
         </div>
 
         <input type="text" id="in-name" placeholder="اسم الموقع">
         <input type="text" id="in-wa" placeholder="رقم الواتساب">
-        <textarea id="in-desc" placeholder="وصف الموقع" rows="3"></textarea>
-        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--neon); color:black; font-weight:bold; border:none;">حفظ الإعدادات</button>
+        <input type="text" id="in-map" placeholder="رابط جوجل ماب">
+        <textarea id="in-hours" placeholder="ساعات العمل"></textarea>
+        <textarea id="in-desc" placeholder="وصف الصفحة الرئيسية"></textarea>
+        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--neon); color:black; font-weight:bold; border:none;">حفظ البيانات الأساسية</button>
         
-        <hr style="opacity:0.1; margin:20px 0;">
+        <hr style="opacity:0.1; margin:30px 0;">
         <input type="text" id="new-p" placeholder="اسم قسم جديد">
         <button onclick="addP()" style="width:100%; padding:10px; background:white; color:black; border:none;">إضافة قسم</button>
         
-        <hr style="opacity:0.1; margin:20px 0;">
-        <select id="target"><optgroup label="الأقسام" id="opt-p"></optgroup></select>
+        <hr style="opacity:0.1; margin:30px 0;">
+        <select id="target">
+            <optgroup label="الأقسام" id="opt-p"></optgroup>
+            <optgroup label="المجلدات" id="opt-a"></optgroup>
+        </select>
         <input type="text" id="img-url" placeholder="رابط الصورة">
-        <input type="text" id="img-txt" placeholder="وصف الصورة">
-        <button onclick="upload()" style="width:100%; padding:15px; background:var(--neon); color:black; border:none; font-weight:bold;">نشر العمل</button>
+        <input type="text" id="img-txt" placeholder="وصف العمل">
+        <button onclick="upload()" style="width:100%; padding:15px; background:var(--neon); color:black; font-weight:bold; border:none;">نشر العمل الآن</button>
     </div>
 </div>
 
@@ -108,85 +127,89 @@
     });
 
     function render(data) {
+        const waNum = data.whatsapp_num || "";
         document.getElementById('view-name').innerText = data.site_name || "بصمة غير";
         document.getElementById('view-desc').innerText = data.home_desc || "";
-        document.getElementById('wa-link').href = `https://wa.me/${data.whatsapp_num || ''}`;
+        document.getElementById('view-hours').innerText = data.work_hours || "";
+        document.getElementById('wa-main-link').href = `https://wa.me/${waNum}`;
+        
+        if(data.map_url) document.getElementById('map-btn-wrapper').innerHTML = `<a href="${data.map_url}" target="_blank" class="hub-link link-map">📍 موقعنا على الخريطة</a>`;
 
         const nav = document.getElementById('main-nav');
         const dPages = document.getElementById('dynamic-pages');
+        const fGrid = document.getElementById('folders-grid');
         const opP = document.getElementById('opt-p');
+        const opA = document.getElementById('opt-a');
 
         nav.innerHTML = `<button class="nav-btn active" onclick="tab('home', this)">الرئيسية</button>`;
-        dPages.innerHTML = ""; opP.innerHTML = "";
+        dPages.innerHTML = ""; fGrid.innerHTML = ""; opP.innerHTML = ""; opA.innerHTML = "";
 
+        // معالجة الأقسام
         if(data.pages) {
             Object.keys(data.pages).forEach(id => {
                 const p = data.pages[id];
                 nav.innerHTML += `<button class="nav-btn" onclick="tab('${id}', this)">${p.title}</button>`;
                 opP.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
-                
-                let gridHtml = '<div class="grid">';
-                if(p.imgs) {
-                    Object.keys(p.imgs).forEach(imgId => {
-                        const img = p.imgs[imgId];
-                        const path = `pages/${id}/imgs/${imgId}`;
-                        const voted = localStorage.getItem('voted_'+path);
-                        gridHtml += `
-                            <div class="work-item">
-                                <div class="img-box"><img src="${img.url}"></div>
-                                <div style="padding:15px;">
-                                    <p>${img.desc || ''}</p>
-                                    <div class="vote-bar">
-                                        <button class="vote-btn ${voted==='likes'?'voted':''}" onclick="handleVote(event, '${path}', 'likes')">👍 ${img.likes || 0}</button>
-                                        <button class="vote-btn ${voted==='dislikes'?'voted':''}" onclick="handleVote(event, '${path}', 'dislikes')">👎 ${img.dislikes || 0}</button>
-                                    </div>
-                                    <button class="order-btn" onclick="window.open('https://wa.me/${data.whatsapp_num}?text=استفسار عن: ${img.desc}')">طلب استشارة</button>
-                                </div>
-                            </div>`;
-                    });
-                }
-                gridHtml += '</div>';
-                dPages.innerHTML += `<section id="sec-${id}" class="sec">${gridHtml}</section>`;
+                dPages.innerHTML += `<section id="sec-${id}" class="sec"><h2 style="text-align:center;">${p.title}</h2><div class="grid">${renderImgs(p.imgs, waNum, `pages/${id}/imgs`)}</div></section>`;
+            });
+        }
+
+        // معالجة المجلدات (أعمالنا)
+        nav.innerHTML += `<button class="nav-btn" onclick="tab('works', this)">أعمالنا</button>`;
+        if(data.albums) {
+            Object.keys(data.albums).forEach(id => {
+                const a = data.albums[id];
+                opA.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
+                fGrid.innerHTML += `<div class="folder-card" onclick="tab('alb-${id}')"><h3>${a.name}</h3></div>`;
+                dPages.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="nav-btn" onclick="tab('works')">← العودة</button><div class="grid">${renderImgs(a.imgs, waNum, `albums/${id}/imgs`)}</div></section>`;
             });
         }
     }
 
-    // إصلاح دالة التصويت لعدم القفز للرئيسية
+    function renderImgs(imgs, wa, basePath) {
+        if(!imgs) return '';
+        return Object.keys(imgs).map(id => {
+            const img = imgs[id];
+            const path = `${basePath}/${id}`;
+            const voted = localStorage.getItem('voted_'+path);
+            return `
+                <div class="work-item">
+                    <div class="img-box"><img src="${img.url}"></div>
+                    <div style="padding:15px;">
+                        <p>${img.desc || ''}</p>
+                        <div class="vote-bar">
+                            <button class="vote-btn ${voted==='likes'?'voted':''}" onclick="handleVote(event, '${path}', 'likes')">👍 ${img.likes || 0}</button>
+                            <button class="vote-btn ${voted==='dislikes'?'voted':''}" onclick="handleVote(event, '${path}', 'dislikes')">👎 ${img.dislikes || 0}</button>
+                        </div>
+                        <button class="order-btn" onclick="window.open('https://wa.me/${wa}?text=استفسار عن: ${img.desc || ''}')">طلب تفاصيل</button>
+                    </div>
+                </div>`;
+        }).join('');
+    }
+
     function handleVote(e, path, type) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if(localStorage.getItem('voted_'+path)) {
-            alert("لقد قمت بالتقييم مسبقاً");
-            return;
-        }
-
-        db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1)
-        .then(() => {
-            localStorage.setItem('voted_'+path, type);
-        });
+        e.preventDefault(); e.stopPropagation();
+        if(localStorage.getItem('voted_'+path)) return alert("لقد قيمت مسبقاً");
+        db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1).then(() => localStorage.setItem('voted_'+path, type));
     }
 
     function tab(id, btn) {
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
         document.getElementById('sec-'+id).classList.add('active');
-        if(btn) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-        // منع القفز للأعلى إذا كنا في نفس الصفحة
-        if(id !== 'home') window.scrollTo({top: 400, behavior:'smooth'});
+        if(btn) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+        if(id !== 'home') window.scrollTo({top: 450, behavior:'smooth'}); else window.scrollTo({top: 0, behavior:'smooth'});
     }
 
     function checkAdmin() {
-        const p = prompt("رمز الإدارة:");
-        if(p === '808090') document.getElementById('admin-panel').style.display = 'block';
+        if(prompt("رمز الإدارة:") === '808090') document.getElementById('admin-panel').style.display = 'block';
     }
 
     function saveData() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('in-name').value,
             whatsapp_num: document.getElementById('in-wa').value,
+            map_url: document.getElementById('in-map').value,
+            work_hours: document.getElementById('in-hours').value,
             home_desc: document.getElementById('in-desc').value
         }).then(() => alert("تم الحفظ"));
     }
@@ -197,28 +220,28 @@
     }
 
     function upload() {
-        const t = document.getElementById('target').value;
-        const u = document.getElementById('img-url').value;
-        const d = document.getElementById('img-txt').value;
+        const t = document.getElementById('target').value, u = document.getElementById('img-url').value, d = document.getElementById('img-txt').value;
         if(t && u) db.ref(`${DB_PATH}/${t}/imgs`).push({ url: u, desc: d, likes: 0, dislikes: 0 });
     }
 
-    // دالة تصفير اللايكات
     function resetAllVotes() {
-        if(!confirm("هل أنت متأكد من حذف جميع اللايكات من كافة الصور؟ لا يمكن التراجع!")) return;
-        
-        db.ref(`${DB_PATH}/pages`).once('value', snap => {
-            const pages = snap.val();
-            if(!pages) return;
-            
-            Object.keys(pages).forEach(pId => {
-                if(pages[pId].imgs) {
-                    Object.keys(pages[pId].imgs).forEach(imgId => {
-                        db.ref(`${DB_PATH}/pages/${pId}/imgs/${imgId}`).update({ likes: 0, dislikes: 0 });
+        if(!confirm("تأكيد تصفير كافة التفاعلات؟")) return;
+        db.ref(DB_PATH).once('value', snap => {
+            const data = snap.val();
+            const updates = {};
+            const process = (root) => {
+                if(!root) return;
+                Object.keys(root).forEach(pId => {
+                    if(root[pId].imgs) Object.keys(root[pId].imgs).forEach(iId => {
+                        updates[`${DB_PATH}/${pId==='pages'?'pages':'albums'}/${pId}/imgs/${iId}/likes`] = 0;
+                        updates[`${DB_PATH}/${pId==='pages'?'pages':'albums'}/${pId}/imgs/${iId}/dislikes`] = 0;
                     });
-                }
-            });
-            alert("تم تصفير جميع العدادات بنجاح");
+                });
+            };
+            // تصفير الأقسام والمجلدات
+            if(data.pages) Object.keys(data.pages).forEach(id => { if(data.pages[id].imgs) Object.keys(data.pages[id].imgs).forEach(imgId => { updates[`${DB_PATH}/pages/${id}/imgs/${imgId}/likes`] = 0; updates[`${DB_PATH}/pages/${id}/imgs/${imgId}/dislikes`] = 0; })});
+            if(data.albums) Object.keys(data.albums).forEach(id => { if(data.albums[id].imgs) Object.keys(data.albums[id].imgs).forEach(imgId => { updates[`${DB_PATH}/albums/${id}/imgs/${imgId}/likes`] = 0; updates[`${DB_PATH}/albums/${id}/imgs/${imgId}/dislikes`] = 0; })});
+            db.ref().update(updates).then(() => alert("تم التصفير"));
         });
     }
 </script>
