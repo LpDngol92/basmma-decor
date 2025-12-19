@@ -11,6 +11,16 @@
         :root { --accent: #c5a059; --bg: #080808; --card-bg: #111111; --text-main: #ffffff; --text-dim: #999999; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Noto Sans Arabic', sans-serif; margin: 0; background: var(--bg); color: var(--text-main); overflow-x: hidden; width: 100%; }
+        
+        /* شاشة الصيانة */
+        #maintenance-screen {
+            position: fixed; inset: 0; background: #000; z-index: 99999;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; padding: 20px;
+        }
+        #maintenance-screen h2 { font-size: 2rem; color: var(--accent); margin-bottom: 10px; }
+        #maintenance-screen p { color: var(--text-dim); font-size: 1.1rem; }
+
         #dynamic-header { height: 75vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; position: relative; background-color: #000; background-position: center; background-size: cover; transition: background-image 1.5s ease-in-out; }
         #dynamic-header::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), var(--bg)); z-index: 1; }
         #dynamic-header h1 { position: relative; z-index: 2; font-size: clamp(2.5rem, 10vw, 5.5rem); font-weight: 900; margin: 0; text-shadow: 0 10px 30px rgba(0,0,0,0.8); }
@@ -34,14 +44,21 @@
         .order-btn { width: 100%; padding: 15px; border-radius: 10px; background: var(--accent); color: black; border: none; font-weight: 800; cursor: pointer; font-size: 1rem; }
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 15px; cursor: zoom-out; }
         #modal img { max-width: 100%; max-height: 95vh; object-fit: contain; border-radius: 8px; }
-        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; z-index: 9999; opacity: 0; }
-        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 11000; padding: 25px; overflow-y: auto; }
+        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; z-index: 100000; opacity: 0; }
+        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 110000; padding: 25px; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 10px; }
-        .reset-btn { background: #ff4444; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin: 20px 0; cursor: pointer; }
+        .reset-btn { background: #ff4444; color: white; border: none; padding: 15px; border-radius: 8px; font-weight: bold; width: 100%; margin: 10px 0; cursor: pointer; }
+        .maintenance-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
+
+<div id="maintenance-screen">
+    <div style="font-size: 4rem;">⏳</div>
+    <h2>الموقع مغلق للصيانة حالياً</h2>
+    <p>نحن نقوم ببعض التحديثات لنخدمكم بشكل أفضل.. نعود قريباً جداً.</p>
+</div>
 
 <div id="modal" onclick="this.style.display='none'"><img src="" id="modal-img"></div>
 <header id="dynamic-header"><h1 id="view-name">بصمة غير</h1></header>
@@ -65,7 +82,15 @@
         <h2 style="color:var(--accent)">إدارة الموقع - v28</h2>
         <button onclick="location.reload()" style="width:100%; padding:10px; background:red; color:white; border:none; border-radius:8px;">خروج</button>
         
-        <button class="reset-btn" onclick="resetAllVotes()">تصفير جميع اللايكات وتفاعلات الزوار</button>
+        <div style="background: #1a1a1a; padding: 15px; border-radius: 10px; margin-top: 20px; border: 1px solid #333;">
+            <h4 style="margin:0 0 10px 0;">حالة الموقع (وضع الصيانة)</h4>
+            <div class="maintenance-btns">
+                <button onclick="setMaintenance(true)" style="background: #e67e22; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">إغلاق الموقع</button>
+                <button onclick="setMaintenance(false)" style="background: #27ae60; color: white; padding: 10px; border: none; border-radius: 5px; cursor: pointer;">تشغيل الموقع</button>
+            </div>
+        </div>
+
+        <button class="reset-btn" onclick="resetAllVotes()">تصفير جميع اللايكات</button>
 
         <input type="text" id="in-name" placeholder="اسم الموقع">
         <input type="text" id="in-wa" placeholder="رقم الواتساب">
@@ -95,13 +120,19 @@
     let allWorksImages = []; 
     let headerInterval;
 
-    // مراقبة التغييرات الحية للايكات والبيانات
     db.ref(DB_PATH).on('value', snap => {
         const data = snap.val() || {};
+        
+        // التحقق من وضع الصيانة
+        if(data.is_maintenance) {
+            document.getElementById('maintenance-screen').style.display = 'flex';
+        } else {
+            document.getElementById('maintenance-screen').style.display = 'none';
+        }
+
         renderStatic(data);
     });
 
-    // جلب كود التصفير الحالي من قاعدة البيانات
     db.ref(`${DB_PATH}/current_reset_id`).on('value', snap => {
         if(snap.val()) localStorage.setItem('site_reset_id', snap.val());
     });
@@ -183,8 +214,11 @@
         }).join('');
     }
 
-    function viewImg(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
+    function setMaintenance(status) {
+        db.ref(DB_PATH).update({ is_maintenance: status }).then(() => alert(status ? "تم إغلاق الموقع" : "تم تشغيل الموقع"));
+    }
 
+    function viewImg(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
     function handleVote(e, path, type, id) {
         e.preventDefault(); e.stopPropagation();
         const resetKey = localStorage.getItem('site_reset_id') || '0';
@@ -195,28 +229,16 @@
         });
     }
 
-    // وظيفة التصفير الشاملة
     function resetAllVotes() {
-        if(!confirm("هل أنت متأكد من تصفير جميع اللايكات وتفاعلات الزوار؟")) return;
+        if(!confirm("هل أنت متأكد؟")) return;
         const newResetKey = Date.now().toString();
         db.ref(DB_PATH).once('value', snap => {
             const data = snap.val();
             const updates = {};
             updates[`${DB_PATH}/current_reset_id`] = newResetKey;
-            
-            if(data.pages) Object.keys(data.pages).forEach(pId => {
-                if(data.pages[pId].imgs) Object.keys(data.pages[pId].imgs).forEach(iId => {
-                    updates[`${DB_PATH}/pages/${pId}/imgs/${iId}/likes`] = 0;
-                    updates[`${DB_PATH}/pages/${pId}/imgs/${iId}/dislikes`] = 0;
-                });
-            });
-            if(data.albums) Object.keys(data.albums).forEach(aId => {
-                if(data.albums[aId].imgs) Object.keys(data.albums[aId].imgs).forEach(iId => {
-                    updates[`${DB_PATH}/albums/${aId}/imgs/${iId}/likes`] = 0;
-                    updates[`${DB_PATH}/albums/${aId}/imgs/${iId}/dislikes`] = 0;
-                });
-            });
-            db.ref().update(updates).then(() => alert("تم التصفير بنجاح!"));
+            if(data.pages) Object.keys(data.pages).forEach(pId => { if(data.pages[pId].imgs) Object.keys(data.pages[pId].imgs).forEach(iId => { updates[`${DB_PATH}/pages/${pId}/imgs/${iId}/likes`] = 0; updates[`${DB_PATH}/pages/${pId}/imgs/${iId}/dislikes`] = 0; }); });
+            if(data.albums) Object.keys(data.albums).forEach(aId => { if(data.albums[aId].imgs) Object.keys(data.albums[aId].imgs).forEach(iId => { updates[`${DB_PATH}/albums/${aId}/imgs/${iId}/likes`] = 0; updates[`${DB_PATH}/albums/${aId}/imgs/${iId}/dislikes`] = 0; }); });
+            db.ref().update(updates).then(() => alert("تم التصفير!"));
         });
     }
 
