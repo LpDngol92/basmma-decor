@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير | v28 المصلحة</title>
+    <title>بصمة غير | v28 الإدارة الكاملة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -33,9 +33,10 @@
         .order-btn { width: 100%; padding: 15px; border-radius: 10px; background: var(--accent); color: black; border: none; font-weight: 800; cursor: pointer; }
         
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 11000; padding: 25px; overflow-y: auto; }
-        input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 10px; }
+        .admin-card { max-width: 600px; margin: 0 auto; background: #111; padding: 20px; border-radius: 15px; border: 1px solid #222; margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 10px; font-family: inherit; }
         .save-btn { width: 100%; padding: 15px; background: var(--accent); font-weight: bold; border: none; border-radius: 8px; color: black; cursor: pointer; }
-        .reset-btn { width: 100%; padding: 15px; background: #c0392b; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 10px 0; }
+        .reset-btn { width: 100%; padding: 15px; background: #c0392b; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 20px; font-weight: bold; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
@@ -62,18 +63,39 @@
 <div style="position:fixed; bottom:0; left:0; width:45px; height:45px; z-index:10000; opacity:0;" onclick="checkAdmin()"></div>
 
 <div id="admin-panel">
-    <div style="max-width: 500px; margin: 0 auto;">
-        <h2 style="color:var(--accent)">إدارة النظام v28</h2>
-        <button onclick="location.reload()" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:8px;">خروج</button>
-        <button class="reset-btn" onclick="deepResetAll()">🔥 تصفير شامل للايكات (حل نهائي)</button>
+    <div class="admin-card">
+        <h2 style="color:var(--accent)">⚙️ إدارة الموقع v28</h2>
+        <button onclick="location.reload()" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:8px; margin-bottom:15px;">خروج وإغلاق</button>
+        
+        <button class="reset-btn" onclick="deepResetAll()">🔥 تصفير جميع اللايكات (تحديث شامل)</button>
+
+        <h3>📝 المعلومات الأساسية</h3>
         <input type="text" id="in-name" placeholder="اسم الموقع">
-        <input type="text" id="in-wa" placeholder="رقم الواتساب">
+        <input type="text" id="in-wa" placeholder="رقم الواتساب (بدون +)">
         <input type="text" id="in-map" placeholder="رابط قوقل ماب">
         <textarea id="in-hours" placeholder="ساعات العمل"></textarea>
-        <textarea id="in-desc" placeholder="وصف الصفحة"></textarea>
-        <button onclick="saveData()" class="save-btn">حفظ البيانات</button>
+        <textarea id="in-desc" placeholder="وصف الصفحة الرئيسية"></textarea>
+        <button onclick="saveData()" class="save-btn">حفظ التغييرات</button>
+    </div>
+
+    <div class="admin-card">
+        <h3>📂 إدارة الأقسام والمجلدات</h3>
+        <input type="text" id="new-p-name" placeholder="اسم القسم الجديد">
+        <button onclick="addP()" style="width:100%; padding:12px; background:#2ecc71; color:white; border:none; border-radius:8px;">+ إضافة قسم جديد</button>
         <hr style="opacity:0.1; margin:20px 0;">
-        <input type="text" id="new-p" placeholder="اسم قسم جديد"><button onclick="addP()" style="width:100%; padding:10px;">+ إضافة القسم</button>
+        <input type="text" id="new-alb-name" placeholder="اسم المجلد الجديد (في أعمالنا)">
+        <button onclick="addAlb()" style="width:100%; padding:12px; background:#3498db; color:white; border:none; border-radius:8px;">+ إضافة مجلد جديد</button>
+    </div>
+
+    <div class="admin-card">
+        <h3>🖼️ إضافة صورة جديدة</h3>
+        <select id="target-select">
+            <optgroup label="الأقسام" id="opt-pages"></optgroup>
+            <optgroup label="المجلدات (أعمالنا)" id="opt-albums"></optgroup>
+        </select>
+        <input type="text" id="img-url" placeholder="رابط الصورة المباشر">
+        <input type="text" id="img-desc" placeholder="وصف الصورة / اسم المنتج">
+        <button onclick="uploadImg()" style="width:100%; padding:15px; background:white; color:black; font-weight:bold; border:none; border-radius:8px;">🚀 نشر الصورة الآن</button>
     </div>
 </div>
 
@@ -87,21 +109,20 @@
     const db = firebase.database();
     const DB_PATH = 'site_v28';
 
-    let currentTab = 'home'; // حفظ التبويب الحالي لمنع القفز
+    let currentTab = 'home'; 
     let allImages = [];
 
-    // جلب البيانات مرة واحدة عند التشغيل ثم المتابعة
     db.ref(DB_PATH).on('value', snap => {
         const data = snap.val() || {};
-        renderAll(data);
+        renderFull(data);
+        fillAdminInputs(data);
     });
 
-    function renderAll(data) {
+    function renderFull(data) {
         allImages = [];
         const wa = data.whatsapp_num || "";
         const rK = data.current_reset_id || "0";
 
-        // التحديثات الأساسية
         document.getElementById('view-name').innerText = data.site_name || "بصمة غير";
         document.getElementById('view-desc').innerText = data.home_desc || "";
         document.getElementById('view-hours').innerText = data.work_hours || "";
@@ -113,34 +134,39 @@
         const nav = document.getElementById('main-nav');
         const dPages = document.getElementById('dynamic-pages');
         const fList = document.getElementById('folders-list');
+        const optP = document.getElementById('opt-pages');
+        const optA = document.getElementById('opt-albums');
 
-        // بناء القائمة دون تدمير التبويب المفتوح
-        let navHtml = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="tab('home', this)">الرئيسية</button>`;
-        let pagesHtml = "";
-        
+        let navH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="tab('home', this)">الرئيسية</button>`;
+        let pagesH = "";
+        optP.innerHTML = ""; optA.innerHTML = "";
+
         if(data.pages) {
             Object.keys(data.pages).forEach(id => {
                 const p = data.pages[id];
-                navHtml += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="tab('${id}', this)">${p.title}</button>`;
-                pagesHtml += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(p.imgs, wa, `pages/${id}/imgs`, rK)}</div></section>`;
+                navH += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="tab('${id}', this)">${p.title}</button>`;
+                pagesH += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(p.imgs, wa, `pages/${id}/imgs`, rK)}</div></section>`;
+                optP.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
+                if(p.imgs) Object.values(p.imgs).forEach(i => allImages.push(i.url));
             });
         }
 
-        navHtml += `<button class="nav-btn ${currentTab==='works'?'active':''}" onclick="tab('works', this)">أعمالنا</button>`;
+        navH += `<button class="nav-btn ${currentTab==='works'?'active':''}" onclick="tab('works', this)">أعمالنا</button>`;
         
-        let foldersHtml = "";
+        let foldersH = "";
         if(data.albums) {
             Object.keys(data.albums).forEach(id => {
                 const a = data.albums[id];
-                foldersHtml += `<div class="name-item" onclick="tab('alb-${id}')" style="background:#111; padding:20px; border-radius:10px; border:1px solid #333; text-align:center;">${a.name}</div>`;
-                pagesHtml += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="border:1px solid #333; margin-bottom:20px;" onclick="tab('works')">← العودة</button><div class="grid">${drawImgs(a.imgs, wa, `albums/${id}/imgs`, rK)}</div></section>`;
+                foldersH += `<div class="name-item" onclick="tab('alb-${id}')" style="background:#111; padding:20px; border-radius:10px; border:1px solid #333; text-align:center; font-weight:bold;">${a.name}</div>`;
+                pagesH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="border:1px solid #333; margin-bottom:20px;" onclick="tab('works')">← العودة</button><div class="grid">${drawImgs(a.imgs, wa, `albums/${id}/imgs`, rK)}</div></section>`;
+                optA.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
                 if(a.imgs) Object.values(a.imgs).forEach(i => allImages.push(i.url));
             });
         }
 
-        nav.innerHTML = navHtml;
-        dPages.innerHTML = pagesHtml;
-        fList.innerHTML = foldersHtml;
+        nav.innerHTML = navH;
+        dPages.innerHTML = pagesH;
+        fList.innerHTML = foldersH;
 
         if(allImages.length > 0 && !window.headerStarted) startHeader();
     }
@@ -169,39 +195,62 @@
         const key = 'voted_' + path + '_' + rK;
         const current = localStorage.getItem(key);
         const ref = db.ref(`${DB_PATH}/${path}`);
-
-        if (current === type) {
-            ref.child(type).transaction(c => (c || 1) - 1);
-            localStorage.removeItem(key);
-        } else if (current) {
-            ref.child(current).transaction(c => (c || 1) - 1);
-            ref.child(type).transaction(c => (c || 0) + 1);
-            localStorage.setItem(key, type);
-        } else {
-            ref.child(type).transaction(c => (c || 0) + 1);
-            localStorage.setItem(key, type);
-        }
+        if (current === type) { ref.child(type).transaction(c => (c || 1) - 1); localStorage.removeItem(key); }
+        else if (current) { ref.child(current).transaction(c => (c || 1) - 1); ref.child(type).transaction(c => (c || 0) + 1); localStorage.setItem(key, type); }
+        else { ref.child(type).transaction(c => (c || 0) + 1); localStorage.setItem(key, type); }
     }
 
     function tab(id, btn) {
-        currentTab = id; // حفظ المكان الحالي
+        currentTab = id;
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
         const target = document.getElementById('sec-'+id);
         if(target) target.classList.add('active');
-        
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
-        
         window.scrollTo({top: (id==='home' ? 0 : 350), behavior:'smooth'});
     }
 
+    // إدارة البيانات
+    function fillAdminInputs(data) {
+        if(document.getElementById('admin-panel').style.display !== 'block') {
+            document.getElementById('in-name').value = data.site_name || "";
+            document.getElementById('in-wa').value = data.whatsapp_num || "";
+            document.getElementById('in-map').value = data.map_url || "";
+            document.getElementById('in-hours').value = data.work_hours || "";
+            document.getElementById('in-desc').value = data.home_desc || "";
+        }
+    }
+
+    function saveData() {
+        db.ref(DB_PATH).update({
+            site_name: document.getElementById('in-name').value,
+            whatsapp_num: document.getElementById('in-wa').value,
+            map_url: document.getElementById('in-map').value,
+            work_hours: document.getElementById('in-hours').value,
+            home_desc: document.getElementById('in-desc').value
+        }).then(() => alert("✅ تم الحفظ بنجاح"));
+    }
+
+    function addP() { const t = document.getElementById('new-p-name').value; if(t) db.ref(`${DB_PATH}/pages`).push({ title: t }).then(()=>alert("تمت إضافة القسم")); }
+    function addAlb() { const t = document.getElementById('new-alb-name').value; if(t) db.ref(`${DB_PATH}/albums`).push({ name: t }).then(()=>alert("تمت إضافة المجلد")); }
+    function uploadImg() {
+        const target = document.getElementById('target-select').value;
+        const url = document.getElementById('img-url').value;
+        const desc = document.getElementById('img-desc').value;
+        if(target && url) {
+            db.ref(`${DB_PATH}/${target}/imgs`).push({ url: url, desc: desc, likes: 0, dislikes: 0 }).then(() => {
+                alert("🚀 تم النشر بنجاح!");
+                document.getElementById('img-url').value = ""; document.getElementById('img-desc').value = "";
+            });
+        }
+    }
+
     function deepResetAll() {
-        if(!confirm("سيتم تصفير كل العدادات فوراً. هل أنت متأكد؟")) return;
+        if(!confirm("⚠️ سيتم تصفير كل العدادات فوراً. هل أنت متأكد؟")) return;
         db.ref(DB_PATH).once('value', snap => {
             const data = snap.val();
             let updates = {};
             updates['current_reset_id'] = Date.now().toString();
-            
             const clear = (obj, p) => {
                 for(let k in obj) {
                     if(k === 'likes' || k === 'dislikes') updates[p + '/' + k] = 0;
@@ -210,7 +259,6 @@
             };
             if(data.pages) clear(data.pages, 'pages');
             if(data.albums) clear(data.albums, 'albums');
-            
             db.ref(DB_PATH).update(updates).then(() => alert("✅ تم التصفير!"));
         });
     }
@@ -219,22 +267,11 @@
         window.headerStarted = true;
         const h = document.getElementById('dynamic-header');
         setInterval(() => {
-            h.style.backgroundImage = `url('${allImages[Math.floor(Math.random()*allImages.length)]}')`;
+            if(allImages.length > 0) h.style.backgroundImage = `url('${allImages[Math.floor(Math.random()*allImages.length)]}')`;
         }, 5000);
     }
-
     function viewImg(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
     function checkAdmin() { if(prompt("الرمز:") === '808090') document.getElementById('admin-panel').style.display='block'; }
-    function saveData() {
-        db.ref(DB_PATH).update({
-            site_name: document.getElementById('in-name').value,
-            whatsapp_num: document.getElementById('in-wa').value,
-            map_url: document.getElementById('in-map').value,
-            work_hours: document.getElementById('in-hours').value,
-            home_desc: document.getElementById('in-desc').value
-        }).then(() => alert("✅ تم الحفظ"));
-    }
-    function addP() { const t = document.getElementById('new-p').value; if(t) db.ref(`${DB_PATH}/pages`).push({ title: t }); }
 </script>
 </body>
 </html>
