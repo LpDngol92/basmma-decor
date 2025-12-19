@@ -17,8 +17,6 @@
         #dynamic-header h1 { position: relative; z-index: 2; font-size: clamp(2.5rem, 10vw, 5.5rem); font-weight: 900; margin: 0; text-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         
         nav { position: sticky; top: 0; background: rgba(8, 8, 8, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: center; align-items: center; z-index: 5000; overflow-x: auto; scrollbar-width: none; gap: 5px; }
-        nav::-webkit-scrollbar { display: none; }
-        
         .nav-btn { padding: 12px 20px; border: none; background: none; color: var(--text-dim); font-weight: 700; cursor: pointer; border-radius: 8px; font-size: 0.95rem; flex-shrink: 0; transition: 0.3s; }
         .nav-btn.active { color: var(--accent); background: rgba(197, 160, 89, 0.1); }
         
@@ -41,9 +39,9 @@
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 15px; cursor: zoom-out; }
         #modal img { max-width: 100%; max-height: 95vh; object-fit: contain; }
         
-        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 45px; height: 45px; z-index: 10000; opacity: 0; cursor: default; }
+        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 45px; height: 45px; z-index: 10000; opacity: 0; }
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 11000; padding: 25px; overflow-y: auto; }
-        input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 10px; font-family: inherit; }
+        input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 10px; }
         .save-btn { width: 100%; padding: 15px; background: var(--accent); font-weight: bold; border: none; border-radius: 8px; color: black; cursor: pointer; }
         .reset-btn { width: 100%; padding: 15px; background: #c0392b; font-weight: bold; border: none; border-radius: 8px; color: white; margin: 15px 0; cursor: pointer; }
 
@@ -72,10 +70,8 @@
 <div id="admin-panel">
     <div style="max-width: 500px; margin: 0 auto;">
         <h2 style="color:var(--accent)">إدارة الموقع v28</h2>
-        <button onclick="location.reload()" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:8px; margin-bottom:10px;">خروج</button>
-        
-        <button class="reset-btn" onclick="deepResetAll()">🔥 تصفير اللايكات للكل (تحديث شامل)</button>
-
+        <button onclick="location.reload()" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:8px;">خروج</button>
+        <button class="reset-btn" onclick="deepResetAll()">🔥 تصفير شامل وفوري للايكات</button>
         <input type="text" id="in-name" placeholder="اسم الموقع">
         <input type="text" id="in-wa" placeholder="رقم الواتساب">
         <input type="text" id="in-map" placeholder="رابط قوقل ماب">
@@ -83,11 +79,11 @@
         <textarea id="in-desc" placeholder="وصف الصفحة"></textarea>
         <button onclick="saveData()" class="save-btn">حفظ البيانات</button>
         <hr style="opacity:0.1; margin:20px 0;">
-        <input type="text" id="new-p" placeholder="اسم قسم جديد"><button onclick="addP()" style="width:100%; padding:10px;">+ إضافة القسم</button>
+        <input type="text" id="new-p" placeholder="اسم القسم جديد"><button onclick="addP()">+ إضافة القسم</button>
         <hr style="opacity:0.1; margin:20px 0;">
         <select id="target"><optgroup label="الأقسام" id="opt-p"></optgroup><optgroup label="المجلدات" id="opt-a"></optgroup></select>
         <input type="text" id="img-url" placeholder="رابط الصورة"><input type="text" id="img-txt" placeholder="وصف الصورة">
-        <button onclick="upload()" style="width:100%; padding:18px; background:white; color:black; font-weight:bold; border:none; border-radius:8px;">نشر الصورة</button>
+        <button onclick="upload()" style="width:100%; padding:18px; background:white; color:black; border:none; border-radius:8px;">نشر الصورة</button>
     </div>
 </div>
 
@@ -99,24 +95,17 @@
     };
     firebase.initializeApp(config);
     const db = firebase.database();
-    const DB_PATH = 'site_v28'; // المسار المطلوب
+    const DB_PATH = 'site_v28';
 
     let allWorksImages = []; 
     let headerInterval;
 
     db.ref(DB_PATH).on('value', snap => {
         const data = snap.val() || {};
-        renderStatic(data);
-        if(document.getElementById('admin-panel').style.display !== 'block') {
-            document.getElementById('in-name').value = data.site_name || "";
-            document.getElementById('in-wa').value = data.whatsapp_num || "";
-            document.getElementById('in-map').value = data.map_url || "";
-            document.getElementById('in-hours').value = data.work_hours || "";
-            document.getElementById('in-desc').value = data.home_desc || "";
-        }
+        renderSite(data);
     });
 
-    function renderStatic(data) {
+    function renderSite(data) {
         allWorksImages = [];
         const waNum = data.whatsapp_num || "";
         const rK = data.current_reset_id || "0";
@@ -157,11 +146,11 @@
         if(allWorksImages.length > 0) startHeader();
     }
 
-    function renderImgs(imgs, wa, basePath, rK) {
+    function renderImgs(imgs, wa, path, rK) {
         if(!imgs) return '';
         return Object.keys(imgs).map(id => {
             const img = imgs[id];
-            const itemPath = `${basePath}/${id}`;
+            const itemPath = `${path}/${id}`;
             const voted = localStorage.getItem('voted_'+itemPath+'_'+rK);
             return `<div class="work-item">
                 <div class="img-box" onclick="viewImg('${img.url}')"><img src="${img.url}"></div>
@@ -184,21 +173,46 @@
         });
     }
 
+    // وظيفة التصفير الجديدة والأضمن
     function deepResetAll() {
-        if(!confirm("سيتم تصفير جميع الصور وفتح التصويت من جديد، متأكد؟")) return;
-        const newID = Date.now().toString();
+        if(!confirm("سيتم تصفير كل العدادات فوراً، هل أنت متأكد؟")) return;
+        
         db.ref(DB_PATH).once('value', snap => {
-            let data = snap.val();
+            const data = snap.val();
             if(!data) return;
-            function clear(obj) {
-                for (let k in obj) {
-                    if (k === 'likes' || k === 'dislikes') obj[k] = 0;
-                    else if (typeof obj[k] === 'object' && obj[k] !== null) clear(obj[k]);
-                }
+
+            let updates = {};
+            const newResetID = Date.now().toString();
+            updates['current_reset_id'] = newResetID;
+
+            // تمرير على الأقسام وتجهيز مسارات التصفير
+            if(data.pages) {
+                Object.keys(data.pages).forEach(pId => {
+                    if(data.pages[pId].imgs) {
+                        Object.keys(data.pages[pId].imgs).forEach(imgId => {
+                            updates[`pages/${pId}/imgs/${imgId}/likes`] = 0;
+                            updates[`pages/${pId}/imgs/${imgId}/dislikes`] = 0;
+                        });
+                    }
+                });
             }
-            clear(data);
-            data.current_reset_id = newID;
-            db.ref(DB_PATH).set(data).then(() => alert("✅ تم التصفير!"));
+
+            // تمرير على المجلدات وتجهيز مسارات التصفير
+            if(data.albums) {
+                Object.keys(data.albums).forEach(aId => {
+                    if(data.albums[aId].imgs) {
+                        Object.keys(data.albums[aId].imgs).forEach(imgId => {
+                            updates[`albums/${aId}/imgs/${imgId}/likes`] = 0;
+                            updates[`albums/${aId}/imgs/${imgId}/dislikes`] = 0;
+                        });
+                    }
+                });
+            }
+
+            // تنفيذ التحديث الجماعي لضمان السرعة والدقة
+            db.ref(DB_PATH).update(updates).then(() => {
+                alert("✅ تم التصفير بنجاح تام!");
+            }).catch(e => alert("خطأ: " + e.message));
         });
     }
 
@@ -209,7 +223,7 @@
             map_url: document.getElementById('in-map').value,
             work_hours: document.getElementById('in-hours').value,
             home_desc: document.getElementById('in-desc').value
-        }).then(() => alert("✅ تم حفظ التغييرات!"));
+        }).then(() => alert("✅ تم الحفظ!"));
     }
 
     function startHeader() {
