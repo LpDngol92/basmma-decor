@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير | v28 النسخة الأصلية المصلحة</title>
+    <title>بصمة غير | النسخة الكاملة v28</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -14,135 +14,126 @@
             --gold: #c5a059;
             --bg: #0a0a0b;
             --card: #141416;
-            --heart: #e74c3c;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; overflow-x: hidden; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; margin: 0; padding: 0; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; width: 100%; }
 
-        /* شاشة الترحيب */
-        #splash {
-            position: fixed; inset: 0; background: var(--bg); z-index: 50000;
-            display: flex; align-items: center; justify-content: center;
-            transition: 1s ease-in-out;
-        }
-        #splash h2 { font-size: 2.5rem; color: var(--gold); opacity: 0; animation: fadeUp 1.2s forwards; }
-        @keyframes fadeUp { to { opacity: 1; transform: translateY(-10px); } }
+        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 50000; display: flex; align-items: center; justify-content: center; }
 
-        /* الهيدر */
         header {
             height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center;
             position: relative; background-size: cover; background-position: center;
-            transition: 2s ease-in-out;
+            transition: background-image 2s ease-in-out;
         }
-        header::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 20%, var(--bg) 95%); z-index: 1; }
+        header::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 20%, var(--bg) 95%); }
         
-        .header-content { position: relative; z-index: 5; text-align: center; }
-        header h1 { 
-            font-size: clamp(3rem, 15vw, 6rem); color: #fff; margin: 0;
-            text-shadow: 0 0 20px rgba(197, 160, 89, 0.4);
-            animation: glow 3s infinite alternate;
-        }
-        @keyframes glow { from { text-shadow: 0 0 10px var(--gold); } to { text-shadow: 0 0 30px var(--gold); } }
+        .header-content { position: relative; z-index: 5; text-align: center; width: 90%; }
+        header h1 { font-size: clamp(2.5rem, 10vw, 6rem); color: #fff; text-shadow: 0 0 20px var(--gold); }
 
-        /* القائمة العلوية الثابتة */
         nav {
-            position: sticky; top: 15px; z-index: 10000; margin: -50px auto 40px; width: fit-content;
-            background: rgba(20, 20, 22, 0.95); backdrop-filter: blur(15px); padding: 8px; border-radius: 25px;
-            border: 1px solid rgba(197, 160, 89, 0.2); display: flex; gap: 8px; overflow-x: auto;
+            position: sticky; top: 10px; z-index: 10000; margin: -40px auto 30px; 
+            width: fit-content; max-width: 95%; background: rgba(20, 20, 22, 0.95); 
+            backdrop-filter: blur(15px); padding: 5px; border-radius: 50px;
+            border: 1px solid rgba(197, 160, 89, 0.2); display: flex; gap: 5px; overflow-x: auto;
         }
-        .nav-btn { padding: 12px 25px; border: none; background: transparent; color: #777; font-weight: 800; border-radius: 20px; cursor: pointer; transition: 0.4s; white-space: nowrap; }
-        .nav-btn.active { background: var(--primary); color: #fff; box-shadow: 0 5px 15px rgba(92, 10, 10, 0.4); }
+        nav::-webkit-scrollbar { display: none; }
+        .nav-btn { padding: 10px 20px; border: none; background: transparent; color: #777; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; font-size: 0.9rem; }
+        .nav-btn.active { background: var(--primary); color: #fff; }
 
-        /* الأقسام */
-        .sec { width: 92%; max-width: 1300px; margin: 0 auto 100px; display: none; }
-        .sec.active { display: block; animation: fadeInUp 0.6s ease; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .sec { width: 90%; max-width: 1200px; margin: 0 auto 80px; display: none; }
+        .sec.active { display: block; }
 
-        .grid { display: grid; gap: 25px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+        /* حاوية المعلومات المدمجة */
+        .info-card {
+            background: var(--card); border: 1px solid rgba(197, 160, 89, 0.2);
+            border-radius: 20px; padding: 25px; margin: 0 auto 30px; max-width: 450px; text-align: center;
+        }
+        .info-label { color: var(--gold); display: block; font-weight: 800; font-size: 0.9rem; margin-bottom: 5px; }
+        .info-value { font-size: 1.1rem; font-weight: 500; }
 
-        .card { background: var(--card); border-radius: 25px; overflow: hidden; border: 1px solid rgba(255,255,255,0.04); transition: 0.4s ease; }
-        .card:hover { transform: translateY(-8px); border-color: var(--gold); }
-
+        .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        .card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
         .img-wrap { width: 100%; aspect-ratio: 1/1; overflow: hidden; cursor: zoom-in; }
-        .img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: 0.8s; }
+        .img-wrap img { width: 100%; height: 100%; object-fit: cover; }
         
-        .card-info { padding: 20px; text-align: center; }
-        .card-info h3 { margin: 0 0 15px; font-size: 1.1rem; color: #fff; }
+        .card-info { padding: 15px; text-align: center; }
+        .btn-order { width: 100%; padding: 15px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; }
 
-        /* التفاعلات */
-        .heart-btn {
-            display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
-            padding: 10px 20px; border-radius: 50px; background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08); transition: 0.3s; margin: 0 auto 15px; width: fit-content;
-        }
-        .heart-btn.voted { border-color: var(--heart); background: rgba(231, 76, 60, 0.1); }
-        .heart-btn.voted span { color: var(--heart); }
-
-        .btn-order {
-            width: 100%; padding: 15px; border-radius: 15px;
-            background: linear-gradient(135deg, var(--primary), #3d2317);
-            color: #fff; border: none; font-weight: 900; cursor: pointer;
-        }
-
-        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 60000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        /* لوحة التحكم */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 100000; padding: 20px; overflow-y: auto; }
-        .admin-box { max-width: 550px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
-        input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #0a0a0b; border: 1px solid #333; color: #fff; border-radius: 10px; }
+        .admin-box { max-width: 500px; margin: 0 auto; background: #151518; padding: 20px; border-radius: 20px; border: 1px solid var(--gold); }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; }
+        
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 60000; display: none; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-<div id="splash"><h2 id="splash-text">بصمة غير</h2></div>
-<div id="modal" onclick="this.style.display='none'"><img id="modal-img" style="max-width:90%; max-height:85vh; border-radius:15px;"></div>
+<div id="splash"><h2>بصمة غير</h2></div>
+<div id="modal" onclick="this.style.display='none'"><img id="modal-img" style="max-width:95%; max-height:80vh;"></div>
 
 <header id="main-h">
-    <div class="header-content">
-        <h1 id="view-title">بصمة غير</h1>
-    </div>
+    <div class="header-content"><h1 id="view-title">بصمة غير</h1></div>
 </header>
 
 <nav id="navbar"></nav>
 
 <main>
     <section id="sec-home" class="sec active">
-        <div style="max-width: 700px; margin: 0 auto; text-align: center; padding: 40px 0;">
-            <p id="h-desc" style="font-size: 1.4rem; color: #aaa; line-height: 1.7; white-space: pre-wrap;"></p>
-            <div id="h-hours" style="margin: 30px 0; color: var(--gold); font-weight: 800; font-size: 1.1rem;"></div>
-            <div id="h-map" style="margin-bottom: 40px;"></div>
-            <a id="wa-main" href="#" target="_blank" style="padding: 20px 60px; background: #fff; color: #000; border-radius: 50px; text-decoration: none; font-weight: 900;">تواصل معنا</a>
+        <div style="text-align: center; padding: 20px 0;">
+            <p id="h-desc" style="font-size: 1.2rem; color: #aaa; line-height: 1.6; white-space: pre-wrap; margin-bottom: 40px;"></p>
+            
+            <div class="info-card">
+                <div class="info-item">
+                    <span class="info-label">🕒 أوقات العمل</span>
+                    <span id="h-hours" class="info-value"></span>
+                </div>
+                <div style="height: 1px; background: rgba(255,255,255,0.05); margin: 15px 0;"></div>
+                <div class="info-item">
+                    <span class="info-label">📍 موقعنا</span>
+                    <div id="h-map" class="info-value"></div>
+                </div>
+            </div>
+
+            <a id="wa-main" href="#" target="_blank" style="display:inline-block; padding: 18px 60px; background: #fff; color: #000; border-radius: 50px; text-decoration: none; font-weight: 900;">تواصل معنا</a>
         </div>
     </section>
     
-    <section id="sec-works" class="sec">
-        <div id="albums-grid" class="grid"></div>
-    </section>
-    
+    <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
     <div id="dynamic-pages"></div>
 </main>
 
-<div style="position:fixed; bottom:0; left:0; width:50px; height:50px; z-index:110000;" onclick="checkAccess()"></div>
+<div style="position:fixed; bottom:0; left:0; width:60px; height:60px; z-index:110000; cursor:pointer;" onclick="checkAccess()"></div>
 
 <div id="admin-panel">
     <div class="admin-box">
         <button onclick="location.reload()" style="background:red; color:white; border:none; padding:8px 15px; border-radius:8px; float:left;">إغلاق</button>
-        <h2 style="color:var(--gold)">لوحة التحكم v28</h2>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة v28</h2>
+        
         <input type="text" id="in-name" placeholder="اسم الموقع">
         <input type="text" id="in-splash" placeholder="نص الترحيب">
-        <input type="text" id="in-wa" placeholder="واتساب (966..)">
+        <input type="text" id="in-wa" placeholder="رقم الواتساب">
         <input type="text" id="in-map" placeholder="رابط الخريطة">
         <input type="text" id="in-hours" placeholder="ساعات العمل">
         <textarea id="in-desc" placeholder="وصف الرئيسية"></textarea>
-        <button onclick="saveMain()" class="btn-order">حفظ المعلومات</button>
-        <hr style="opacity:0.1; margin:20px 0;">
-        <input type="text" id="new-p" placeholder="قسم جديد"><button onclick="addP()" style="width:100%; margin-bottom:5px;">إضافة قسم</button>
-        <input type="text" id="new-a" placeholder="مجلد جديد في أعمالنا"><button onclick="addA()" style="width:100%;">إضافة مجلد</button>
-        <hr style="opacity:0.1; margin:20px 0;">
+        <button onclick="saveMain()" class="btn-order">حفظ المعلومات الأساسية</button>
+        
+        <hr style="margin:25px 0; opacity:0.1;">
+        
+        <input type="text" id="new-p" placeholder="اسم قسم جديد">
+        <button onclick="addP()" style="width:100%; margin-bottom:10px; padding:10px; background:#222; color:#fff; border:1px solid #444; border-radius:8px;">+ إضافة قسم جديد</button>
+        
+        <input type="text" id="new-a" placeholder="اسم مجلد في أعمالنا">
+        <button onclick="addA()" style="width:100%; padding:10px; background:#222; color:#fff; border:1px solid #444; border-radius:8px;">+ إضافة مجلد أعمال</button>
+        
+        <hr style="margin:25px 0; opacity:0.1;">
+        
+        <label style="color:var(--gold); display:block; margin-bottom:5px;">اختر المجلد أو القسم للنشر:</label>
         <select id="target-sel"></select>
         <input type="text" id="img-u" placeholder="رابط الصورة">
-        <input type="text" id="img-d" placeholder="الوصف">
-        <button onclick="publish()" class="btn-order">نشر العمل</button>
-        <button onclick="resetData()" style="background:none; color:#444; border:none; margin-top:10px; cursor:pointer;">تصفير التفاعلات</button>
+        <input type="text" id="img-d" placeholder="وصف العمل">
+        <button onclick="publish()" class="btn-order">نشر العمل الآن</button>
     </div>
 </div>
 
@@ -170,17 +161,12 @@
         const rId = data.current_reset_id || "0";
         
         document.getElementById('view-title').innerText = data.site_name || "بصمة غير";
-        document.getElementById('splash-text').innerText = data.splash_title || "بصمة غير";
         document.getElementById('h-desc').innerText = data.home_desc || "";
         document.getElementById('h-hours').innerText = data.work_hours || "";
         document.getElementById('wa-main').href = `https://wa.me/${wa}`;
-        document.getElementById('h-map').innerHTML = data.map_url ? `<a href="${data.map_url}" target="_blank" style="color:var(--gold);">📍 موقعنا على الخريطة</a>` : '';
+        document.getElementById('h-map').innerHTML = data.map_url ? `<a href="${data.map_url}" target="_blank" style="color:#fff; text-decoration:underline;">عرض الموقع</a>` : 'غير محدد';
 
-        setTimeout(() => {
-            const sp = document.getElementById('splash');
-            sp.style.opacity = '0';
-            setTimeout(() => sp.style.display = 'none', 1000);
-        }, 2000);
+        setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 2000);
 
         const nav = document.getElementById('navbar');
         const dPages = document.getElementById('dynamic-pages');
@@ -199,13 +185,13 @@
             });
         }
         
-        navH += `<button class="nav-btn ${currentTab==='works'?'active':''}" onclick="go('works', this)">أعمالنا</button>`;
+        navH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works', this)">أعمالنا</button>`;
 
         let albH = "";
         if(data.albums) {
             Object.keys(data.albums).forEach(id => {
                 const a = data.albums[id];
-                albH += `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="margin:0">${a.name}</h3><small style="color:var(--gold)">عرض الصور ←</small></div>`;
+                albH += `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3>${a.name}</h3><small style="color:var(--gold)">عرض المجلد ←</small></div>`;
                 sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:20px; background:#1e1413" onclick="go('works')">← العودة</button><div class="grid">${draw(a.imgs, wa, `albums/${id}/imgs`, rId)}</div></section>`;
                 sel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
                 if(a.imgs) Object.values(a.imgs).forEach(i => { if(i.url) headerImgs.push(i.url); });
@@ -225,11 +211,11 @@
             return `<div class="card">
                 <div class="img-wrap" onclick="zoom('${img.url}')"><img src="${img.url}"></div>
                 <div class="card-info">
-                    <h3>${img.desc || 'بصمة غير'}</h3>
-                    <div class="heart-btn ${v==='likes'?'voted':''}" onclick="vote('${p}','likes','${rId}')">
-                        <span>❤</span> <b>إعجاب</b> <span style="margin-right:10px; color:var(--gold)">${img.likes || 0}</span>
+                    <h3 style="margin-bottom:10px;">${img.desc || 'بصمة غير'}</h3>
+                    <div style="margin-bottom:15px; cursor:pointer;" onclick="vote('${p}','likes','${rId}')">
+                        <span style="color:${v==='likes'?'#e74c3c':'#555'}">❤</span> <b>إعجاب</b> <span>${img.likes || 0}</span>
                     </div>
-                    <button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=${encodeURIComponent('استفسار عن: '+img.desc)}')">استفسر الآن</button>
+                    <button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=استفسار عن ${img.desc}')">استفسر الآن</button>
                 </div>
             </div>`;
         }).join('');
@@ -248,7 +234,7 @@
         if(target) target.classList.add('active');
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
-        window.scrollTo({top: (id==='home'?0:450), behavior:'smooth'});
+        window.scrollTo({top: (id==='home'?0:400), behavior:'smooth'});
     }
 
     function vote(p, t, rId) {
@@ -258,7 +244,11 @@
     }
 
     function zoom(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
-    function checkAccess() { if(prompt("الرمز:")==='808090') document.getElementById('admin-panel').style.display='block'; }
+    
+    function checkAccess() { 
+        let code = prompt("ادخل رمز الإدارة:"); 
+        if(code === '808090') document.getElementById('admin-panel').style.display='block'; 
+    }
     
     function saveMain() {
         db.ref(DB_PATH).update({
@@ -268,20 +258,17 @@
             map_url: document.getElementById('in-map').value,
             work_hours: document.getElementById('in-hours').value,
             home_desc: document.getElementById('in-desc').value
-        }).then(() => alert("تم الحفظ"));
+        }).then(() => alert("تم حفظ الإعدادات"));
     }
     function addP() { db.ref(`${DB_PATH}/pages`).push({ title: document.getElementById('new-p').value }); }
     function addA() { db.ref(`${DB_PATH}/albums`).push({ name: document.getElementById('new-a').value }); }
-    function publish() { db.ref(`${DB_PATH}/${document.getElementById('target-sel').value}/imgs`).push({ url:document.getElementById('img-u').value, desc:document.getElementById('img-d').value, likes:0 }); }
-    function resetData() {
-        if(confirm("تصفير؟")) {
-            db.ref(DB_PATH).once('value', s => {
-                const d = s.val(); let up = {}; up['current_reset_id'] = Date.now().toString();
-                const clr = (o, p) => { for(let k in o) { if(k==='likes') up[p+'/'+k]=0; else if(typeof o[k]==='object') clr(o[k], p+'/'+k); } }
-                if(d.pages) clr(d.pages, 'pages'); if(d.albums) clr(d.albums, 'albums');
-                db.ref(DB_PATH).update(up);
-            });
-        }
+    function publish() {
+        const t = document.getElementById('target-sel').value;
+        db.ref(`${DB_PATH}/${t}/imgs`).push({
+            url: document.getElementById('img-u').value,
+            desc: document.getElementById('img-d').value,
+            likes: 0
+        }).then(() => { alert("تم النشر"); document.getElementById('img-u').value=""; });
     }
 </script>
 </body>
