@@ -32,8 +32,8 @@
         .img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
         .item-content { padding: 18px; }
         .vote-bar { display: flex; gap: 10px; margin-bottom: 12px; }
-        .vote-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; border-radius: 10px; cursor: pointer; }
-        .vote-btn.voted { border-color: var(--accent); color: var(--accent); }
+        .vote-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; border-radius: 10px; cursor: pointer; transition: 0.3s ease; }
+        .vote-btn.voted { border-color: var(--accent); color: var(--accent); background: rgba(197, 160, 89, 0.1); }
         .order-btn { width: 100%; padding: 15px; border-radius: 10px; background: var(--accent); color: black; border: none; font-weight: 800; cursor: pointer; }
         
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 15px; cursor: zoom-out; }
@@ -79,7 +79,7 @@
         <textarea id="in-desc" placeholder="وصف الصفحة"></textarea>
         <button onclick="saveData()" class="save-btn">حفظ البيانات</button>
         <hr style="opacity:0.1; margin:20px 0;">
-        <input type="text" id="new-p" placeholder="اسم القسم جديد"><button onclick="addP()">+ إضافة القسم</button>
+        <input type="text" id="new-p" placeholder="اسم القسم الجديد"><button onclick="addP()">+ إضافة القسم</button>
         <hr style="opacity:0.1; margin:20px 0;">
         <select id="target"><optgroup label="الأقسام" id="opt-p"></optgroup><optgroup label="المجلدات" id="opt-a"></optgroup></select>
         <input type="text" id="img-url" placeholder="رابط الصورة"><input type="text" id="img-txt" placeholder="وصف الصورة">
@@ -166,53 +166,39 @@
         }).join('');
     }
 
+    // وظيفة التصويت الذكية (إضافة، تبديل، أو إلغاء)
     function vote(path, type, rK) {
-        if(localStorage.getItem('voted_'+path+'_'+rK)) return;
-        db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1).then(() => {
-            localStorage.setItem('voted_'+path+'_'+rK, type);
-        });
+        const storageKey = 'voted_' + path + '_' + rK;
+        const currentVote = localStorage.getItem(storageKey);
+        const ref = db.ref(`${DB_PATH}/${path}`);
+
+        if (currentVote === type) {
+            // إذا ضغط نفس الزر -> إلغاء التصويت
+            ref.child(type).transaction(c => (c || 1) - 1);
+            localStorage.removeItem(storageKey);
+        } else if (currentVote) {
+            // إذا كان مصوت لشيء آخر -> تبديل
+            ref.child(currentVote).transaction(c => (c || 1) - 1);
+            ref.child(type).transaction(c => (c || 0) + 1);
+            localStorage.setItem(storageKey, type);
+        } else {
+            // تصويت جديد
+            ref.child(type).transaction(c => (c || 0) + 1);
+            localStorage.setItem(storageKey, type);
+        }
     }
 
-    // وظيفة التصفير الجديدة والأضمن
     function deepResetAll() {
         if(!confirm("سيتم تصفير كل العدادات فوراً، هل أنت متأكد؟")) return;
-        
         db.ref(DB_PATH).once('value', snap => {
             const data = snap.val();
             if(!data) return;
-
             let updates = {};
             const newResetID = Date.now().toString();
             updates['current_reset_id'] = newResetID;
-
-            // تمرير على الأقسام وتجهيز مسارات التصفير
-            if(data.pages) {
-                Object.keys(data.pages).forEach(pId => {
-                    if(data.pages[pId].imgs) {
-                        Object.keys(data.pages[pId].imgs).forEach(imgId => {
-                            updates[`pages/${pId}/imgs/${imgId}/likes`] = 0;
-                            updates[`pages/${pId}/imgs/${imgId}/dislikes`] = 0;
-                        });
-                    }
-                });
-            }
-
-            // تمرير على المجلدات وتجهيز مسارات التصفير
-            if(data.albums) {
-                Object.keys(data.albums).forEach(aId => {
-                    if(data.albums[aId].imgs) {
-                        Object.keys(data.albums[aId].imgs).forEach(imgId => {
-                            updates[`albums/${aId}/imgs/${imgId}/likes`] = 0;
-                            updates[`albums/${aId}/imgs/${imgId}/dislikes`] = 0;
-                        });
-                    }
-                });
-            }
-
-            // تنفيذ التحديث الجماعي لضمان السرعة والدقة
-            db.ref(DB_PATH).update(updates).then(() => {
-                alert("✅ تم التصفير بنجاح تام!");
-            }).catch(e => alert("خطأ: " + e.message));
+            if(data.pages) Object.keys(data.pages).forEach(pId => { if(data.pages[pId].imgs) Object.keys(data.pages[pId].imgs).forEach(imgId => { updates[`pages/${pId}/imgs/${imgId}/likes`] = 0; updates[`pages/${pId}/imgs/${imgId}/dislikes`] = 0; }); });
+            if(data.albums) Object.keys(data.albums).forEach(aId => { if(data.albums[aId].imgs) Object.keys(data.albums[aId].imgs).forEach(imgId => { updates[`albums/${aId}/imgs/${imgId}/likes`] = 0; updates[`albums/${aId}/imgs/${imgId}/dislikes`] = 0; }); });
+            db.ref(DB_PATH).update(updates).then(() => alert("✅ تم التصفير بنجاح!"));
         });
     }
 
