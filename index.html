@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير | v28 النسخة المطورة</title>
+    <title>بصمة غير | v28 النسخة الملكية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -15,8 +15,7 @@
             --accent: #c5a059;
             --bg: #0a0a0b;
             --card-bg: #141416;
-            --success: #27ae60;
-            --danger: #e74c3c;
+            --heart: #e74c3c;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -57,28 +56,31 @@
         .card-info { padding: 20px; text-align: center; }
         .card-info h3 { margin: 0 0 15px; font-size: 1.1rem; color: #fff; }
 
-        /* أزرار التفاعل الجديدة - شكل احترافي */
-        .reaction-container {
-            display: flex; justify-content: center; gap: 20px; margin-bottom: 20px;
+        /* زر الإعجاب الجديد (قلب) */
+        .like-container {
+            display: flex; justify-content: center; margin-bottom: 20px;
         }
-        .react-box {
-            display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer;
-            padding: 8px 15px; border-radius: 15px; background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; min-width: 70px;
+        .heart-btn {
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
+            padding: 10px 25px; border-radius: 50px; background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08); transition: 0.3s;
         }
-        .react-box span:first-child { font-size: 1.5rem; transition: 0.3s; }
-        .react-box span:last-child { font-weight: 900; font-size: 0.9rem; color: #aaa; }
+        .heart-btn .icon { font-size: 1.4rem; color: #555; transition: 0.3s; }
+        .heart-btn .label { font-weight: 800; color: #888; font-size: 0.95rem; }
+        .heart-btn .count { font-weight: 900; color: var(--accent); margin-right: 5px; }
         
-        .react-box:hover { background: rgba(255,255,255,0.08); transform: scale(1.1); }
-        .react-box:hover span:first-child { transform: rotate(15deg); }
-
-        .react-box.up.voted { border-color: var(--success); background: rgba(39, 174, 96, 0.1); }
-        .react-box.up.voted span:last-child { color: var(--success); }
+        .heart-btn:hover { background: rgba(231, 76, 60, 0.05); transform: scale(1.05); }
         
-        .react-box.down.voted { border-color: var(--danger); background: rgba(231, 76, 60, 0.1); }
-        .react-box.down.voted span:last-child { color: var(--danger); }
+        .heart-btn.voted { border-color: var(--heart); background: rgba(231, 76, 60, 0.1); animation: heartBeat 0.4s ease-in-out; }
+        .heart-btn.voted .icon { color: var(--heart); }
+        .heart-btn.voted .label { color: #fff; }
 
-        /* زر الاستفسار مع تأثير اللمعان */
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
         .btn-order {
             width: 100%; padding: 15px; border-radius: 15px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -90,7 +92,6 @@
             background: rgba(255,255,255,0.15); transform: rotate(25deg); transition: 0.5s;
         }
         .btn-order:hover::after { left: 120%; }
-        .btn-order:active { transform: scale(0.97); }
 
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000; padding: 20px; overflow-y: auto; }
@@ -195,7 +196,7 @@
         if(data.albums) {
             Object.keys(data.albums).forEach(id => {
                 const a = data.albums[id];
-                albH += `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="margin:0">${a.name}</h3><small style="color:var(--accent)">عرض الأعمال</small></div>`;
+                albH += `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="margin:0">${a.name}</h3><small style="color:var(--accent)">عرض المجلد ←</small></div>`;
                 sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:20px; background:#1e1413" onclick="go('works')">← العودة</button><div class="grid">${draw(a.imgs, wa, `albums/${id}/imgs`, rId)}</div></section>`;
                 sel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
                 if(a.imgs) Object.values(a.imgs).forEach(i => { if(i.url) headerImgs.push(i.url); });
@@ -217,12 +218,11 @@
                 <div class="img-wrap" onclick="zoom('${img.url}')"><img src="${img.url}"></div>
                 <div class="card-info">
                     <h3>${img.desc || 'بصمة غير'}</h3>
-                    <div class="reaction-container">
-                        <div class="react-box up ${v==='likes'?'voted':''}" onclick="vote('${p}','likes','${rId}')">
-                            <span>✨</span><span>${img.likes || 0}</span>
-                        </div>
-                        <div class="react-box down ${v==='dislikes'?'voted':''}" onclick="vote('${p}','dislikes','${rId}')">
-                            <span>👎</span><span>${img.dislikes || 0}</span>
+                    <div class="like-container">
+                        <div class="heart-btn ${v==='likes'?'voted':''}" onclick="vote('${p}','likes','${rId}')">
+                            <span class="icon">❤</span>
+                            <span class="label">إعجاب</span>
+                            <span class="count">${img.likes || 0}</span>
                         </div>
                     </div>
                     <button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=${msg}')">استفسر الآن</button>
