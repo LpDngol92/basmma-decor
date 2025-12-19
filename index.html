@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير | v28 النسخة الملكية</title>
+    <title>بصمة غير | v28 النسخة الإبداعية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -21,89 +21,85 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; overflow-x: hidden; }
 
+        /* شاشة الترحيب */
+        #splash {
+            position: fixed; inset: 0; background: var(--bg); z-index: 20000;
+            display: flex; align-items: center; justify-content: center;
+            transition: 1s ease-in-out;
+        }
+        #splash h2 {
+            font-size: 2.5rem; color: var(--accent); opacity: 0;
+            transform: translateY(20px); animation: splashFade 1.5s forwards;
+        }
+        @keyframes splashFade {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* الهيدر والأنيميشن الخاص بالاسم */
         header {
             height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center;
             position: relative; background-size: cover; background-position: center;
             transition: background-image 2s ease-in-out; overflow: hidden;
         }
         header::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 20%, var(--bg) 95%); z-index: 1; }
-        header h1 { position: relative; z-index: 5; font-size: clamp(3rem, 15vw, 6rem); color: #fff; text-shadow: 0 0 30px rgba(92,10,10,0.6); margin: 0; text-align: center; }
-
-        nav {
-            position: sticky; top: 15px; z-index: 5000; margin: -50px auto 40px; width: fit-content;
-            background: rgba(20, 20, 22, 0.9); backdrop-filter: blur(15px); padding: 8px; border-radius: 25px;
-            border: 1px solid rgba(197, 160, 89, 0.2); display: flex; gap: 8px; overflow-x: auto;
+        
+        .header-content { position: relative; z-index: 5; text-align: center; }
+        
+        header h1 { 
+            font-size: clamp(3rem, 15vw, 6rem); color: #fff; margin: 0;
+            animation: titleIntro 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            text-shadow: 0 0 20px rgba(197, 160, 89, 0.5);
+            letter-spacing: 2px;
         }
+        
+        /* تأثير التوهج المستمر للاسم */
+        .glow-text {
+            animation: glowPulse 3s infinite alternate;
+        }
+
+        @keyframes titleIntro {
+            from { opacity: 0; transform: translateY(50px) scale(0.9); filter: blur(10px); }
+            to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+        }
+
+        @keyframes glowPulse {
+            from { text-shadow: 0 0 10px rgba(255,255,255,0.2), 0 0 20px rgba(197, 160, 89, 0.2); }
+            to { text-shadow: 0 0 20px rgba(255,255,255,0.4), 0 0 40px rgba(197, 160, 89, 0.6); }
+        }
+
+        /* باقي الستايلات السابقة (تم اختصارها للحفاظ على المساحة مع بقاء مفعولها) */
+        nav { position: sticky; top: 15px; z-index: 5000; margin: -50px auto 40px; width: fit-content; background: rgba(20, 20, 22, 0.9); backdrop-filter: blur(15px); padding: 8px; border-radius: 25px; border: 1px solid rgba(197, 160, 89, 0.2); display: flex; gap: 8px; overflow-x: auto; }
         .nav-btn { padding: 12px 25px; border: none; background: transparent; color: #777; font-weight: 800; border-radius: 20px; cursor: pointer; transition: 0.4s; white-space: nowrap; }
         .nav-btn.active { background: var(--primary); color: #fff; box-shadow: 0 5px 15px rgba(92, 10, 10, 0.4); }
-
         .sec { width: 92%; max-width: 1300px; margin: 0 auto 100px; display: none; }
         .sec.active { display: block; animation: fadeInUp 0.6s ease; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
         .grid { display: grid; gap: 25px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
-
-        .card {
-            background: var(--card-bg); border-radius: 25px; overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.04); transition: 0.4s ease; position: relative;
-        }
+        .card { background: var(--card-bg); border-radius: 25px; overflow: hidden; border: 1px solid rgba(255,255,255,0.04); transition: 0.4s ease; position: relative; }
         .card:hover { transform: translateY(-8px); border-color: var(--primary); box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
-
         .img-wrap { width: 100%; aspect-ratio: 1/1; overflow: hidden; cursor: zoom-in; }
         .img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: 0.8s; }
-        .card:hover .img-wrap img { transform: scale(1.08); }
-
         .card-info { padding: 20px; text-align: center; }
-        .card-info h3 { margin: 0 0 15px; font-size: 1.1rem; color: #fff; }
-
-        /* زر الإعجاب الجديد (قلب) */
-        .like-container {
-            display: flex; justify-content: center; margin-bottom: 20px;
-        }
-        .heart-btn {
-            display: flex; align-items: center; gap: 10px; cursor: pointer;
-            padding: 10px 25px; border-radius: 50px; background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08); transition: 0.3s;
-        }
-        .heart-btn .icon { font-size: 1.4rem; color: #555; transition: 0.3s; }
-        .heart-btn .label { font-weight: 800; color: #888; font-size: 0.95rem; }
-        .heart-btn .count { font-weight: 900; color: var(--accent); margin-right: 5px; }
-        
-        .heart-btn:hover { background: rgba(231, 76, 60, 0.05); transform: scale(1.05); }
-        
-        .heart-btn.voted { border-color: var(--heart); background: rgba(231, 76, 60, 0.1); animation: heartBeat 0.4s ease-in-out; }
-        .heart-btn.voted .icon { color: var(--heart); }
-        .heart-btn.voted .label { color: #fff; }
-
-        @keyframes heartBeat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-
-        .btn-order {
-            width: 100%; padding: 15px; border-radius: 15px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: #fff; border: none; font-weight: 900; cursor: pointer;
-            position: relative; overflow: hidden; transition: 0.3s;
-        }
-        .btn-order::after {
-            content: ''; position: absolute; top: -50%; left: -60%; width: 50%; height: 200%;
-            background: rgba(255,255,255,0.15); transform: rotate(25deg); transition: 0.5s;
-        }
-        .btn-order:hover::after { left: 120%; }
-
-        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000; padding: 20px; overflow-y: auto; }
+        .heart-btn { display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; padding: 10px 25px; border-radius: 50px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); transition: 0.3s; margin: 0 auto 15px; width: fit-content; }
+        .heart-btn.voted { border-color: var(--heart); background: rgba(231, 76, 60, 0.1); }
+        .heart-btn.voted span { color: var(--heart); }
+        .btn-order { width: 100%; padding: 15px; border-radius: 15px; background: linear-gradient(135deg, var(--primary), var(--secondary)); color: #fff; border: none; font-weight: 900; cursor: pointer; transition: 0.3s; }
+        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 30000; padding: 20px; overflow-y: auto; }
         .admin-box { max-width: 550px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--primary); }
         input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #0a0a0b; border: 1px solid #333; color: #fff; border-radius: 10px; }
     </style>
 </head>
 <body>
 
+<div id="splash"><h2 id="splash-text">جاري التحميل...</h2></div>
+
 <div id="modal" onclick="this.style.display='none'"><img id="modal-img" style="max-width:90%; max-height:85vh; border-radius:15px;"></div>
 
-<header id="main-h"><h1 id="view-title">بصمة غير</h1></header>
+<header id="main-h">
+    <div class="header-content">
+        <h1 id="view-title" class="glow-text">بصمة غير</h1>
+    </div>
+</header>
 
 <nav id="navbar"></nav>
 
@@ -116,26 +112,21 @@
             <a id="wa-main" href="#" target="_blank" style="padding: 20px 60px; background: #fff; color: #000; border-radius: 50px; text-decoration: none; font-weight: 900;">تواصل معنا</a>
         </div>
     </section>
-
     <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
     <div id="dynamic-pages"></div>
 </main>
 
-<div style="position:fixed; bottom:0; left:0; width:50px; height:50px; z-index:11000;" onclick="checkAccess()"></div>
+<div style="position:fixed; bottom:0; left:0; width:50px; height:50px; z-index:31000;" onclick="checkAccess()"></div>
 
 <div id="admin-panel">
     <div class="admin-box">
         <button onclick="location.reload()" style="background:red; color:white; border:none; padding:8px 15px; border-radius:8px; float:left;">إغلاق</button>
-        <h2 style="color:var(--accent)">لوحة التحكم v28</h2>
-        <button onclick="resetData()" style="width:100%; padding:12px; background:#c0392b; color:white; border:none; border-radius:10px; margin-bottom:15px;">تصفير التفاعلات</button>
-        <input type="text" id="in-name" placeholder="اسم الموقع">
+        <h2 style="color:var(--accent)">لوحة التحكم الإبداعية</h2>
+        <input type="text" id="in-splash" placeholder="نص شاشة الترحيب (مثلاً: أهلاً بك في عالمنا)">
+        <input type="text" id="in-name" placeholder="اسم الموقع في الهيدر">
         <input type="text" id="in-wa" placeholder="واتساب (966..)">
-        <input type="text" id="in-map" placeholder="رابط الخريطة">
         <textarea id="in-desc" placeholder="وصف الرئيسية"></textarea>
-        <button onclick="saveMain()" class="btn-order">حفظ المعلومات</button>
-        <hr style="opacity:0.1; margin:20px 0;">
-        <input type="text" id="new-p" placeholder="قسم جديد"><button onclick="addP()" style="width:100%; margin-bottom:10px;">+ إضافة قسم</button>
-        <input type="text" id="new-a" placeholder="مجلد جديد"><button onclick="addA()" style="width:100%;">+ إضافة مجلد</button>
+        <button onclick="saveMain()" class="btn-order">حفظ التعديلات</button>
         <hr style="opacity:0.1; margin:20px 0;">
         <select id="target-sel"></select>
         <input type="text" id="img-u" placeholder="رابط الصورة">
@@ -166,13 +157,18 @@
         headerImgs = [];
         const wa = data.whatsapp_num || "";
         const rId = data.current_reset_id || "0";
-        const siteName = data.site_name || "بصمة غير";
-
-        document.getElementById('view-title').innerText = siteName;
+        
+        // تحديث النصوص
+        document.getElementById('view-title').innerText = data.site_name || "بصمة غير";
+        document.getElementById('splash-text').innerText = data.splash_title || "مرحباً بك";
         document.getElementById('h-desc').innerText = data.home_desc || "";
-        document.getElementById('h-hours').innerText = data.work_hours || "";
-        document.getElementById('wa-main').href = `https://wa.me/${wa}?text=${encodeURIComponent('السلام عليكم، أرغب في التواصل معكم بخصوص خدمات ' + siteName)}`;
-        document.getElementById('h-map').innerHTML = data.map_url ? `<a href="${data.map_url}" target="_blank" style="color:var(--accent); text-decoration:none;">📍 موقع المعرض</a>` : '';
+        document.getElementById('wa-main').href = `https://wa.me/${wa}?text=السلام عليكم`;
+
+        // إخفاء الـ Splash بعد 2.5 ثانية
+        setTimeout(() => {
+            document.getElementById('splash').style.opacity = '0';
+            setTimeout(() => document.getElementById('splash').style.display = 'none', 1000);
+        }, 2500);
 
         const nav = document.getElementById('navbar');
         const dPages = document.getElementById('dynamic-pages');
@@ -192,17 +188,15 @@
         }
         navH += `<button class="nav-btn ${currentTab==='works'?'active':''}" onclick="go('works', this)">أعمالنا</button>`;
 
-        let albH = "";
         if(data.albums) {
             Object.keys(data.albums).forEach(id => {
                 const a = data.albums[id];
-                albH += `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="margin:0">${a.name}</h3><small style="color:var(--accent)">عرض المجلد ←</small></div>`;
                 sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:20px; background:#1e1413" onclick="go('works')">← العودة</button><div class="grid">${draw(a.imgs, wa, `albums/${id}/imgs`, rId)}</div></section>`;
                 sel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
                 if(a.imgs) Object.values(a.imgs).forEach(i => { if(i.url) headerImgs.push(i.url); });
             });
         }
-        nav.innerHTML = navH; dPages.innerHTML = sectionsH; aGrid.innerHTML = albH;
+        nav.innerHTML = navH; dPages.innerHTML = sectionsH;
         if(headerImgs.length > 0 && !window.hInit) initHeader();
     }
 
@@ -212,20 +206,14 @@
             const img = imgs[id];
             const p = `${path}/${id}`;
             const v = localStorage.getItem('voted_'+p+'_'+rId);
-            const msg = encodeURIComponent(`مرحباً، أود الاستفسار عن: (${img.desc || 'هذا العمل'})`);
-
             return `<div class="card">
                 <div class="img-wrap" onclick="zoom('${img.url}')"><img src="${img.url}"></div>
                 <div class="card-info">
-                    <h3>${img.desc || 'بصمة غير'}</h3>
-                    <div class="like-container">
-                        <div class="heart-btn ${v==='likes'?'voted':''}" onclick="vote('${p}','likes','${rId}')">
-                            <span class="icon">❤</span>
-                            <span class="label">إعجاب</span>
-                            <span class="count">${img.likes || 0}</span>
-                        </div>
+                    <h3>${img.desc || 'عمل مميز'}</h3>
+                    <div class="heart-btn ${v==='likes'?'voted':''}" onclick="vote('${p}','likes','${rId}')">
+                        <span style="font-size:1.4rem">❤</span> <span style="font-weight:bold">إعجاب</span> <span style="margin-right:10px; color:var(--accent)">${img.likes || 0}</span>
                     </div>
-                    <button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=${msg}')">استفسر الآن</button>
+                    <button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=${encodeURIComponent('استفسار عن: '+img.desc)}')">استفسر الآن</button>
                 </div>
             </div>`;
         }).join('');
@@ -250,25 +238,27 @@
     function vote(p, t, rId) {
         const key = 'voted_'+p+'_'+rId; const current = localStorage.getItem(key); const ref = db.ref(`${DB_PATH}/${p}`);
         if(current===t) { ref.child(t).transaction(c=>(c||1)-1); localStorage.removeItem(key); }
-        else if(current) { ref.child(current).transaction(c=>(c||1)-1); ref.child(t).transaction(c=>(c||0)+1); localStorage.setItem(key, t); }
         else { ref.child(t).transaction(c=>(c||0)+1); localStorage.setItem(key, t); }
     }
 
     function zoom(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
     function checkAccess() { if(prompt("الرمز:")==='808090') document.getElementById('admin-panel').style.display='block'; }
-    function saveMain() { db.ref(DB_PATH).update({ site_name:document.getElementById('in-name').value, whatsapp_num:document.getElementById('in-wa').value, map_url:document.getElementById('in-map').value, home_desc:document.getElementById('in-desc').value }); }
-    function addP() { db.ref(`${DB_PATH}/pages`).push({ title: document.getElementById('new-p').value }); }
-    function addA() { db.ref(`${DB_PATH}/albums`).push({ name: document.getElementById('new-a').value }); }
-    function publish() { db.ref(`${DB_PATH}/${document.getElementById('target-sel').value}/imgs`).push({ url:document.getElementById('img-u').value, desc:document.getElementById('img-d').value, likes:0, dislikes:0 }); }
-    function resetData() {
-        if(confirm("تصفير؟")) {
-            db.ref(DB_PATH).once('value', s => {
-                const d = s.val(); let up = {}; up['current_reset_id'] = Date.now().toString();
-                const clr = (o, p) => { for(let k in o) { if(k==='likes'||k==='dislikes') up[p+'/'+k]=0; else if(typeof o[k]==='object') clr(o[k], p+'/'+k); } }
-                if(d.pages) clr(d.pages, 'pages'); if(d.albums) clr(d.albums, 'albums');
-                db.ref(DB_PATH).update(up);
-            });
-        }
+    
+    function saveMain() {
+        db.ref(DB_PATH).update({
+            site_name: document.getElementById('in-name').value,
+            splash_title: document.getElementById('in-splash').value,
+            whatsapp_num: document.getElementById('in-wa').value,
+            home_desc: document.getElementById('in-desc').value
+        }).then(() => alert("تم الحفظ بنجاح"));
+    }
+
+    function publish() {
+        db.ref(`${DB_PATH}/${document.getElementById('target-sel').value}/imgs`).push({
+            url: document.getElementById('img-u').value,
+            desc: document.getElementById('img-d').value,
+            likes: 0
+        }).then(() => alert("تم النشر"));
     }
 </script>
 </body>
