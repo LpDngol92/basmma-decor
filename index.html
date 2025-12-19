@@ -7,77 +7,82 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #b8860b; --bg: #f9f9f9; --white: #ffffff; --whatsapp: #25d366; }
+        :root { --gold: #b8860b; --bg: #f4f4f4; --white: #ffffff; --whatsapp: #25d366; --dark-frame: #1a1a1a; }
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 0; user-select: none; }
         
         header { background: var(--white); padding: 15px; text-align: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 1000; }
-        header h1 { color: #333; margin: 0; font-size: 19px; }
+        header h1 { color: #333; margin: 0; font-size: 19px; font-weight: 800; }
 
-        .nav { display: flex; justify-content: center; gap: 8px; padding: 10px; background: white; border-bottom: 1px solid #eee; overflow-x: auto; }
-        .btn { padding: 7px 16px; border: 1px solid #ddd; border-radius: 20px; background: white; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 13px; transition: 0.2s; }
+        .nav { display: flex; justify-content: center; gap: 8px; padding: 10px; background: white; border-bottom: 1px solid #eee; overflow-x: auto; white-space: nowrap; }
+        .btn { padding: 7px 18px; border: 1px solid #ddd; border-radius: 20px; background: white; font-weight: bold; cursor: pointer; font-size: 13px; transition: 0.3s; }
         .btn.active { background: var(--gold); color: white; border-color: var(--gold); }
 
         .sec { width: 95%; max-width: 1200px; margin: 15px auto; display: none; }
         .sec.active { display: block; }
 
         .grid { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        @media (max-width: 480px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
 
         .card { 
-            background: white; border-radius: 12px; overflow: hidden; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.07); border: 1px solid #eee;
+            background: white; border-radius: 10px; overflow: hidden; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee;
         }
 
-        /* تكبير الإطار ليصبح مستطيلاً طولياً فخماً */
+        /* الإطار الذكي الذي يظهر الصورة كاملة تلقائياً */
         .img-container {
             width: 100%;
-            aspect-ratio: 3 / 4; /* تم تكبير الطول هنا ليناسب صور الديكور الطويلة */
+            aspect-ratio: 3 / 4; 
+            background: var(--dark-frame);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
-            background: #111;
             cursor: pointer;
         }
         
         .img-container img { 
-            width: 100%; height: 100%; 
-            object-fit: cover; /* لضمان ملء الإطار الجديد بشكل احترافي */
+            max-width: 100%; 
+            max-height: 100%; 
+            object-fit: contain; /* يضمن ظهور كامل الصورة دون قص */
             display: block;
             transition: 0.4s;
         }
-        .card:hover img { transform: scale(1.05); }
+        .card:hover img { transform: scale(1.08); }
 
-        .card-info { padding: 15px; text-align: center; }
-        .card-info p { font-weight: bold; margin: 0 0 10px; color: #333; font-size: 15px; min-height: 35px; }
+        .card-info { padding: 12px; text-align: center; }
+        .card-info p { font-weight: bold; margin: 0 0 10px; color: #333; font-size: 14px; min-height: 32px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         
         .order-btn { 
             background: var(--whatsapp); color: white; text-decoration: none; 
-            padding: 11px; border-radius: 10px; display: block; font-weight: bold; font-size: 15px;
+            padding: 10px; border-radius: 8px; display: block; font-weight: bold; font-size: 14px;
         }
 
-        /* نافذة الاستعراض الكامل */
+        /* نافذة الاستعراض الذكي المحدثة */
         #overlay { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.96); z-index: 2000; justify-content: center; align-items: center; 
+            background: rgba(0,0,0,0.97); z-index: 2000; justify-content: center; align-items: center; 
         }
-        #overlay img { max-width: 98%; max-height: 90%; border-radius: 4px; object-fit: contain; }
+        #overlay img { max-width: 98%; max-height: 90%; object-fit: contain; }
 
-        /* لوحة التحكم المبسطة */
+        /* لوحة التحكم */
         #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; padding: 20px; overflow-y: auto; }
         .admin-box { background: #f4f4f4; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; opacity: 0; }
-        .save-btn { width: 100%; padding: 14px; background: #222; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; opacity: 0; z-index: 1000; }
+        .save-btn { width: 100%; padding: 14px; background: #222; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="overlay" onclick="this.style.display='none'"><img id="overlay-img" src=""></div>
 
-<header><h1 id="display-site-name">بصمة غير</h1></header>
+<header><h1 id="display-site-name">بصمة غير للديكور</h1></header>
 <nav class="nav" id="main-nav"></nav>
 
 <section id="sec-home" class="sec">
-    <div style="text-align:center; padding:30px; background:white; border-radius:15px; border-right: 5px solid var(--gold);">
+    <div style="text-align:center; padding:30px; background:white; border-radius:15px; border-top: 4px solid var(--gold);">
         <h2 id="display-home-title">...</h2>
-        <p id="display-home-desc" style="white-space: pre-line; color: #444; line-height: 1.6;"></p>
+        <p id="display-home-desc" style="white-space: pre-line; color: #555; line-height: 1.7;"></p>
     </div>
 </section>
 
@@ -88,20 +93,20 @@
 
 <div id="admin-panel">
     <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h3>إدارة site_v28</h3>
+        <h3>إدارة بصمة غير v28</h3>
         <button onclick="location.reload()">إغلاق</button>
     </div>
     <div class="admin-box">
-        <input type="text" id="set-site-name" placeholder="اسم الموقع" style="width:100%; padding:10px; margin-bottom:5px;">
-        <input type="text" id="set-whatsapp" placeholder="رقم الواتساب" style="width:100%; padding:10px; margin-bottom:5px;">
-        <textarea id="set-home-desc" placeholder="وصف الخدمة..." style="width:100%; padding:10px;" rows="3"></textarea>
-        <button class="save-btn" onclick="saveTexts()">حفظ التعديلات</button>
+        <input type="text" id="set-site-name" placeholder="اسم الموقع" style="width:100%; padding:12px; margin-bottom:10px;">
+        <input type="text" id="set-whatsapp" placeholder="رقم الواتساب" style="width:100%; padding:12px; margin-bottom:10px;">
+        <textarea id="set-home-desc" placeholder="وصف الخدمة..." style="width:100%; padding:12px;" rows="3"></textarea>
+        <button class="save-btn" onclick="saveTexts()">حفظ البيانات</button>
     </div>
     <div class="admin-box">
-        <select id="sel-target" style="width:100%; padding:10px; margin-bottom:10px;"><option value="">-- اختر القسم --</option><optgroup label="الأقسام" id="opt-pages"></optgroup></select>
-        <input type="text" id="img-url" placeholder="رابط الصورة" style="width:100%; padding:10px; margin-bottom:5px;">
-        <input type="text" id="img-desc" placeholder="وصف الصورة" style="width:100%; padding:10px; margin-bottom:5px;">
-        <button class="save-btn" onclick="addNewContent()" style="background:var(--gold);">رفع الآن</button>
+        <select id="sel-target" style="width:100%; padding:12px; margin-bottom:10px;"><option value="">-- اختر الوجهة --</option><optgroup label="الأقسام" id="opt-pages"></optgroup></select>
+        <input type="text" id="img-url" placeholder="رابط الصورة المباشر" style="width:100%; padding:12px; margin-bottom:10px;">
+        <input type="text" id="img-desc" placeholder="وصف الصورة" style="width:100%; padding:12px; margin-bottom:10px;">
+        <button class="save-btn" onclick="addNewContent()" style="background:var(--gold);">نشر العمل</button>
     </div>
 </div>
 
@@ -148,7 +153,7 @@
     }
 
     function createCard(url, desc, wa) {
-        const msg = encodeURIComponent(`استفسار عن عمل: ${desc}`);
+        const msg = encodeURIComponent(`السلام عليكم، استفسار بخصوص عمل: ${desc}`);
         return `
             <div class="card">
                 <div class="img-container" onclick="openImg('${url}')">
@@ -174,23 +179,19 @@
     function openImg(url) { document.getElementById('overlay-img').src = url; document.getElementById('overlay').style.display = 'flex'; }
     
     async function checkAuth() { 
-        const p = prompt("الرمز:"); 
+        const p = prompt("كلمة السر:"); 
         const s = await db.ref('server_auth/admin_pass').once('value');
         if(p === s.val().toString()) document.getElementById('admin-panel').style.display='block';
     }
 
     function saveTexts() {
-        const d = { 
-            site_name: document.getElementById('set-site-name').value, 
-            whatsapp_num: document.getElementById('set-whatsapp').value, 
-            home_desc: document.getElementById('set-home-desc').value 
-        };
-        db.ref(DB_NAME).update(d); alert("تم الحفظ");
+        const d = { site_name: document.getElementById('set-site-name').value, whatsapp_num: document.getElementById('set-whatsapp').value, home_desc: document.getElementById('set-home-desc').value };
+        db.ref(DB_NAME).update(d).then(() => alert("تم الحفظ"));
     }
 
     function addNewContent() {
         const target = document.getElementById('sel-target').value, url = document.getElementById('img-url').value, desc = document.getElementById('img-desc').value;
-        if(target && url) db.ref(`${DB_NAME}/${target}/imgs`).push({ url, desc });
+        if(target && url) db.ref(`${DB_NAME}/${target}/imgs`).push({ url, desc }).then(() => alert("تم الرفع"));
     }
 </script>
 </body>
