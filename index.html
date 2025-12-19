@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير v29 - النسخة المتوازنة</title>
+    <title>بصمة غير v29 - مع الخريطة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #b8860b; --dark: #1a252f; --bg: #f8fafc; --white: #ffffff; --whatsapp: #25d366; }
+        :root { --gold: #b8860b; --dark: #1a252f; --bg: #f8fafc; --white: #ffffff; --whatsapp: #25d366; --map-blue: #4285F4; }
         
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
@@ -15,40 +15,41 @@
         header { 
             background: var(--dark); color: white; padding: 20px 15px; 
             text-align: center; border-bottom: 4px solid var(--gold);
-            position: sticky; top: 0; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky; top: 0; z-index: 1000;
         }
         header h1 { margin: 0; font-size: 1.4rem; font-weight: 800; }
 
-        /* تعديل جوهري: التبويبات في المنتصف */
         .nav-box { 
             background: white; border-bottom: 1px solid #eee; 
             position: sticky; top: 68px; z-index: 999; 
-            display: flex; justify-content: center; /* توسيط أفقي */
+            display: flex; justify-content: center;
         }
         .nav { 
             display: flex; gap: 10px; padding: 12px; 
             overflow-x: auto; scrollbar-width: none; 
-            max-width: 100%; justify-content: center; /* توسيط المحتوى داخلياً */
+            max-width: 100%; justify-content: center;
         }
-        /* للجوالات إذا كانت التبويبات كثيرة تتحول للتمرير تلقائياً */
-        @media (max-width: 600px) {
-            .nav { justify-content: flex-start; padding-left: 20px; padding-right: 20px; }
-        }
-        .nav::-webkit-scrollbar { display: none; }
+        @media (max-width: 600px) { .nav { justify-content: flex-start; } }
 
         .btn { 
             padding: 10px 22px; border-radius: 50px; border: 1.5px solid #eee; 
             background: #fff; font-weight: bold; cursor: pointer; white-space: nowrap;
             transition: 0.3s; color: #555; font-size: 13px;
         }
-        .btn.active { 
-            background: var(--dark); color: white; border-color: var(--dark); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
-        }
+        .btn.active { background: var(--dark); color: white; border-color: var(--dark); }
 
         .sec { width: 94%; max-width: 1200px; margin: 25px auto; display: none; }
         .sec.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ستايل زر الخريطة الجديد في الرئيسية */
+        .map-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+            background: var(--map-blue); color: white; text-decoration: none;
+            padding: 15px 30px; border-radius: 12px; font-weight: bold; margin-top: 25px;
+            box-shadow: 0 4px 15px rgba(66, 133, 244, 0.3); transition: 0.3s;
+        }
+        .map-btn:hover { transform: scale(1.05); }
 
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
         @media (max-width: 500px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; } }
@@ -58,37 +59,18 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.04); transition: 0.3s;
             display: flex; flex-direction: column; border: 1px solid #f0f0f0;
         }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.08); }
-
         .thumb-box { width: 100%; aspect-ratio: 1/1; overflow: hidden; cursor: zoom-in; }
-        .thumb-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        .card:hover img { transform: scale(1.05); }
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
 
         .card-info { padding: 15px; flex-grow: 1; }
         .card-info p { font-weight: bold; font-size: 13px; margin: 0 0 15px; color: #444; height: 38px; overflow: hidden; }
 
         .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        
-        .vote-btn { 
-            background: #f8fafc; border: 1px solid #eee; padding: 10px; border-radius: 10px; 
-            font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-        .vote-btn.liked { color: #228be6; border-color: #228be6; }
-        .vote-btn.disliked { color: #fa5252; border-color: #fa5252; }
+        .vote-btn { background: #f8fafc; border: 1px solid #eee; padding: 10px; border-radius: 10px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .order-btn-mini { grid-column: span 2; background: var(--whatsapp); color: white; text-decoration: none; padding: 14px; border-radius: 12px; text-align: center; font-weight: 800; font-size: 14px; margin-top: 5px; }
 
-        .order-btn-mini { 
-            grid-column: span 2; background: var(--whatsapp); color: white; 
-            text-decoration: none; padding: 14px; border-radius: 12px; 
-            text-align: center; font-weight: 800; font-size: 14px; margin-top: 5px;
-            box-shadow: 0 4px 15px rgba(37, 211, 102, 0.25);
-        }
-
-        #overlay { 
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.97); z-index: 10000; flex-direction: column; 
-            justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(5px);
-        }
-        #overlay img { max-width: 100%; max-height: 75%; border-radius: 12px; box-shadow: 0 0 30px rgba(255,255,255,0.1); }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.97); z-index: 10000; flex-direction: column; justify-content: center; align-items: center; padding: 15px; backdrop-filter: blur(5px); }
+        #overlay img { max-width: 100%; max-height: 75%; border-radius: 12px; }
         #overlay-desc { color: white; margin-top: 25px; text-align: center; font-size: 1.2rem; font-weight: bold; width: 90%; }
 
         .admin-trigger { position: fixed; bottom: 0; left: 0; width: 50px; height: 50px; opacity: 0; z-index: 10001; }
@@ -111,9 +93,11 @@
 </div>
 
 <section id="sec-home" class="sec">
-    <div style="background:white; padding:40px 20px; border-radius:25px; text-align:center; border:1px solid #f0f0f0; box-shadow:0 5px 15px rgba(0,0,0,0.02);">
+    <div style="background:white; padding:40px 20px; border-radius:25px; text-align:center; border:1px solid #f0f0f0;">
         <h2 id="display-home-title" style="color:var(--gold); margin-top:0;">مرحباً بكم</h2>
         <p id="display-home-desc" style="line-height:1.9; color:#666; font-size:16px;"></p>
+        
+        <div id="map-container"></div>
     </div>
 </section>
 
@@ -126,11 +110,12 @@
 
 <div id="admin-panel">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3>إدارة v28 - التوسيط</h3>
-        <button onclick="location.reload()" style="padding:8px 15px;">إغلاق</button>
+        <h3>إدارة v28 + الخريطة</h3>
+        <button onclick="location.reload()">إغلاق</button>
     </div>
     <input type="text" id="set-site-name" placeholder="اسم الموقع">
     <input type="text" id="set-whatsapp" placeholder="رقم الواتساب">
+    <input type="text" id="set-map-url" placeholder="رابط جوجل ماب (Google Maps)">
     <textarea id="set-home-desc" placeholder="وصف الخدمة" rows="4"></textarea>
     <button class="save-btn" onclick="saveTexts()">تحديث البيانات</button>
     <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
@@ -174,6 +159,14 @@
         document.getElementById('display-site-name').innerText = data.site_name || "بصمة غير";
         document.getElementById('display-home-desc').innerText = data.home_desc || "";
 
+        // عرض زر الخريطة إذا وجد الرابط
+        const mapContainer = document.getElementById('map-container');
+        if (data.map_url) {
+            mapContainer.innerHTML = `<a href="${data.map_url}" target="_blank" class="map-btn">📍 موقعنا على الخريطة</a>`;
+        } else {
+            mapContainer.innerHTML = "";
+        }
+
         const nav = document.getElementById('main-nav');
         const pagesDiv = document.getElementById('pages-content');
         const foldersGrid = document.getElementById('folders-grid');
@@ -210,7 +203,7 @@
     }
 
     function createCard(url, desc, wa, path, L, D) {
-        const welcomeMessage = `السلام عليكم، لفت نظري هذا العمل: (${desc || 'ديكور مميز'}). أود الاستفسار عن تفاصيله.`;
+        const welcomeMessage = `السلام عليكم، لفت نظري هذا العمل: (${desc || 'ديكور'}). أود الاستفسار عنه.`;
         const msg = encodeURIComponent(welcomeMessage);
         const voted = localStorage.getItem('voted_'+path);
         return `
@@ -221,7 +214,7 @@
                     <div class="actions">
                         <button class="vote-btn ${voted=='L'?'liked':''}" onclick="vote('${path}','likes')">👍 <span>${L}</span></button>
                         <button class="vote-btn ${voted=='D'?'disliked':''}" onclick="vote('${path}','dislikes')">👎 <span>${D}</span></button>
-                        <a href="https://wa.me/${wa}?text=${msg}" target="_blank" class="order-btn-mini">استفسار واتساب</a>
+                        <a href="https://wa.me/${wa}?text=${msg}" target="_blank" class="order-btn-mini">واتساب</a>
                     </div>
                 </div>
             </div>`;
@@ -250,18 +243,23 @@
     }
 
     function saveTexts() {
-        const d = { site_name: document.getElementById('set-site-name').value, whatsapp_num: document.getElementById('set-whatsapp').value, home_desc: document.getElementById('set-home-desc').value };
-        db.ref(DB_NAME).update(d).then(() => alert("تم الحفظ"));
+        const d = { 
+            site_name: document.getElementById('set-site-name').value, 
+            whatsapp_num: document.getElementById('set-whatsapp').value, 
+            map_url: document.getElementById('set-map-url').value, // حفظ الرابط الجديد
+            home_desc: document.getElementById('set-home-desc').value 
+        };
+        db.ref(DB_NAME).update(d).then(() => alert("تم حفظ البيانات والخريطة"));
     }
 
     function addPage() {
         const t = document.getElementById('new-p-title').value;
-        if(t) db.ref(`${DB_NAME}/pages`).push({ title: t }).then(() => alert("تمت إضافة القسم"));
+        if(t) db.ref(`${DB_NAME}/pages`).push({ title: t });
     }
 
     function addNewContent() {
         const target = document.getElementById('sel-target').value, url = document.getElementById('img-url').value, desc = document.getElementById('img-desc').value;
-        if(target && url) db.ref(`${DB_NAME}/${target}/imgs`).push({ url, desc, likes: 0, dislikes: 0 }).then(() => alert("تم النشر بنجاح"));
+        if(target && url) db.ref(`${DB_NAME}/${target}/imgs`).push({ url, desc, likes: 0, dislikes: 0 }).then(() => alert("تم النشر"));
     }
 </script>
 </body>
