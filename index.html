@@ -42,7 +42,7 @@
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 11000; padding: 25px; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 10px; }
         .save-btn { width: 100%; padding: 15px; background: var(--accent); font-weight: bold; border: none; border-radius: 8px; color: black; cursor: pointer; }
-        .reset-btn { width: 100%; padding: 15px; background: #e67e22; font-weight: bold; border: none; border-radius: 8px; color: white; margin: 10px 0; cursor: pointer; }
+        .reset-btn { width: 100%; padding: 15px; background: #c0392b; font-weight: bold; border: none; border-radius: 8px; color: white; margin: 10px 0; cursor: pointer; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -71,7 +71,7 @@
         <h2 style="color:var(--accent)">إدارة الموقع</h2>
         <button onclick="location.reload()" style="width:100%; padding:10px; background:red; color:white; border:none; border-radius:8px;">خروج</button>
         
-        <button class="reset-btn" onclick="resetAllVotes()">🔥 تصفير اللايكات + فتح التصويت</button>
+        <button class="reset-btn" onclick="resetAllVotes()">🔥 تصفير جميع اللايكات الآن</button>
 
         <input type="text" id="in-name" placeholder="اسم الموقع">
         <input type="text" id="in-wa" placeholder="رقم الواتساب">
@@ -104,7 +104,6 @@
     db.ref(DB_PATH).on('value', snap => {
         const data = snap.val() || {};
         renderStatic(data);
-        // تعبئة الحقول في لوحة الإدارة تلقائياً
         document.getElementById('in-name').value = data.site_name || "";
         document.getElementById('in-wa').value = data.whatsapp_num || "";
         document.getElementById('in-map').value = data.map_url || "";
@@ -159,7 +158,6 @@
         return Object.keys(imgs).map(id => {
             const img = imgs[id];
             const voted = localStorage.getItem('voted_'+basePath+'/'+id+'_'+rK);
-            const msg = encodeURIComponent(`مرحباً، حاب استفسر عن هذا العمل: ${img.desc || ''}`);
             return `<div class="work-item">
                 <div class="img-box" onclick="viewImg('${img.url}')"><img src="${img.url}"></div>
                 <div class="item-content">
@@ -168,7 +166,7 @@
                         <button class="vote-btn ${voted==='likes'?'voted':''}" onclick="handleVote('${basePath}/${id}', 'likes', '${rK}')">👍 ${img.likes || 0}</button>
                         <button class="vote-btn ${voted==='dislikes'?'voted':''}" onclick="handleVote('${basePath}/${id}', 'dislikes', '${rK}')">👎 ${img.dislikes || 0}</button>
                     </div>
-                    <button class="order-btn" onclick="window.open('https://wa.me/${wa}?text=${msg}')">استفسر الآن</button>
+                    <button class="order-btn" onclick="window.open('https://wa.me/${wa}?text=${encodeURIComponent(img.desc)}')">استفسر الآن</button>
                 </div>
             </div>`;
         }).join('');
@@ -182,19 +180,20 @@
     }
 
     function resetAllVotes() {
-        if(!confirm("سيتم مسح جميع اللايكات وفتح التصويت للجميع من جديد، هل أنت متأكد؟")) return;
+        if(!confirm("سيتم تصفير جميع الصور في كل الأقسام وفتح التصويت من جديد، هل أنت متأكد؟")) return;
         const newID = Date.now().toString();
         db.ref(DB_PATH).once('value', snap => {
-            const data = snap.val();
-            let updates = {};
-            updates[`${DB_PATH}/current_reset_id`] = newID;
-            
-            // تصفير الأقسام
-            if(data.pages) Object.keys(data.pages).forEach(pId => { if(data.pages[pId].imgs) Object.keys(data.pages[pId].imgs).forEach(iId => { updates[`${DB_PATH}/pages/${pId}/imgs/${iId}/likes`] = 0; updates[`${DB_PATH}/pages/${pId}/imgs/${iId}/dislikes`] = 0; }); });
-            // تصفير المجلدات
-            if(data.albums) Object.keys(data.albums).forEach(aId => { if(data.albums[aId].imgs) Object.keys(data.albums[aId].imgs).forEach(iId => { updates[`${DB_PATH}/albums/${aId}/imgs/${iId}/likes`] = 0; updates[`${DB_PATH}/albums/${aId}/imgs/${iId}/dislikes`] = 0; }); });
-            
-            db.ref().update(updates).then(() => alert("تم التصفير وفتح التصويت بنجاح!"));
+            let data = snap.val();
+            if(!data) return;
+            function clearCounts(obj) {
+                for (let key in obj) {
+                    if (key === 'likes' || key === 'dislikes') obj[key] = 0;
+                    else if (typeof obj[key] === 'object' && obj[key] !== null) clearCounts(obj[key]);
+                }
+            }
+            clearCounts(data);
+            data.current_reset_id = newID;
+            db.ref(DB_PATH).set(data).then(() => alert("✅ تم التصفير بالكامل!"));
         });
     }
 
@@ -205,7 +204,7 @@
             map_url: document.getElementById('in-map').value,
             work_hours: document.getElementById('in-hours').value,
             home_desc: document.getElementById('in-desc').value
-        }).then(() => alert("تم حفظ التغييرات بنجاح!"));
+        }).then(() => alert("تم حفظ البيانات!"));
     }
 
     function startHeader() {
