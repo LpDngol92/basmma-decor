@@ -9,7 +9,7 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100;400;700;900&display=swap');
         :root { --neon: #00f2ff; --border: rgba(255, 255, 255, 0.1); --bg: #030303; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Noto Sans Arabic', sans-serif; margin: 0; background: var(--bg); color: white; overflow-x: hidden; scroll-behavior: smooth; }
         .bg-glow { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(0, 242, 255, 0.05) 0%, transparent 40%); z-index: -1; pointer-events: none; }
         header { height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle, #111 0%, #000 100%); border-bottom: 1px solid var(--border); }
@@ -20,25 +20,19 @@
         .sec { width: 92%; max-width: 1200px; margin: 60px auto; display: none; }
         .sec.active { display: block; animation: fadeUp 0.6s ease-out; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
         .hub-container { display: flex; justify-content: center; gap: 15px; margin-top: 40px; flex-wrap: wrap; }
         .hub-link { flex: 1; min-width: 200px; max-width: 280px; height: 60px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 900; border-radius: 12px; transition: 0.3s; border: 1px solid var(--border); }
         .link-map { background: white; color: black; }
         .link-wa { background: rgba(255,255,255,0.05); color: white; }
-
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
         .folder-card { padding: 50px 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); text-align: center; cursor: pointer; transition: 0.4s; border-radius: 8px; }
-        .folder-card:hover { background: white; color: black; }
-        
-        .work-item { background: #080808; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .work-item { background: #080808; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; position: relative; }
         .img-box { width: 100%; aspect-ratio: 1/1; cursor: pointer; overflow: hidden; }
         .img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        
         .vote-bar { display: flex; gap: 10px; margin-top: 15px; }
-        .vote-btn { flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .vote-btn.voted { border-color: var(--neon); color: var(--neon); }
+        .vote-btn { flex: 1; padding: 12px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; cursor: pointer; border-radius: 5px; font-weight: bold; position: relative; }
+        .vote-btn.voted { border-color: var(--neon); color: var(--neon); background: rgba(0, 242, 255, 0.1); }
         .order-btn { width: 100%; padding: 15px; background: var(--neon); color: black; border: none; font-weight: 900; margin-top: 10px; cursor: pointer; border-radius: 5px; }
-
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 7000; padding: 20px; overflow-y: auto; }
         .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; opacity: 0; z-index: 6500; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #111; color: #fff; border: 1px solid #333; }
@@ -66,10 +60,7 @@
     </div>
 </section>
 
-<section id="sec-works" class="sec">
-    <div id="folders-grid" class="grid"></div>
-</section>
-
+<section id="sec-works" class="sec"><div id="folders-grid" class="grid"></div></section>
 <div id="dynamic-pages"></div>
 
 <div class="admin-trigger" onclick="checkAdmin()"></div>
@@ -77,11 +68,11 @@
 <div id="admin-panel">
     <div style="max-width: 600px; margin: 0 auto;">
         <h2 style="color: var(--neon);">لوحة التحكم v28</h2>
-        <button onclick="location.reload()" style="background:red; color:white; padding:10px; border:none; width:100%; margin-bottom:20px;">خروج</button>
+        <button onclick="location.reload()" style="background:red; color:white; padding:10px; border:none; width:100%; margin-bottom:20px; cursor:pointer;">خروج</button>
         
         <div style="background:#111; padding:15px; border-radius:10px; margin-bottom:20px; border: 1px solid red; text-align:center;">
-            <h4 style="margin:0 0 10px 0; color:red;">إدارة التفاعلات</h4>
-            <button onclick="resetAllVotes()" style="background:red; color:white; padding:10px; border:none; cursor:pointer; width:100%; font-weight:bold;">تصفير كافة اللايكات والديسلايكات</button>
+            <h4 style="margin:0 0 10px 0; color:red;">إدارة التفاعلات والمستخدمين</h4>
+            <button onclick="resetAllVotes()" style="background:red; color:white; padding:10px; border:none; cursor:pointer; width:100%; font-weight:bold;">تصفير التفاعلات + السماح للجميع بالتقييم مجدداً</button>
         </div>
 
         <input type="text" id="in-name" placeholder="اسم الموقع">
@@ -89,20 +80,15 @@
         <input type="text" id="in-map" placeholder="رابط جوجل ماب">
         <textarea id="in-hours" placeholder="ساعات العمل"></textarea>
         <textarea id="in-desc" placeholder="وصف الصفحة الرئيسية"></textarea>
-        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--neon); color:black; font-weight:bold; border:none;">حفظ البيانات الأساسية</button>
-        
+        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--neon); color:black; font-weight:bold; border:none; cursor:pointer;">حفظ البيانات الأساسية</button>
         <hr style="opacity:0.1; margin:30px 0;">
         <input type="text" id="new-p" placeholder="اسم قسم جديد">
-        <button onclick="addP()" style="width:100%; padding:10px; background:white; color:black; border:none;">إضافة قسم</button>
-        
+        <button onclick="addP()" style="width:100%; padding:10px; background:white; color:black; border:none; cursor:pointer;">إضافة قسم</button>
         <hr style="opacity:0.1; margin:30px 0;">
-        <select id="target">
-            <optgroup label="الأقسام" id="opt-p"></optgroup>
-            <optgroup label="المجلدات" id="opt-a"></optgroup>
-        </select>
+        <select id="target"><optgroup label="الأقسام" id="opt-p"></optgroup><optgroup label="المجلدات" id="opt-a"></optgroup></select>
         <input type="text" id="img-url" placeholder="رابط الصورة">
         <input type="text" id="img-txt" placeholder="وصف العمل">
-        <button onclick="upload()" style="width:100%; padding:15px; background:var(--neon); color:black; font-weight:bold; border:none;">نشر العمل الآن</button>
+        <button onclick="upload()" style="width:100%; padding:15px; background:var(--neon); color:black; font-weight:bold; border:none; cursor:pointer;">نشر العمل الآن</button>
     </div>
 </div>
 
@@ -132,7 +118,6 @@
         document.getElementById('view-desc').innerText = data.home_desc || "";
         document.getElementById('view-hours').innerText = data.work_hours || "";
         document.getElementById('wa-main-link').href = `https://wa.me/${waNum}`;
-        
         if(data.map_url) document.getElementById('map-btn-wrapper').innerHTML = `<a href="${data.map_url}" target="_blank" class="hub-link link-map">📍 موقعنا على الخريطة</a>`;
 
         const nav = document.getElementById('main-nav');
@@ -144,7 +129,6 @@
         nav.innerHTML = `<button class="nav-btn active" onclick="tab('home', this)">الرئيسية</button>`;
         dPages.innerHTML = ""; fGrid.innerHTML = ""; opP.innerHTML = ""; opA.innerHTML = "";
 
-        // معالجة الأقسام
         if(data.pages) {
             Object.keys(data.pages).forEach(id => {
                 const p = data.pages[id];
@@ -154,7 +138,6 @@
             });
         }
 
-        // معالجة المجلدات (أعمالنا)
         nav.innerHTML += `<button class="nav-btn" onclick="tab('works', this)">أعمالنا</button>`;
         if(data.albums) {
             Object.keys(data.albums).forEach(id => {
@@ -168,18 +151,20 @@
 
     function renderImgs(imgs, wa, basePath) {
         if(!imgs) return '';
+        // جلب معرف الجلسة للتصفير
+        const resetKey = localStorage.getItem('site_reset_id') || '0';
         return Object.keys(imgs).map(id => {
             const img = imgs[id];
             const path = `${basePath}/${id}`;
-            const voted = localStorage.getItem('voted_'+path);
+            const voted = localStorage.getItem('voted_'+path+'_'+resetKey);
             return `
                 <div class="work-item">
                     <div class="img-box"><img src="${img.url}"></div>
                     <div style="padding:15px;">
                         <p>${img.desc || ''}</p>
                         <div class="vote-bar">
-                            <button class="vote-btn ${voted==='likes'?'voted':''}" onclick="handleVote(event, '${path}', 'likes')">👍 ${img.likes || 0}</button>
-                            <button class="vote-btn ${voted==='dislikes'?'voted':''}" onclick="handleVote(event, '${path}', 'dislikes')">👎 ${img.dislikes || 0}</button>
+                            <button type="button" class="vote-btn ${voted==='likes'?'voted':''}" onclick="handleVote(event, '${path}', 'likes')">👍 ${img.likes || 0}</button>
+                            <button type="button" class="vote-btn ${voted==='dislikes'?'voted':''}" onclick="handleVote(event, '${path}', 'dislikes')">👎 ${img.dislikes || 0}</button>
                         </div>
                         <button class="order-btn" onclick="window.open('https://wa.me/${wa}?text=استفسار عن: ${img.desc || ''}')">طلب تفاصيل</button>
                     </div>
@@ -187,16 +172,32 @@
         }).join('');
     }
 
+    // الدالة النهائية لحل مشكلة القفز للرئيسية
     function handleVote(e, path, type) {
-        e.preventDefault(); e.stopPropagation();
-        if(localStorage.getItem('voted_'+path)) return alert("لقد قيمت مسبقاً");
-        db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1).then(() => localStorage.setItem('voted_'+path, type));
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const resetKey = localStorage.getItem('site_reset_id') || '0';
+        if(localStorage.getItem('voted_'+path+'_'+resetKey)) {
+            alert("لقد قيمت مسبقاً");
+            return false;
+        }
+
+        db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1)
+        .then(() => {
+            localStorage.setItem('voted_'+path+'_'+resetKey, type);
+            // لا حاجة لإعادة التحميل، firebase .on('value') سيتكفل بالتحديث
+        });
+        return false;
     }
 
     function tab(id, btn) {
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
         document.getElementById('sec-'+id).classList.add('active');
-        if(btn) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
+        if(btn) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
         if(id !== 'home') window.scrollTo({top: 450, behavior:'smooth'}); else window.scrollTo({top: 0, behavior:'smooth'});
     }
 
@@ -224,26 +225,28 @@
         if(t && u) db.ref(`${DB_PATH}/${t}/imgs`).push({ url: u, desc: d, likes: 0, dislikes: 0 });
     }
 
+    // تصفير ذكي: يصفر العدادات ويغير معرف التقييم ليسمح للجميع بالتقييم مجدداً
     function resetAllVotes() {
-        if(!confirm("تأكيد تصفير كافة التفاعلات؟")) return;
+        if(!confirm("تأكيد تصفير التفاعلات والسماح للجميع بالتقييم مجدداً؟")) return;
+        
         db.ref(DB_PATH).once('value', snap => {
             const data = snap.val();
             const updates = {};
-            const process = (root) => {
-                if(!root) return;
-                Object.keys(root).forEach(pId => {
-                    if(root[pId].imgs) Object.keys(root[pId].imgs).forEach(iId => {
-                        updates[`${DB_PATH}/${pId==='pages'?'pages':'albums'}/${pId}/imgs/${iId}/likes`] = 0;
-                        updates[`${DB_PATH}/${pId==='pages'?'pages':'albums'}/${pId}/imgs/${iId}/dislikes`] = 0;
-                    });
-                });
-            };
-            // تصفير الأقسام والمجلدات
+            // تحديث معرف التصفير في قاعدة البيانات (اختياري) ولكن سنكتفي بتحديثه محلياً ولدى الجميع
+            const newResetId = Date.now().toString();
+            db.ref(`${DB_PATH}/current_reset_id`).set(newResetId);
+
             if(data.pages) Object.keys(data.pages).forEach(id => { if(data.pages[id].imgs) Object.keys(data.pages[id].imgs).forEach(imgId => { updates[`${DB_PATH}/pages/${id}/imgs/${imgId}/likes`] = 0; updates[`${DB_PATH}/pages/${id}/imgs/${imgId}/dislikes`] = 0; })});
             if(data.albums) Object.keys(data.albums).forEach(id => { if(data.albums[id].imgs) Object.keys(data.albums[id].imgs).forEach(imgId => { updates[`${DB_PATH}/albums/${id}/imgs/${imgId}/likes`] = 0; updates[`${DB_PATH}/albums/${id}/imgs/${imgId}/dislikes`] = 0; })});
-            db.ref().update(updates).then(() => alert("تم التصفير"));
+            
+            db.ref().update(updates).then(() => alert("تم التصفير بنجاح! يمكن للجميع الآن التقييم مرة أخرى."));
         });
     }
+
+    // الاستماع لمعرف التصفير للسماح بإعادة التقييم تلقائياً
+    db.ref(`${DB_PATH}/current_reset_id`).on('value', snap => {
+        if(snap.val()) localStorage.setItem('site_reset_id', snap.val());
+    });
 </script>
 </body>
 </html>
