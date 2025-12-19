@@ -3,78 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير للديكور</title>
+    <title>بصمة غير للديكور - v28</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #b8860b; --bg: #fdfdfd; --white: #ffffff; --whatsapp: #25d366; }
+        :root { --gold: #b8860b; --bg: #f5f5f5; --white: #ffffff; --whatsapp: #25d366; }
         * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 0; user-select: none; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 0; }
         
-        header { background: var(--white); padding: 25px; text-align: center; border-bottom: 3px solid var(--gold); }
-        header h1 { color: #333; margin: 0; font-size: 24px; font-weight: 800; }
+        header { background: var(--white); padding: 20px; text-align: center; border-bottom: 2px solid var(--gold); position: sticky; top: 0; z-index: 1000; }
+        header h1 { color: #333; margin: 0; font-size: 20px; }
 
-        .nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: white; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-x: auto; }
-        .btn { padding: 8px 20px; border: 1px solid #ddd; border-radius: 25px; background: white; font-weight: bold; cursor: pointer; white-space: nowrap; transition: 0.3s; }
+        .nav { display: flex; justify-content: center; gap: 8px; padding: 10px; background: white; border-bottom: 1px solid #ddd; overflow-x: auto; }
+        .btn { padding: 6px 15px; border: 1px solid #ddd; border-radius: 20px; background: white; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 13px; }
         .btn.active { background: var(--gold); color: white; border-color: var(--gold); }
 
-        .sec { width: 95%; max-width: 1200px; margin: 20px auto; display: none; }
+        .sec { width: 95%; max-width: 1200px; margin: 15px auto; display: none; }
         .sec.active { display: block; }
 
-        .grid { 
-            display: grid; 
-            gap: 20px; 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-        }
-        @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+        .grid { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 
         .card { 
-            background: white; 
-            border-radius: 12px; 
-            overflow: hidden; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            border: 1px solid #eee;
+            background: white; border-radius: 15px; overflow: hidden; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 1px solid #eee;
+        }
+
+        /* هذا هو "البرواز" اللي يخلي كل الصور بنفس المقاس زي طلبك */
+        .img-container {
+            width: 100%;
+            aspect-ratio: 4 / 3; /* يخلي كل الصور مستطيلات متساوية وفخمة */
+            overflow: hidden;
+            background: #000; /* خلفية سوداء لو كانت الصورة أصغر */
+            cursor: zoom-in;
         }
         
-        /* عرض الصورة بكامل حجمها الطبيعي بدون قص أو نوافذ منبثقة */
-        .card img { 
-            width: 100%; 
-            height: auto; 
-            display: block; 
+        .img-container img { 
+            width: 100%; height: 100%; 
+            object-fit: cover; /* يملأ المستطيل بالصورة بشكل مرتب جداً */
+            display: block;
         }
 
         .card-info { padding: 15px; text-align: center; }
-        .card-info p { font-weight: bold; margin: 0 0 12px; color: #333; font-size: 1.1rem; }
+        .card-info p { font-weight: bold; margin: 0 0 10px; color: #333; height: 40px; overflow: hidden; }
         
         .order-btn { 
             background: var(--whatsapp); color: white; text-decoration: none; 
-            padding: 12px; border-radius: 8px; display: block; font-weight: bold; 
-            font-size: 1rem; transition: 0.3s;
+            padding: 10px; border-radius: 10px; display: block; font-weight: bold; 
         }
-        .order-btn:hover { background: #1ebe57; }
+
+        /* نافذة الاستعراض الذكي (الصورة الكاملة) */
+        #overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; 
+        }
+        #overlay img { max-width: 95%; max-height: 90%; border-radius: 5px; object-fit: contain; }
 
         /* لوحة التحكم */
-        #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; padding: 20px; overflow-y: auto; }
+        #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; padding: 20px; overflow-y: auto; }
         .admin-box { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #ddd; }
-        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
-        .action-btn { background: #333; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; opacity: 0; cursor: pointer; }
+        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; opacity: 0; }
+        button.save { width: 100%; padding: 15px; background: #333; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
+
+<div id="overlay" onclick="this.style.display='none'"><img id="overlay-img" src=""></div>
 
 <header><h1 id="display-site-name">بصمة غير</h1></header>
 <nav class="nav" id="main-nav"></nav>
 
 <section id="sec-home" class="sec">
-    <div style="text-align:center; padding:40px 20px; background:white; border-radius:15px; border: 1px solid #eee;">
-        <h2 id="display-home-title" style="color:var(--gold);">...</h2>
-        <p id="display-home-desc" style="white-space: pre-line; line-height: 1.8; color: #555;"></p>
+    <div style="text-align:center; padding:30px; background:white; border-radius:15px; border: 2px solid var(--gold);">
+        <h2 id="display-home-title">...</h2>
+        <p id="display-home-desc" style="white-space: pre-line; color: #666;"></p>
     </div>
 </section>
 
 <section id="sec-works" class="sec">
-    <h2 style="text-align:center; color:var(--gold); margin-bottom: 25px;">أعمالنا</h2>
     <div id="folders-grid" class="grid"></div>
 </section>
 
@@ -82,25 +87,19 @@
 <div class="admin-trigger" onclick="checkAuth()"></div>
 
 <div id="admin-panel">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3>لوحة إدارة site_v28</h3>
-        <button onclick="location.reload()" style="background:#cc0000; color:white; border:none; padding:8px 15px; border-radius:5px;">إغلاق</button>
+    <h3>إدارة موقع بصمة غير</h3>
+    <button onclick="location.reload()" style="margin-bottom:20px;">إغلاق</button>
+    <div class="admin-box">
+        <input type="text" id="set-site-name" placeholder="اسم الموقع" style="width:100%; padding:10px; margin-bottom:10px;">
+        <input type="text" id="set-whatsapp" placeholder="رقم الواتساب" style="width:100%; padding:10px; margin-bottom:10px;">
+        <textarea id="set-home-desc" placeholder="وصف الخدمة..." style="width:100%; padding:10px;" rows="3"></textarea>
+        <button class="save" onclick="saveTexts()">حفظ البيانات</button>
     </div>
     <div class="admin-box">
-        <input type="text" id="set-site-name" placeholder="اسم الموقع">
-        <input type="text" id="set-whatsapp" placeholder="رقم الواتساب">
-        <input type="text" id="set-home-title" placeholder="عنوان الترحيب">
-        <textarea id="set-home-desc" placeholder="وصف الخدمة..." rows="3"></textarea>
-        <button class="action-btn" onclick="saveTexts()">حفظ البيانات الأساسية</button>
-    </div>
-    <div class="admin-box">
-        <input type="text" id="new-p-title" placeholder="اسم قسم جديد">
-        <button class="action-btn" onclick="addPage()" style="background:var(--gold); margin-bottom:10px;">+ إضافة قسم</button>
-        <hr>
-        <select id="sel-target"><option value="">-- اختر الوجهة --</option><optgroup label="الأقسام" id="opt-pages"></optgroup><optgroup label="المجلدات" id="opt-albums"></optgroup></select>
-        <input type="text" id="img-url" placeholder="رابط الصورة">
-        <input type="text" id="img-desc" placeholder="وصف العمل">
-        <button class="action-btn" onclick="addNewContent()">نشر العمل</button>
+        <select id="sel-target" style="width:100%; padding:10px; margin-bottom:10px;"><option value="">-- اختر الوجهة --</option><optgroup label="الأقسام" id="opt-pages"></optgroup><optgroup label="المجلدات" id="opt-albums"></optgroup></select>
+        <input type="text" id="img-url" placeholder="رابط الصورة" style="width:100%; padding:10px; margin-bottom:10px;">
+        <input type="text" id="img-desc" placeholder="وصف العمل" style="width:100%; padding:10px; margin-bottom:10px;">
+        <button class="save" onclick="addNewContent()" style="background:var(--gold);">رفع الآن</button>
     </div>
 </div>
 
@@ -114,18 +113,17 @@
     const db = firebase.database();
     const DB_NAME = 'site_v28'; 
     let currentActiveSec = localStorage.getItem('lastSec') || 'home';
-    let siteData = {};
 
     db.ref(DB_NAME).on('value', snap => {
-        siteData = snap.val() || {};
-        render();
+        const data = snap.val() || {};
+        render(data);
         showSec(currentActiveSec, false);
     });
 
-    function render() {
-        document.getElementById('display-site-name').innerText = siteData.site_name || "بصمة غير";
-        document.getElementById('display-home-title').innerText = siteData.home_title || "مرحباً بكم";
-        document.getElementById('display-home-desc').innerText = siteData.home_desc || "";
+    function render(data) {
+        document.getElementById('display-site-name').innerText = data.site_name || "بصمة غير";
+        document.getElementById('display-home-title').innerText = data.home_title || "مرحباً بكم";
+        document.getElementById('display-home-desc').innerText = data.home_desc || "";
 
         const nav = document.getElementById('main-nav');
         const pagesDiv = document.getElementById('pages-content');
@@ -135,47 +133,30 @@
         nav.innerHTML = `<button class="btn" onclick="showSec('home')">الرئيسية</button>`;
         pagesDiv.innerHTML = ""; foldersGrid.innerHTML = ""; optP.innerHTML = "";
 
-        if(siteData.pages) {
-            Object.keys(siteData.pages).forEach(id => {
-                const p = siteData.pages[id];
+        if(data.pages) {
+            Object.keys(data.pages).forEach(id => {
+                const p = data.pages[id];
                 nav.innerHTML += `<button class="btn" onclick="showSec('${id}')">${p.title}</button>`;
                 optP.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
-                let imgsHTML = '<div class="grid">';
-                if(p.imgs) {
-                    Object.keys(p.imgs).forEach(imgId => {
-                        imgsHTML += createCard(p.imgs[imgId].url, p.imgs[imgId].desc || p.title);
-                    });
-                }
-                imgsHTML += '</div>';
-                pagesDiv.innerHTML += `<section id="sec-${id}" class="sec"><h2 style="text-align:center; color:var(--gold);">${p.title}</h2>${imgsHTML}</section>`;
+                let imgs = '<div class="grid">';
+                if(p.imgs) Object.keys(p.imgs).forEach(iId => imgs += createCard(p.imgs[iId].url, p.imgs[iId].desc, data.whatsapp_num));
+                imgs += '</div>';
+                pagesDiv.innerHTML += `<section id="sec-${id}" class="sec">${imgs}</section>`;
             });
         }
-
         nav.innerHTML += `<button class="btn" onclick="showSec('works')">أعمالنا</button>`;
-        if(siteData.albums) {
-            Object.keys(siteData.albums).forEach(id => {
-                const alb = siteData.albums[id];
-                foldersGrid.innerHTML += `<div class="card" style="padding:40px; cursor:pointer; text-align:center; font-weight:bold; border:2px solid var(--gold);" onclick="showSec('alb-${id}')">${alb.name}</div>`;
-                let albImgsHTML = '<div class="grid">';
-                if(alb.imgs) {
-                    Object.keys(alb.imgs).forEach(imgId => {
-                        albImgsHTML += createCard(alb.imgs[imgId].url, alb.name);
-                    });
-                }
-                albImgsHTML += '</div>';
-                pagesDiv.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="btn" onclick="showSec('works')" style="margin-bottom:20px;">🔙 عودة للعام</button><h2 style="text-align:center;">${alb.name}</h2>${albImgsHTML}</section>`;
-            });
-        }
     }
 
-    function createCard(url, desc) {
-        const msg = encodeURIComponent(`السلام عليكم، استفسار بخصوص عمل: ${desc}`);
+    function createCard(url, desc, wa) {
+        const msg = encodeURIComponent(`استفسار عن عمل: ${desc}`);
         return `
             <div class="card">
-                <img src="${url}" loading="lazy">
+                <div class="img-container" onclick="openImg('${url}')">
+                    <img src="${url}" loading="lazy">
+                </div>
                 <div class="card-info">
-                    <p>${desc}</p>
-                    <a href="https://wa.me/${siteData.whatsapp_num}?text=${msg}" target="_blank" class="order-btn">💬 تواصل الآن</a>
+                    <p>${desc || 'عمل ديكور'}</p>
+                    <a href="https://wa.me/${wa}?text=${msg}" target="_blank" class="order-btn">تواصل الآن</a>
                 </div>
             </div>`;
     }
@@ -190,20 +171,21 @@
         btns.forEach(b => { if(b.getAttribute('onclick').includes(`'${id}'`)) b.classList.add('active'); });
     }
 
+    function openImg(url) { document.getElementById('overlay-img').src = url; document.getElementById('overlay').style.display = 'flex'; }
+    
     async function checkAuth() { 
-        const p = prompt("الرمز السري:"); 
+        const p = prompt("الرمز:"); 
         const s = await db.ref('server_auth/admin_pass').once('value');
         if(p === s.val().toString()) document.getElementById('admin-panel').style.display='block';
     }
 
     function saveTexts() {
-        const d = { site_name: document.getElementById('set-site-name').value, whatsapp_num: document.getElementById('set-whatsapp').value, home_title: document.getElementById('set-home-title').value, home_desc: document.getElementById('set-home-desc').value };
-        db.ref(DB_NAME).update(d); alert("تم التحديث بنجاح");
-    }
-
-    function addPage() {
-        const t = document.getElementById('new-p-title').value;
-        if(t) db.ref(`${DB_NAME}/pages`).push({ title: t });
+        const d = { 
+            site_name: document.getElementById('set-site-name').value, 
+            whatsapp_num: document.getElementById('set-whatsapp').value, 
+            home_desc: document.getElementById('set-home-desc').value 
+        };
+        db.ref(DB_NAME).update(d); alert("تم الحفظ");
     }
 
     function addNewContent() {
