@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير للديكور - v28 الإبداعية</title>
+    <title>بصمة غير للديكور - v28 العرض الكامل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         :root { --gold: #b8860b; --white: #ffffff; --whatsapp: #25d366; --like: #3b5998; --dislike: #d9534f; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* الخلفية الشبكية المتحركة */
         body { 
             font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; 
             background: linear-gradient(-45deg, #f0f0f0, #ffffff, #f7f1e3, #ffffff);
@@ -18,7 +17,6 @@
         }
         @keyframes meshGradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* تأثير الزجاج المنصهر للهيدر */
         header { 
             background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             padding: 15px; text-align: center; border-bottom: 2px solid var(--gold); 
@@ -28,12 +26,10 @@
 
         .nav { 
             display: flex; gap: 8px; padding: 10px; background: rgba(255,255,255,0.6); 
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            position: sticky; top: 55px; z-index: 999; overflow-x: auto; scrollbar-width: none; 
+            backdrop-filter: blur(10px); position: sticky; top: 55px; z-index: 999; overflow-x: auto; scrollbar-width: none; 
         }
         .nav::-webkit-scrollbar { display: none; }
 
-        /* لمعان الأزرار الذهبية */
         .btn { 
             padding: 6px 18px; border: 1px solid rgba(0,0,0,0.1); border-radius: 20px; 
             background: white; font-weight: bold; cursor: pointer; font-size: 12px; 
@@ -53,63 +49,55 @@
         .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
         @media (max-width: 480px) { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
 
-        .card { 
-            background: white; border-radius: 12px; overflow: hidden; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.02); 
-            display: flex; flex-direction: column; transition: 0.3s; 
-        }
-        .card:hover { transform: translateY(-5px); }
-
-        .thumb-box { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #eee; }
-        .thumb-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.6s; }
-        .card:hover .thumb-box img { transform: scale(1.1); }
+        .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: 0.3s; }
+        .thumb-box { width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #eee; cursor: zoom-in; }
+        .thumb-box img { width: 100%; height: 100%; object-fit: cover; }
 
         .card-info { padding: 10px; flex-grow: 1; }
         .card-info p { font-weight: bold; margin: 0 0 10px; color: #333; font-size: 11px; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 
         .actions { display: flex; gap: 4px; align-items: center; justify-content: space-between; }
-        
-        /* نبض زر الواتساب */
-        .order-btn-mini { 
-            background: var(--whatsapp); color: white; text-decoration: none; 
-            flex: 2; padding: 7px 2px; border-radius: 6px; text-align: center; 
-            font-weight: bold; font-size: 10px; animation: pulse-green 2s infinite; 
-        }
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6); }
-            70% { box-shadow: 0 0 0 8px rgba(37, 211, 102, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
-        }
+        .order-btn-mini { background: var(--whatsapp); color: white; text-decoration: none; flex: 2; padding: 7px 2px; border-radius: 6px; text-align: center; font-weight: bold; font-size: 10px; animation: pulse-green 2s infinite; }
+        @keyframes pulse-green { 0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.6); } 70% { box-shadow: 0 0 0 8px rgba(37, 211, 102, 0); } 100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); } }
 
-        .vote-btn { 
-            flex: 1; border: 1px solid #f0f0f0; background: #fafafa; border-radius: 6px; 
-            padding: 4px 0; cursor: pointer; display: flex; flex-direction: column; 
-            align-items: center; font-size: 9px; transition: 0.2s; 
+        .vote-btn { flex: 1; border: 1px solid #f0f0f0; background: #fafafa; border-radius: 6px; padding: 4px 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; font-size: 9px; }
+        .vote-btn.liked { color: var(--like); border-color: var(--like); }
+        .vote-btn.disliked { color: var(--dislike); border-color: var(--dislike); }
+
+        /* تعديل نافذة العرض لتظهر الوصف كاملاً */
+        #overlay { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.98); z-index: 10000; flex-direction: column; 
+            justify-content: center; align-items: center; backdrop-filter: blur(8px); 
         }
-        .vote-btn.liked { color: var(--like); border-color: var(--like); background: #f0f4ff; }
-        .vote-btn.disliked { color: var(--dislike); border-color: var(--dislike); background: #fff0f0; }
-        .vote-btn span { font-weight: bold; font-size: 10px; margin-top: 2px; }
+        #overlay img { max-width: 95%; max-height: 70%; object-fit: contain; border-radius: 10px; }
+        #overlay-desc { 
+            color: white; padding: 20px; text-align: center; font-size: 18px; 
+            font-weight: bold; width: 90%; line-height: 1.6; direction: rtl;
+        }
+        .close-overlay { position: absolute; top: 20px; right: 20px; color: white; font-size: 30px; cursor: pointer; }
 
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.96); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        #overlay img { max-width: 95%; max-height: 85%; object-fit: contain; border-radius: 10px; }
-
-        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; opacity: 0; z-index: 10001; cursor: pointer; }
+        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; opacity: 0; z-index: 10001; }
         #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 99999; padding: 20px; overflow-y: auto; }
         .admin-box { background: #f8f8f8; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee; }
-        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; }
+        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; }
         .save-btn { width: 100%; padding: 12px; background: #222; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="overlay" onclick="this.style.display='none'"><img id="overlay-img" src=""></div>
+<div id="overlay" onclick="this.style.display='none'">
+    <span class="close-overlay">✕</span>
+    <img id="overlay-img" src="">
+    <div id="overlay-desc"></div>
+</div>
 
 <header><h1 id="display-site-name">بصمة غير</h1></header>
 <nav class="nav" id="main-nav"></nav>
 
 <section id="sec-home" class="sec">
-    <div style="text-align:center; padding:35px 20px; background:rgba(255,255,255,0.85); backdrop-filter: blur(10px); border-radius:20px; border: 1px solid rgba(184,134,11,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.02);">
-        <h2 id="display-home-title" style="color:var(--gold); margin-bottom:12px; font-size: 1.4rem;">...</h2>
+    <div style="text-align:center; padding:35px 20px; background:rgba(255,255,255,0.85); backdrop-filter: blur(10px); border-radius:20px; border: 1px solid rgba(184,134,11,0.2);">
+        <h2 id="display-home-title" style="color:var(--gold); margin-bottom:12px;">...</h2>
         <p id="display-home-desc" style="white-space: pre-line; line-height: 1.7; color: #444; font-size: 15px;"></p>
     </div>
 </section>
@@ -119,28 +107,27 @@
 </section>
 
 <div id="pages-content"></div>
-
 <div class="admin-trigger" onclick="checkAuth()"></div>
 
 <div id="admin-panel">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3 style="margin:0;">لوحة إدارة بصمة غير</h3>
-        <button onclick="location.reload()" style="padding:8px 15px; border-radius:8px; border:1px solid #ccc;">إغلاق</button>
+        <h3>إدارة بصمة غير</h3>
+        <button onclick="location.reload()">إغلاق</button>
     </div>
     <div class="admin-box">
-        <input type="text" id="set-site-name" placeholder="اسم المتجر">
+        <input type="text" id="set-site-name" placeholder="اسم الموقع">
         <input type="text" id="set-whatsapp" placeholder="رقم الواتساب">
-        <textarea id="set-home-desc" placeholder="نبذة عن الخدمة..." rows="4"></textarea>
+        <textarea id="set-home-desc" placeholder="نبذة..." rows="4"></textarea>
         <button class="save-btn" onclick="saveTexts()">تحديث النصوص</button>
     </div>
     <div class="admin-box">
-        <input type="text" id="new-p-title" placeholder="اسم قسم جديد">
+        <input type="text" id="new-p-title" placeholder="قسم جديد">
         <button class="save-btn" onclick="addPage()" style="background:var(--gold);">إنشاء قسم</button>
         <hr style="margin:20px 0; border:0; border-top:1px solid #ddd;">
-        <select id="sel-target"><option value="">-- اختر مكان النشر --</option><optgroup label="الأقسام" id="opt-pages"></optgroup><optgroup label="المجلدات" id="opt-albums"></optgroup></select>
-        <input type="text" id="img-url" placeholder="رابط الصورة المباشر">
+        <select id="sel-target"><option value="">-- وجهة النشر --</option><optgroup label="الأقسام" id="opt-pages"></optgroup><optgroup label="المجلدات" id="opt-albums"></optgroup></select>
+        <input type="text" id="img-url" placeholder="رابط الصورة">
         <input type="text" id="img-desc" placeholder="وصف العمل">
-        <button class="save-btn" onclick="addNewContent()">نشر الآن</button>
+        <button class="save-btn" onclick="addNewContent()">نشر</button>
     </div>
 </div>
 
@@ -162,11 +149,11 @@
     });
 
     async function checkAuth() { 
-        const pInput = prompt("أدخل رمز الإدارة:"); 
+        const pInput = prompt("الرمز:"); 
         if (!pInput) return;
         db.ref('server_auth/admin_pass').once('value').then(s => {
             if (pInput === s.val().toString()) document.getElementById('admin-panel').style.display='block';
-            else alert("الرمز خطأ!");
+            else alert("خطأ!");
         });
     }
 
@@ -192,7 +179,7 @@
                 let imgs = '<div class="grid">';
                 if(p.imgs) Object.keys(p.imgs).forEach(iId => imgs += createCard(p.imgs[iId].url, p.imgs[iId].desc, data.whatsapp_num, `pages/${id}/imgs/${iId}`, p.imgs[iId].likes||0, p.imgs[iId].dislikes||0));
                 imgs += '</div>';
-                pagesDiv.innerHTML += `<section id="sec-${id}" class="sec"><h2 style="text-align:center; color:var(--gold); font-size:1.2rem;">${p.title}</h2>${imgs}</section>`;
+                pagesDiv.innerHTML += `<section id="sec-${id}" class="sec"><h2 style="text-align:center; color:var(--gold);">${p.title}</h2>${imgs}</section>`;
             });
         }
 
@@ -201,7 +188,7 @@
             Object.keys(data.albums).forEach(id => {
                 const alb = data.albums[id];
                 optA.innerHTML += `<option value="albums/${id}">${alb.name}</option>`;
-                foldersGrid.innerHTML += `<div class="card" style="padding:30px 10px; cursor:pointer; text-align:center; font-weight:bold; color:var(--gold); border:2px solid var(--gold); border-radius:15px; font-size:13px;" onclick="showSec('alb-${id}')">${alb.name}</div>`;
+                foldersGrid.innerHTML += `<div class="card" style="padding:30px 10px; cursor:pointer; text-align:center; font-weight:bold; color:var(--gold); border:2px solid var(--gold); border-radius:15px;" onclick="showSec('alb-${id}')">${alb.name}</div>`;
                 let albImgs = '<div class="grid">';
                 if(alb.imgs) Object.keys(alb.imgs).forEach(iId => albImgs += createCard(alb.imgs[iId].url, alb.name, data.whatsapp_num, `albums/${id}/imgs/${iId}`, alb.imgs[iId].likes||0, alb.imgs[iId].dislikes||0));
                 albImgs += '</div>';
@@ -213,9 +200,10 @@
     function createCard(url, desc, wa, path, L, D) {
         const msg = encodeURIComponent(`استفسار: ${desc}`);
         const voted = localStorage.getItem('voted_'+path);
+        // تم تمرير الوصف بداخل دالة openImg
         return `
             <div class="card">
-                <div class="thumb-box" onclick="openImg('${url}')"><img src="${url}" loading="lazy"></div>
+                <div class="thumb-box" onclick="openImg('${url}', '${desc || 'عمل مميز'}')"><img src="${url}" loading="lazy"></div>
                 <div class="card-info">
                     <p>${desc || 'عمل جديد'}</p>
                     <div class="actions">
@@ -243,7 +231,12 @@
         btns.forEach(b => { if(b.getAttribute('onclick').includes(`'${id}'`)) b.classList.add('active'); });
     }
 
-    function openImg(url) { document.getElementById('overlay-img').src = url; document.getElementById('overlay').style.display = 'flex'; }
+    // وظيفة تكبير الصورة مع إظهار الوصف الكامل
+    function openImg(url, desc) { 
+        document.getElementById('overlay-img').src = url; 
+        document.getElementById('overlay-desc').innerText = desc;
+        document.getElementById('overlay').style.display = 'flex'; 
+    }
 
     function saveTexts() {
         const d = { site_name: document.getElementById('set-site-name').value, whatsapp_num: document.getElementById('set-whatsapp').value, home_desc: document.getElementById('set-home-desc').value };
