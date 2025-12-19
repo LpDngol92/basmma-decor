@@ -3,152 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير | معرض الأعمال المتطور</title>
+    <title>بصمة غير | أعمال خشبية فاخرة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100;400;700;900&display=swap');
-
-        :root {
-            --accent: #c5a059;
-            --bg: #080808;
-            --card-bg: #111111;
-            --text-main: #ffffff;
-            --text-dim: #999999;
-        }
-
+        :root { --accent: #c5a059; --bg: #080808; --card-bg: #111111; --text-main: #ffffff; --text-dim: #999999; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body { font-family: 'Noto Sans Arabic', sans-serif; margin: 0; background: var(--bg); color: var(--text-main); overflow-x: hidden; width: 100%; }
-
-        /* الهيدر الديناميكي المتغير */
-        #dynamic-header {
-            height: 75vh; width: 100%; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; text-align: center;
-            padding: 40px 20px; position: relative;
-            background-color: #000;
-            background-position: center;
-            background-size: cover;
-            transition: background-image 1.5s ease-in-out;
-        }
-
-        #dynamic-header::before {
-            content: ''; position: absolute; inset: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.3), var(--bg));
-            z-index: 1;
-        }
-
-        #dynamic-header h1 { 
-            position: relative; z-index: 2; 
-            font-size: clamp(2.5rem, 10vw, 5.5rem); 
-            font-weight: 900; margin: 0; 
-            text-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-
-        /* القائمة العلوية الثابتة */
-        nav {
-            position: sticky; top: 0; background: rgba(8, 8, 8, 0.95); 
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.05);
-            display: flex; z-index: 5000; overflow-x: auto; scrollbar-width: none;
-        }
+        #dynamic-header { height: 75vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 40px 20px; position: relative; background-color: #000; background-position: center; background-size: cover; transition: background-image 1.5s ease-in-out; }
+        #dynamic-header::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.3), var(--bg)); z-index: 1; }
+        #dynamic-header h1 { position: relative; z-index: 2; font-size: clamp(2.5rem, 10vw, 5.5rem); font-weight: 900; margin: 0; text-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        nav { position: sticky; top: 0; background: rgba(8, 8, 8, 0.95); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; z-index: 5000; overflow-x: auto; scrollbar-width: none; }
         nav::-webkit-scrollbar { display: none; }
         @media (min-width: 768px) { nav { justify-content: center; } }
-
-        .nav-btn {
-            padding: 12px 22px; border: none; background: none; color: var(--text-dim);
-            font-weight: 700; cursor: pointer; border-radius: 8px; font-size: 0.95rem; flex-shrink: 0;
-            transition: 0.3s;
-        }
+        .nav-btn { padding: 12px 22px; border: none; background: none; color: var(--text-dim); font-weight: 700; cursor: pointer; border-radius: 8px; font-size: 0.95rem; flex-shrink: 0; transition: 0.3s; }
         .nav-btn.active { color: var(--accent); background: rgba(197, 160, 89, 0.1); }
-
-        /* الأقسام */
         .sec { width: 95%; max-width: 1400px; margin: 40px auto; display: none; }
         .sec.active { display: block; animation: fadeIn 0.6s ease; }
-
-        /* شبكة العرض المتجاوبة */
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
-        
         .work-item { background: var(--card-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03); }
-        
         .img-box { width: 100%; aspect-ratio: 1/1; cursor: zoom-in; background: #000; overflow: hidden; }
         .img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
         .img-box:hover img { transform: scale(1.05); }
-
         .item-content { padding: 18px; }
         .item-content h3 { margin: 0 0 15px 0; font-size: 1.05rem; min-height: 1.5em; }
-
         .vote-bar { display: flex; gap: 10px; margin-bottom: 12px; }
-        .vote-btn { 
-            flex: 1; padding: 10px; background: rgba(255,255,255,0.03); 
-            border: 1px solid rgba(255,255,255,0.05); color: #fff; 
-            border-radius: 10px; cursor: pointer; font-size: 0.9rem;
-        }
+        .vote-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; border-radius: 10px; cursor: pointer; font-size: 0.9rem; }
         .vote-btn.voted { border-color: var(--accent); color: var(--accent); }
-
-        .order-btn { 
-            width: 100%; padding: 15px; border-radius: 10px; 
-            background: var(--accent); color: black; border: none; 
-            font-weight: 800; cursor: pointer; font-size: 1rem;
-        }
-
-        /* نافذة تكبير الصور */
-        #modal { 
-            position: fixed; inset: 0; background: rgba(0,0,0,0.98); 
-            z-index: 10000; display: none; align-items: center; 
-            justify-content: center; padding: 15px; cursor: zoom-out;
-        }
+        .order-btn { width: 100%; padding: 15px; border-radius: 10px; background: var(--accent); color: black; border: none; font-weight: 800; cursor: pointer; font-size: 1rem; }
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 15px; cursor: zoom-out; }
         #modal img { max-width: 100%; max-height: 95vh; object-fit: contain; border-radius: 8px; }
-
-        /* لوحة التحكم */
         .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; z-index: 9999; opacity: 0; }
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 11000; padding: 25px; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 14px; margin-bottom: 12px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 10px; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div id="modal" onclick="this.style.display='none'"><img src="" id="modal-img"></div>
-
-<header id="dynamic-header">
-    <h1 id="view-name">بصمة غير</h1>
-</header>
-
+<header id="dynamic-header"><h1 id="view-name">بصمة غير</h1></header>
 <nav id="main-nav"></nav>
 
 <section id="sec-home" class="sec active">
     <div style="max-width: 650px; margin: 0 auto; text-align: center;">
         <p id="view-desc" style="color: var(--text-dim); font-size: 1.2rem; line-height: 1.8;"></p>
-        <div id="view-hours" style="margin: 30px 0; color: var(--accent); font-weight: bold;"></div>
+        <div id="view-hours" style="margin: 20px 0; color: var(--accent); font-weight: bold;"></div>
+        <div id="map-btn-wrapper" style="margin-bottom: 30px;"></div>
         <a id="wa-main-link" href="#" target="_blank" style="display:inline-block; background:white; color:black; padding:15px 45px; border-radius:50px; text-decoration:none; font-weight: 900; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">للتواصل اضغط هنا</a>
     </div>
 </section>
 
-<section id="sec-works" class="sec">
-    <div id="folders-grid" class="grid"></div>
-</section>
-
+<section id="sec-works" class="sec"><div id="folders-grid" class="grid"></div></section>
 <div id="dynamic-pages"></div>
 
 <div class="admin-trigger" onclick="checkAdmin()"></div>
-
 <div id="admin-panel">
     <div style="max-width: 500px; margin: 0 auto;">
         <h2 style="color:var(--accent)">إدارة الموقع - v28</h2>
-        <button onclick="location.reload()" style="width:100%; padding:10px; background:red; color:white; border:none; border-radius:8px; margin-bottom:20px;">خروج وإغلاق</button>
+        <button onclick="location.reload()" style="width:100%; padding:10px; background:red; color:white; border:none; border-radius:8px; margin-bottom:20px;">خروج</button>
         <input type="text" id="in-name" placeholder="اسم الموقع">
         <input type="text" id="in-wa" placeholder="رقم الواتساب">
+        <input type="text" id="in-map" placeholder="رابط قوقل ماب">
         <textarea id="in-hours" placeholder="ساعات العمل"></textarea>
-        <textarea id="in-desc" placeholder="وصف الصفحة الرئيسية"></textarea>
-        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--accent); font-weight:bold; border:none; border-radius:8px;">حفظ التغييرات</button>
+        <textarea id="in-desc" placeholder="وصف الصفحة"></textarea>
+        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--accent); font-weight:bold; border:none; border-radius:8px;">حفظ البيانات</button>
         <hr style="margin:30px 0; opacity:0.1;">
-        <input type="text" id="new-p" placeholder="اسم قسم جديد (مثلاً: مجالس)">
-        <button onclick="addP()" style="width:100%; padding:10px; border-radius:8px;">+ إضافة القسم</button>
+        <input type="text" id="new-p" placeholder="اسم قسم جديد"><button onclick="addP()" style="width:100%; padding:10px; border-radius:8px;">+ إضافة القسم</button>
         <hr style="margin:30px 0; opacity:0.1;">
         <select id="target"><optgroup label="الأقسام" id="opt-p"></optgroup><optgroup label="المجلدات" id="opt-a"></optgroup></select>
-        <input type="text" id="img-url" placeholder="رابط الصورة المباشر">
-        <input type="text" id="img-txt" placeholder="وصف الصورة">
+        <input type="text" id="img-url" placeholder="رابط الصورة"><input type="text" id="img-txt" placeholder="وصف الصورة">
         <button onclick="upload()" style="width:100%; padding:18px; background:white; color:black; font-weight:bold; border:none; border-radius:8px;">نشر الصورة</button>
     </div>
 </div>
@@ -172,11 +97,20 @@
     });
 
     function renderStatic(data) {
-        allWorksImages = []; // تصفير المصفوفة للجمع الجديد
+        allWorksImages = [];
+        const waNum = data.whatsapp_num || "";
         document.getElementById('view-name').innerText = data.site_name || "بصمة غير";
         document.getElementById('view-desc').innerText = data.home_desc || "";
         document.getElementById('view-hours').innerText = data.work_hours || "";
-        document.getElementById('wa-main-link').href = `https://wa.me/${data.whatsapp_num}`;
+        
+        // رسالة تواصل عامة
+        const helloMsg = encodeURIComponent("السلام عليكم، تحية طيبة لبصمة غير للديكور، حاب أتواصل معكم بخصوص أعمالكم الخشبية.");
+        document.getElementById('wa-main-link').href = `https://wa.me/${waNum}?text=${helloMsg}`;
+        
+        const mapDiv = document.getElementById('map-btn-wrapper');
+        if(data.map_url) {
+            mapDiv.innerHTML = `<a href="${data.map_url}" target="_blank" style="color:var(--accent); text-decoration:none; font-size:0.9rem;">📍 موقعنا على الخريطة</a>`;
+        } else { mapDiv.innerHTML = ''; }
 
         const nav = document.getElementById('main-nav');
         const dPages = document.getElementById('dynamic-pages');
@@ -185,50 +119,38 @@
         const opA = document.getElementById('opt-a');
 
         nav.innerHTML = `<button class="nav-btn active" onclick="tab('home', this)">الرئيسية</button>`;
-        
-        // 1. الأقسام
         if(data.pages) {
             Object.keys(data.pages).forEach(id => {
                 const p = data.pages[id];
                 nav.innerHTML += `<button class="nav-btn" onclick="tab('${id}', this)">${p.title}</button>`;
                 opP.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
-                dPages.innerHTML += `<section id="sec-${id}" class="sec"><div class="grid">${renderImgs(p.imgs, data.whatsapp_num, `pages/${id}/imgs`)}</div></section>`;
+                dPages.innerHTML += `<section id="sec-${id}" class="sec"><div class="grid">${renderImgs(p.imgs, waNum, `pages/${id}/imgs`)}</div></section>`;
             });
         }
-
         nav.innerHTML += `<button class="nav-btn" onclick="tab('works', this)">أعمالنا</button>`;
-        
-        // 2. أعمالنا (المجلدات) - منها فقط نسحب صور الهيدر
         if(data.albums) {
             Object.keys(data.albums).forEach(id => {
                 const a = data.albums[id];
                 opA.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
-                fGrid.innerHTML += `<div class="work-item" style="padding:50px 20px; text-align:center; cursor:pointer; background:rgba(255,255,255,0.02);" onclick="tab('alb-${id}')"><h3 style="margin:0;">📁 ${a.name}</h3></div>`;
-                dPages.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="nav-btn" style="border:1px solid #333; margin-bottom:20px;" onclick="tab('works')">← العودة للمجلدات</button><div class="grid">${renderImgs(a.imgs, data.whatsapp_num, `albums/${id}/imgs`)}</div></section>`;
-                
-                if(a.imgs) {
-                    Object.values(a.imgs).forEach(img => { if(img.url) allWorksImages.push(img.url); });
-                }
+                fGrid.innerHTML += `<div class="work-item" style="padding:50px 20px; text-align:center; cursor:pointer;" onclick="tab('alb-${id}')"><h3>📁 ${a.name}</h3></div>`;
+                dPages.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="nav-btn" style="border:1px solid #333; margin-bottom:20px;" onclick="tab('works')">← العودة</button><div class="grid">${renderImgs(a.imgs, waNum, `albums/${id}/imgs`)}</div></section>`;
+                if(a.imgs) Object.values(a.imgs).forEach(img => { if(img.url) allWorksImages.push(img.url); });
             });
         }
-        
         if(allWorksImages.length > 0) startDynamicHeader();
     }
 
     function startDynamicHeader() {
         if(headerInterval) clearInterval(headerInterval);
         const header = document.getElementById('dynamic-header');
-        
         const changeBg = () => {
             if (allWorksImages.length > 0) {
                 const randomImg = allWorksImages[Math.floor(Math.random() * allWorksImages.length)];
                 header.style.backgroundImage = `url('${randomImg}')`;
-            } else {
-                header.style.backgroundImage = `url('https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80')`;
             }
         };
         changeBg();
-        headerInterval = setInterval(changeBg, 5000); // تغيير كل 5 ثوانٍ
+        headerInterval = setInterval(changeBg, 5000);
     }
 
     function renderImgs(imgs, wa, basePath) {
@@ -238,53 +160,40 @@
             const img = imgs[id];
             const path = `${basePath}/${id}`;
             const voted = localStorage.getItem('voted_'+path+'_'+resetKey);
-            return `
-                <div class="work-item">
-                    <div class="img-box" onclick="viewImg('${img.url}')"><img src="${img.url}" loading="lazy"></div>
-                    <div class="item-content">
-                        <h3>${img.desc || ''}</h3>
-                        <div class="vote-bar">
-                            <button class="vote-btn ${voted==='likes'?'voted':''}" onclick="handleVote(event, '${path}', 'likes')">👍 <span id="count-likes-${id}">${img.likes || 0}</span></button>
-                            <button class="vote-btn ${voted==='dislikes'?'voted':''}" onclick="handleVote(event, '${path}', 'dislikes')">👎 <span id="count-dislikes-${id}">${img.dislikes || 0}</span></button>
-                        </div>
-                        <button class="order-btn" onclick="window.open('https://wa.me/${wa}?text=استفسار عن: ${img.desc}')">استفسر الآن</button>
+            // رسالة استفسار عن منتج محدد
+            const orderMsg = encodeURIComponent(`مرحباً، حاب استفسر عن هذا العمل: ${img.desc || ''}`);
+            return `<div class="work-item">
+                <div class="img-box" onclick="viewImg('${img.url}')"><img src="${img.url}" loading="lazy"></div>
+                <div class="item-content">
+                    <h3>${img.desc || ''}</h3>
+                    <div class="vote-bar">
+                        <button class="vote-btn ${voted==='likes'?'voted':''}" onclick="handleVote(event, '${path}', 'likes')">👍 <span id="count-likes-${id}">${img.likes || 0}</span></button>
+                        <button class="vote-btn ${voted==='dislikes'?'voted':''}" onclick="handleVote(event, '${path}', 'dislikes')">👎 <span id="count-dislikes-${id}">${img.dislikes || 0}</span></button>
                     </div>
-                </div>`;
+                    <button class="order-btn" onclick="window.open('https://wa.me/${wa}?text=${orderMsg}')">استفسر الآن</button>
+                </div>
+            </div>`;
         }).join('');
     }
 
-    function viewImg(url) {
-        document.getElementById('modal-img').src = url;
-        document.getElementById('modal').style.display = 'flex';
-    }
-
+    function viewImg(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
     function handleVote(e, path, type) {
         e.preventDefault(); e.stopPropagation();
         const resetKey = localStorage.getItem('site_reset_id') || '0';
         if(localStorage.getItem('voted_'+path+'_'+resetKey)) return;
-        db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1).then(() => {
-            localStorage.setItem('voted_'+path+'_'+resetKey, type);
-        });
+        db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1).then(() => { localStorage.setItem('voted_'+path+'_'+resetKey, type); });
     }
-
     function tab(id, btn) {
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
         const target = document.getElementById('sec-'+id);
         if(target) target.classList.add('active');
-        if(btn) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-        }
+        if(btn) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
         window.scrollTo({top: (id==='home' ? 0 : 400), behavior:'smooth'});
     }
-
     function checkAdmin() { if(prompt("الرمز:") === '808090') document.getElementById('admin-panel').style.display='block'; }
-    function saveData() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, work_hours: document.getElementById('in-hours').value, home_desc: document.getElementById('in-desc').value }).then(() => alert("تم الحفظ")); }
+    function saveData() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, map_url: document.getElementById('in-map').value, work_hours: document.getElementById('in-hours').value, home_desc: document.getElementById('in-desc').value }).then(() => alert("تم الحفظ")); }
     function addP() { const t = document.getElementById('new-p').value; if(t) db.ref(`${DB_PATH}/pages`).push({ title: t }); }
     function upload() { const t = document.getElementById('target').value, u = document.getElementById('img-url').value, d = document.getElementById('img-txt').value; if(t && u) db.ref(`${DB_PATH}/${t}/imgs`).push({ url: u, desc: d, likes: 0, dislikes: 0 }).then(()=>alert("نُشر")); }
-
-    db.ref(`${DB_PATH}/current_reset_id`).on('value', snap => { if(snap.val()) localStorage.setItem('site_reset_id', snap.val()); });
 </script>
 </body>
 </html>
