@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير للديكور</title>
+    <title>بصمة غير | v28 المطور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -69,7 +69,7 @@
         <button class="reset-btn" onclick="deepResetAll()">🔥 تصفير جميع اللايكات</button>
         <h3>📝 المعلومات الأساسية</h3>
         <input type="text" id="in-name" placeholder="اسم الموقع">
-        <input type="text" id="in-wa" placeholder="رقم الواتساب (مثال: 966500000000)">
+        <input type="text" id="in-wa" placeholder="رقم الواتساب">
         <input type="text" id="in-map" placeholder="رابط قوقل ماب">
         <textarea id="in-hours" placeholder="ساعات العمل"></textarea>
         <textarea id="in-desc" placeholder="وصف الصفحة الرئيسية"></textarea>
@@ -103,7 +103,7 @@
     const DB_PATH = 'site_v28';
 
     let currentTab = 'home'; 
-    let allImages = [];
+    let worksImagesOnly = []; // مخصص فقط لصور "أعمالنا"
 
     db.ref(DB_PATH).on('value', snap => {
         const data = snap.val() || {};
@@ -111,7 +111,7 @@
     });
 
     function renderFull(data) {
-        allImages = [];
+        worksImagesOnly = []; // إعادة التصفير عند كل تحديث لضمان الدقة
         const wa = data.whatsapp_num || "";
         const rK = data.current_reset_id || "0";
         const siteName = data.site_name || "بصمة غير";
@@ -120,7 +120,6 @@
         document.getElementById('view-desc').innerText = data.home_desc || "";
         document.getElementById('view-hours').innerText = data.work_hours || "";
         
-        // تعديل رسالة التواصل العامة
         const mainMsg = encodeURIComponent(`السلام عليكم، أرغب في التواصل بخصوص خدمات ${siteName}`);
         document.getElementById('wa-main-link').href = `https://wa.me/${wa}?text=${mainMsg}`;
         
@@ -137,18 +136,19 @@
         let pagesH = "";
         optP.innerHTML = ""; optA.innerHTML = "";
 
+        // رندر الأقسام العادية (لا تضاف صورها للهيدر)
         if(data.pages) {
             Object.keys(data.pages).forEach(id => {
                 const p = data.pages[id];
                 navH += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="tab('${id}', this)">${p.title}</button>`;
                 pagesH += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(p.imgs, wa, `pages/${id}/imgs`, rK)}</div></section>`;
                 optP.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
-                if(p.imgs) Object.values(p.imgs).forEach(i => allImages.push(i.url));
             });
         }
 
         navH += `<button class="nav-btn ${currentTab==='works'?'active':''}" onclick="tab('works', this)">أعمالنا</button>`;
         
+        // رندر المجلدات داخل أعمالنا (تضاف صورها فقط للهيدر)
         let foldersH = "";
         if(data.albums) {
             Object.keys(data.albums).forEach(id => {
@@ -156,7 +156,9 @@
                 foldersH += `<div class="name-item" onclick="tab('alb-${id}')" style="background:#111; padding:20px; border-radius:10px; border:1px solid #333; text-align:center; font-weight:bold;">${a.name}</div>`;
                 pagesH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="border:1px solid #333; margin-bottom:20px;" onclick="tab('works')">← العودة</button><div class="grid">${drawImgs(a.imgs, wa, `albums/${id}/imgs`, rK)}</div></section>`;
                 optA.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
-                if(a.imgs) Object.values(a.imgs).forEach(i => allImages.push(i.url));
+                
+                // هنا نقوم بجمع الصور للهيدر من أعمالنا فقط
+                if(a.imgs) Object.values(a.imgs).forEach(i => { if(i.url) worksImagesOnly.push(i.url); });
             });
         }
 
@@ -164,7 +166,21 @@
         dPages.innerHTML = pagesH;
         fList.innerHTML = foldersH;
 
-        if(allImages.length > 0 && !window.headerStarted) startHeader();
+        // تشغيل الهيدر بانتظام
+        if(worksImagesOnly.length > 0 && !window.headerStarted) startHeader();
+    }
+
+    function startHeader() {
+        window.headerStarted = true;
+        const h = document.getElementById('dynamic-header');
+        const updateHeader = () => {
+            if(worksImagesOnly.length > 0) {
+                const randomImg = worksImagesOnly[Math.floor(Math.random()*worksImagesOnly.length)];
+                h.style.backgroundImage = `url('${randomImg}')`;
+            }
+        };
+        updateHeader(); // تشغيل فوري
+        setInterval(updateHeader, 5000); // تغيير كل 5 ثواني
     }
 
     function drawImgs(imgs, wa, path, rK) {
@@ -173,10 +189,7 @@
             const img = imgs[id];
             const p = `${path}/${id}`;
             const v = localStorage.getItem('voted_'+p+'_'+rK);
-            
-            // تعديل رسالة الاستفسار عن منتج معين
             const orderMsg = encodeURIComponent(`مرحباً، أود الاستفسار عن: (${img.desc || 'هذا العمل'})\nرابط الصورة: ${img.url}`);
-            
             return `<div class="work-item">
                 <div class="img-box" onclick="viewImg('${img.url}')"><img src="${img.url}"></div>
                 <div class="item-content">
@@ -245,13 +258,6 @@
         });
     }
 
-    function startHeader() {
-        window.headerStarted = true;
-        const h = document.getElementById('dynamic-header');
-        setInterval(() => {
-            if(allImages.length > 0) h.style.backgroundImage = `url('${allImages[Math.floor(Math.random()*allImages.length)]}')`;
-        }, 5000);
-    }
     function viewImg(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
     function checkAdmin() { if(prompt("الرمز:") === '808090') document.getElementById('admin-panel').style.display='block'; }
 </script>
