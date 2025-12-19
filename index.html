@@ -3,130 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير | معرض الديكور المنظم</title>
+    <title>بصمة غير | النسخة المعتمدة v28</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
-        :root { --gold: #b8860b; --bg: #ffffff; --card-bg: #f9f9f9; --whatsapp: #25d366; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        :root { --gold: #b8860b; --bg: #f8f9fa; --white: #ffffff; --whatsapp: #25d366; }
+        * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 0; user-select: none; }
         
-        header { padding: 20px; text-align: center; border-bottom: 1px solid #eee; background: #fff; }
-        header h1 { color: var(--gold); margin: 0; font-size: 22px; }
+        header { background: var(--white); padding: 25px; text-align: center; border-bottom: 3px solid var(--gold); }
+        header h1 { color: #333; margin: 0; font-size: 24px; font-weight: 800; }
 
-        /* الأزرار العلوية المنظمة */
-        .nav { display: flex; justify-content: center; gap: 8px; padding: 12px; background: #fff; position: sticky; top: 0; z-index: 1000; border-bottom: 1px solid #eee; overflow-x: auto; white-space: nowrap; }
-        .btn { padding: 7px 18px; border: 1px solid #ddd; border-radius: 20px; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: white; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow-x: auto; }
+        .btn { padding: 8px 20px; border: 1px solid #ddd; border-radius: 25px; background: white; font-weight: bold; cursor: pointer; white-space: nowrap; }
         .btn.active { background: var(--gold); color: white; border-color: var(--gold); }
 
-        .sec { width: 100%; max-width: 1200px; margin: 0 auto; display: none; padding: 15px; }
+        .sec { width: 95%; max-width: 1200px; margin: 20px auto; display: none; }
         .sec.active { display: block; }
 
-        /* نظام الشبكة المنظم (المربعات) */
+        /* العودة للستايل الأصلي الجميل (صور كاملة) */
         .grid { 
             display: grid; 
-            grid-template-columns: repeat(3, 1fr); /* 3 أعمدة في الجوال */
-            gap: 5px; 
+            gap: 20px; 
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
         }
-        @media (min-width: 768px) {
-            .grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
-        }
+        @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
 
         .card { 
-            position: relative;
-            aspect-ratio: 1 / 1; /* مربع إجباري من الخارج */
-            overflow: hidden;
-            background: #eee;
-            border-radius: 4px;
+            background: white; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: 0.3s;
         }
+        .card:hover { transform: translateY(-5px); }
+        
+        /* عرض الصورة بكامل طولها كما كانت */
         .card img { 
-            width: 100%; height: 100%; 
-            object-fit: cover; /* يقص الصورة لتناسب المربع برتابة */
-            cursor: pointer;
+            width: 100%; 
+            height: auto; 
+            display: block; 
+            cursor: zoom-in; 
         }
 
-        /* تفاعل الضغط */
-        .card:active img { transform: scale(0.95); }
-
-        /* أيقونة تدل على وجود تفاعل */
-        .card::after {
-            content: '🔍';
-            position: absolute; top: 5px; left: 5px;
-            font-size: 10px; opacity: 0.5;
+        .card-info { padding: 15px; text-align: center; border-top: 1px solid #eee; }
+        .card-info p { font-weight: bold; margin: 0 0 10px; color: #333; }
+        
+        .order-btn { 
+            background: var(--whatsapp); color: white; text-decoration: none; 
+            padding: 10px; border-radius: 8px; display: block; font-weight: bold; 
         }
 
-        /* النافذة المنبثقة (العرض الذكي الكامل) */
+        /* نافذة العرض الكبيرة */
         #overlay { 
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.95); z-index: 10001; 
-            justify-content: center; align-items: center; flex-direction: column;
+            background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; 
         }
-        #overlay img { 
-            max-width: 95%; max-height: 80%; 
-            object-fit: contain; /* يظهر الصورة كاملة بطولها الحقيقي هنا */
-            border-radius: 8px;
-        }
-        .overlay-info { color: white; margin-top: 15px; text-align: center; width: 90%; }
-        .wa-order-btn { background: var(--whatsapp); color: white; padding: 12px 25px; border-radius: 30px; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 10px; }
+        #overlay img { max-width: 95%; max-height: 90%; border-radius: 5px; }
 
-        /* لوحة التحكم */
-        #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 20000; padding: 20px; overflow-y: auto; }
-        .admin-box { border: 1px solid #ddd; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
-        .action-btn { background: #333; color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; opacity: 0; z-index: 1000; }
-
-        .folder-card { background: #f4f4f4; padding: 40px 10px; text-align: center; border-radius: 10px; cursor: pointer; font-weight: bold; border: 1px solid #eee; }
+        /* لوحة الإدارة */
+        #admin-panel { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; padding: 20px; overflow-y: auto; }
+        .admin-box { background: #f9f9f9; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #ddd; }
+        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; }
+        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; opacity: 0; }
     </style>
 </head>
 <body>
 
-<div id="overlay" onclick="this.style.display='none'">
-    <img id="overlay-img" src="">
-    <div class="overlay-info">
-        <p id="overlay-desc"></p>
-        <a id="overlay-wa" href="#" target="_blank" class="wa-order-btn">استفسار عبر الواتساب</a>
-        <div style="margin-top: 20px; color: #aaa; font-size: 12px;">إغلاق [X]</div>
-    </div>
-</div>
+<div id="overlay" onclick="this.style.display='none'"><img id="overlay-img" src=""></div>
 
 <header><h1 id="display-site-name">بصمة غير</h1></header>
 <nav class="nav" id="main-nav"></nav>
 
 <section id="sec-home" class="sec">
-    <div style="text-align:center; padding:50px 20px;">
-        <h2 id="display-home-title">...</h2>
-        <p id="display-home-desc" style="white-space: pre-line; line-height: 1.6; color: #444;"></p>
+    <div style="text-align:center; padding:40px; background:white; border-radius:15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+        <h2 id="display-home-title" style="color:var(--gold);">...</h2>
+        <p id="display-home-desc" style="white-space: pre-line; line-height: 1.7; color: #555;"></p>
     </div>
 </section>
 
 <section id="sec-works" class="sec">
-    <div id="folders-grid" class="grid" style="grid-template-columns: repeat(2, 1fr);"></div>
+    <h2 style="text-align:center; color:var(--gold);">أعمالنا المنفذة</h2>
+    <div id="folders-grid" class="grid"></div>
 </section>
 
 <div id="pages-content"></div>
 <div class="admin-trigger" onclick="checkAuth()"></div>
 
 <div id="admin-panel">
-    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-        <h3>إدارة site_v28</h3>
-        <button onclick="location.reload()">إغلاق</button>
-    </div>
+    <h3>لوحة التحكم site_v28</h3>
+    <button onclick="location.reload()">إغلاق</button>
     <div class="admin-box">
         <input type="text" id="set-site-name" placeholder="اسم الموقع">
         <input type="text" id="set-whatsapp" placeholder="رقم الواتساب">
-        <input type="text" id="set-home-title" placeholder="عنوان الصفحة الرئيسية">
+        <input type="text" id="set-home-title" placeholder="عنوان الترحيب">
         <textarea id="set-home-desc" placeholder="وصف الخدمة..."></textarea>
-        <button class="action-btn" onclick="saveTexts()">حفظ النصوص</button>
+        <button onclick="saveTexts()">حفظ</button>
     </div>
     <div class="admin-box">
         <input type="text" id="new-p-title" placeholder="اسم قسم جديد">
-        <button class="action-btn" onclick="addPage()" style="background:var(--gold);">+ إضافة قسم</button>
+        <button onclick="addPage()">إضافة قسم</button>
         <hr>
-        <select id="sel-target"><option value="">-- اختر القسم لإضافة صورة --</option><optgroup label="الأقسام" id="opt-pages"></optgroup><optgroup label="المجلدات" id="opt-albums"></optgroup></select>
+        <select id="sel-target"><option value="">-- اختر الوجهة --</option><optgroup label="الأقسام" id="opt-pages"></optgroup><optgroup label="المجلدات" id="opt-albums"></optgroup></select>
         <input type="text" id="img-url" placeholder="رابط الصورة">
-        <input type="text" id="img-desc" placeholder="وصف العمل (يظهر عند التكبير)">
-        <button class="action-btn" onclick="addNewContent()">رفع الآن</button>
+        <input type="text" id="img-desc" placeholder="وصف العمل">
+        <button onclick="addNewContent()">نشر</button>
     </div>
 </div>
 
@@ -169,7 +150,7 @@
                 let imgsHTML = '<div class="grid">';
                 if(p.imgs) {
                     Object.keys(p.imgs).forEach(imgId => {
-                        imgsHTML += `<div class="card"><img src="${p.imgs[imgId].url}" onclick="openImg('${p.imgs[imgId].url}', '${p.imgs[imgId].desc || p.title}')"></div>`;
+                        imgsHTML += createCard(p.imgs[imgId].url, p.imgs[imgId].desc || p.title);
                     });
                 }
                 imgsHTML += '</div>';
@@ -181,25 +162,29 @@
         if(siteData.albums) {
             Object.keys(siteData.albums).forEach(id => {
                 const alb = siteData.albums[id];
-                foldersGrid.innerHTML += `<div class="folder-card" onclick="showSec('alb-${id}')">${alb.name}</div>`;
+                foldersGrid.innerHTML += `<div class="card" style="padding:40px; cursor:pointer; text-align:center; font-weight:bold; border:2px solid var(--gold);" onclick="showSec('alb-${id}')">${alb.name}</div>`;
                 let albImgsHTML = '<div class="grid">';
                 if(alb.imgs) {
                     Object.keys(alb.imgs).forEach(imgId => {
-                        albImgsHTML += `<div class="card"><img src="${alb.imgs[imgId].url}" onclick="openImg('${alb.imgs[imgId].url}', '${alb.name}')"></div>`;
+                        albImgsHTML += createCard(alb.imgs[imgId].url, alb.name);
                     });
                 }
                 albImgsHTML += '</div>';
-                pagesDiv.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="btn" onclick="showSec('works')" style="margin-bottom:15px;">🔙 عودة</button><h2 style="text-align:center;">${alb.name}</h2>${albImgsHTML}</section>`;
+                pagesDiv.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="btn" onclick="showSec('works')" style="margin-bottom:20px;">🔙 عودة</button><h2 style="text-align:center;">${alb.name}</h2>${albImgsHTML}</section>`;
             });
         }
     }
 
-    function openImg(url, desc) {
-        document.getElementById('overlay-img').src = url;
-        document.getElementById('overlay-desc').innerText = desc;
-        const msg = encodeURIComponent(`السلام عليكم، استفسار بخصوص عمل: ${desc}`);
-        document.getElementById('overlay-wa').href = `https://wa.me/${siteData.whatsapp_num}?text=${msg}`;
-        document.getElementById('overlay').style.display = 'flex';
+    function createCard(url, desc) {
+        const msg = encodeURIComponent(`استفسار بخصوص: ${desc}`);
+        return `
+            <div class="card">
+                <img src="${url}" onclick="openImg('${url}')" loading="lazy">
+                <div class="card-info">
+                    <p>${desc}</p>
+                    <a href="https://wa.me/${siteData.whatsapp_num}?text=${msg}" target="_blank" class="order-btn">تواصل واتساب</a>
+                </div>
+            </div>`;
     }
 
     function showSec(id, save = true) {
@@ -212,8 +197,10 @@
         btns.forEach(b => { if(b.getAttribute('onclick').includes(`'${id}'`)) b.classList.add('active'); });
     }
 
-    async function checkAuth() {
-        const p = prompt("الرمز:");
+    function openImg(url) { document.getElementById('overlay-img').src = url; document.getElementById('overlay').style.display = 'flex'; }
+    
+    async function checkAuth() { 
+        const p = prompt("الرمز:"); 
         const s = await db.ref('server_auth/admin_pass').once('value');
         if(p === s.val().toString()) document.getElementById('admin-panel').style.display='block';
     }
