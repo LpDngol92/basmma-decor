@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>بصمة غير v29 - إصلاح الرابط</title>
+    <title>بصمة غير v29 - أوقات العمل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -25,8 +25,9 @@
         .sec.active { display: block; animation: fadeIn 0.4s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* ستايل زر الخريطة */
-        .map-section { margin-top: 30px; padding-top: 20px; border-top: 1px dashed #ccc; text-align: center; }
+        /* ستايل قسم المعلومات الجديد */
+        .info-section { margin-top: 30px; padding: 20px; border-top: 1px dashed #ccc; background: #fffaf0; border-radius: 15px; }
+        .work-hours { margin-bottom: 20px; color: #555; font-size: 0.95rem; line-height: 1.6; }
         .map-btn {
             display: inline-flex; align-items: center; justify-content: center; gap: 10px;
             background: var(--map-blue); color: white; text-decoration: none;
@@ -69,7 +70,11 @@
     <div style="background:white; padding:40px 20px; border-radius:25px; text-align:center; border:1px solid #eee;">
         <h2 id="display-home-title" style="color:var(--gold);">مرحباً بكم</h2>
         <p id="display-home-desc" style="line-height:1.9; color:#666; white-space: pre-line;"></p>
-        <div id="map-container"></div>
+        
+        <div id="info-container" class="info-section">
+            <div id="display-work-hours" class="work-hours" style="white-space: pre-line;"></div>
+            <div id="map-container"></div>
+        </div>
     </div>
 </section>
 
@@ -79,14 +84,21 @@
 
 <div id="admin-panel">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h3>إدارة v28 - تحديث نهائي</h3>
+        <h3>إدارة v28 - أوقات العمل والموقع</h3>
         <button onclick="location.reload()">إغلاق</button>
     </div>
-    <input type="text" id="set-site-name" placeholder="اسم الموقع">
-    <input type="text" id="set-whatsapp" placeholder="رقم الواتساب">
-    <input type="text" id="set-map-url" placeholder="رابط قوقل ماب">
-    <textarea id="set-home-desc" placeholder="وصف الخدمة" rows="4"></textarea>
-    <button class="save-btn" onclick="saveTexts()">حفظ البيانات الرئيسية</button>
+    <label>اسم الموقع:</label>
+    <input type="text" id="set-site-name">
+    <label>رقم الواتساب:</label>
+    <input type="text" id="set-whatsapp">
+    <label>رابط قوقل ماب:</label>
+    <input type="text" id="set-map-url">
+    <label>أوقات العمل:</label>
+    <textarea id="set-work-hours" placeholder="مثال: من السبت للخميس 8ص - 10م" rows="3"></textarea>
+    <label>وصف الخدمة:</label>
+    <textarea id="set-home-desc" rows="4"></textarea>
+    
+    <button class="save-btn" onclick="saveTexts()">حفظ البيانات</button>
     <hr style="margin:20px 0;">
     <input type="text" id="new-p-title" placeholder="اسم قسم جديد">
     <button class="save-btn" onclick="addPage()" style="background:var(--gold);">إضافة قسم</button>
@@ -109,17 +121,17 @@
 
     let currentActiveSec = localStorage.getItem('lastSec') || 'home';
 
-    // جلب البيانات وعرضها وتعبئة اللوحة
     db.ref(DB_NAME).on('value', snap => {
         const data = snap.val() || {};
         render(data);
         showSec(currentActiveSec, false);
         
-        // تعبئة لوحة التحكم بالبيانات المخزنة حالياً لضمان عدم ضياعها
-        if(data.site_name) document.getElementById('set-site-name').value = data.site_name;
-        if(data.whatsapp_num) document.getElementById('set-whatsapp').value = data.whatsapp_num;
-        if(data.map_url) document.getElementById('set-map-url').value = data.map_url;
-        if(data.home_desc) document.getElementById('set-home-desc').value = data.home_desc;
+        // تعبئة لوحة التحكم
+        document.getElementById('set-site-name').value = data.site_name || "";
+        document.getElementById('set-whatsapp').value = data.whatsapp_num || "";
+        document.getElementById('set-map-url').value = data.map_url || "";
+        document.getElementById('set-work-hours').value = data.work_hours || "";
+        document.getElementById('set-home-desc').value = data.home_desc || "";
     });
 
     async function checkAuth() { 
@@ -135,13 +147,26 @@
         document.getElementById('display-site-name').innerText = data.site_name || "بصمة غير";
         document.getElementById('display-home-title').innerText = data.site_name || "مرحباً بكم";
         document.getElementById('display-home-desc').innerText = data.home_desc || "";
+        
+        // عرض أوقات العمل
+        const hoursDiv = document.getElementById('display-work-hours');
+        if (data.work_hours) {
+            hoursDiv.innerHTML = `<strong>🕒 أوقات العمل:</strong><br>${data.work_hours}`;
+            hoursDiv.style.display = "block";
+        } else {
+            hoursDiv.style.display = "none";
+        }
 
+        // عرض زر الخريطة
         const mapContainer = document.getElementById('map-container');
         if (data.map_url && data.map_url.length > 5) {
-            mapContainer.innerHTML = `<div class="map-section"><a href="${data.map_url}" target="_blank" class="map-btn">📍 موقعنا على Google Maps</a></div>`;
+            mapContainer.innerHTML = `<a href="${data.map_url}" target="_blank" class="map-btn">📍 موقعنا على الخريطة</a>`;
         } else {
             mapContainer.innerHTML = "";
         }
+
+        // إخفاء الحاوية بالكامل إذا لم يوجد بيانات
+        document.getElementById('info-container').style.display = (data.work_hours || data.map_url) ? "block" : "none";
 
         const nav = document.getElementById('main-nav');
         const pagesDiv = document.getElementById('pages-content');
@@ -179,7 +204,7 @@
     }
 
     function createCard(url, desc, wa, path, L, D) {
-        const msg = encodeURIComponent(`استفسار عن عمل: ${desc || ''}`);
+        const msg = encodeURIComponent(`استفسار: ${desc || ''}`);
         const voted = localStorage.getItem('voted_'+path);
         return `
             <div class="card">
@@ -189,7 +214,7 @@
                     <div class="actions">
                         <button class="vote-btn ${voted=='L'?'liked':''}" onclick="vote('${path}','likes')">👍 <span>${L}</span></button>
                         <button class="vote-btn ${voted=='D'?'disliked':''}" onclick="vote('${path}','dislikes')">👎 <span>${D}</span></button>
-                        <a href="https://wa.me/${wa}?text=${msg}" target="_blank" class="order-btn-mini">تواصل واتساب</a>
+                        <a href="https://wa.me/${wa}?text=${msg}" target="_blank" class="order-btn-mini">واتساب</a>
                     </div>
                 </div>
             </div>`;
@@ -217,15 +242,17 @@
     }
 
     function saveTexts() {
-        const site_name = document.getElementById('set-site-name').value;
-        const whatsapp_num = document.getElementById('set-whatsapp').value;
-        const map_url = document.getElementById('set-map-url').value;
-        const home_desc = document.getElementById('set-home-desc').value;
+        const data = {
+            site_name: document.getElementById('set-site-name').value,
+            whatsapp_num: document.getElementById('set-whatsapp').value,
+            map_url: document.getElementById('set-map-url').value,
+            work_hours: document.getElementById('set-work-hours').value,
+            home_desc: document.getElementById('set-home-desc').value
+        };
         
-        // التحديث باستخدام كائن واحد لضمان عدم المسح
-        db.ref(DB_NAME).update({ site_name, whatsapp_num, map_url, home_desc })
-        .then(() => alert("تم الحفظ بنجاح ✅"))
-        .catch(e => alert("خطأ في الحفظ: " + e.message));
+        db.ref(DB_NAME).update(data)
+        .then(() => alert("تم حفظ أوقات العمل والموقع ✅"))
+        .catch(e => alert("خطأ: تأكد من إعدادات الـ Rules في فايربيز"));
     }
 
     function addPage() {
