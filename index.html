@@ -2,15 +2,15 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير | أعمال خشبية فاخرة</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>بصمة غير | معرض ديناميكي</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@100;400;700;900&display=swap');
 
         :root {
-            --accent: #c5a059; /* ذهبي خشبي */
+            --accent: #c5a059;
             --bg: #080808;
             --card-bg: #111111;
             --text-main: #ffffff;
@@ -18,98 +18,82 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
-        body { font-family: 'Noto Sans Arabic', sans-serif; margin: 0; background: var(--bg); color: var(--text-main); scroll-behavior: smooth; }
+        body { font-family: 'Noto Sans Arabic', sans-serif; margin: 0; background: var(--bg); color: var(--text-main); overflow-x: hidden; }
 
-        /* Header مع خلفية دواليب خشبية */
-        header {
-            height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            text-align: center; padding: 20px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.2), var(--bg)),
-                        url('https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80') center/cover;
+        /* الهيدر المتغير */
+        #dynamic-header {
+            height: 70vh; width: 100%; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; text-align: center;
+            padding: 40px 20px; position: relative;
+            background-color: #000;
+            background-position: center;
+            background-size: cover;
+            transition: background-image 1.5s ease-in-out; /* انتقال ناعم عند التغيير */
         }
 
-        header h1 { font-size: clamp(3rem, 12vw, 6rem); font-weight: 900; margin: 0; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        /* طبقة تعتيم فوق صورة الهيدر لجعل النص واضحاً */
+        #dynamic-header::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.4), var(--bg));
+            z-index: 1;
+        }
 
-        /* Navigation */
+        #dynamic-header h1 { position: relative; z-index: 2; font-size: clamp(2.5rem, 10vw, 5rem); font-weight: 900; margin: 0; text-shadow: 0 5px 20px rgba(0,0,0,0.8); }
+
         nav {
-            position: sticky; top: 0; background: rgba(8, 8, 8, 0.9); backdrop-filter: blur(15px);
-            padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05);
-            display: flex; gap: 10px; z-index: 5000; justify-content: center; overflow-x: auto;
+            position: sticky; top: 0; background: rgba(8, 8, 8, 0.95); backdrop-filter: blur(15px);
+            padding: 5px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; z-index: 5000; overflow-x: auto; scrollbar-width: none;
         }
+        nav::-webkit-scrollbar { display: none; }
+        @media (min-width: 768px) { nav { justify-content: center; } }
 
         .nav-btn {
-            padding: 12px 25px; border: none; background: none; color: var(--text-dim);
-            font-weight: 700; cursor: pointer; transition: 0.3s; border-radius: 8px; white-space: nowrap;
+            padding: 12px 20px; border: none; background: none; color: var(--text-dim);
+            font-weight: 700; cursor: pointer; border-radius: 8px; font-size: 0.9rem; flex-shrink: 0;
         }
         .nav-btn.active { color: var(--accent); background: rgba(197, 160, 89, 0.1); }
 
-        /* Sections */
-        .sec { width: 90%; max-width: 1300px; margin: 60px auto; display: none; }
-        .sec.active { display: block; animation: fadeIn 0.6s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .sec { width: 95%; max-width: 1400px; margin: 40px auto; display: none; }
+        .sec.active { display: block; animation: fadeIn 0.5s ease; }
 
-        /* Grid */
-        .grid { display: grid; gap: 25px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+        .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+        .work-item { background: var(--card-bg); border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03); }
+        .img-box { width: 100%; aspect-ratio: 1/1; cursor: pointer; background: #000; overflow: hidden; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
 
-        .work-item { background: var(--card-bg); border-radius: 15px; overflow: hidden; border: 1px solid rgba(255,255,255,0.03); }
+        .item-content { padding: 15px; }
+        .vote-bar { display: flex; gap: 8px; margin-bottom: 10px; }
+        .vote-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: #fff; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+        .vote-btn.voted { background: var(--accent); color: #000; }
 
-        .img-box { width: 100%; aspect-ratio: 1/1; overflow: hidden; cursor: zoom-in; position: relative; }
-        .img-box img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-        .img-box:hover img { transform: scale(1.05); }
+        .order-btn { width: 100%; padding: 14px; border-radius: 8px; background: var(--accent); color: black; border: none; font-weight: 800; cursor: pointer; }
 
-        .item-content { padding: 20px; }
-        .item-content h3 { margin: 0 0 15px 0; font-size: 1.1rem; }
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 10px; }
+        #modal img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-        .vote-bar { display: flex; gap: 10px; }
-        .vote-btn { 
-            flex: 1; padding: 10px; background: rgba(255,255,255,0.03); 
-            border: 1px solid rgba(255,255,255,0.05); color: #fff;
-            border-radius: 10px; cursor: pointer; font-weight: 700;
-        }
-        .vote-btn.voted { border-color: var(--accent); color: var(--accent); }
-
-        .order-btn {
-            width: 100%; margin-top: 12px; padding: 15px; border-radius: 10px;
-            background: var(--accent); color: black; border: none; font-weight: 800; cursor: pointer;
-        }
-
-        /* Folder Card */
-        .folder-card {
-            padding: 60px 20px; background: var(--card-bg); border-radius: 15px;
-            text-align: center; border: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: 0.3s;
-        }
-        .folder-card:hover { border-color: var(--accent); transform: translateY(-5px); }
-
-        /* Modal استعراض الصور */
-        #modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000;
-            display: none; align-items: center; justify-content: center; padding: 20px;
-            cursor: zoom-out;
-        }
-        #modal img { max-width: 100%; max-height: 90vh; border-radius: 10px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
-
-        /* Admin Trigger & Panel */
-        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 40px; height: 40px; z-index: 9999; opacity: 0; }
-        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 11000; padding: 30px; overflow-y: auto; }
+        .admin-trigger { position: fixed; bottom: 0; left: 0; width: 50px; height: 50px; z-index: 9999; opacity: 0; }
+        #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 11000; padding: 20px; overflow-y: auto; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #151515; color: #fff; border: 1px solid #333; border-radius: 8px; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div id="modal" onclick="this.style.display='none'"><img src="" id="modal-img"></div>
 
-<header>
+<header id="dynamic-header">
     <h1 id="view-name">بصمة غير</h1>
 </header>
 
 <nav id="main-nav"></nav>
 
 <section id="sec-home" class="sec active">
-    <div style="max-width: 800px; margin: 0 auto; text-align: center;">
-        <p id="view-desc" style="color: var(--text-dim); font-size: 1.2rem;"></p>
-        <div id="view-hours" style="margin: 30px 0; color: var(--accent); font-weight: bold;"></div>
-        <div id="map-btn-wrapper"></div>
-        <a id="wa-main-link" href="#" target="_blank" style="display:inline-block; margin-top: 30px; background:white; color:black; padding:15px 40px; border-radius:50px; text-decoration:none; font-weight: 800;">للتواصل اضغط هنا</a>
+    <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+        <p id="view-desc" style="color: var(--text-dim); font-size: 1.1rem;"></p>
+        <div id="view-hours" style="margin: 25px 0; color: var(--accent); font-weight: bold;"></div>
+        <a id="wa-main-link" href="#" target="_blank" style="display:inline-block; background:white; color:black; padding:12px 35px; border-radius:50px; text-decoration:none; font-weight: 800;">للتواصل اضغط هنا</a>
     </div>
 </section>
 
@@ -120,23 +104,22 @@
 
 <div id="admin-panel">
     <div style="max-width: 500px; margin: 0 auto;">
-        <h2 style="color:var(--accent)">لوحة التحكم v28</h2>
-        <button onclick="location.reload()" style="width:100%; padding:10px; background:red; color:white; border:none; margin-bottom:10px;">إغلاق</button>
-        <button onclick="resetAllVotes()" style="width:100%; padding:15px; background:orange; font-weight:bold; margin-bottom:20px;">تصفير كافة التفاعلات</button>
+        <h2>لوحة التحكم v28</h2>
+        <button onclick="location.reload()" style="width:100%; padding:10px; background:red; color:white; border:none;">خروج</button>
+        <hr>
         <input type="text" id="in-name" placeholder="اسم الموقع">
         <input type="text" id="in-wa" placeholder="واتساب">
-        <input type="text" id="in-map" placeholder="رابط الخريطة">
         <textarea id="in-hours" placeholder="ساعات العمل"></textarea>
-        <textarea id="in-desc" placeholder="الوصف"></textarea>
-        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--accent); font-weight:bold; border:none;">حفظ البيانات</button>
-        <hr style="margin:30px 0; opacity:0.1;">
+        <textarea id="in-desc" placeholder="وصف الصفحة"></textarea>
+        <button onclick="saveData()" style="width:100%; padding:15px; background:var(--accent); color:black; font-weight:bold;">حفظ البيانات</button>
+        <hr>
         <input type="text" id="new-p" placeholder="اسم قسم جديد">
         <button onclick="addP()" style="width:100%; padding:10px;">إضافة قسم</button>
-        <hr style="margin:30px 0; opacity:0.1;">
+        <hr>
         <select id="target"><optgroup label="الأقسام" id="opt-p"></optgroup><optgroup label="المجلدات" id="opt-a"></optgroup></select>
         <input type="text" id="img-url" placeholder="رابط الصورة">
         <input type="text" id="img-txt" placeholder="الوصف">
-        <button onclick="upload()" style="width:100%; padding:15px; background:white; color:black; font-weight:bold; border:none;">نشر</button>
+        <button onclick="upload()" style="width:100%; padding:15px; background:white; color:black;">نشر</button>
     </div>
 </div>
 
@@ -150,19 +133,21 @@
     const db = firebase.database();
     const DB_PATH = 'site_v28';
 
+    let allImages = []; // مصفوفة لتخزين كافة روابط الصور المرفوعة
+
     db.ref(DB_PATH).once('value', snap => {
         const data = snap.val() || {};
         renderStatic(data);
+        startDynamicHeader(); // ابدأ تغيير خلفية الهيدر
         listenToVotes();
     });
 
     function renderStatic(data) {
-        const waNum = data.whatsapp_num || "";
+        allImages = []; // تصفير المصفوفة قبل الجمع
         document.getElementById('view-name').innerText = data.site_name || "بصمة غير";
         document.getElementById('view-desc').innerText = data.home_desc || "";
         document.getElementById('view-hours').innerText = data.work_hours || "";
-        document.getElementById('wa-main-link').href = `https://wa.me/${waNum}`;
-        if(data.map_url) document.getElementById('map-btn-wrapper').innerHTML = `<a href="${data.map_url}" target="_blank" style="color:var(--text-dim);">📍 موقعنا على الخريطة</a>`;
+        document.getElementById('wa-main-link').href = `https://wa.me/${data.whatsapp_num}`;
 
         const nav = document.getElementById('main-nav');
         const dPages = document.getElementById('dynamic-pages');
@@ -172,24 +157,46 @@
 
         nav.innerHTML = `<button class="nav-btn active" onclick="tab('home', this)">الرئيسية</button>`;
         
+        // جمع الصور من الأقسام
         if(data.pages) {
             Object.keys(data.pages).forEach(id => {
                 const p = data.pages[id];
                 nav.innerHTML += `<button class="nav-btn" onclick="tab('${id}', this)">${p.title}</button>`;
                 opP.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
-                dPages.innerHTML += `<section id="sec-${id}" class="sec"><div class="grid">${renderImgs(p.imgs, waNum, `pages/${id}/imgs`)}</div></section>`;
+                dPages.innerHTML += `<section id="sec-${id}" class="sec"><div class="grid">${renderImgs(p.imgs, data.whatsapp_num, `pages/${id}/imgs`)}</div></section>`;
+                if(p.imgs) Object.values(p.imgs).forEach(i => allImages.push(i.url));
             });
         }
 
         nav.innerHTML += `<button class="nav-btn" onclick="tab('works', this)">أعمالنا</button>`;
+        // جمع الصور من المجلدات
         if(data.albums) {
             Object.keys(data.albums).forEach(id => {
                 const a = data.albums[id];
                 opA.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
-                fGrid.innerHTML += `<div class="folder-card" onclick="tab('alb-${id}')"><h3>${a.name}</h3></div>`;
-                dPages.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="nav-btn" style="border:1px solid #333; margin-bottom:20px;" onclick="tab('works')">← عودة</button><div class="grid">${renderImgs(a.imgs, waNum, `albums/${id}/imgs`)}</div></section>`;
+                fGrid.innerHTML += `<div class="work-item" style="padding:40px; text-align:center; cursor:pointer;" onclick="tab('alb-${id}')"><h3>${a.name}</h3></div>`;
+                dPages.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="nav-btn" onclick="tab('works')">← عودة</button><div class="grid">${renderImgs(a.imgs, data.whatsapp_num, `albums/${id}/imgs`)}</div></section>`;
+                if(a.imgs) Object.values(a.imgs).forEach(i => allImages.push(i.url));
             });
         }
+    }
+
+    // دالة لتغيير الهيدر بشكل عشوائي
+    function startDynamicHeader() {
+        const header = document.getElementById('dynamic-header');
+        const defaultImg = 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&q=80';
+
+        const changeBg = () => {
+            if (allImages.length > 0) {
+                const randomImg = allImages[Math.floor(Math.random() * allImages.length)];
+                header.style.backgroundImage = `url('${randomImg}')`;
+            } else {
+                header.style.backgroundImage = `url('${defaultImg}')`;
+            }
+        };
+
+        changeBg(); // تغيير فوري عند التحميل
+        setInterval(changeBg, 5000); // تغيير كل 5 ثوانٍ
     }
 
     function renderImgs(imgs, wa, basePath) {
@@ -203,7 +210,7 @@
                 <div class="work-item">
                     <div class="img-box" onclick="viewImg('${img.url}')"><img src="${img.url}" loading="lazy"></div>
                     <div class="item-content">
-                        <h3>${img.desc || ''}</h3>
+                        <h3 style="font-size:1rem; margin:0 0 10px 0;">${img.desc || ''}</h3>
                         <div class="vote-bar">
                             <button class="vote-btn ${voted==='likes'?'voted':''}" id="btn-likes-${id}" onclick="handleVote(event, '${path}', 'likes', '${id}')">👍 <span id="count-likes-${id}">${img.likes || 0}</span></button>
                             <button class="vote-btn ${voted==='dislikes'?'voted':''}" id="btn-dislikes-${id}" onclick="handleVote(event, '${path}', 'dislikes', '${id}')">👎 <span id="count-dislikes-${id}">${img.dislikes || 0}</span></button>
@@ -214,15 +221,12 @@
         }).join('');
     }
 
-    function viewImg(url) {
-        document.getElementById('modal-img').src = url;
-        document.getElementById('modal').style.display = 'flex';
-    }
+    function viewImg(url) { document.getElementById('modal-img').src = url; document.getElementById('modal').style.display = 'flex'; }
 
     function handleVote(e, path, type, id) {
         e.preventDefault(); e.stopPropagation();
         const resetKey = localStorage.getItem('site_reset_id') || '0';
-        if(localStorage.getItem('voted_'+path+'_'+resetKey)) return alert("تم التقييم مسبقاً");
+        if(localStorage.getItem('voted_'+path+'_'+resetKey)) return;
         db.ref(`${DB_PATH}/${path}/${type}`).transaction(c => (c || 0) + 1).then(() => {
             localStorage.setItem('voted_'+path+'_'+resetKey, type);
             document.getElementById(`btn-${type}-${id}`).classList.add('voted');
@@ -232,48 +236,26 @@
     function listenToVotes() {
         db.ref(DB_PATH).on('value', snap => {
             const data = snap.val(); if(!data) return;
-            const updateCount = (imgs) => {
-                if(!imgs) return;
-                Object.keys(imgs).forEach(imgId => {
-                    const l = document.getElementById(`count-likes-${imgId}`);
-                    const d = document.getElementById(`count-dislikes-${imgId}`);
-                    if(l) l.innerText = imgs[imgId].likes || 0;
-                    if(d) d.innerText = imgs[imgId].dislikes || 0;
-                });
-            };
-            if(data.pages) Object.keys(data.pages).forEach(pId => updateCount(data.pages[pId].imgs));
-            if(data.albums) Object.keys(data.albums).forEach(aId => updateCount(data.albums[aId].imgs));
+            const update = (imgs) => { if(imgs) Object.keys(imgs).forEach(k => { 
+                if(document.getElementById(`count-likes-${k}`)) document.getElementById(`count-likes-${k}`).innerText = imgs[k].likes || 0;
+                if(document.getElementById(`count-dislikes-${k}`)) document.getElementById(`count-dislikes-${k}`).innerText = imgs[k].dislikes || 0;
+            })};
+            if(data.pages) Object.values(data.pages).forEach(p => update(p.imgs));
+            if(data.albums) Object.values(data.albums).forEach(a => update(a.imgs));
         });
     }
 
     function tab(id, btn) {
         document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
         document.getElementById('sec-'+id).classList.add('active');
-        if(btn) {
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
+        if(btn) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }
         window.scrollTo({top: (id==='home'?0:400), behavior:'smooth'});
     }
 
     function checkAdmin() { if(prompt("الرمز:") === '808090') document.getElementById('admin-panel').style.display='block'; }
-    function saveData() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, map_url: document.getElementById('in-map').value, work_hours: document.getElementById('in-hours').value, home_desc: document.getElementById('in-desc').value }).then(() => alert("حفظ بنجاح")); }
+    function saveData() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, work_hours: document.getElementById('in-hours').value, home_desc: document.getElementById('in-desc').value }).then(() => alert("تم")); }
     function addP() { const t = document.getElementById('new-p').value; if(t) db.ref(`${DB_PATH}/pages`).push({ title: t }); }
     function upload() { const t = document.getElementById('target').value, u = document.getElementById('img-url').value, d = document.getElementById('img-txt').value; if(t && u) db.ref(`${DB_PATH}/${t}/imgs`).push({ url: u, desc: d, likes: 0, dislikes: 0 }); }
-
-    function resetAllVotes() {
-        if(!confirm("تأكيد تصفير الكل؟")) return;
-        const newKey = Date.now().toString();
-        db.ref(`${DB_PATH}/current_reset_id`).set(newKey);
-        db.ref(DB_PATH).once('value', snap => {
-            const data = snap.val(); const up = {};
-            if(data.pages) Object.keys(data.pages).forEach(id => { if(data.pages[id].imgs) Object.keys(data.pages[id].imgs).forEach(iId => { up[`${DB_PATH}/pages/${id}/imgs/${iId}/likes`]=0; up[`${DB_PATH}/pages/${id}/imgs/${iId}/dislikes`]=0; })});
-            if(data.albums) Object.keys(data.albums).forEach(id => { if(data.albums[id].imgs) Object.keys(data.albums[id].imgs).forEach(iId => { up[`${DB_PATH}/albums/${id}/imgs/${iId}/likes`]=0; up[`${DB_PATH}/albums/${id}/imgs/${iId}/dislikes`]=0; })});
-            db.ref().update(up).then(() => location.reload());
-        });
-    }
-
-    db.ref(`${DB_PATH}/current_reset_id`).on('value', snap => { if(snap.val()) localStorage.setItem('site_reset_id', snap.val()); });
 </script>
 </body>
 </html>
