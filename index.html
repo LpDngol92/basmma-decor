@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير | تجربة 2026 المتكاملة</title>
+    <title>بصمة غير | 2026</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -23,7 +23,6 @@
             overflow-x: hidden; scroll-behavior: smooth;
         }
 
-        /* خلفية التوهج */
         .bg-glow {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), rgba(0, 242, 255, 0.05) 0%, transparent 40%);
@@ -60,7 +59,6 @@
         .sec.active { display: block; animation: fadeUp 0.6s ease-out; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* الأزرار الموحدة */
         .hub-container { display: flex; justify-content: center; gap: 15px; margin-top: 40px; flex-wrap: wrap; }
         .hub-link {
             flex: 1; min-width: 200px; max-width: 280px; height: 60px;
@@ -72,7 +70,6 @@
         .link-wa { background: rgba(255,255,255,0.05); color: white; }
         .hub-link:hover { transform: translateY(-5px); border-color: var(--neon); box-shadow: 0 0 20px rgba(0,242,255,0.2); }
 
-        /* الشبكة والكروت */
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
         
         .folder-card {
@@ -86,7 +83,6 @@
         .img-box img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(100%); transition: 0.6s; }
         .work-item:hover img { filter: grayscale(0%); transform: scale(1.05); }
 
-        /* ستايل استعراض الصور (Lightbox) */
         #lightbox {
             position: fixed; inset: 0; background: rgba(0,0,0,0.95);
             backdrop-filter: blur(15px); z-index: 5000;
@@ -94,15 +90,9 @@
             opacity: 0; transition: 0.3s ease;
         }
         #lightbox.open { display: flex; opacity: 1; }
-        #lightbox img { 
-            max-width: 90%; max-height: 85vh; border-radius: 10px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            transform: scale(0.9); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
+        #lightbox img { max-width: 90%; max-height: 85vh; border-radius: 10px; transform: scale(0.9); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         #lightbox.open img { transform: scale(1); }
-        .close-hint { position: absolute; top: 20px; color: #666; font-size: 0.9rem; letter-spacing: 2px; }
 
-        /* باقي العناصر */
         .item-details { padding: 20px; }
         .vote-bar { display: flex; gap: 2px; margin-top: 15px; }
         .vote-btn { flex: 1; padding: 10px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); color: #666; cursor: pointer; text-align: center; }
@@ -112,7 +102,7 @@
 
         .admin-trigger { position: fixed; bottom: 0; left: 0; width: 30px; height: 30px; opacity: 0; z-index: 6000; }
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 7000; padding: 30px; overflow-y: auto; }
-        input, textarea, select { width: 100%; padding: 15px; margin-bottom: 10px; background: #111; border: 1px solid #333; color: white; }
+        input, textarea, select { width: 100%; padding: 15px; margin-bottom: 10px; background: #111; border: 1px solid #333; color: white; font-family: inherit; }
     </style>
 </head>
 <body onmousemove="updateGlow(event)">
@@ -120,7 +110,6 @@
 <div class="bg-glow" id="glow"></div>
 
 <div id="lightbox" onclick="closeLightbox()">
-    <div class="close-hint">اضغط في أي مكان للإغلاق</div>
     <img id="lightbox-img" src="" alt="preview">
 </div>
 
@@ -137,7 +126,7 @@
         <div id="view-hours" style="color: var(--neon); margin: 25px 0; font-weight: 900;"></div>
         <div class="hub-container">
             <div id="map-btn-wrapper" style="display:contents;"></div>
-            <a id="wa-link" href="#" target="_blank" class="hub-link link-wa">تواصل عبر واتساب</a>
+            <a id="wa-main-link" href="#" target="_blank" class="hub-link link-wa">تواصل معنا الآن</a>
         </div>
     </div>
 </section>
@@ -186,18 +175,15 @@
         document.getElementById('glow').style.setProperty('--y', e.clientY + 'px');
     }
 
-    /* سكريبت استعراض الصور */
     function openLightbox(src) {
         const lb = document.getElementById('lightbox');
-        const img = document.getElementById('lightbox-img');
-        img.src = src;
+        document.getElementById('lightbox-img').src = src;
         lb.classList.add('open');
-        document.body.style.overflow = 'hidden'; // منع السكرول أثناء العرض
+        document.body.style.overflow = 'hidden';
     }
 
     function closeLightbox() {
-        const lb = document.getElementById('lightbox');
-        lb.classList.remove('open');
+        document.getElementById('lightbox').classList.remove('open');
         document.body.style.overflow = 'auto';
     }
 
@@ -207,10 +193,15 @@
     });
 
     function render(data) {
+        const waNum = data.whatsapp_num || "";
         document.getElementById('view-name').innerText = data.site_name || "بصمة غير";
         document.getElementById('view-desc').innerText = data.home_desc || "";
         document.getElementById('view-hours').innerText = data.work_hours || "";
-        document.getElementById('wa-link').href = "https://wa.me/" + (data.whatsapp_num || "");
+        
+        // رسالة التواصل الرئيسية
+        const mainMsg = encodeURIComponent("السلام عليكم، تحية طيبة لـ (بصمة غير).. أريد الاستفسار عن خدماتكم المتاحة.");
+        document.getElementById('wa-main-link').href = `https://wa.me/${waNum}?text=${mainMsg}`;
+
         if(data.map_url) document.getElementById('map-btn-wrapper').innerHTML = `<a href="${data.map_url}" target="_blank" class="hub-link link-map">📍 موقعنا على الخريطة</a>`;
 
         const nav = document.getElementById('main-nav');
@@ -228,7 +219,7 @@
                 nav.innerHTML += `<button class="nav-btn" onclick="tab('${id}', this)">${p.title}</button>`;
                 opP.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
                 let h = '<div class="grid">';
-                if(p.imgs) Object.keys(p.imgs).forEach(iId => h += createCard(p.imgs[iId], data.whatsapp_num, `pages/${id}/imgs/${iId}`));
+                if(p.imgs) Object.keys(p.imgs).forEach(iId => h += createCard(p.imgs[iId], waNum, `pages/${id}/imgs/${iId}`));
                 h += '</div>';
                 dPages.innerHTML += `<section id="sec-${id}" class="sec"><h2 style="text-align:center; margin-bottom:40px;">${p.title}</h2>${h}</section>`;
             });
@@ -241,7 +232,7 @@
                 opA.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
                 fGrid.innerHTML += `<div class="folder-card" onclick="tab('alb-${id}')"><h3>${a.name}</h3></div>`;
                 let h = '<div class="grid">';
-                if(a.imgs) Object.keys(a.imgs).forEach(iId => h += createCard(a.imgs[iId], data.whatsapp_num, `albums/${id}/imgs/${iId}`));
+                if(a.imgs) Object.keys(a.imgs).forEach(iId => h += createCard(a.imgs[iId], waNum, `albums/${id}/imgs/${iId}`));
                 h += '</div>';
                 dPages.innerHTML += `<section id="sec-alb-${id}" class="sec"><button class="nav-btn" style="margin-bottom:30px;" onclick="tab('works')">← العودة</button>${h}</section>`;
             });
@@ -250,18 +241,21 @@
 
     function createCard(img, wa, path) {
         const v = localStorage.getItem('voted_'+path);
+        const desc = img.desc || 'تصميم ديكور';
+        // رسالة طلب التفاصيل (فقط الوصف)
+        const orderMsg = encodeURIComponent(`السلام عليكم، أود الاستفسار عن خدمة: ${desc}`);
+        const waLink = `https://wa.me/${wa}?text=${orderMsg}`;
+
         return `
             <div class="work-item">
-                <div class="img-box" onclick="openLightbox('${img.url}')">
-                    <img src="${img.url}" loading="lazy">
-                </div>
+                <div class="img-box" onclick="openLightbox('${img.url}')"><img src="${img.url}" loading="lazy"></div>
                 <div class="item-details">
-                    <p style="font-weight:700;">${img.desc || 'تصميم ديكور'}</p>
+                    <p style="font-weight:700;">${desc}</p>
                     <div class="vote-bar">
                         <div class="vote-btn ${v=='L'?'voted':''}" onclick="vote('${path}','likes')">👍 ${img.likes||0}</div>
                         <div class="vote-btn ${v=='D'?'voted':''}" onclick="vote('${path}','dislikes')">👎 ${img.dislikes||0}</div>
                     </div>
-                    <button class="order-btn" onclick="window.open('https://wa.me/${wa}')">طلب تفاصيل</button>
+                    <button class="order-btn" onclick="window.open('${waLink}')">طلب تفاصيل</button>
                 </div>
             </div>`;
     }
