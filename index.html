@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v28 النسخة النهائية</title>
+    <title>بصمة غير | v28 النسخة الاحترافية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -32,6 +32,7 @@
         .admin-item { background: #000; padding: 10px; border-radius: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 60000; display: none; align-items: center; justify-content: center; }
+        .del-img-btn { position: absolute; top: 10px; right: 10px; background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 5px; z-index: 100; cursor: pointer; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
@@ -58,25 +59,29 @@
 <div id="admin-panel">
     <div class="admin-box">
         <button onclick="location.reload()" style="background:#333; color:white; border:none; padding:8px 15px; border-radius:8px; float:left;">إغلاق</button>
-        <h3 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم الكاملة</h3>
-        <input type="text" id="in-name" placeholder="اسم الموقع"><input type="text" id="in-wa" placeholder="رقم الواتساب"><input type="text" id="in-map" placeholder="رابط الخريطة"><input type="text" id="in-hours" placeholder="ساعات العمل"><textarea id="in-desc" placeholder="الوصف"></textarea>
+        <h3 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة v28</h3>
+        <input type="text" id="in-name" placeholder="اسم الموقع"><input type="text" id="in-wa" placeholder="رقم الواتساب"><input type="text" id="in-map" placeholder="رابط الخريطة"><input type="text" id="in-hours" placeholder="ساعات العمل"><textarea id="in-desc" placeholder="وصف الرئيسية"></textarea>
         <button onclick="saveMain()" class="btn-order">حفظ الأساسيات</button>
         <hr style="opacity:0.1; margin:20px 0;">
+        <h4 style="color:var(--gold); margin-bottom:10px;">إدارة الأقسام</h4>
         <div id="manage-lists"></div>
-        <input type="text" id="new-p" placeholder="قسم جديد"><button onclick="addP()" style="width:100%; margin-bottom:5px;">إضافة قسم</button>
-        <input type="text" id="new-a" placeholder="مجلد أعمال"><button onclick="addA()" style="width:100%;">إضافة مجلد</button>
+        <input type="text" id="new-p" placeholder="اسم قسم جديد"><button onclick="addP()" style="width:100%; margin-bottom:5px;">إضافة قسم</button>
+        <input type="text" id="new-a" placeholder="اسم مجلد أعمال"><button onclick="addA()" style="width:100%;">إضافة مجلد</button>
         <hr style="opacity:0.1; margin:20px 0;">
-        <select id="target-sel"></select><input type="text" id="img-u" placeholder="رابط الصورة"><input type="text" id="img-d" placeholder="الوصف">
-        <button onclick="publish()" class="btn-order">نشر العمل</button>
+        <h4 style="color:var(--gold); margin-bottom:10px;">نشر صور جديدة</h4>
+        <select id="target-sel"></select><input type="text" id="img-u" placeholder="رابط الصورة المباشر"><input type="text" id="img-d" placeholder="وصف الصورة">
+        <button onclick="publish()" class="btn-order">نشر الآن</button>
         <hr style="opacity:0.1; margin:20px 0;">
-        <button onclick="resetLikes()" style="width:100%; padding:10px; background:none; border:1px solid var(--danger); color:var(--danger); border-radius:10px; cursor:pointer;">⚠️ تصفير جميع اللايكات</button>
+        <button onclick="resetLikes()" style="width:100%; padding:10px; background:none; border:1px solid var(--danger); color:var(--danger); border-radius:10px; cursor:pointer;">تصفير اللايكات</button>
     </div>
 </div>
 <script>
     const config = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd" };
     firebase.initializeApp(config); const db = firebase.database(); const DB_PATH = 'site_v28';
     let currentTab = 'home', headerImgs = [], isAdmin = false;
+
     db.ref(DB_PATH).on('value', snap => { renderAll(snap.val() || {}); });
+
     function renderAll(data) {
         headerImgs = []; const wa = data.whatsapp_num || "", rId = data.current_reset_id || "0";
         document.getElementById('view-title').innerText = data.site_name || "بصمة غير";
@@ -85,42 +90,72 @@
         document.getElementById('wa-main').href = `https://wa.me/${wa}`;
         document.getElementById('h-map').innerHTML = data.map_url ? `<a href="${data.map_url}" target="_blank" style="color:#fff;">عرض الموقع</a>` : 'غير محدد';
         setTimeout(() => document.getElementById('splash').style.display = 'none', 1500);
+        
         const nav = document.getElementById('navbar'), dPages = document.getElementById('dynamic-pages'), aGrid = document.getElementById('albums-grid'), sel = document.getElementById('target-sel'), mList = document.getElementById('manage-lists');
         let navH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home', this)">الرئيسية</button>`, sectionsH = ""; sel.innerHTML = ""; mList.innerHTML = ""; aGrid.innerHTML = "";
+        
         if(data.pages) Object.keys(data.pages).forEach(id => {
             const p = data.pages[id]; navH += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}', this)">${p.title}</button>`;
             sectionsH += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${draw(p.imgs, wa, `pages/${id}/imgs`, rId)}</div></section>`;
-            sel.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
+            sel.innerHTML += `<option value="pages/${id}">${p.title} (قسم)</option>`;
             mList.innerHTML += `<div class="admin-item"><span>${p.title}</span><button onclick="delAny('pages/${id}')" style="color:red; background:none; border:none;">حذف</button></div>`;
         });
+        
         navH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works', this)">أعمالنا</button>`;
+        
         if(data.albums) Object.keys(data.albums).forEach(id => {
             const a = data.albums[id]; aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3>${a.name}</h3></div>`;
             sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:20px; background:#222" onclick="go('works')">← عودة</button><div class="grid">${draw(a.imgs, wa, `albums/${id}/imgs`, rId)}</div></section>`;
-            sel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
+            sel.innerHTML += `<option value="albums/${id}">${a.name} (مجلد)</option>`;
             mList.innerHTML += `<div class="admin-item"><span>${a.name} (مجلد)</span><button onclick="delAny('albums/${id}')" style="color:red; background:none; border:none;">حذف</button></div>`;
             if(a.imgs) Object.values(a.imgs).forEach(i => { if(i.url) headerImgs.push(i.url); });
         });
+        
         nav.innerHTML = navH; dPages.innerHTML = sectionsH;
         if(headerImgs.length > 0 && !window.hInit) initHeader();
+        if(isAdmin) toggleAdminButtons(true);
     }
+
     function draw(imgs, wa, path, rId) {
         if(!imgs) return '';
         return Object.keys(imgs).map(id => {
             const img = imgs[id], p = `${path}/${id}`, v = localStorage.getItem('voted_'+p+'_'+rId);
-            return `<div class="card">${isAdmin?`<button onclick="delAny('${p}')" style="position:absolute; top:5px; left:5px; background:red; border:none; padding:5px; color:#fff; border-radius:5px; z-index:20;">X</button>`:''}<div class="img-wrap" onclick="zoom('${img.url}')"><img src="${img.url}"></div><div class="card-info"><h3>${img.desc||''}</h3><div onclick="vote('${p}','likes','${rId}')" style="cursor:pointer; margin-bottom:10px;"><span style="color:${v==='likes'?'red':'#555'}">❤</span> ${img.likes||0}</div><button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=${img.desc}')">استفسر</button></div></div>`;
+            return `<div class="card">
+                <button class="del-img-btn" onclick="delAny('${p}')">X حذف</button>
+                <div class="img-wrap" onclick="zoom('${img.url}')"><img src="${img.url}"></div>
+                <div class="card-info">
+                    <h3>${img.desc||''}</h3>
+                    <div onclick="vote('${p}','likes','${rId}')" style="cursor:pointer; margin-bottom:10px;">
+                        <span style="color:${v==='likes'?'red':'#555'}">❤</span> ${img.likes||0}
+                    </div>
+                    <button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=${img.desc}')">استفسر</button>
+                </div>
+            </div>`;
         }).join('');
     }
+
+    function toggleAdminButtons(show) {
+        document.querySelectorAll('.del-img-btn').forEach(btn => btn.style.display = show ? 'block' : 'none');
+    }
+
     function initHeader() { window.hInit = true; const h = document.getElementById('main-h'); const up = () => { if(headerImgs.length) h.style.backgroundImage = `url('${headerImgs[Math.floor(Math.random()*headerImgs.length)]}')`; }; up(); setInterval(up, 5000); }
     function go(id, btn) { currentTab = id; document.querySelectorAll('.sec').forEach(s => s.classList.remove('active')); const t = document.getElementById('sec-'+id); if(t) t.classList.add('active'); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); window.scrollTo({top: (id==='home'?0:400), behavior:'smooth'}); }
     function vote(p, t, rId) { const key = 'voted_'+p+'_'+rId, cur = localStorage.getItem(key), ref = db.ref(`${DB_PATH}/${p}`); if(cur===t) { ref.child(t).transaction(c=>(c||1)-1); localStorage.removeItem(key); } else { ref.child(t).transaction(c=>(c||0)+1); localStorage.setItem(key, t); } }
     function zoom(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
-    function checkAccess() { if(prompt("الرمز:")==='808090') { isAdmin = true; document.getElementById('admin-panel').style.display='block'; db.ref(DB_PATH).once('value', s => renderAll(s.val())); } }
+    
+    function checkAccess() { 
+        if(prompt("الرمز:")==='808090') { 
+            isAdmin = true; 
+            document.getElementById('admin-panel').style.display='block'; 
+            toggleAdminButtons(true);
+        } 
+    }
+    
     function saveMain() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, map_url: document.getElementById('in-map').value, work_hours: document.getElementById('in-hours').value, home_desc: document.getElementById('in-desc').value }).then(() => alert("تم الحفظ")); }
-    function addP() { db.ref(`${DB_PATH}/pages`).push({ title: document.getElementById('new-p').value }); }
-    function addA() { db.ref(`${DB_PATH}/albums`).push({ name: document.getElementById('new-a').value }); }
-    function publish() { db.ref(`${DB_PATH}/${document.getElementById('target-sel').value}/imgs`).push({ url: document.getElementById('img-u').value, desc: document.getElementById('img-d').value, likes: 0 }); }
-    function delAny(p) { if(confirm("حذف؟")) db.ref(`${DB_PATH}/${p}`).remove(); }
+    function addP() { db.ref(`${DB_PATH}/pages`).push({ title: document.getElementById('new-p').value }); document.getElementById('new-p').value=""; }
+    function addA() { db.ref(`${DB_PATH}/albums`).push({ name: document.getElementById('new-a').value }); document.getElementById('new-a').value=""; }
+    function publish() { db.ref(`${DB_PATH}/${document.getElementById('target-sel').value}/imgs`).push({ url: document.getElementById('img-u').value, desc: document.getElementById('img-d').value, likes: 0 }); document.getElementById('img-u').value=""; document.getElementById('img-d').value=""; }
+    function delAny(p) { if(confirm("هل أنت متأكد من الحذف؟")) db.ref(`${DB_PATH}/${p}`).remove(); }
     function resetLikes() { if(confirm("تصفير الكل؟")) { db.ref(DB_PATH).once('value', s => { const d = s.val(); let up = {}; up['current_reset_id'] = Date.now().toString(); const clr = (o, p) => { for(let k in o) { if(k==='likes') up[p+'/'+k]=0; else if(typeof o[k]==='object') clr(o[k], p+'/'+k); } }; if(d.pages) clr(d.pages, 'pages'); if(d.albums) clr(d.albums, 'albums'); db.ref(DB_PATH).update(up); }); } }
 </script>
 </body>
