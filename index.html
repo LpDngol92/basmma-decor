@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v28</title>
+    <title>بصمة غير | v28 المطورة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -15,24 +15,26 @@
         header { height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; position: relative; background-size: cover; background-position: center; transition: 1.5s; }
         header::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 20%, var(--bg) 98%); }
         .header-content { position: relative; z-index: 5; text-align: center; width: 90%; }
-        header h1 { font-size: clamp(2.2rem, 8vw, 6rem); color: #fff; text-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        header h1 { font-size: clamp(2.2rem, 8vw, 6rem); color: #fff; }
         nav { position: sticky; top: 10px; z-index: 10000; margin: -40px auto 30px; width: fit-content; max-width: 95%; background: rgba(20, 20, 22, 0.9); backdrop-filter: blur(15px); padding: 5px; border-radius: 50px; border: 1px solid rgba(197, 160, 89, 0.2); display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; }
-        nav::-webkit-scrollbar { display: none; }
-        .nav-btn { padding: 10px 18px; border: none; background: transparent; color: #888; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; font-size: 0.9rem; }
+        .nav-btn { padding: 10px 18px; border: none; background: transparent; color: #888; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; }
         .nav-btn.active { background: var(--primary); color: #fff; }
         .sec { width: 92%; max-width: 1200px; margin: 0 auto 80px; display: none; }
         .sec.active { display: block; }
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-        .card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); position: relative; }
+        .card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
         .img-wrap { width: 100%; aspect-ratio: 1/1; overflow: hidden; cursor: zoom-in; }
         .img-wrap img { width: 100%; height: 100%; object-fit: cover; }
-        .btn-order { width: 100%; padding: 14px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; }
+        .btn-order { width: 100%; padding: 14px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; }
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 100000; padding: 20px; overflow-y: auto; }
-        .admin-box { max-width: 550px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
+        .admin-box { max-width: 600px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: inherit; }
-        .admin-controls { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 100; display: none; }
-        .admin-btn { border: none; padding: 5px 10px; border-radius: 5px; color: white; cursor: pointer; font-weight: bold; font-size: 0.75rem; }
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 60000; display: none; align-items: center; justify-content: center; }
+        .admin-img-card { display: flex; align-items: center; gap: 10px; background: #000; padding: 10px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #222; }
+        .admin-img-card img { width: 60px; height: 60px; object-fit: cover; border-radius: 5px; }
+        .admin-img-info { flex: 1; font-size: 0.8rem; overflow: hidden; }
+        .admin-img-btns { display: flex; gap: 5px; }
+        .mini-btn { padding: 5px 10px; border: none; border-radius: 5px; color: #fff; cursor: pointer; font-size: 0.7rem; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -67,22 +69,30 @@
         <h3 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v28</h3>
         <input type="text" id="in-name" placeholder="اسم الموقع"><input type="text" id="in-wa" placeholder="رقم الواتساب"><input type="text" id="in-map" placeholder="رابط الخريطة"><input type="text" id="in-hours" placeholder="ساعات العمل"><textarea id="in-desc" placeholder="الوصف"></textarea>
         <button onclick="saveMain()" class="btn-order">حفظ الأساسيات</button>
-        <hr style="opacity:0.1; margin:20px 0;"><div id="manage-lists"></div>
+        <hr style="opacity:0.1; margin:20px 0;">
+        <h4 style="color:var(--gold); margin-bottom:10px;">إدارة الأقسام</h4>
+        <div id="manage-lists"></div>
         <input type="text" id="new-p" placeholder="اسم قسم جديد"><button onclick="addP()" style="width:100%; margin-bottom:5px;">إضافة قسم</button>
         <input type="text" id="new-a" placeholder="اسم مجلد أعمال"><button onclick="addA()" style="width:100%;">إضافة مجلد</button>
-        <hr style="opacity:0.1; margin:20px 0;"><select id="target-sel"></select>
-        <input type="text" id="img-u" placeholder="رابط الصورة"><input type="text" id="img-d" placeholder="الوصف">
+        <hr style="opacity:0.1; margin:20px 0;">
+        <h4 style="color:var(--gold); margin-bottom:10px;">إدارة ونشر الصور</h4>
+        <select id="target-sel" onchange="loadAdminImgs(this.value)"></select>
+        <div id="admin-imgs-manager" style="max-height: 300px; overflow-y: auto; margin-bottom: 15px; background: #0a0a0b; padding: 10px; border-radius: 10px;">
+            <p style="color: #666; text-align: center; font-size: 0.8rem;">اختر قسماً من القائمة أعلاه لعرض صوره وإدارتها</p>
+        </div>
+        <input type="text" id="img-u" placeholder="رابط صورة جديدة"><input type="text" id="img-d" placeholder="وصف الصورة">
         <button onclick="publish()" class="btn-order">نشر الآن</button>
-        <hr style="opacity:0.1; margin:20px 0;"><button onclick="resetLikes()" style="width:100%; padding:10px; background:none; border:1px solid var(--danger); color:var(--danger); border-radius:10px;">تصفير التفاعلات</button>
+        <hr style="opacity:0.1; margin:20px 0;">
+        <button onclick="resetLikes()" style="width:100%; padding:10px; background:none; border:1px solid var(--danger); color:var(--danger); border-radius:10px;">تصفير التفاعلات</button>
     </div>
 </div>
 
 <script>
     const config = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd" };
     firebase.initializeApp(config); const db = firebase.database(); const DB_PATH = 'site_v28';
-    let currentTab = 'home', headerImgs = [], isAdmin = false, allOptions = "";
+    let currentTab = 'home', headerImgs = [], isAdmin = false, currentData = {};
 
-    db.ref(DB_PATH).on('value', snap => { renderAll(snap.val() || {}); });
+    db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; renderAll(currentData); });
 
     function renderAll(data) {
         headerImgs = []; const wa = data.whatsapp_num || "", rId = data.current_reset_id || "0";
@@ -95,68 +105,77 @@
         
         const nav = document.getElementById('navbar'), dPages = document.getElementById('dynamic-pages'), aGrid = document.getElementById('albums-grid'), sel = document.getElementById('target-sel'), mList = document.getElementById('manage-lists');
         let navH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home', this)">الرئيسية</button>`, sectionsH = ""; 
-        sel.innerHTML = ""; mList.innerHTML = ""; aGrid.innerHTML = ""; allOptions = "";
+        sel.innerHTML = '<option value="">-- اختر قسماً للإدارة --</option>'; mList.innerHTML = ""; aGrid.innerHTML = "";
 
         if(data.pages) Object.keys(data.pages).forEach(id => {
             const p = data.pages[id]; navH += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}', this)">${p.title}</button>`;
             sectionsH += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${draw(p.imgs, wa, `pages/${id}/imgs`, rId)}</div></section>`;
-            let opt = `<option value="pages/${id}">${p.title}</option>`; sel.innerHTML += opt; allOptions += opt;
+            sel.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
             mList.innerHTML += `<div style="display:flex;justify-content:space-between;background:#000;padding:8px;border-radius:5px;margin-bottom:5px;"><span>${p.title}</span><button onclick="delAny('pages/${id}')" style="color:red;background:none;border:none;">حذف</button></div>`;
         });
         navH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works', this)">أعمالنا</button>`;
         if(data.albums) Object.keys(data.albums).forEach(id => {
             const a = data.albums[id]; aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:40px;text-align:center;cursor:pointer;"><h3>${a.name}</h3></div>`;
             sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:20px;background:#222" onclick="go('works')">← عودة</button><div class="grid">${draw(a.imgs, wa, `albums/${id}/imgs`, rId)}</div></section>`;
-            let opt = `<option value="albums/${id}">${a.name} (أعمال)</option>`; sel.innerHTML += opt; allOptions += opt;
+            sel.innerHTML += `<option value="albums/${id}">${a.name} (أعمال)</option>`;
             mList.innerHTML += `<div style="display:flex;justify-content:space-between;background:#000;padding:8px;border-radius:5px;margin-bottom:5px;"><span>${a.name}</span><button onclick="delAny('albums/${id}')" style="color:red;background:none;border:none;">حذف</button></div>`;
             if(a.imgs) Object.values(a.imgs).forEach(i => { if(i.url) headerImgs.push(i.url); });
         });
         nav.innerHTML = navH; dPages.innerHTML = sectionsH;
         if(headerImgs.length > 0 && !window.hInit) initHeader();
-        if(isAdmin) toggleAdminUI(true);
     }
 
     function draw(imgs, wa, path, rId) {
         if(!imgs) return '';
         return Object.keys(imgs).map(id => {
             const img = imgs[id], p = path + '/' + id, v = localStorage.getItem('voted_'+p+'_'+rId);
-            return `<div class="card">
-                <div class="admin-controls">
-                    <button class="admin-btn" style="background:var(--danger);" onclick="delAny('${p}')">حذف</button>
-                    <button class="admin-btn" style="background:var(--success);" onclick="moveImg('${p}', '${id}', ${JSON.stringify(img).replace(/"/g, '&quot;')})">نقل</button>
-                </div>
-                <div class="img-wrap" onclick="zoom('${img.url}')"><img src="${img.url}"></div>
-                <div class="card-info">
-                    <h3>${img.desc||''}</h3>
-                    <div onclick="vote('${p}','likes','${rId}')" style="cursor:pointer;margin-bottom:10px;"><span style="color:${v==='likes'?'red':'#555'}">❤</span> ${img.likes||0}</div>
-                    <button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=${encodeURIComponent(img.desc||'استفسار')}')">استفسر</button>
+            return `<div class="card"><div class="img-wrap" onclick="zoom('${img.url}')"><img src="${img.url}"></div><div class="card-info"><h3>${img.desc||''}</h3><div onclick="vote('${p}','likes','${rId}')" style="cursor:pointer;margin-bottom:10px;"><span style="color:${v==='likes'?'red':'#555'}">❤</span> ${img.likes||0}</div><button class="btn-order" onclick="window.open('https://wa.me/${wa}?text=${encodeURIComponent(img.desc||'استفسار')}')">استفسر</button></div></div>`;
+        }).join('');
+    }
+
+    function loadAdminImgs(path) {
+        const box = document.getElementById('admin-imgs-manager');
+        if(!path) { box.innerHTML = '<p style="color:#666;text-align:center;">اختر قسماً للإدارة</p>'; return; }
+        const parts = path.split('/'); 
+        const imgs = currentData[parts[0]] && currentData[parts[0]][parts[1]] ? currentData[parts[0]][parts[1]].imgs : null;
+        if(!imgs) { box.innerHTML = '<p style="color:#666;text-align:center;">لا توجد صور في هذا القسم</p>'; return; }
+        box.innerHTML = Object.keys(imgs).map(id => {
+            const img = imgs[id];
+            return `<div class="admin-img-card">
+                <img src="${img.url}">
+                <div class="admin-img-info"><b>${img.desc || 'بدون وصف'}</b></div>
+                <div class="admin-img-btns">
+                    <button class="mini-btn" style="background:var(--success)" onclick="moveImg('${path}/imgs/${id}', ${JSON.stringify(img).replace(/"/g, '&quot;')})">نقل</button>
+                    <button class="mini-btn" style="background:var(--danger)" onclick="delAny('${path}/imgs/${id}')">حذف</button>
                 </div>
             </div>`;
         }).join('');
     }
 
-    function moveImg(oldPath, imgId, imgData) {
-        const newTarget = prompt("اختر رقم الوجهة الجديدة من القائمة:\n" + Array.from(document.getElementById('target-sel').options).map((o,i)=>`${i}: ${o.text}`).join('\n'));
-        if(newTarget !== null) {
-            const targetVal = document.getElementById('target-sel').options[newTarget].value;
-            db.ref(DB_PATH + '/' + targetVal + '/imgs').push(imgData).then(() => {
-                db.ref(DB_PATH + '/' + oldPath).remove();
-                alert("تم النقل بنجاح");
+    function moveImg(oldPath, imgData) {
+        const sel = document.getElementById('target-sel');
+        const options = Array.from(sel.options).filter(o => o.value !== "");
+        const choice = prompt("اختر رقم الوجهة الجديدة:\n" + options.map((o,i)=>`${i}: ${o.text}`).join('\n'));
+        if(choice !== null && options[choice]) {
+            const targetPath = options[choice].value;
+            db.ref(DB_PATH + '/' + targetPath + '/imgs').push(imgData).then(() => {
+                db.ref(DB_PATH + '/' + oldPath).remove().then(() => {
+                    alert("تم النقل"); loadAdminImgs(document.getElementById('target-sel').value);
+                });
             });
         }
     }
 
-    function toggleAdminUI(show) { document.querySelectorAll('.admin-controls').forEach(c => c.style.display = show ? 'flex' : 'none'); }
     function initHeader() { window.hInit = true; const h = document.getElementById('main-h'); const up = () => { if(headerImgs.length) h.style.backgroundImage = `url('${headerImgs[Math.floor(Math.random()*headerImgs.length)]}')`; }; up(); setInterval(up, 5000); }
     function go(id, btn) { currentTab = id; document.querySelectorAll('.sec').forEach(s => s.classList.remove('active')); const t = document.getElementById('sec-'+id); if(t) t.classList.add('active'); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); window.scrollTo({top: (id==='home'?0:400), behavior:'smooth'}); }
     function vote(p, t, rId) { const key = 'voted_'+p+'_'+rId, cur = localStorage.getItem(key), ref = db.ref(DB_PATH + '/' + p); if(cur===t) { ref.child(t).transaction(c=>(c||1)-1); localStorage.removeItem(key); } else { ref.child(t).transaction(c=>(c||0)+1); localStorage.setItem(key, t); } }
     function zoom(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
-    function checkAccess() { if(prompt("الرمز:")==='808090') { isAdmin = true; document.getElementById('admin-panel').style.display='block'; toggleAdminUI(true); } }
+    function checkAccess() { if(prompt("الرمز:")==='808090') { isAdmin = true; document.getElementById('admin-panel').style.display='block'; } }
     function saveMain() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, map_url: document.getElementById('in-map').value, work_hours: document.getElementById('in-hours').value, home_desc: document.getElementById('in-desc').value }).then(() => alert("تم الحفظ")); }
     function addP() { db.ref(DB_PATH + '/pages').push({ title: document.getElementById('new-p').value }); document.getElementById('new-p').value=""; }
     function addA() { db.ref(DB_PATH + '/albums').push({ name: document.getElementById('new-a').value }); document.getElementById('new-a').value=""; }
-    function publish() { db.ref(DB_PATH + '/' + document.getElementById('target-sel').value + '/imgs').push({ url: document.getElementById('img-u').value, desc: document.getElementById('img-d').value, likes: 0 }); document.getElementById('img-u').value=""; document.getElementById('img-d').value=""; }
-    function delAny(p) { if(confirm("حذف؟")) db.ref(DB_PATH + '/' + p).remove(); }
+    function publish() { db.ref(DB_PATH + '/' + document.getElementById('target-sel').value + '/imgs').push({ url: document.getElementById('img-u').value, desc: document.getElementById('img-d').value, likes: 0 }).then(()=>loadAdminImgs(document.getElementById('target-sel').value)); document.getElementById('img-u').value=""; document.getElementById('img-d').value=""; }
+    function delAny(p) { if(confirm("حذف؟")) db.ref(DB_PATH + '/' + p).remove().then(()=> { if(p.includes('/imgs/')) loadAdminImgs(document.getElementById('target-sel').value); }); }
     function resetLikes() { if(confirm("تصفير الكل؟")) { db.ref(DB_PATH).once('value', s => { const d = s.val(); let up = {}; up['current_reset_id'] = Date.now().toString(); const clr = (o, p) => { for(let k in o) { if(k==='likes') up[p+'/'+k]=0; else if(typeof o[k]==='object') clr(o[k], p+'/'+k); } }; if(d.pages) clr(d.pages, 'pages'); if(d.albums) clr(d.albums, 'albums'); db.ref(DB_PATH).update(up); }); } }
 </script>
 </body>
