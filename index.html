@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v28 النسخة الاحترافية</title>
+    <title>بصمة غير | v28 النسخة المصححة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -77,7 +77,9 @@
 </div>
 <script>
     const config = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd" };
-    firebase.initializeApp(config); const db = firebase.database(); const DB_PATH = 'site_v28';
+    firebase.initializeApp(config); const db = firebase.database(); 
+    const DB_PATH = 'site_v28'; // تثبيت المسار المتفق عليه
+    
     let currentTab = 'home', headerImgs = [], isAdmin = false;
 
     db.ref(DB_PATH).on('value', snap => { renderAll(snap.val() || {}); });
@@ -140,22 +142,22 @@
 
     function initHeader() { window.hInit = true; const h = document.getElementById('main-h'); const up = () => { if(headerImgs.length) h.style.backgroundImage = `url('${headerImgs[Math.floor(Math.random()*headerImgs.length)]}')`; }; up(); setInterval(up, 5000); }
     function go(id, btn) { currentTab = id; document.querySelectorAll('.sec').forEach(s => s.classList.remove('active')); const t = document.getElementById('sec-'+id); if(t) t.classList.add('active'); document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); if(btn) btn.classList.add('active'); window.scrollTo({top: (id==='home'?0:400), behavior:'smooth'}); }
-    function vote(p, t, rId) { const key = 'voted_'+p+'_'+rId, cur = localStorage.getItem(key), ref = db.ref(`${DB_PATH}/${p}`); if(cur===t) { ref.child(t).transaction(c=>(c||1)-1); localStorage.removeItem(key); } else { ref.child(t).transaction(c=>(c||0)+1); localStorage.setItem(key, t); } }
-    function zoom(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
     
-    function checkAccess() { 
-        if(prompt("الرمز:")==='808090') { 
-            isAdmin = true; 
-            document.getElementById('admin-panel').style.display='block'; 
-            toggleAdminButtons(true);
-        } 
+    function vote(p, t, rId) { 
+        const key = 'voted_'+p+'_'+rId, cur = localStorage.getItem(key), ref = db.ref(`${DB_PATH}/${p}`); 
+        if(cur===t) { ref.child(t).transaction(c=>(c||1)-1); localStorage.removeItem(key); } 
+        else { ref.child(t).transaction(c=>(c||0)+1); localStorage.setItem(key, t); } 
     }
     
+    function zoom(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
+    function checkAccess() { if(prompt("الرمز:")==='808090') { isAdmin = true; document.getElementById('admin-panel').style.display='block'; toggleAdminButtons(true); } }
+    
+    // تأكيد استخدام DB_PATH في جميع الوظائف
     function saveMain() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, map_url: document.getElementById('in-map').value, work_hours: document.getElementById('in-hours').value, home_desc: document.getElementById('in-desc').value }).then(() => alert("تم الحفظ")); }
     function addP() { db.ref(`${DB_PATH}/pages`).push({ title: document.getElementById('new-p').value }); document.getElementById('new-p').value=""; }
     function addA() { db.ref(`${DB_PATH}/albums`).push({ name: document.getElementById('new-a').value }); document.getElementById('new-a').value=""; }
     function publish() { db.ref(`${DB_PATH}/${document.getElementById('target-sel').value}/imgs`).push({ url: document.getElementById('img-u').value, desc: document.getElementById('img-d').value, likes: 0 }); document.getElementById('img-u').value=""; document.getElementById('img-d').value=""; }
-    function delAny(p) { if(confirm("هل أنت متأكد من الحذف؟")) db.ref(`${DB_PATH}/${p}`).remove(); }
+    function delAny(p) { if(confirm("حذف؟")) db.ref(`${DB_PATH}/${p}`).remove(); }
     function resetLikes() { if(confirm("تصفير الكل؟")) { db.ref(DB_PATH).once('value', s => { const d = s.val(); let up = {}; up['current_reset_id'] = Date.now().toString(); const clr = (o, p) => { for(let k in o) { if(k==='likes') up[p+'/'+k]=0; else if(typeof o[k]==='object') clr(o[k], p+'/'+k); } }; if(d.pages) clr(d.pages, 'pages'); if(d.albums) clr(d.albums, 'albums'); db.ref(DB_PATH).update(up); }); } }
 </script>
 </body>
