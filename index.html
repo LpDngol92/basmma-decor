@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v30.2 الفخمة</title>
+    <title>بصمة غير | v30.3 الذهبية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -12,52 +12,57 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; width: 100%; }
         
-        /* سبلاش فخم جداً */
+        /* سبلاش البصمة الذهبية الفخمة */
         #splash { 
             position: fixed; inset: 0; background: #000; z-index: 999999; 
             display: flex; flex-direction: column; align-items: center; justify-content: center; 
-            transition: 1s cubic-bezier(0.65, 0, 0.35, 1); 
+            transition: 1.2s cubic-bezier(0.65, 0, 0.35, 1); 
         }
         #splash.hide { transform: translateY(-100%); opacity: 0; pointer-events: none; }
         
         .splash-content { text-align: center; }
         .splash-title { 
             font-size: 2.5rem; font-weight: 900; color: var(--gold); 
-            margin-bottom: 20px; text-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
-            animation: fadeInText 1.2s ease;
+            margin-bottom: 30px; text-shadow: 0 0 25px rgba(197, 160, 89, 0.5);
+            animation: fadeInText 1.5s ease;
         }
-        .fingerprint-img { 
-            width: 120px; height: auto; 
-            filter: drop-shadow(0 0 15px var(--gold)) brightness(1.2);
-            animation: pulseFinger 2.5s infinite ease-in-out;
-            opacity: 0.9;
+        .fingerprint-gold { 
+            width: 140px; height: auto; 
+            animation: pulseGold 2s infinite ease-in-out;
+            filter: drop-shadow(0 0 20px rgba(197, 160, 89, 0.6));
         }
 
-        @keyframes fadeInText { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        @keyframes pulseFinger { 0%, 100% { opacity: 0.5; transform: scale(1); filter: drop-shadow(0 0 5px var(--gold)); } 50% { opacity: 1; transform: scale(1.1); filter: drop-shadow(0 0 25px var(--gold)); } }
+        @keyframes fadeInText { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulseGold { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.08); opacity: 1; } }
 
-        /* العناصر الأساسية */
+        /* العناصر الأساسية للموقع */
         header { height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; position: relative; background-size: cover; background-position: center; transition: background 2s ease; }
         header::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 10%, var(--bg) 95%); }
         .header-content { position: relative; z-index: 5; text-align: center; width: 90%; }
         header h1 { font-size: clamp(2.5rem, 10vw, 6rem); color: #fff; text-shadow: 0 0 30px rgba(0,0,0,0.9); font-weight: 900; }
 
         nav { position: sticky; top: 10px; z-index: 10000; margin: -50px auto 30px; width: fit-content; max-width: 95%; background: rgba(20, 20, 22, 0.95); backdrop-filter: blur(15px); padding: 5px; border-radius: 50px; border: 1px solid rgba(197, 160, 89, 0.2); display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; }
-        .nav-btn { padding: 12px 22px; border: none; background: transparent; color: #888; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; }
-        .nav-btn.active { background: var(--primary); color: #fff; }
+        .nav-btn { padding: 12px 22px; border: none; background: transparent; color: #888; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; transition: 0.3s; }
+        .nav-btn.active { background: var(--primary); color: #fff; box-shadow: 0 4px 15px rgba(92, 10, 10, 0.4); }
 
         .sec { width: 92%; max-width: 1200px; margin: 0 auto 80px; display: none; min-height: 400px; }
         .sec.active { display: block; animation: fadeIn 0.6s ease; }
 
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-        .card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
-        .img-container { position: relative; width: 100%; aspect-ratio: 1/1; overflow: hidden; background: #111; }
+        .card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); transition: 0.3s; }
+        .img-container { position: relative; width: 100%; aspect-ratio: 1/1; overflow: hidden; background: #111; cursor: zoom-in; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
 
+        .watermark-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; opacity: 0.35; z-index: 10; }
+        .watermark-overlay img { width: 45%; max-height: 45%; object-fit: contain; filter: grayscale(1) brightness(2); }
+        .watermark-overlay span { font-size: 1.2rem; font-weight: 900; color: #fff; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* لوحة التحكم v30.3 */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 1000000; padding: 20px; overflow-y: auto; }
         .admin-box { max-width: 850px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; }
         .btn-order { width: 100%; padding: 15px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; }
-
+        
         #admin-imgs-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; background: #080808; padding: 15px; border-radius: 15px; }
         .admin-img-item { position: relative; aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; border: 1px solid #222; }
         .admin-img-item img { width: 100%; height: 100%; object-fit: cover; }
@@ -72,7 +77,7 @@
 <div id="splash">
     <div class="splash-content">
         <div class="splash-title">بصمة غير للديكور</div>
-        <img src="https://i.ibb.co/v4m0fXN/fingerprint-gold.png" class="fingerprint-img" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2618/2618567.png'">
+        <img src="https://i.ibb.co/p3Ym0vH/gold-fingerprint.png" class="fingerprint-gold" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2618/2618567.png'">
     </div>
 </div>
 
@@ -94,7 +99,7 @@
                 <div id="h-map" style="margin-top:20px;"></div>
             </div>
             <br>
-            <a id="wa-main" href="#" target="_blank" style="display:inline-block; padding:20px 60px; background:#fff; color:#000; border-radius:50px; text-decoration:none; font-weight:900; font-size:1.2rem;">تواصل معنا واتساب</a>
+            <a id="wa-main" href="#" target="_blank" style="display:inline-block; padding:20px 60px; background:#fff; color:#000; border-radius:50px; text-decoration:none; font-weight:900; font-size:1.2rem; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">تواصل معنا واتساب</a>
         </div>
     </section>
     <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
@@ -106,19 +111,21 @@
 <div id="admin-panel">
     <div class="admin-box">
         <button onclick="location.reload()" style="float:left; background:var(--danger); color:#fff; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">خروج</button>
-        <h2 style="color:var(--gold);">لوحة التحكم v30.2</h2>
+        <h2 style="color:var(--gold);">لوحة التحكم v30.3</h2>
         <br>
         <div style="height:320px; background:#fff; margin-bottom:10px; border-radius:15px; overflow:hidden;"><iframe src="https://www.0zz0.com/" style="width:100%; height:100%; border:none;"></iframe></div>
-        <button onclick="doSmartPaste()" style="width:100%; padding:12px; background:var(--success); color:#fff; border:none; border-radius:10px; margin-bottom:10px; font-weight:bold;">📋 جلب الروابط</button>
-        <textarea id="img-urls" style="height:70px; background:#000; color:#fff; width:100%;"></textarea>
-        <select id="target-sel" onchange="loadAdminImgs(this.value)" style="width:100%; padding:10px; margin-top:10px; background:#000; color:#fff;"></select>
-        <button onclick="publishMany()" class="btn-order" style="background:var(--blue); margin-top:10px;">نشر الصور</button>
+        <button onclick="doSmartPaste()" style="width:100%; padding:12px; background:var(--success); color:#fff; border:none; border-radius:10px; margin-bottom:10px; font-weight:bold;">📋 جلب الروابط المنسوخة</button>
+        <textarea id="img-urls" style="height:70px; width:100%; background:#000; color:#fff;" placeholder="الروابط هنا..."></textarea>
+        <select id="target-sel" onchange="loadAdminImgs(this.value)" style="width:100%; padding:10px; margin:10px 0; background:#000; color:#fff;"></select>
+        <button onclick="publishMany()" class="btn-order" style="background:var(--blue); margin-bottom:15px;">نشر الصور المحددة</button>
         <div id="admin-imgs-list"></div>
         <hr style="margin:20px 0; opacity:0.1;">
-        <input type="text" id="in-hours" placeholder="الدوام" style="width:100%; padding:10px; margin-bottom:5px;">
-        <input type="text" id="in-name" placeholder="اسم الموقع" style="width:100%; padding:10px; margin-bottom:5px;">
-        <input type="text" id="in-wa" placeholder="واتساب" style="width:100%; padding:10px; margin-bottom:5px;">
-        <button onclick="saveSettings()" class="btn-order">حفظ الكل</button>
+        <input type="text" id="in-hours" placeholder="الدوام"><input type="text" id="in-name" placeholder="اسم الموقع"><input type="text" id="in-wa" placeholder="واتساب">
+        <input type="text" id="wm-name" placeholder="نص العلامة المائية"><input type="text" id="wm-icon" placeholder="رابط أيقونة العلامة">
+        <button onclick="saveSettings()" class="btn-order">حفظ الإعدادات</button>
+        <hr style="margin:20px 0; opacity:0.1;">
+        <input type="text" id="new-p" placeholder="قسم جديد"><button onclick="addP()">إضافة قسم</button>
+        <input type="text" id="new-a" placeholder="مجلد جديد"><button onclick="addA()">إضافة مجلد</button>
     </div>
 </div>
 
@@ -134,12 +141,22 @@
         updateHeaderBG();
     });
 
+    async function tryAutoPaste() {
+        if(document.getElementById('admin-panel').style.display === 'block') {
+            try {
+                const text = await navigator.clipboard.readText();
+                const urls = text.match(/https?:\/\/[^\s"']+\.(?:jpg|jpeg|png|gif)/gi);
+                if(urls) document.getElementById('img-urls').value = [...new Set(urls)].join('\n');
+            } catch(e) {}
+        }
+    }
+
     async function doSmartPaste() {
         try {
             const text = await navigator.clipboard.readText();
             const urls = text.match(/https?:\/\/[^\s"']+\.(?:jpg|jpeg|png|gif)/gi);
-            if(urls) document.getElementById('img-urls').value = [...new Set(urls)].join('\n');
-        } catch(e) {}
+            if(urls) { document.getElementById('img-urls').value = [...new Set(urls)].join('\n'); }
+        } catch(e) { alert("يرجى منح صلاحية اللصق"); }
     }
 
     function updateHeaderBG() {
@@ -170,15 +187,16 @@
         if(data.albums) Object.keys(data.albums).forEach(id => {
             const a = data.albums[id];
             aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:45px 15px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold)">${a.name}</h3></div>`;
-            sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><div class="grid">${drawImgs(a.imgs, data)}</div></section>`;
+            sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:20px;background:#222;color:#fff" onclick="go('works')">← عودة</button><div class="grid">${drawImgs(a.imgs, data)}</div></section>`;
             sel.innerHTML += `<option value="albums/${id}">مجلد: ${a.name}</option>`;
         });
         nav.innerHTML = navH; dPages.innerHTML = sectionsH;
     }
 
     function drawImgs(imgs, data) {
-        if(!imgs) return '<p style="text-align:center; padding:50px; opacity:0.5;">لا يوجد صور</p>';
-        return Object.keys(imgs).reverse().map(id => `<div class="card"><div class="img-container" onclick="zoom('${imgs[id].url}')"><img src="${imgs[id].url}"></div></div>`).join('');
+        if(!imgs) return '<p style="text-align:center; padding:80px; opacity:0.4;">لا يوجد صور</p>';
+        const wm = (data.wm_name || data.wm_icon) ? `<div class="watermark-overlay">${data.wm_icon ? `<img src="${data.wm_icon}">` : ''}<span>${data.wm_name || ''}</span></div>` : '';
+        return Object.keys(imgs).reverse().map(id => `<div class="card"><div class="img-container" onclick="zoom('${imgs[id].url}')"><img src="${imgs[id].url}">${wm}</div><div style="padding:15px;"><button class="btn-order" onclick="window.open('https://wa.me/${data.whatsapp_num}')">استفسر عن العمل</button></div></div>`).join('');
     }
 
     function go(id) { currentTab = id; renderAll(currentData); window.scrollTo({ top: 0, behavior: 'smooth' }); }
@@ -194,14 +212,16 @@
     }
     function publishMany() {
         const target = document.getElementById('target-sel').value; const urls = document.getElementById('img-urls').value.split('\n').filter(u => u.trim() !== "");
-        if(!target || urls.length === 0) return alert("خطأ");
+        if(!target || urls.length === 0) return alert("أكمل البيانات");
         urls.forEach(url => db.ref(DB_PATH + '/' + target + '/imgs').push({ url: url.trim() }));
         document.getElementById('img-urls').value = ""; loadAdminImgs(target);
     }
     function saveSettings() {
-        db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, work_hours: document.getElementById('in-hours').value }).then(() => alert("تم"));
+        db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, work_hours: document.getElementById('in-hours').value, wm_name: document.getElementById('wm-name').value, wm_icon: document.getElementById('wm-icon').value }).then(() => alert("تم الحفظ"));
     }
     function zoom(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
+    function addP() { const t = document.getElementById('new-p').value; if(t) db.ref(DB_PATH + '/pages').push({ title: t }); }
+    function addA() { const t = document.getElementById('new-a').value; if(t) db.ref(DB_PATH + '/albums').push({ name: t }); }
     function delAny(p) { if(confirm("حذف؟")) db.ref(DB_PATH + '/' + p).remove().then(() => loadAdminImgs(document.getElementById('target-sel').value)); }
 </script>
 </body>
