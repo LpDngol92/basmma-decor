@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v28.6</title>
+    <title>بصمة غير | v28.8</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -12,8 +12,7 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; width: 100%; }
         
-        /* إصلاح شاشة التحميل */
-        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 999999; display: flex; align-items: center; justify-content: center; transition: 0.8s; opacity: 1; }
+        #splash { position: fixed; inset: 0; background: var(--bg); z-index: 999999; display: flex; align-items: center; justify-content: center; transition: 0.8s; }
         #splash.hide { opacity: 0; pointer-events: none; }
 
         header { height: 100vh; width: 100vw; display: flex; align-items: center; justify-content: center; position: relative; background-size: cover; background-position: center; }
@@ -32,23 +31,22 @@
         .img-container { position: relative; width: 100%; aspect-ratio: 1/1; overflow: hidden; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
 
-        /* العلامة المائية */
         .watermark-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; opacity: 0.3; z-index: 10; }
         .watermark-overlay img { width: 45%; max-height: 45%; object-fit: contain; filter: grayscale(1) brightness(2); }
-        .watermark-overlay span { color: #fff; font-size: 0.8rem; margin-top: 5px; font-weight: bold; }
 
-        /* لوحة الإدارة */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 1000000; padding: 20px; overflow-y: auto; }
-        .admin-box { max-width: 800px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
+        .admin-box { max-width: 850px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: inherit; }
+        
         .uploader-frame { width: 100%; height: 350px; border-radius: 15px; background: #fff; overflow: hidden; margin-bottom: 15px; border: 2px solid var(--gold); }
+        .btn-order { width: 100%; padding: 15px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; }
+        .btn-smart { background: var(--success); color: #fff; border: none; padding: 15px; border-radius: 10px; font-weight: 900; cursor: pointer; width: 100%; margin-bottom: 15px; }
         
-        .btn-order { width: 100%; padding: 15px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; font-size: 1rem; }
-        
-        /* زر اللصق الذكي */
-        .smart-paste-area { background: #1a1a1d; padding: 15px; border-radius: 15px; border: 1px dashed var(--success); margin-bottom: 20px; text-align: center; }
-        .btn-smart { background: var(--success); color: #fff; border: none; padding: 12px 20px; border-radius: 10px; font-weight: 900; cursor: pointer; width: 100%; margin-bottom: 10px; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); }
-        
+        #admin-imgs-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-top: 15px; background: #080808; padding: 15px; border-radius: 15px; border: 1px solid #222; }
+        .admin-img-item { position: relative; aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
+        .admin-img-item img { width: 100%; height: 100%; object-fit: cover; }
+        .btn-del-img { position: absolute; top: 5px; right: 5px; background: var(--danger); color: #fff; border: none; border-radius: 6px; width: 25px; height: 25px; cursor: pointer; font-weight: bold; }
+
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000000; display: none; align-items: center; justify-content: center; }
     </style>
 </head>
@@ -63,145 +61,21 @@
 <main>
     <section id="sec-home" class="sec active">
         <div style="text-align: center; padding: 20px 0;">
-            <p id="h-desc" style="white-space: pre-wrap; margin-bottom: 30px; line-height: 1.6; color: #bbb;"></p>
-            <div style="background:var(--card); padding:20px; border-radius:20px; max-width:400px; margin:0 auto; border: 1px solid rgba(197, 160, 89, 0.1);">
-                <p style="color:var(--gold); font-weight:800; margin-bottom:5px;">🕒 أوقات العمل</p>
-                <p id="h-hours"></p>
-                <div id="h-map" style="margin-top:15px;"></div>
+            <div id="announcement-box" style="display:none; background:var(--card); padding:25px; border-radius:20px; border:2px dashed var(--gold); margin-bottom:40px; max-width:600px; margin-left:auto; margin-right:auto;">
+                <h2 id="ann-title" style="color:var(--gold); margin-bottom:12px; font-weight:900;"></h2>
+                <p id="ann-body" style="line-height:1.7; color:#eee; font-size:1.1rem;"></p>
             </div>
-            <br>
-            <a id="wa-main" href="#" target="_blank" style="display:inline-block; padding:18px 50px; background:#fff; color:#000; border-radius:50px; text-decoration:none; font-weight:900; font-size: 1.1rem;">تواصل معنا واتساب</a>
+
+            <p id="h-desc" style="white-space: pre-wrap; margin-bottom: 30px; line-height: 1.6; color: #bbb;"></p>
+            
+            <div style="background:var(--card); padding:25px; border-radius:25px; max-width:450px; margin:0 auto; border: 1px solid rgba(197, 160, 89, 0.15);">
+                <p style="color:var(--gold); font-weight:800; margin-bottom:8px; font-size:1.1rem;">🕒 أوقات العمل</p>
+                <p id="h-hours" style="font-size:1.1rem;"></p>
+                <div id="h-map" style="margin-top:20px;"></div>
+            </div>
+            <br><br>
+            <a id="wa-main" href="#" target="_blank" style="display:inline-block; padding:20px 60px; background:#fff; color:#000; border-radius:50px; text-decoration:none; font-weight:900; font-size:1.2rem; box-shadow: 0 10px 20px rgba(255,255,255,0.1);">تواصل معنا واتساب</a>
         </div>
     </section>
     <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
-    <div id="dynamic-pages"></div>
-</main>
-
-<div style="position:fixed; bottom:0; left:0; width:60px; height:60px; z-index:10000;" onclick="checkAccess()"></div>
-
-<div id="admin-panel">
-    <div class="admin-box">
-        <button onclick="location.reload()" style="float:left; background:#333; color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer;">إغلاق اللوحة</button>
-        <h2 style="color:var(--gold); margin-bottom:20px;">إدارة بصمة غير v28.6</h2>
-        
-        <h4 style="color:var(--gold); margin-bottom:10px;">1. ارفع الصور هنا (0zz0)</h4>
-        <div class="uploader-frame"><iframe src="https://www.0zz0.com/" style="width:100%; height:100%; border:none;"></iframe></div>
-        
-        <div class="smart-paste-area">
-            <h4 style="color:var(--success); margin-bottom:10px;">2. اللصق الذكي والجمع</h4>
-            <button class="btn-smart" onclick="doSmartPaste()">📋 بنقرة واحدة: جلب الروابط المنسوخة</button>
-            <textarea id="img-urls" style="height:80px; font-size:0.8rem;" placeholder="الروابط المباشرة ستظهر هنا تلقائياً.."></textarea>
-            <select id="target-sel" style="border: 1px solid var(--gold);"></select>
-            <button onclick="publishMany()" class="btn-order" style="background:var(--blue);">نشر الصور الآن</button>
-        </div>
-
-        <hr style="margin:20px 0; opacity:0.1;">
-        
-        <h4 style="color:var(--gold); margin-bottom:10px;">3. إعدادات الأقسام والمجلدات</h4>
-        <div id="manage-lists" style="background:#000; padding:10px; border-radius:10px; margin-bottom:10px; border: 1px solid #222;"></div>
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <input type="text" id="new-p" placeholder="اسم قسم (نافبار)" style="margin:0;">
-            <button onclick="addP()" style="white-space:nowrap; background:var(--gold); color:#000; border:none; padding:0 15px; border-radius:8px; font-weight:bold;">إضافة</button>
-        </div>
-        <div style="display:flex; gap:5px; margin-bottom:20px;">
-            <input type="text" id="new-a" placeholder="اسم مجلد (أعمالنا)" style="margin:0;">
-            <button onclick="addA()" style="white-space:nowrap; background:var(--gold); color:#000; border:none; padding:0 15px; border-radius:8px; font-weight:bold;">إضافة</button>
-        </div>
-
-        <h4 style="color:var(--gold); margin-bottom:10px;">4. بيانات الموقع والعلامة المائية</h4>
-        <input type="text" id="in-name" placeholder="اسم الموقع">
-        <input type="text" id="in-wa" placeholder="رقم الواتساب">
-        <input type="text" id="wm-name" placeholder="نص العلامة المائية">
-        <input type="text" id="wm-icon" placeholder="رابط شعار العلامة">
-        <button onclick="saveMain()" class="btn-order">حفظ كل الإعدادات</button>
-    </div>
-</div>
-
-<script>
-    const config = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd" };
-    firebase.initializeApp(config); const db = firebase.database(); const DB_PATH = 'site_v28';
-    let currentTab = 'home', currentData = {};
-
-    // جلب البيانات من فايربيس
-    db.ref(DB_PATH).on('value', snap => {
-        currentData = snap.val() || {};
-        renderAll(currentData);
-        setTimeout(() => document.getElementById('splash').classList.add('hide'), 500);
-    });
-
-    // وظيفة اللصق الذكي (الميزة المطلوبة)
-    async function doSmartPaste() {
-        try {
-            const text = await navigator.clipboard.readText();
-            // البحث عن روابط الصور المباشرة فقط
-            const regex = /https?:\/\/[^\s"']+\.(?:jpg|jpeg|png|gif)/gi;
-            const urls = text.match(regex);
-            
-            if(urls && urls.length > 0) {
-                const uniqueUrls = [...new Set(urls)];
-                document.getElementById('img-urls').value = uniqueUrls.join('\n');
-                alert("تم استخراج " + uniqueUrls.length + " رابط بنجاح!");
-            } else {
-                alert("لم أجد روابط صور مباشرة في الحافظة. ارفع الصور أولاً في 0zz0 وانسخ الروابط المباشرة.");
-            }
-        } catch(e) {
-            alert("يرجى الضغط على 'سماح' للوصول للحافظة عند طلب المتصفح.");
-        }
-    }
-
-    function renderAll(data) {
-        document.getElementById('view-title').innerText = data.site_name || "بصمة غير";
-        document.getElementById('h-desc').innerText = data.home_desc || "";
-        document.getElementById('h-hours').innerText = data.work_hours || "";
-        document.getElementById('wa-main').href = "https://wa.me/" + (data.whatsapp_num || "");
-        if(data.map_url) document.getElementById('h-map').innerHTML = `<a href="${data.map_url}" target="_blank" style="color:var(--gold); text-decoration:none; font-weight:bold;">📍 عرض الموقع على الخريطة</a>`;
-
-        const nav = document.getElementById('navbar'), dPages = document.getElementById('dynamic-pages'), aGrid = document.getElementById('albums-grid'), sel = document.getElementById('target-sel'), mList = document.getElementById('manage-lists');
-        let navH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`, sectionsH = "";
-        sel.innerHTML = '<option value="">-- اختر مكان النشر --</option>'; aGrid.innerHTML = ""; mList.innerHTML = "";
-
-        if(data.pages) Object.keys(data.pages).forEach(id => {
-            const p = data.pages[id];
-            navH += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}')">${p.title}</button>`;
-            sectionsH += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(p.imgs, data)}</div></section>`;
-            sel.innerHTML += `<option value="pages/${id}">قسم: ${p.title}</option>`;
-            mList.innerHTML += `<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #222;align-items:center;"><span>${p.title}</span><button onclick="delAny('pages/${id}')" style="color:red;background:none;border:none;cursor:pointer;">حذف</button></div>`;
-        });
-
-        navH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
-        if(data.albums) Object.keys(data.albums).forEach(id => {
-            const a = data.albums[id];
-            aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:40px;text-align:center;cursor:pointer;border:1px solid rgba(197,160,89,0.2);"><h3 style="color:var(--gold)">${a.name}</h3></div>`;
-            sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:20px;background:#222;color:#fff" onclick="go('works')">← عودة للمجلدات</button><div class="grid">${drawImgs(a.imgs, data)}</div></section>`;
-            sel.innerHTML += `<option value="albums/${id}">مجلد: ${a.name}</option>`;
-            mList.innerHTML += `<div style="display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid #222;align-items:center;"><span>${a.name} (مجلد)</span><button onclick="delAny('albums/${id}')" style="color:red;background:none;border:none;cursor:pointer;">حذف</button></div>`;
-        });
-        nav.innerHTML = navH; dPages.innerHTML = sectionsH;
-    }
-
-    function drawImgs(imgs, data) {
-        if(!imgs) return '<p style="text-align:center; grid-column:1/-1; opacity:0.5; padding:50px;">لا يوجد صور في هذا القسم بعد..</p>';
-        const wm = (data.wm_name || data.wm_icon) ? `<div class="watermark-overlay">${data.wm_icon ? `<img src="${data.wm_icon}">` : ''}<span>${data.wm_name || ''}</span></div>` : '';
-        return Object.keys(imgs).map(id => `<div class="card"><div class="img-container" onclick="zoom('${imgs[id].url}')"><img src="${imgs[id].url}">${wm}</div><div style="padding:15px;"><button class="btn-order" onclick="window.open('https://wa.me/${data.whatsapp_num}')">استفسر عن هذا العمل</button></div></div>`).join('');
-    }
-
-    function publishMany() {
-        const target = document.getElementById('target-sel').value;
-        const urls = document.getElementById('img-urls').value.split('\n').filter(u => u.trim() !== "");
-        if(!target) return alert("الرجاء اختيار القسم (أين تريد نشر الصور؟)");
-        if(urls.length === 0) return alert("لا يوجد روابط لنشرها!");
-        urls.forEach(url => { db.ref(DB_PATH + '/' + target + '/imgs').push({ url: url.trim() }); });
-        alert("تم نشر " + urls.length + " صورة بنجاح!"); 
-        document.getElementById('img-urls').value = "";
-    }
-
-    function go(id) { currentTab = id; renderAll(currentData); window.scrollTo({top:0, behavior:'smooth'}); }
-    function zoom(u) { document.getElementById('modal-img').src = u; document.getElementById('modal').style.display = 'flex'; }
-    function checkAccess() { if(prompt("الرمز السري:")==='808090') document.getElementById('admin-panel').style.display='block'; }
-    function saveMain() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, wm_name: document.getElementById('wm-name').value, wm_icon: document.getElementById('wm-icon').value }); alert("تم حفظ الإعدادات بنجاح"); }
-    function addP() { const t = document.getElementById('new-p').value; if(t) db.ref(DB_PATH + '/pages').push({ title: t }); document.getElementById('new-p').value=""; }
-    function addA() { const t = document.getElementById('new-a').value; if(t) db.ref(DB_PATH + '/albums').push({ name: t }); document.getElementById('new-a').value=""; }
-    function delAny(p) { if(confirm("هل أنت متأكد من الحذف نهائياً؟")) db.ref(DB_PATH + '/' + p).remove(); }
-</script>
-</body>
-</html>
+    <div id="dynamic-pages">
