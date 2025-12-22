@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v82</title>
+    <title>بصمة غير | v83</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -13,12 +13,17 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; }
 
-        /* أنميشن الوميض والنبض */
-        @keyframes glow { 0%, 100% { opacity: 0.4; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.05); } }
-        .wm-text { position: absolute; bottom: 10px; right: 10px; font-weight: 900; color: var(--gold); text-shadow: 0 0 10px #000; font-size: 0.8rem; animation: glow 2s infinite; pointer-events: none; }
-        .wm-logo { position: absolute; top: 10px; left: 10px; width: 40px; opacity: 0.5; pointer-events: none; }
-        .wm-large { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.3; width: 60%; animation: glow 3s infinite; pointer-events: none; }
+        /* أنميشن وستايل الواترمارك الشفاف */
+        @keyframes glow { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.5; } }
+        .wm-text { position: absolute; bottom: 8px; right: 8px; font-weight: 900; color: #fff; text-shadow: 1px 1px 3px #000; font-size: 0.7rem; animation: glow 3s infinite; pointer-events: none; white-space: nowrap; }
+        .wm-logo { position: absolute; top: 8px; left: 8px; width: 35px; opacity: 0.3; pointer-events: none; }
+        
+        /* الواترمارك في التكبير (الزاوية اليمنى بالأسفل) */
+        .wm-large-wrap { position: absolute; bottom: 20px; right: 20px; text-align: right; pointer-events: none; z-index: 10; }
+        .wm-large-img { width: 80px; opacity: 0.3; display: block; margin-bottom: 5px; }
+        .wm-large-txt { font-weight: 900; color: #fff; opacity: 0.4; font-size: 1.2rem; text-shadow: 2px 2px 5px #000; animation: glow 3s infinite; }
 
+        /* حالة الدوام */
         .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-left: 8px; vertical-align: middle; }
         .pulse-green { background: var(--green); box-shadow: 0 0 0 var(--green); animation: pulse-g 2s infinite; }
         .pulse-red { background: var(--red); box-shadow: 0 0 0 var(--red); animation: pulse-r 2s infinite; }
@@ -31,7 +36,7 @@
         .header-content { position: relative; z-index: 5; text-align: center; }
 
         nav { position: sticky; top: 0; z-index: 10000; background: rgba(10, 10, 11, 0.95); backdrop-filter: blur(10px); padding: 10px; border-bottom: 1px solid var(--gold); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-        .nav-btn { padding: 8px 18px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; }
+        .nav-btn { padding: 8px 18px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; transition: 0.3s; }
         .nav-btn.active { background: var(--primary); color: #fff; }
 
         .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; }
@@ -44,14 +49,16 @@
         .btn-order { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; text-align: center; text-decoration: none; display: block; }
 
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); }
-        .modal-body { position: relative; text-align: center; max-width: 95%; }
-        #modal-img { max-width: 100%; max-height: 85vh; border-radius: 8px; border: 1px solid var(--gold); }
+        .modal-body { position: relative; display: inline-block; }
+        #modal-img { max-width: 95vw; max-height: 85vh; border-radius: 8px; border: 1px solid var(--gold); }
 
+        /* Admin Layout */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 15px; overflow-y: auto; }
         .admin-box { width: 100%; max-width: 900px; margin: 0 auto; background: #151518; padding: 20px; border-radius: 15px; border: 1px solid var(--gold); }
         .setting-group { background: #0c0c0e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #222; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 8px; background: #000; border: 1px solid #333; color: #fff; border-radius: 5px; font-family: 'Tajawal'; }
         .collapse-btn { width: 100%; padding: 15px; background: #222; color: var(--gold); border: none; border-radius: 8px; text-align: right; font-weight: 900; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .day-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #1a1a1a; padding: 10px; border-radius: 8px; flex-wrap: wrap; border-right: 4px solid var(--gold); }
     </style>
 </head>
 <body>
@@ -59,7 +66,7 @@
 <div id="splash" style="position:fixed; inset:0; background:#000; z-index:999999; display:flex; align-items:center; justify-content:center;"><h2 style="color:var(--gold);">بصمة غير...</h2></div>
 
 <div id="modal" onclick="closeZoom()">
-    <div class="modal-body">
+    <div class="modal-body" onclick="event.stopPropagation()">
         <img id="modal-img" src="">
         <div id="modal-wm-layer"></div>
     </div>
@@ -94,8 +101,12 @@
             </div>
         </div>
     </section>
+    
     <div id="dynamic-pages"></div>
-    <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
+
+    <section id="sec-works" class="sec">
+        <div id="albums-grid" class="grid"></div>
+    </section>
 </main>
 
 <div style="position:fixed; bottom:0; left:0; width:50px; height:50px; z-index:999999;" onclick="checkAccess()"></div>
@@ -103,29 +114,29 @@
 <div id="admin-panel">
     <div class="admin-box">
         <button onclick="location.reload()" style="background:red; color:#fff; padding:5px 15px; border:none; float:left;">خروج</button>
-        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة v82</h2>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة v83</h2>
         
         <iframe src="https://www.0zz0.com/" style="width:100%; height:180px; border-radius:10px; background:#fff; margin-bottom:15px; border:none;"></iframe>
 
         <div class="setting-group">
-            <b style="color:var(--gold);">📸 نشر وإدارة الصور:</b>
+            <b style="color:var(--gold);">📸 رفع ونشر الصور:</b>
             <select id="target-sel" onchange="loadAdminImgs(this.value)"></select>
-            <textarea id="img-urls" rows="3" placeholder="ضع روابط الصور هنا..."></textarea>
-            <button onclick="publishMany()" style="width:100%; padding:12px; background:#3498db; color:#fff; border:none;">نشر الصور</button>
+            <textarea id="img-urls" rows="3" placeholder="ضع الروابط هنا (رابط في كل سطر)..."></textarea>
+            <button onclick="publishMany()" style="width:100%; padding:12px; background:#3498db; color:#fff; border:none; font-weight:900;">نشر الصور للقسم المختار</button>
             <div id="admin-imgs-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:8px; margin-top:10px;"></div>
         </div>
 
         <div class="setting-group">
-            <button class="collapse-btn" onclick="toggleColl('wm-content')">🛡️ نظام حماية الصور (الواترمارك) <i class="fas fa-chevron-down"></i></button>
+            <button class="collapse-btn" onclick="toggleColl('wm-content')">🛡️ حماية الصور (الواترمارك) <i class="fas fa-chevron-down"></i></button>
             <div id="wm-content" style="display:none; padding-top:15px;">
-                <input type="text" id="in-wm-text" placeholder="النص المكتوب (مثلاً: بصمة غير)">
-                <input type="text" id="in-wm-logo" placeholder="رابط صورة الشعار (اختياري)">
-                <button onclick="saveSettings()" style="width:100%; padding:10px; background:var(--gold); border:none;">تحديث الحماية</button>
+                <input type="text" id="in-wm-text" placeholder="النص الشفاف">
+                <input type="text" id="in-wm-logo" placeholder="رابط الشعار PNG">
+                <button onclick="saveSettings()" style="width:100%; padding:10px; background:var(--gold); border:none;">حفظ الواترمارك</button>
             </div>
         </div>
 
         <div class="setting-group">
-            <button class="collapse-btn" onclick="toggleColl('sched-content')">⚙️ إدارة أوقات الدوام <i class="fas fa-chevron-down"></i></button>
+            <button class="collapse-btn" onclick="toggleColl('sched-content')">⚙️ إدارة الدوام <i class="fas fa-chevron-down"></i></button>
             <div id="sched-content" style="display:none; padding-top:15px;">
                 <div id="schedule-editor"></div>
                 <button onclick="saveSchedule()" style="width:100%; padding:12px; background:var(--green); color:#fff; border:none;">حفظ الجدول</button>
@@ -133,9 +144,9 @@
         </div>
 
         <div class="setting-group">
-            <b style="color:var(--gold);">⚙️ البيانات العامة:</b>
-            <input type="text" id="in-name" placeholder="الاسم"><input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-tiktok" placeholder="تيكتوك"><input type="text" id="in-insta" placeholder="انستقرام"><input type="text" id="in-map" placeholder="ماب">
-            <button onclick="saveSettings()" style="width:100%; padding:12px; background:var(--gold); color:#000; border:none;">حفظ</button>
+            <b style="color:var(--gold);">⚙️ الإعدادات العامة:</b>
+            <input type="text" id="in-name" placeholder="اسم المحل"><input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-tiktok" placeholder="رابط تيك توك"><input type="text" id="in-insta" placeholder="رابط انستقرام"><input type="text" id="in-map" placeholder="رابط ماب">
+            <button onclick="saveSettings()" style="width:100%; padding:12px; background:var(--gold); color:#000; border:none;">حفظ الكل</button>
         </div>
     </div>
 </div>
@@ -158,22 +169,7 @@
         document.getElementById('view-title').innerText = d.site_name || "بصمة غير";
         document.getElementById('wa-main').href = `https://wa.me/${d.whatsapp_num}`;
         
-        // التواصل
-        const tk = document.getElementById('link-tiktok'), ins = document.getElementById('link-insta');
-        if(d.tiktok_url){ tk.href=d.tiktok_url; tk.style.display='block'; } else tk.style.display='none';
-        if(d.insta_url){ ins.href=d.insta_url; ins.style.display='block'; } else ins.style.display='none';
-
-        // الدوام
-        const sDiv = document.getElementById('work-schedule-display');
-        if(d.work_schedule && d.work_schedule[0]) {
-            const s = d.work_schedule[0];
-            let h = `<div>يومياً: من ${t12(s.s1_start)} إلى ${t12(s.s1_end)}</div>`;
-            if(s.s2_active) h += `<div>فترة ثانية: من ${t12(s.s2_start)} إلى ${t12(s.s2_end)}</div>`;
-            if(d.work_schedule[5] && !d.work_schedule[5].active) h += `<div style="color:var(--red); font-weight:bold;">الجمعة: إجازة</div>`;
-            sDiv.innerHTML = h;
-        }
-
-        // بناء الأقسام
+        // القوائم والأقسام
         const tSel = document.getElementById('target-sel'); tSel.innerHTML = '<option value="">-- اختر القسم --</option>';
         let nH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
         let sH = ""; 
@@ -183,11 +179,10 @@
             tSel.innerHTML += `<option value="pages/${id}">${d.pages[id].title}</option>`;
         });
         nH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
-        
         const aG = document.getElementById('albums-grid'); aG.innerHTML = "";
         if(d.albums) Object.keys(d.albums).forEach(id => {
             aG.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:30px; text-align:center;"><h3 style="color:var(--gold);">${d.albums[id].name}</h3></div>`;
-            sH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" onclick="go('works')" style="margin-bottom:15px;">← عودة</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`;
+            sH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" onclick="go('works')" style="margin-bottom:15px;">← عودة للألبومات</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`;
             tSel.innerHTML += `<option value="albums/${id}">${d.albums[id].name}</option>`;
         });
 
@@ -196,25 +191,45 @@
         document.getElementById('sec-home').style.display = currentTab==='home'?'block':'none';
         document.getElementById('sec-works').style.display = currentTab==='works'?'block':'none';
 
-        // ملء خانات الإدارة
+        // التواصل
+        const tk = document.getElementById('link-tiktok'), ins = document.getElementById('link-insta');
+        tk.style.display = d.tiktok_url ? 'block' : 'none'; tk.href = d.tiktok_url;
+        ins.style.display = d.insta_url ? 'block' : 'none'; ins.href = d.insta_url;
+
+        // الدوام
+        const sDiv = document.getElementById('work-schedule-display');
+        if(d.work_schedule && d.work_schedule[0]) {
+            const s = d.work_schedule[0];
+            let h = `<div>يومياً: من ${t12(s.s1_start)} إلى ${t12(s.s1_end)}</div>`;
+            if(s.s2_active) h += `<div>فترة ثانية: من ${t12(s.s2_start)} إلى ${t12(s.s2_end)}</div>`;
+            sDiv.innerHTML = h;
+        }
+
+        // إعداد لوحة الدوام (مرة واحدة)
+        const ed = document.getElementById('schedule-editor');
+        if(ed.innerHTML === "") {
+            DAYS.forEach((day, i) => {
+                const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:true, s1_start:"09:00", s1_end:"22:00"};
+                ed.innerHTML += `<div class="day-row"><input type="checkbox" id="check-${i}" ${s.active?'checked':''}> <b>${day}</b><div style="display:flex; gap:5px;"><input type="time" id="s1s-${i}" value="${s.s1_start}"> <input type="time" id="s1e-${i}" value="${s.s1_end}"></div></div>`;
+            });
+        }
         document.getElementById('in-wm-text').value = d.wm_text || "";
         document.getElementById('in-wm-logo').value = d.wm_logo || "";
-        document.getElementById('in-name').value = d.site_name||""; 
+        document.getElementById('in-name').value = d.site_name||"";
+        document.getElementById('in-wa').value = d.whatsapp_num||"";
     }
 
     function drawImgs(imgs) {
-        if(!imgs) return '<p style="padding:50px; grid-column:1/-1; text-align:center;">قريباً...</p>';
+        if(!imgs) return '<p style="padding:50px; text-align:center; grid-column:1/-1;">قريباً...</p>';
         const d = currentData;
         return Object.keys(imgs).reverse().map(id => {
             const url = imgs[id].url;
             let wm = "";
             if(d.wm_logo) wm += `<img src="${d.wm_logo}" class="wm-logo">`;
             if(d.wm_text) wm += `<div class="wm-text">${d.wm_text}</div>`;
-            
             return `<div class="card">
                 <div class="img-container" onclick="zoom('${url}')">
-                    <img src="${url}" loading="lazy">
-                    ${wm}
+                    <img src="${url}" loading="lazy">${wm}
                 </div>
                 <button class="btn-order" onclick="window.open('https://wa.me/${d.whatsapp_num}')">استفسار</button>
             </div>`;
@@ -224,17 +239,18 @@
     function zoom(u) {
         const d = currentData;
         document.getElementById('modal-img').src = u;
-        let h = "";
-        if(d.wm_logo) h += `<img src="${d.wm_logo}" class="wm-large">`;
-        else if(d.wm_text) h += `<div class="wm-text" style="font-size:2rem; top:50%; left:50%; transform:translate(-50%,-50%);">${d.wm_text}</div>`;
+        let h = `<div class="wm-large-wrap">`;
+        if(d.wm_logo) h += `<img src="${d.wm_logo}" class="wm-large-img">`;
+        if(d.wm_text) h += `<div class="wm-large-txt">${d.wm_text}</div>`;
+        h += `</div>`;
         document.getElementById('modal-wm-layer').innerHTML = h;
         document.getElementById('modal').style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
 
-    function closeZoom() { document.getElementById('modal').style.display = 'none'; document.body.style.overflow = 'auto'; }
-    function toggleColl(id) { const x = document.getElementById(id); x.style.display = x.style.display==='none'?'block':'none'; }
+    function closeZoom() { document.getElementById('modal').style.display='none'; document.body.style.overflow='auto'; }
     function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
+    function toggleColl(id) { const x = document.getElementById(id); x.style.display = x.style.display==='none'?'block':'none'; }
     function checkAccess() { if(prompt("Pass:")==='808090') document.getElementById('admin-panel').style.display='block'; }
 
     function saveSettings() {
@@ -246,7 +262,12 @@
             map_url: document.getElementById('in-map').value,
             wm_text: document.getElementById('in-wm-text').value,
             wm_logo: document.getElementById('in-wm-logo').value
-        }).then(()=>alert("تم التحديث بنجاح"));
+        }).then(()=>alert("تم الحفظ"));
+    }
+
+    function saveSchedule() {
+        let sc = {}; DAYS.forEach((_, i) => { sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_start: document.getElementById(`s1s-${i}`).value, s1_end: document.getElementById(`s1e-${i}`).value }; });
+        db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم حفظ الدوام"));
     }
 
     function publishMany() {
@@ -254,7 +275,6 @@
         if(t && urls.length){ urls.forEach(u=>db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()})); document.getElementById('img-urls').value=""; alert("تم النشر"); }
     }
 
-    // باقي الدوال (الدوام، السلايدر، إلخ) تبقى كما هي في الكود v81...
     function updateWorkStatus() {
         const d = currentData; if(!d.work_schedule) return;
         const now = new Date(), dayIdx = now.getDay(), cur = now.getHours() * 60 + now.getMinutes(), ts = d.work_schedule[dayIdx];
@@ -262,13 +282,23 @@
         if(ts && ts.active) {
             const c = (s, e) => { const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number); return cur >= (sh*60+sm) && cur <= (eh*60+em); };
             if(c(ts.s1_start, ts.s1_end)) open = true;
-            if(ts.s2_active && c(ts.s2_start, ts.s2_end)) open = true;
         }
         const dot = document.getElementById('status-dot'), txt = document.getElementById('status-text');
         if(open){ dot.className="dot pulse-green"; txt.innerText="مفتوح الآن"; txt.style.color="var(--green)"; }
         else { dot.className="dot pulse-red"; txt.innerText="مغلق الآن"; txt.style.color="var(--red)"; }
     }
-    function startHeaderSls() { const p = Object.values(currentData.pages||{}).find(x => x.title && x.title.includes("خذ فكرة")); if(!p || !p.imgs) return; const urls = Object.values(p.imgs).map(i => i.url); if(!window.hT && urls.length) window.hT = setInterval(() => { activeBG = activeBG===1?2:1; const n = document.getElementById('bg-'+activeBG), o = document.getElementById('bg-'+(activeBG===1?2:1)); n.style.backgroundImage = `url('${urls[Math.floor(Math.random()*urls.length)]}')`; n.style.opacity = 1; o.style.opacity = 0; }, 5000); }
+
+    function startHeaderSls() {
+        const p = Object.values(currentData.pages||{}).find(x => x.title && x.title.includes("خذ فكرة"));
+        if(!p || !p.imgs) return;
+        const urls = Object.values(p.imgs).map(i => i.url);
+        if(!window.hT && urls.length) window.hT = setInterval(() => {
+            activeBG = activeBG===1?2:1;
+            const n = document.getElementById('bg-'+activeBG), o = document.getElementById('bg-'+(activeBG===1?2:1));
+            n.style.backgroundImage = `url('${urls[Math.floor(Math.random()*urls.length)]}')`;
+            n.style.opacity = 1; o.style.opacity = 0;
+        }, 5000);
+    }
 </script>
 </body>
 </html>
