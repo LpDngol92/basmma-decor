@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v40</title>
+    <title>بصمة غير | v41</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -12,20 +12,10 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; }
 
-        /* السبلاش المتوهج */
         #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: 0.8s ease-in-out; }
         #splash.hide { opacity: 0; pointer-events: none; visibility: hidden; }
-        .splash-text { 
-            font-size: 3rem; 
-            font-weight: 900; 
-            color: #fff;
-            text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold), 0 0 40px var(--gold);
-            animation: pulseGlow 2s infinite;
-        }
-        @keyframes pulseGlow {
-            0%, 100% { transform: scale(1); opacity: 1; text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold); }
-            50% { transform: scale(1.05); opacity: 0.8; text-shadow: 0 0 20px var(--gold), 0 0 40px #fff; }
-        }
+        .splash-text { font-size: 3rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--gold), 0 0 20px var(--gold); animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
 
         header { height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; background-size: cover; background-position: center; transition: 2s; }
         header::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, transparent 10%, var(--bg) 95%); }
@@ -43,8 +33,16 @@
         .card { background: var(--card); border-radius: 25px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.15); }
         .img-container { position: relative; width: 100%; aspect-ratio: 1/1; overflow: hidden; background: #111; cursor: zoom-in; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* توهج العلامة المائية */
         .watermark-overlay { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 10; }
-        .watermark-overlay span { font-size: 0.8rem; font-weight: 900; color: #fff; text-shadow: 0 0 8px var(--gold); }
+        .watermark-overlay span { 
+            font-size: 0.85rem; 
+            font-weight: 900; 
+            color: #fff; 
+            text-shadow: 0 0 10px var(--gold), 0 0 5px #000;
+            filter: drop-shadow(0 0 2px var(--gold));
+        }
 
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 20px; overflow-y: auto; }
         .admin-box { max-width: 850px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
@@ -92,9 +90,6 @@
     <div class="admin-box">
         <button onclick="location.reload()" style="float:left; background:var(--danger); color:#fff; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">خروج</button>
         <h2 style="color:var(--gold);">لوحة التحكم</h2><br>
-        <div style="width:100%; height:300px; border-radius:20px; overflow:hidden; border:1px solid #333; margin-bottom:20px;">
-            <iframe src="https://www.0zz0.com/" style="width:100%; height:100%; border:none;"></iframe>
-        </div>
         <div class="setting-group">
             <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">🚀 إدارة الصور:</p>
             <select id="target-sel" onchange="loadAdminImgs(this.value)"></select>
@@ -163,14 +158,7 @@
         document.getElementById('sec-works').classList.toggle('active', currentTab==='works');
     }
 
-    // وظيفة الانتقال المحدثة لعدم القفز للأعلى
-    function go(id) { 
-        currentTab = id; 
-        renderAll(); 
-        const navPos = document.getElementById('navbar').offsetTop;
-        window.scrollTo({ top: navPos - 20, behavior: 'smooth' }); 
-    }
-
+    function go(id) { currentTab = id; renderAll(); const navPos = document.getElementById('navbar').offsetTop; window.scrollTo({ top: navPos - 20, behavior: 'smooth' }); }
     function drawImgs(imgs) {
         if(!imgs) return '<p style="text-align:center; padding:50px; width:100%; opacity:0.3;">لا يوجد صور</p>';
         const wm = `<div class="watermark-overlay"><span>${currentData.site_name || 'بصمة غير'}</span></div>`;
@@ -190,9 +178,7 @@
         if(currentData.pages) Object.keys(currentData.pages).forEach(id => options.push({path:`pages/${id}`, title:currentData.pages[id].title}));
         if(currentData.albums) Object.keys(currentData.albums).forEach(id => options.push({path:`albums/${id}`, title:currentData.albums[id].name}));
         let choice = prompt("انقل إلى الرقم:\n" + options.map((o,i)=>`${i+1}. ${o.title}`).join('\n'));
-        if(choice && options[choice-1]) {
-            db.ref(DB_PATH+'/'+options[choice-1].path+'/imgs').push({url:url}).then(() => db.ref(DB_PATH+'/'+oldP+'/imgs/'+imgId).remove());
-        }
+        if(choice && options[choice-1]) { db.ref(DB_PATH+'/'+options[choice-1].path+'/imgs').push({url:url}).then(() => db.ref(DB_PATH+'/'+oldP+'/imgs/'+imgId).remove()); }
     }
     function delImg(p) { if(confirm("حذف الصورة؟")) db.ref(DB_PATH+'/'+p).remove(); }
     function publishMany() {
@@ -217,7 +203,18 @@
     function checkAccess() { if(prompt("كلمة المرور:")==='808090') document.getElementById('admin-panel').style.display='block'; }
     function zoom(u) { document.getElementById('modal-img').src=u; document.getElementById('modal').style.display='flex'; }
     function addP() { const t = document.getElementById('new-p').value; if(t) db.ref(DB_PATH+'/pages').push({title:t}); }
-    function updateHeaderBG() { if(currentData.pages) { const first = Object.values(currentData.pages)[0]; if(first && first.imgs) document.getElementById('main-header').style.backgroundImage = `url('${Object.values(first.imgs)[0].url}')`; } }
+    
+    // وظيفة تحديث الهيدر من قسم "خذ فكرة" حصراً
+    function updateHeaderBG() {
+        if(currentData.pages) {
+            const ideaSec = Object.values(currentData.pages).find(p => p.title.includes("خذ فكرة"));
+            if(ideaSec && ideaSec.imgs) {
+                const imgUrls = Object.values(ideaSec.imgs);
+                const randomImg = imgUrls[Math.floor(Math.random() * imgUrls.length)].url;
+                document.getElementById('main-header').style.backgroundImage = `url('${randomImg}')`;
+            }
+        }
+    }
 </script>
 </body>
 </html>
