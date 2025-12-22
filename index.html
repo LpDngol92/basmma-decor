@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v86</title>
+    <title>بصمة غير | v87</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -21,7 +21,7 @@
         .wm-large-img { width: 80px; opacity: 0.3; display: block; margin-bottom: 5px; }
         .wm-large-txt { font-weight: 900; color: #fff; opacity: 0.4; font-size: 1.2rem; text-shadow: 2px 2px 5px #000; animation: glow 3s infinite; }
 
-        /* الحالة */
+        /* نبض الحالة */
         .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-left: 8px; vertical-align: middle; }
         .pulse-green { background: var(--green); box-shadow: 0 0 0 var(--green); animation: pulse-g 2s infinite; }
         .pulse-red { background: var(--red); box-shadow: 0 0 0 var(--red); animation: pulse-r 2s infinite; }
@@ -50,7 +50,7 @@
         .modal-body { position: relative; display: inline-block; }
         #modal-img { max-width: 95vw; max-height: 85vh; border-radius: 8px; border: 1px solid var(--gold); }
 
-        /* Admin */
+        /* Admin Layout */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 15px; overflow-y: auto; }
         .admin-box { width: 100%; max-width: 900px; margin: 0 auto; background: #151518; padding: 20px; border-radius: 15px; border: 1px solid var(--gold); }
         .setting-group { background: #0c0c0e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #222; }
@@ -87,7 +87,7 @@
                 <div id="work-schedule-display" style="font-size: 1.1rem; color: #fff; line-height: 1.8; margin-bottom: 15px;"></div>
                 <div id="status-indicator" style="margin-top:20px; padding:15px; border-top:1px solid #222; font-weight:900; font-size:1.4rem;">
                     <span id="status-dot" class="dot"></span>
-                    <span id="status-text">...</span>
+                    <span id="status-text">جاري التحميل...</span>
                 </div>
             </div>
             <br>
@@ -99,6 +99,7 @@
             </div>
         </div>
     </section>
+    
     <div id="dynamic-pages"></div>
     <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
 </main>
@@ -108,17 +109,17 @@
 <div id="admin-panel">
     <div class="admin-box">
         <button onclick="location.reload()" style="background:red; color:#fff; padding:5px 15px; border:none; float:left;">خروج</button>
-        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة v86</h2>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة v87</h2>
         
         <div class="setting-group">
-            <b style="color:var(--gold);">📸 إدارة الصور:</b>
+            <b style="color:var(--gold);">📸 رفع الصور:</b>
             <select id="target-sel"></select>
             <textarea id="img-urls" rows="3" placeholder="ضع الروابط هنا..."></textarea>
             <button onclick="publishMany()" style="width:100%; padding:12px; background:#3498db; color:#fff; border:none;">نشر</button>
         </div>
 
         <div class="setting-group">
-            <button class="collapse-btn" onclick="toggleColl('sched-content')">⚙️ ضبط الفترتين (الشفتات) <i class="fas fa-chevron-down"></i></button>
+            <button class="collapse-btn" onclick="toggleColl('sched-content')">⚙️ ضبط الدوام (فترتين) <i class="fas fa-chevron-down"></i></button>
             <div id="sched-content" style="display:none; padding-top:15px;">
                 <div id="schedule-editor"></div>
                 <button onclick="saveSchedule()" style="width:100%; padding:12px; background:var(--green); color:#fff; border:none;">حفظ الجدول</button>
@@ -126,15 +127,15 @@
         </div>
 
         <div class="setting-group">
-            <b style="color:var(--gold);">⚙️ البيانات العامة والتواصل:</b>
+            <b style="color:var(--gold);">⚙️ البيانات العامة:</b>
             <input type="text" id="in-name" placeholder="اسم الموقع">
             <input type="text" id="in-wa" placeholder="رقم الواتساب">
-            <input type="text" id="in-tiktok" placeholder="رابط تيك توك">
-            <input type="text" id="in-insta" placeholder="رابط انستقرام">
-            <input type="text" id="in-map" placeholder="رابط جوجل ماب">
+            <input type="text" id="in-tiktok" placeholder="تيك توك">
+            <input type="text" id="in-insta" placeholder="انستقرام">
+            <input type="text" id="in-map" placeholder="رابط ماب">
             <input type="text" id="in-wm-text" placeholder="نص الواترمارك">
             <input type="text" id="in-wm-logo" placeholder="رابط الشعار">
-            <button onclick="saveSettings()" style="width:100%; padding:12px; background:var(--gold); color:#000; border:none;">حفظ البيانات</button>
+            <button onclick="saveSettings()" style="width:100%; padding:12px; background:var(--gold); color:#000; border:none;">حفظ الكل</button>
         </div>
     </div>
 </div>
@@ -146,7 +147,10 @@
     const DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
     db.ref(DB_PATH).on('value', snap => {
-        currentData = snap.val() || {}; renderAll(); updateWorkStatus(); startHeaderSls();
+        currentData = snap.val() || {}; 
+        renderAll(); 
+        updateWorkStatus(); 
+        startHeaderSls();
         setTimeout(() => document.getElementById('splash').style.display='none', 1000);
     });
 
@@ -161,29 +165,34 @@
         tk.style.display = d.tiktok_url ? 'block' : 'none'; tk.href = d.tiktok_url;
         ins.style.display = d.insta_url ? 'block' : 'none'; ins.href = d.insta_url;
 
-        const tSel = document.getElementById('target-sel'); tSel.innerHTML = '<option value="">-- القسم --</option>';
+        const tSel = document.getElementById('target-sel'); tSel.innerHTML = '<option value="">-- اختر القسم --</option>';
         let nH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
         let sH = ""; 
+        
+        // بناء الأقسام والصور
         if(d.pages) Object.keys(d.pages).forEach(id => {
             nH += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}')">${d.pages[id].title}</button>`;
             sH += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`;
             tSel.innerHTML += `<option value="pages/${id}">${d.pages[id].title}</option>`;
         });
+        
         nH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
-        const aG = document.getElementById('albums-grid'); aG.innerHTML = "";
+        const aG = document.getElementById('albums-grid'); if(aG) aG.innerHTML = "";
         if(d.albums) Object.keys(d.albums).forEach(id => {
             aG.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:30px; text-align:center;"><h3 style="color:var(--gold);">${d.albums[id].name}</h3></div>`;
             sH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" onclick="go('works')" style="margin-bottom:15px;">← عودة</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`;
             tSel.innerHTML += `<option value="albums/${id}">${d.albums[id].name}</option>`;
         });
-        document.getElementById('navbar').innerHTML = nH; document.getElementById('dynamic-pages').innerHTML = sH;
 
-        // عرض الدوام بالفترتين
+        document.getElementById('navbar').innerHTML = nH;
+        document.getElementById('dynamic-pages').innerHTML = sH;
+
+        // عرض الدوام
         const sDiv = document.getElementById('work-schedule-display');
         const today = new Date().getDay();
         if(d.work_schedule && d.work_schedule[today]) {
             const s = d.work_schedule[today];
-            if(!s.active) sDiv.innerHTML = `<span style="color:var(--red);">اليوم إجازة</span>`;
+            if(!s.active) sDiv.innerHTML = `<span style="color:var(--red);">نعتذر، اليوم إجازة</span>`;
             else {
                 let h = `الفترة 1: من ${t12(s.s1_start)} إلى ${t12(s.s1_end)}`;
                 if(s.s2_active) h += `<br>الفترة 2: من ${t12(s.s2_start)} إلى ${t12(s.s2_end)}`;
@@ -191,7 +200,7 @@
             }
         }
 
-        // لوحة الإدارة (الفترتين)
+        // لوحة الإدارة
         document.getElementById('in-name').value = d.site_name || "";
         document.getElementById('in-wa').value = d.whatsapp_num || "";
         document.getElementById('in-tiktok').value = d.tiktok_url || "";
@@ -203,20 +212,24 @@
         const ed = document.getElementById('schedule-editor');
         if(ed.innerHTML === "") {
             DAYS.forEach((day, i) => {
-                const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:true, s1_start:"09:00", s1_end:"12:00", s2_active:true, s2_start:"16:00", s2_end:"22:00"};
-                ed.innerHTML += `
-                <div class="day-row">
+                const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:true, s1_start:"09:00", s1_end:"12:00", s2_active:false};
+                ed.innerHTML += `<div class="day-row">
                     <input type="checkbox" id="check-${i}" ${s.active?'checked':''}> <b>${day}</b>
-                    <div class="time-row">
-                        <span>ف1:</span> <input type="time" id="s1s-${i}" value="${s.s1_start}"> إلى <input type="time" id="s1e-${i}" value="${s.s1_end}">
-                    </div>
-                    <div class="time-row">
-                        <input type="checkbox" id="s2active-${i}" ${s.s2_active?'checked':''}> <span>ف2:</span> 
-                        <input type="time" id="s2s-${i}" value="${s.s2_start || '16:00'}"> إلى <input type="time" id="s2e-${i}" value="${s.s2_end || '22:00'}">
-                    </div>
+                    <div class="time-row"><span>ف1:</span> <input type="time" id="s1s-${i}" value="${s.s1_start}"> <input type="time" id="s1e-${i}" value="${s.s1_end}"></div>
+                    <div class="time-row"><input type="checkbox" id="s2active-${i}" ${s.s2_active?'checked':''}> <span>ف2:</span> <input type="time" id="s2s-${i}" value="${s.s2_start||''}"> <input type="time" id="s2e-${i}" value="${s.s2_end||''}"></div>
                 </div>`;
             });
         }
+    }
+
+    function drawImgs(imgs) {
+        if(!imgs) return '<p style="padding:50px; text-align:center; grid-column:1/-1;">لا يوجد صور حالياً</p>';
+        const d = currentData;
+        return Object.keys(imgs).reverse().map(id => {
+            const url = imgs[id].url;
+            let wm = d.wm_logo ? `<img src="${d.wm_logo}" class="wm-logo">` : (d.wm_text ? `<div class="wm-text">${d.wm_text}</div>` : "");
+            return `<div class="card"><div class="img-container" onclick="zoom('${url}')"><img src="${url}" loading="lazy">${wm}</div><button class="btn-order" onclick="window.open('https://wa.me/${d.whatsapp_num}')">استفسار</button></div>`;
+        }).join('');
     }
 
     function updateWorkStatus() {
@@ -236,20 +249,9 @@
             if(check(conf.s1_start, conf.s1_end)) open = true;
             if(conf.s2_active && check(conf.s2_start, conf.s2_end)) open = true;
         }
-
         const dot = document.getElementById('status-dot'), txt = document.getElementById('status-text');
         if(open) { dot.className="dot pulse-green"; txt.innerText="مفتوح الآن"; txt.style.color="var(--green)"; }
         else { dot.className="dot pulse-red"; txt.innerText="مغلق الآن"; txt.style.color="var(--red)"; }
-    }
-
-    function drawImgs(imgs) {
-        if(!imgs) return '<p style="padding:50px; text-align:center; grid-column:1/-1;">قريباً...</p>';
-        const d = currentData;
-        return Object.keys(imgs).reverse().map(id => {
-            const url = imgs[id].url;
-            let wm = d.wm_logo ? `<img src="${d.wm_logo}" class="wm-logo">` : (d.wm_text ? `<div class="wm-text">${d.wm_text}</div>` : "");
-            return `<div class="card"><div class="img-container" onclick="zoom('${url}')"><img src="${url}" loading="lazy">${wm}</div><button class="btn-order" onclick="window.open('https://wa.me/${d.whatsapp_num}')">استفسار</button></div>`;
-        }).join('');
     }
 
     function zoom(u) {
@@ -268,24 +270,21 @@
     function toggleColl(id) { const x = document.getElementById(id); x.style.display = x.style.display==='none'?'block':'none'; }
     function checkAccess() { if(prompt("Pass:")==='808090') document.getElementById('admin-panel').style.display='block'; }
     function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, tiktok_url: document.getElementById('in-tiktok').value, insta_url: document.getElementById('in-insta').value, map_url: document.getElementById('in-map').value, wm_text: document.getElementById('in-wm-text').value, wm_logo: document.getElementById('in-wm-logo').value }).then(()=>alert("تم الحفظ")); }
-    
     function saveSchedule() {
-        let sc = {}; 
-        DAYS.forEach((_, i) => { 
-            sc[i] = { 
-                active: document.getElementById(`check-${i}`).checked, 
-                s1_start: document.getElementById(`s1s-${i}`).value, 
-                s1_end: document.getElementById(`s1e-${i}`).value,
-                s2_active: document.getElementById(`s2active-${i}`).checked,
-                s2_start: document.getElementById(`s2s-${i}`).value,
-                s2_end: document.getElementById(`s2e-${i}`).value
-            }; 
-        });
+        let sc = {}; DAYS.forEach((_, i) => { sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_start: document.getElementById(`s1s-${i}`).value, s1_end: document.getElementById(`s1e-${i}`).value, s2_active: document.getElementById(`s2active-${i}`).checked, s2_start: document.getElementById(`s2s-${i}`).value, s2_end: document.getElementById(`s2e-${i}`).value }; });
         db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم حفظ الدوام"));
     }
-
     function publishMany() { const t = document.getElementById('target-sel').value, urls = document.getElementById('img-urls').value.split('\n').filter(u=>u.trim()); if(t && urls.length){ urls.forEach(u=>db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()})); document.getElementById('img-urls').value=""; alert("تم النشر"); } }
-    function startHeaderSls() { const p = Object.values(currentData.pages||{}).find(x => x.title && x.title.includes("خذ فكرة")); if(!p || !p.imgs) return; const urls = Object.values(p.imgs).map(i => i.url); if(!window.hT && urls.length) window.hT = setInterval(() => { document.getElementById('bg-1').style.backgroundImage = `url('${urls[Math.floor(Math.random()*urls.length)]}')`; document.getElementById('bg-1').style.opacity = 0.6; }, 5000); }
+    function startHeaderSls() {
+        const p = Object.values(currentData.pages||{}).find(x => x.title && x.title.includes("خذ فكرة"));
+        if(!p || !p.imgs) return;
+        const urls = Object.values(p.imgs).map(i => i.url);
+        if(!window.hT && urls.length) window.hT = setInterval(() => {
+            const n = document.getElementById('bg-1');
+            n.style.backgroundImage = `url('${urls[Math.floor(Math.random()*urls.length)]}')`;
+            n.style.opacity = 0.6;
+        }, 5000);
+    }
 </script>
 </body>
 </html>
