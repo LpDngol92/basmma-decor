@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v51</title>
+    <title>بصمة غير | v53</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;800;900&display=swap');
         :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.85); --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; }
@@ -18,7 +19,7 @@
         @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
 
         header { height: 60vh; display: flex; align-items: flex-end; justify-content: center; position: relative; overflow: hidden; padding-bottom: 20px; }
-        .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: opacity 2s ease-in-out; z-index: 1; }
+        .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: opacity 2s ease-in-out; z-index: 1; background-color: #000; }
         header::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, var(--bg)); z-index: 2; }
         .header-content { position: relative; z-index: 5; text-align: center; margin-bottom: 10px; }
         .header-content h1 { font-size: clamp(2.2rem, 9vw, 4.5rem); color: #fff; text-shadow: 0 0 25px #000; font-weight: 900; }
@@ -33,30 +34,34 @@
 
         .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
         .card { background: var(--card); border-radius: 20px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.1); }
-        .img-container { position: relative; width: 100%; aspect-ratio: 1/1; overflow: hidden; }
+        .img-container { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #111; }
+        .img-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* واتر مارك المصغرات والمكبرات */
         .watermark-overlay { position: absolute; bottom: 15px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 10; }
         .watermark-overlay span { display: inline-block; font-size: 0.9rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--gold); animation: wmPulse 3s infinite ease-in-out; }
         @keyframes wmPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); text-shadow: 0 0 25px var(--gold); } }
 
+        /* قسم التواصل الجديد */
+        .social-box { margin-top: 30px; padding: 20px; border: 1px dashed rgba(197, 160, 89, 0.3); border-radius: 20px; max-width: 450px; margin-left: auto; margin-right: auto; }
+        .social-title { font-size: 0.9rem; color: var(--gold); font-weight: 800; margin-bottom: 15px; letter-spacing: 1px; }
+        .social-links { display: flex; justify-content: center; gap: 25px; }
+        .social-links a { color: #fff; font-size: 1.8rem; transition: 0.3s; }
+        .social-links a:hover { transform: scale(1.2); color: var(--gold); }
+
         #promo-box { display: none; max-width: 450px; margin: 0 auto 20px; padding: 20px; background: linear-gradient(45deg, #1a1a1d, #2c0505); border: 1px solid var(--gold); border-radius: 20px; color: #fff; text-align: center; }
 
-        /* نافذة التكبير المعدلة مع وتر مارك */
-        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000000; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
-        .modal-wrap { position: relative; max-width: 90%; max-height: 85vh; border-radius: 12px; overflow: hidden; }
-        #modal-img { max-width: 100%; max-height: 85vh; border-radius: 10px; display: block; }
-        .modal-wm { position: absolute; bottom: 30px; left: 0; right: 0; text-align: center; pointer-events: none; }
-        .modal-wm span { font-size: 1.5rem; font-weight: 900; color: #fff; text-shadow: 0 0 20px var(--gold); }
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 2000000; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+        .modal-wrap { position: relative; max-width: 95%; max-height: 90vh; display: flex; flex-direction: column; align-items: center; }
+        #modal-img { max-width: 100%; max-height: 85vh; border-radius: 5px; object-fit: contain; }
+        .modal-wm { margin-top: 15px; text-align: center; pointer-events: none; }
+        .modal-wm span { font-size: 1.4rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--gold); }
 
-        /* لوحة التحكم */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 20px; overflow-y: auto; }
         .admin-box { max-width: 900px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
-        .upload-frame { width: 100%; height: 350px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; background: #fff; }
         .setting-group { background: #0c0c0e; padding: 20px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #222; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: inherit; }
         .btn-order { width: 100%; padding: 15px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: block; margin-top: 5px; }
-        
+        .upload-frame { width: 100%; height: 350px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; background: #fff; }
         #admin-imgs-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 15px; }
         .admin-img-card { position: relative; aspect-ratio: 1/1; border-radius: 10px; overflow: hidden; border: 1px solid #333; }
         .admin-img-card img { width: 100%; height: 100%; object-fit: cover; }
@@ -71,8 +76,8 @@
 
 <div id="modal" onclick="this.style.display='none'">
     <div class="modal-wrap">
-        <img id="modal-img">
-        <div class="modal-wm"><span id="zoom-wm-txt">بصمة غير</span></div>
+        <img id="modal-img" src="">
+        <div class="modal-wm"><span id="zoom-wm-txt"></span></div>
     </div>
 </div>
 
@@ -97,6 +102,14 @@
                 <div id="h-map" style="margin-top:20px;"></div>
             </div><br>
             <a id="wa-main" href="#" target="_blank" class="btn-order" style="display:inline-block; width:auto; padding:15px 45px; border-radius:50px; background:#fff; color:#000;">تواصل معنا واتساب</a>
+
+            <div class="social-box">
+                <div class="social-title">التواصل الاجتماعي</div>
+                <div class="social-links">
+                    <a id="link-tiktok" href="#" target="_blank"><i class="fa-brands fa-tiktok"></i></a>
+                    <a id="link-insta" href="#" target="_blank"><i class="fa-brands fa-instagram"></i></a>
+                </div>
+            </div>
         </div>
     </section>
     <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
@@ -112,27 +125,33 @@
         <iframe src="https://www.0zz0.com/" class="upload-frame"></iframe>
 
         <div class="setting-group">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">📝 تعديل أسماء الأقسام والمجلدات:</p>
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">📝 إدارة الأقسام:</p>
             <select id="edit-sec-sel" onchange="prepEditSec(this.value)"></select>
             <div id="edit-area" style="display:none;">
-                <input type="text" id="edit-sec-input" placeholder="اكتب الاسم الجديد">
-                <button onclick="saveSecName()" class="btn-order" style="background:var(--success);">حفظ الاسم الجديد</button>
+                <input type="text" id="edit-sec-input">
+                <button onclick="saveSecName()" class="btn-order" style="background:var(--success);">تحديث الاسم</button>
             </div>
         </div>
 
         <div class="setting-group">
             <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">🚀 نشر الصور:</p>
             <select id="target-sel" onchange="loadAdminImgs(this.value)"></select>
-            <textarea id="img-urls" style="height:80px;" placeholder="ألصق الروابط هنا..."></textarea>
+            <textarea id="img-urls" style="height:80px;" placeholder="ألصق روابط الصور هنا..."></textarea>
             <button onclick="publishMany()" class="btn-order" style="background:var(--blue);">نشر الآن</button>
             <div id="admin-imgs-list"></div>
         </div>
 
         <div class="setting-group">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">📢 الإعلان:</p>
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">📢 إعدادات الإعلان:</p>
             <input type="text" id="in-p-title" placeholder="عنوان الإعلان">
             <textarea id="in-p-body" placeholder="نص الإعلان"></textarea>
             <select id="in-p-show"><option value="none">إخفاء</option><option value="block">إظهار</option></select>
+        </div>
+
+        <div class="setting-group">
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">🔗 روابط التواصل الاجتماعي:</p>
+            <input type="text" id="in-tiktok" placeholder="رابط صفحة التيك توك">
+            <input type="text" id="in-insta" placeholder="رابط صفحة الانستقرام">
         </div>
 
         <div class="setting-group">
@@ -141,8 +160,8 @@
             <input type="text" id="in-wa" placeholder="رقم الواتساب">
             <input type="text" id="in-hours" placeholder="الدوام">
             <input type="text" id="in-map" placeholder="رابط الخريطة">
-            <input type="text" id="in-splash" placeholder="نص شاشة التحميل">
-            <button onclick="saveSettings()" class="btn-order">حفظ كل الإعدادات</button>
+            <input type="text" id="in-splash" placeholder="نص السبلاش">
+            <button onclick="saveSettings()" class="btn-order">حفظ الكل</button>
         </div>
 
         <div style="display:flex; gap:10px;">
@@ -164,28 +183,33 @@
     });
 
     function renderAll() {
-        const d = currentData;
-        const sName = d.site_name || "بصمة غير";
+        const d = currentData; const sName = d.site_name || "بصمة غير";
         document.getElementById('view-title').innerText = sName;
         document.getElementById('splash-txt').innerText = d.splash_text || sName;
-        document.getElementById('zoom-wm-txt').innerText = sName; // تحديث وتر مارك التكبير
+        document.getElementById('zoom-wm-txt').innerText = sName;
         document.getElementById('h-hours').innerText = d.work_hours || "";
         
+        // تحديث الروابط الاجتماعية
+        document.getElementById('link-tiktok').href = d.tiktok_url || "#";
+        document.getElementById('link-tiktok').style.display = d.tiktok_url ? 'inline-block' : 'none';
+        document.getElementById('link-insta').href = d.insta_url || "#";
+        document.getElementById('link-insta').style.display = d.insta_url ? 'inline-block' : 'none';
+
         const mainMsg = encodeURIComponent("السلام عليكم ورحمة الله وبركاته \nتحيه طيبة بصمة غير للديكور");
         document.getElementById('wa-main').href = `https://wa.me/${d.whatsapp_num}?text=${mainMsg}`;
         
-        const promoBox = document.getElementById('promo-box');
+        const pb = document.getElementById('promo-box');
         if(d.promo_show === 'block') {
-            promoBox.style.display = 'block';
+            pb.style.display = 'block';
             document.getElementById('p-title').innerText = d.promo_title || "";
             document.getElementById('p-body').innerText = d.promo_body || "";
-        } else { promoBox.style.display = 'none'; }
+        } else pb.style.display = 'none';
 
         if(d.map_url) document.getElementById('h-map').innerHTML = `<a href="${d.map_url}" target="_blank" style="color:var(--gold); font-weight:bold; text-decoration:none;">📍 الموقع</a>`;
 
-        const targetSel = document.getElementById('target-sel'); const editSel = document.getElementById('edit-sec-sel');
-        targetSel.innerHTML = '<option value="">-- اختر القسم للرفع --</option>';
-        editSel.innerHTML = '<option value="">-- اختر لتعديل الاسم --</option>';
+        const tSel = document.getElementById('target-sel'); const eSel = document.getElementById('edit-sec-sel');
+        tSel.innerHTML = '<option value="">-- اختر القسم للرفع --</option>';
+        eSel.innerHTML = '<option value="">-- اختر لتعديل الاسم --</option>';
 
         let navH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
         let sectionsH = ""; const aGrid = document.getElementById('albums-grid'); aGrid.innerHTML = "";
@@ -194,21 +218,22 @@
             const p = d.pages[id]; 
             navH += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}')">${p.title}</button>`;
             sectionsH += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(p.imgs)}</div></section>`;
-            targetSel.innerHTML += `<option value="pages/${id}">قسم: ${p.title}</option>`;
-            editSel.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
+            tSel.innerHTML += `<option value="pages/${id}">قسم: ${p.title}</option>`;
+            eSel.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
         });
         navH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
         if(d.albums) Object.keys(d.albums).forEach(id => {
             const a = d.albums[id]; 
             aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:50px 20px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${a.name}</h3></div>`;
             sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="background:#222; margin-bottom:20px;" onclick="go('works')">← عودة</button><div class="grid">${drawImgs(a.imgs)}</div></section>`;
-            targetSel.innerHTML += `<option value="albums/${id}">مجلد: ${a.name}</option>`;
-            editSel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
+            tSel.innerHTML += `<option value="albums/${id}">مجلد: ${a.name}</option>`;
+            eSel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
         });
         document.getElementById('navbar').innerHTML = navH; document.getElementById('dynamic-pages').innerHTML = sectionsH;
         document.getElementById('sec-home').classList.toggle('active', currentTab==='home');
         document.getElementById('sec-works').classList.toggle('active', currentTab==='works');
 
+        // تعبئة حقول الإدارة
         document.getElementById('in-name').value = d.site_name || "";
         document.getElementById('in-wa').value = d.whatsapp_num || "";
         document.getElementById('in-hours').value = d.work_hours || "";
@@ -217,6 +242,8 @@
         document.getElementById('in-p-title').value = d.promo_title || "";
         document.getElementById('in-p-body').value = d.promo_body || "";
         document.getElementById('in-p-show').value = d.promo_show || "none";
+        document.getElementById('in-tiktok').value = d.tiktok_url || "";
+        document.getElementById('in-insta').value = d.insta_url || "";
     }
 
     function go(id) { currentTab = id; renderAll(); window.scrollTo({ top: document.getElementById('navbar').offsetTop, behavior: 'smooth' }); }
@@ -238,13 +265,13 @@
     }
 
     function drawImgs(imgs) {
-        if(!imgs) return '<p style="text-align:center; padding:50px; width:100%; opacity:0.3;">قريباً...</p>';
+        if(!imgs) return '<p style="text-align:center; padding:50px; opacity:0.3;">قريباً...</p>';
         const wm = `<div class="watermark-overlay"><span>${currentData.site_name || 'بصمة غير'}</span></div>`;
         return Object.keys(imgs).reverse().map(id => {
-            const imgUrl = imgs[id].url;
-            const subMsg = encodeURIComponent(`السلام عليكم ورحمة الله وبركاته \nتحية طيبة بصمة غير للديكور \nحاب استفسر عن العمل هذا: \n${imgUrl}`);
+            const url = imgs[id].url;
+            const subMsg = encodeURIComponent(`حاب استفسر عن هذا العمل: \n${url}`);
             return `<div class="card">
-                <div class="img-container" onclick="zoom('${imgUrl}')"><img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;">${wm}</div>
+                <div class="img-container" onclick="zoom('${url}')"><img src="${url}" loading="lazy">${wm}</div>
                 <div style="padding:15px;"><button class="btn-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num}?text=${subMsg}')">استفسار</button></div>
             </div>`;
         }).join('');
@@ -277,14 +304,15 @@
         const t = document.getElementById('target-sel').value; const urls = document.getElementById('img-urls').value.split('\n').filter(u => u.trim());
         if(!t || urls.length===0) return alert("حدد القسم والروابط");
         urls.forEach(u => db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()}));
-        document.getElementById('img-urls').value = ""; alert("تم!");
+        document.getElementById('img-urls').value = ""; alert("تم النشر!");
     }
     function saveSettings() { 
         db.ref(DB_PATH).update({ 
             site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, 
             work_hours: document.getElementById('in-hours').value, map_url: document.getElementById('in-map').value, 
             splash_text: document.getElementById('in-splash').value, promo_title: document.getElementById('in-p-title').value,
-            promo_body: document.getElementById('in-p-body').value, promo_show: document.getElementById('in-p-show').value
+            promo_body: document.getElementById('in-p-body').value, promo_show: document.getElementById('in-p-show').value,
+            tiktok_url: document.getElementById('in-tiktok').value, insta_url: document.getElementById('in-insta').value
         }).then(()=>alert("تم الحفظ بنجاح")); 
     }
     function addP() { const n = document.getElementById('new-p').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-p').value=""); }
