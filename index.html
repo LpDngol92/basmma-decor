@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v47</title>
+    <title>بصمة غير | v49</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -14,7 +14,7 @@
 
         #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: 0.8s ease-in-out; }
         #splash.hide { opacity: 0; pointer-events: none; visibility: hidden; }
-        .splash-text { font-size: 3rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--gold); animation: pulseGlow 2s infinite; }
+        .splash-text { font-size: 3rem; font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--gold); animation: pulseGlow 2s infinite; text-align: center; padding: 20px; }
         @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
 
         header { height: 60vh; display: flex; align-items: flex-end; justify-content: center; position: relative; overflow: hidden; padding-bottom: 20px; }
@@ -39,6 +39,9 @@
         .watermark-overlay span { display: inline-block; font-size: 0.9rem; font-weight: 900; color: #fff; text-shadow: 0 0 10px var(--gold); animation: wmPulse 3s infinite ease-in-out; }
         @keyframes wmPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); text-shadow: 0 0 25px var(--gold); } }
 
+        /* ستايل الإعلان */
+        #promo-box { display: none; max-width: 450px; margin: 0 auto 20px; padding: 20px; background: linear-gradient(45deg, #1a1a1d, #2c0505); border: 1px solid var(--gold); border-radius: 20px; color: #fff; text-align: center; }
+
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 20px; overflow-y: auto; }
         .admin-box { max-width: 900px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
         .upload-frame { width: 100%; height: 350px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; background: #fff; }
@@ -58,7 +61,7 @@
 </head>
 <body>
 
-<div id="splash"><div class="splash-text">بصمة غير</div></div>
+<div id="splash"><div id="splash-txt" class="splash-text">بصمة غير</div></div>
 <div id="modal" onclick="this.style.display='none'"><img id="modal-img" style="max-width:90%; max-height:85vh; border-radius:10px;"></div>
 
 <header id="main-header">
@@ -72,6 +75,12 @@
 <main>
     <section id="sec-home" class="sec active">
         <div style="text-align: center; padding: 10px 0;">
+            
+            <div id="promo-box">
+                <h3 id="p-title" style="color:var(--gold); margin-bottom:10px;"></h3>
+                <p id="p-body"></p>
+            </div>
+
             <div class="card" style="padding:25px; max-width:450px; margin:0 auto; background:rgba(255,255,255,0.03);">
                 <p style="color:var(--gold); font-weight:800; margin-bottom:10px;">🕒 أوقات العمل</p>
                 <p id="h-hours"></p>
@@ -90,6 +99,7 @@
     <div class="admin-box">
         <button onclick="location.reload()" style="float:left; background:var(--danger); color:#fff; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">خروج</button>
         <h2 style="color:var(--gold);">لوحة التحكم والرفع</h2><br>
+        
         <iframe src="https://www.0zz0.com/" class="upload-frame"></iframe>
 
         <div class="setting-group">
@@ -104,18 +114,29 @@
         <div class="setting-group">
             <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">🚀 نشر الصور في قسم معين:</p>
             <select id="target-sel" onchange="loadAdminImgs(this.value)"></select>
-            <textarea id="img-urls" style="height:80px;" placeholder="ألصق روابط الصور هنا..."></textarea>
+            <textarea id="img-urls" style="height:80px;" placeholder="ألصق روابط الصور هنا (كل رابط في سطر)..."></textarea>
             <button onclick="publishMany()" class="btn-order" style="background:var(--blue);">نشر الصور</button>
             <div id="admin-imgs-list"></div>
         </div>
 
         <div class="setting-group">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">⚙️ إعدادات الموقع:</p>
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">📢 إعدادات الإعلان:</p>
+            <input type="text" id="in-p-title" placeholder="عنوان الإعلان">
+            <textarea id="in-p-body" placeholder="محتوى الإعلان" style="height:60px;"></textarea>
+            <select id="in-p-show">
+                <option value="none">إخفاء الإعلان</option>
+                <option value="block">إظهار الإعلان</option>
+            </select>
+        </div>
+
+        <div class="setting-group">
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">⚙️ إعدادات الموقع العامة:</p>
             <input type="text" id="in-name" placeholder="اسم الموقع">
             <input type="text" id="in-wa" placeholder="رقم الواتساب">
             <input type="text" id="in-hours" placeholder="الدوام">
             <input type="text" id="in-map" placeholder="رابط الخريطة">
-            <button onclick="saveSettings()" class="btn-order">حفظ الإعدادات العامة</button>
+            <input type="text" id="in-splash" placeholder="عبارة شاشة التحميل (السبلاش)">
+            <button onclick="saveSettings()" class="btn-order">حفظ الكل</button>
         </div>
 
         <div style="display:flex; gap:10px;">
@@ -140,11 +161,20 @@
         const data = currentData;
         document.getElementById('view-title').innerText = data.site_name || "بصمة غير";
         document.getElementById('h-hours').innerText = data.work_hours || "";
+        document.getElementById('splash-txt').innerText = data.splash_text || "بصمة غير";
         
-        // رسالة تواصل معنا المخصصة
+        // رسالة تواصل معنا
         const mainMsg = encodeURIComponent("السلام عليكم ورحمة الله وبركاته \nتحيه طيبة بصمة غير للديكور");
         document.getElementById('wa-main').href = `https://wa.me/${data.whatsapp_num}?text=${mainMsg}`;
         
+        // عرض الإعلان
+        const promoBox = document.getElementById('promo-box');
+        if(data.promo_show === 'block') {
+            promoBox.style.display = 'block';
+            document.getElementById('p-title').innerText = data.promo_title || "";
+            document.getElementById('p-body').innerText = data.promo_body || "";
+        } else { promoBox.style.display = 'none'; }
+
         if(data.map_url) document.getElementById('h-map').innerHTML = `<a href="${data.map_url}" target="_blank" style="color:var(--gold); font-weight:bold; text-decoration:none;">📍 الموقع</a>`;
 
         const targetSel = document.getElementById('target-sel'); const editSel = document.getElementById('edit-sec-sel');
@@ -172,6 +202,16 @@
         document.getElementById('navbar').innerHTML = navH; document.getElementById('dynamic-pages').innerHTML = sectionsH;
         document.getElementById('sec-home').classList.toggle('active', currentTab==='home');
         document.getElementById('sec-works').classList.toggle('active', currentTab==='works');
+
+        // ملء حقول الإدارة
+        document.getElementById('in-name').value = data.site_name || "";
+        document.getElementById('in-wa').value = data.whatsapp_num || "";
+        document.getElementById('in-hours').value = data.work_hours || "";
+        document.getElementById('in-map').value = data.map_url || "";
+        document.getElementById('in-splash').value = data.splash_text || "";
+        document.getElementById('in-p-title').value = data.promo_title || "";
+        document.getElementById('in-p-body').value = data.promo_body || "";
+        document.getElementById('in-p-show').value = data.promo_show || "none";
     }
 
     function go(id) { currentTab = id; renderAll(); window.scrollTo({ top: document.getElementById('navbar').offsetTop, behavior: 'smooth' }); }
@@ -197,7 +237,6 @@
         const wm = `<div class="watermark-overlay"><span>${currentData.site_name || 'بصمة غير'}</span></div>`;
         return Object.keys(imgs).reverse().map(id => {
             const imgUrl = imgs[id].url;
-            // رسالة الاستفسار المخصصة مع رابط الصورة
             const subMsg = encodeURIComponent(`السلام عليكم ورحمة الله وبركاته \nتحية طيبة بصمة غير للديكور \nحاب استفسر عن العمل هذا: \n${imgUrl}`);
             return `<div class="card">
                 <div class="img-container" onclick="zoom('${imgUrl}')"><img src="${imgUrl}" style="width:100%; height:100%; object-fit:cover;">${wm}</div>
@@ -233,9 +272,20 @@
         const t = document.getElementById('target-sel').value; const urls = document.getElementById('img-urls').value.split('\n').filter(u => u.trim());
         if(!t || urls.length===0) return alert("حدد القسم والروابط");
         urls.forEach(u => db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()}));
-        document.getElementById('img-urls').value = ""; alert("تم!");
+        document.getElementById('img-urls').value = ""; alert("تم النشر بنجاح");
     }
-    function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, work_hours: document.getElementById('in-hours').value, map_url: document.getElementById('in-map').value }).then(()=>alert("تم")); }
+    function saveSettings() { 
+        db.ref(DB_PATH).update({ 
+            site_name: document.getElementById('in-name').value, 
+            whatsapp_num: document.getElementById('in-wa').value, 
+            work_hours: document.getElementById('in-hours').value, 
+            map_url: document.getElementById('in-map').value, 
+            splash_text: document.getElementById('in-splash').value,
+            promo_title: document.getElementById('in-p-title').value,
+            promo_body: document.getElementById('in-p-body').value,
+            promo_show: document.getElementById('in-p-show').value
+        }).then(()=>alert("تم حفظ جميع التغييرات")); 
+    }
     function addP() { const n = document.getElementById('new-p').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-p').value=""); }
     function checkAccess() { if(prompt("كلمة المرور:")==='808090') document.getElementById('admin-panel').style.display='block'; }
     function zoom(u) { document.getElementById('modal-img').src=u; document.getElementById('modal').style.display='flex'; }
