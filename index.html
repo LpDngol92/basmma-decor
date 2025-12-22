@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v101</title>
+    <title>بصمة غير | v102</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -13,18 +13,13 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; -webkit-user-select: none; user-select: none; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; }
 
-        /* الواترمارك أسفل الصورة عند التكبير */
-        .full-wm { position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%); font-size: 2rem; font-weight: 900; color: rgba(255,255,255,0.15); text-shadow: 0 0 15px rgba(197, 160, 89, 0.6); pointer-events: none; white-space: nowrap; z-index: 101; }
+        .full-wm { position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%); font-size: 1.8rem; font-weight: 900; color: rgba(255,255,255,0.15); text-shadow: 0 0 15px rgba(197, 160, 89, 0.6); pointer-events: none; white-space: nowrap; z-index: 101; }
         .mini-wm { position: absolute; bottom: 8px; right: 8px; font-size: 0.6rem; font-weight: 900; color: #fff; text-shadow: 0 0 5px var(--gold); opacity: 0.7; }
 
-        /* حماية الصورة عند التكبير */
-        #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); backdrop-filter: blur(20px); z-index: 100000; display: none; align-items: center; justify-content: center; padding: 20px; cursor: zoom-out; }
-        #viewer-container { position: relative; max-width: 95%; max-height: 85vh; -webkit-touch-callout: none; }
+        #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); backdrop-filter: blur(20px); z-index: 100000; display: none; align-items: center; justify-content: center; padding: 20px; }
+        #viewer-container { position: relative; max-width: 95%; max-height: 85vh; }
         #viewer-img { width: 100%; height: 100%; border-radius: 12px; border: 1px solid rgba(197, 160, 89, 0.2); pointer-events: none; }
         
-        /* تكتيك تعتيم الشاشة عند محاولة أخذ سكرين (للمتصفحات الداعمة) */
-        @media visibility: hidden { #viewer { background: #000 !important; } }
-
         header { height: 35vh; display: flex; align-items: flex-end; justify-content: center; position: relative; background: #000; padding-bottom: 20px; }
         .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; z-index: 1; filter: brightness(0.5); }
         header::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, var(--bg)); z-index: 2; }
@@ -51,10 +46,8 @@
         .collapse-content { display: none; padding: 15px; background: #0c0c0e; border-top: 1px solid #333; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-family: 'Tajawal'; -webkit-user-select: text; user-select: text; }
 
-        .upload-frame { width: 100%; height: 450px; border: 1px solid #333; border-radius: 10px; margin-bottom: 15px; background: #fff; }
         .home-social { display: flex; justify-content: center; gap: 25px; margin-top: 20px; }
         .home-social a { color: #fff; font-size: 1.8rem; display: none; }
-
         .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-left: 8px; vertical-align: middle; }
         .pulse-green { background: var(--green); box-shadow: 0 0 0 var(--green); animation: pulse-g 2s infinite; }
         .pulse-red { background: var(--red); box-shadow: 0 0 0 var(--red); animation: pulse-r 2s infinite; }
@@ -90,7 +83,7 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v101</h2>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v102</h2>
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c1')">📁 إدارة الأقسام <i class="fas fa-chevron-down"></i></button>
             <div id="c1" class="collapse-content">
@@ -102,7 +95,7 @@
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c2')">📸 رفع الصور <i class="fas fa-chevron-down"></i></button>
             <div id="c2" class="collapse-content">
-                <iframe src="https://www.0zz0.com/" class="upload-frame"></iframe>
+                <iframe src="https://www.0zz0.com/" style="width:100%; height:400px; background:#fff;"></iframe>
                 <select id="target-sel"></select>
                 <textarea id="img-urls" rows="4" placeholder="روابط الصور..."></textarea>
                 <button onclick="publishMany()" style="width:100%; background:#3498db; color:#fff; padding:10px; border:none; border-radius:8px;">نشر</button>
@@ -195,25 +188,34 @@
         if(document.getElementById('schedule-editor').innerHTML === "") fillAdminSchedule(d);
     }
 
-    function drawImgs(imgs, title) {
-        if(!imgs) return '<p style="grid-column:1/-1; text-align:center; padding:50px;">قريباً...</p>';
-        return Object.keys(imgs).reverse().map(id => {
-            const url = imgs[id].url;
-            const inquiryMsg = encodeURIComponent(`السلام عليكم، بصمة غير للديكور.. أرغب في الاستفسار عن هذا العمل:\n${url}`);
-            return `<div class="card"><div class="img-container" onclick="openImg('${url}')"><img src="${url}" loading="lazy"><div class="mini-wm">${currentData.wm_text||''}</div></div><a href="https://wa.me/${currentData.whatsapp_num}?text=${inquiryMsg}" class="btn-order">استفسار</a></div>`;
-        }).join('');
-    }
-
     function getWorkDisplay(d) {
         if(!d.work_schedule) return "قيد التحديث...";
-        let activeDays = ""; let offDays = "";
+        let activeGroups = []; let offDays = [];
+        
+        // تجميع الأيام النشطة
         DAYS.forEach((name, i) => {
             const s = d.work_schedule[i];
             if(s && s.active) {
-                activeDays += `<div style="margin-bottom:10px;"><b style="color:var(--gold)">${name}:</b> <br> الفترة الصباحية: ${t12(s.s1_start)} - ${t12(s.s1_end)} ${s.s2_active ? `<br> الفترة المسائية: ${t12(s.s2_start)} - ${t12(s.s2_end)}` : ''}</div>`;
-            } else { offDays += name + " "; }
+                const timeKey = `${s.s1_start}-${s.s1_end}-${s.s2_active}-${s.s2_start}-${s.s2_end}`;
+                let found = activeGroups.find(g => g.timeKey === timeKey);
+                if(found) found.days.push(name);
+                else activeGroups.push({ days: [name], timeKey: timeKey, data: s });
+            } else { offDays.push(name); }
         });
-        return activeDays + (offDays ? `<div style="color:var(--red); margin-top:10px; font-weight:bold;">الإجازة: ${offDays}</div>` : "");
+
+        let html = "";
+        activeGroups.forEach(g => {
+            let dayRange = g.days.length > 1 ? `من ${g.days[0]} إلى ${g.days[g.days.length-1]}` : g.days[0];
+            html += `<div style="margin-bottom:12px;"><b style="color:var(--gold); font-size:1.1rem;">${dayRange}:</b><br>`;
+            html += `الصباحية: ${t12(g.data.s1_start)} - ${t12(g.data.s1_end)}`;
+            if(g.data.s2_active) html += `<br>المسائية: ${t12(g.data.s2_start)} - ${t12(g.data.s2_end)}`;
+            html += `</div>`;
+        });
+
+        if(offDays.length > 0) {
+            html += `<div style="color:var(--red); font-weight:bold; margin-top:10px; border-top:1px solid #222; padding-top:10px;">الإجازة: ${offDays.join(' - ')}</div>`;
+        }
+        return html;
     }
 
     function t12(t) { if(!t) return ""; let [h, m] = t.split(':'); h = parseInt(h); const p = h >= 12 ? 'م' : 'ص'; h = h % 12 || 12; return `${h}:${m} ${p}`; }
@@ -224,10 +226,11 @@
     function checkAccess() { if(prompt("Pass:")==='808090') document.getElementById('admin-panel').style.display='block'; }
     function updateWorkStatus() { const d = currentData; if(!d.work_schedule) return; const now = new Date(); const curMin = now.getHours() * 60 + now.getMinutes(); const conf = d.work_schedule[now.getDay()]; let open = false; if(conf && conf.active) { const check = (s, e) => { if(!s || !e) return false; const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number); return curMin >= (sh*60+sm) && curMin <= (eh*60+em); }; if(check(conf.s1_start, conf.s1_end)) open = true; if(conf.s2_active && check(conf.s2_start, conf.s2_end)) open = true; } const dot = document.getElementById('status-dot'), txt = document.getElementById('status-text'); if(open) { dot.className="dot pulse-green"; txt.innerText="مفتوح الآن"; txt.style.color="var(--green)"; } else { dot.className="dot pulse-red"; txt.innerText="مغلق الآن"; txt.style.color="var(--red)"; } }
     function fillAdminSchedule(d) { const ed = document.getElementById('schedule-editor'); DAYS.forEach((day, i) => { const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:false, s1_start:"09:00", s1_end:"12:00", s2_active:false}; ed.innerHTML += `<div style="background:#222; padding:10px; margin-bottom:5px; border-radius:5px;"><input type="checkbox" id="check-${i}" ${s.active?'checked':''}> <b>${day}</b><br>الصباحية: <input type="time" id="s1s-${i}" value="${s.s1_start}" style="width:80px"> - <input type="time" id="s1e-${i}" value="${s.s1_end}" style="width:80px"><br><input type="checkbox" id="s2active-${i}" ${s.s2_active?'checked':''}> المسائية: <input type="time" id="s2s-${i}" value="${s.s2_start||''}" style="width:80px"> - <input type="time" id="s2e-${i}" value="${s.s2_end||''}" style="width:80px"></div>`; }); }
-    function saveSchedule() { let sc = {}; DAYS.forEach((_, i) => { sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_start: document.getElementById(`s1s-${i}`).value, s1_end: document.getElementById(`s1e-${i}`).value, s2_active: document.getElementById(`s2active-${i}`).checked, s2_start: document.getElementById(`s2s-${i}`).value, s2_end: document.getElementById(`s2e-${i}`).value }; }); db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم الحفظ")); }
+    function saveSchedule() { let sc = {}; DAYS.forEach((_, i) => { sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_start: document.getElementById(`s1s-${i}`).value, s1_end: document.getElementById(`s1e-${i}`).value, s2_active: document.getElementById(`s2active-${i}`).checked, s2_start: document.getElementById(`s2s-${i}`).value, s2_end: document.getElementById(`s2e-${i}`).value }; }); db.ref(DB_PATH + '/work_schedule').set(sc).then(() => { alert("تم الحفظ"); location.reload(); }); }
     function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, location_url: document.getElementById('in-loc').value, wm_text: document.getElementById('in-wm').value, tiktok_url: document.getElementById('in-tiktok').value, insta_url: document.getElementById('in-insta').value }).then(()=>alert("تم الحفظ")); }
     function publishMany() { const t = document.getElementById('target-sel').value, urls = document.getElementById('img-urls').value.split('\n').filter(u=>u.trim()); if(t && urls.length){ urls.forEach(u=>db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()})); document.getElementById('img-urls').value=""; alert("تم النشر"); } }
     function drawAlbums(albums) { if(!albums) return ''; return Object.keys(albums).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albums[id].name}</h3><p style="font-size:0.7rem; color:#666;">عرض الأعمال</p></div>`).join(''); }
+    function drawImgs(imgs, title) { if(!imgs) return '<p style="grid-column:1/-1; text-align:center; padding:50px;">قريباً...</p>'; return Object.keys(imgs).reverse().map(id => { const url = imgs[id].url; const inquiryMsg = encodeURIComponent(`السلام عليكم، بصمة غير للديكور.. أرغب في الاستفسار عن هذا العمل:\n${url}`); return `<div class="card"><div class="img-container" onclick="openImg('${url}')"><img src="${url}" loading="lazy"><div class="mini-wm">${currentData.wm_text||''}</div></div><a href="https://wa.me/${currentData.whatsapp_num}?text=${inquiryMsg}" class="btn-order">استفسار</a></div>`; }).join(''); }
     function addSec() { const n = document.getElementById('new-sec-in').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); }
 </script>
 </body>
