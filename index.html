@@ -3,32 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v58</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <title>بصمة غير | v59</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;800;900&display=swap');
-        :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.85); --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; }
+        :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.85); --danger: #ff4d4d; }
+        
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; scroll-behavior: smooth; }
 
         /* شاشة التحميل */
-        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: 0.8s ease-in-out; }
-        #splash.hide { opacity: 0; pointer-events: none; visibility: hidden; }
-        .splash-text { font-size: clamp(1.5rem, 8vw, 3.5rem); font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--gold); animation: pulseGlow 2s infinite; text-align: center; padding: 20px; }
-        @keyframes pulseGlow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
+        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; }
+        #splash.hide { opacity: 0; pointer-events: none; visibility: hidden; transition: 0.6s; }
+        .splash-text { font-size: clamp(1.5rem, 8vw, 3rem); font-weight: 900; color: #fff; text-shadow: 0 0 15px var(--gold); text-align: center; }
 
         header { height: 45vh; display: flex; align-items: flex-end; justify-content: center; position: relative; overflow: hidden; padding-bottom: 20px; }
-        .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: opacity 2s ease-in-out; z-index: 1; background-color: #000; }
-        header::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 20%, var(--bg)); z-index: 2; }
+        .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: opacity 1.5s; z-index: 1; background-color: #000; }
+        header::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 30%, var(--bg)); z-index: 2; }
         .header-content { position: relative; z-index: 5; text-align: center; width: 90%; }
-        .header-content h1 { font-size: clamp(1.8rem, 8vw, 4rem); color: #fff; text-shadow: 0 0 25px #000; font-weight: 900; }
+        .header-content h1 { font-size: clamp(1.8rem, 8vw, 4rem); color: #fff; text-shadow: 0 0 20px #000; font-weight: 900; }
 
-        nav { position: sticky; top: 0; z-index: 10000; width: 100%; background: rgba(10, 10, 11, 0.95); backdrop-filter: blur(15px); padding: 10px; border-bottom: 1px solid rgba(197, 160, 89, 0.2); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; justify-content: flex-start; }
+        nav { position: sticky; top: 0; z-index: 10000; width: 100%; background: rgba(10, 10, 11, 0.9); backdrop-filter: blur(10px); padding: 10px; border-bottom: 1px solid rgba(197, 160, 89, 0.2); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
         @media (min-width: 768px) { nav { justify-content: center; } }
-        .nav-btn { padding: 8px 18px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; transition: 0.3s; font-size: 0.85rem; }
-        .nav-btn.active { background: var(--primary); color: #fff; box-shadow: 0 0 15px rgba(92, 10, 10, 0.4); }
+        .nav-btn { padding: 8px 18px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; font-size: 0.85rem; }
+        .nav-btn.active { background: var(--primary); color: #fff; }
 
         .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; }
         .sec.active { display: block; }
@@ -36,26 +39,23 @@
         .grid { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
         @media (min-width: 600px) { .grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; } }
 
-        .card { background: var(--card); border-radius: 15px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.1); height: 100%; display: flex; flex-direction: column; }
-        .img-container { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #111; cursor: pointer; }
-        .img-container img { width: 100%; height: 100%; object-fit: cover; }
+        .card { background: var(--card); border-radius: 15px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.1); }
+        .img-container { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #111; }
+        .img-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
         
         .watermark-overlay { position: absolute; bottom: 8px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 10; }
-        .watermark-overlay span { display: inline-block; font-size: 0.7rem; font-weight: 900; color: #fff; text-shadow: 0 0 8px #000; background: rgba(0,0,0,0.2); padding: 2px 8px; border-radius: 10px; }
-
-        #promo-box { display: none; max-width: 450px; margin: 0 auto 20px; padding: 20px; background: linear-gradient(45deg, #1a1a1d, #2c0505); border: 1px solid var(--gold); border-radius: 20px; color: #fff; text-align: center; }
+        .watermark-overlay span { font-size: 0.7rem; font-weight: 900; color: #fff; text-shadow: 0 0 8px #000; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 10px; }
 
         .social-box { margin: 30px auto; padding: 20px; border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 20px; max-width: 350px; background: rgba(255,255,255,0.02); text-align: center; }
         .social-links { display: flex; justify-content: center; gap: 30px; margin-top: 15px; }
-        .social-links a { color: #fff; font-size: 2.2rem; transition: 0.3s; text-decoration: none; }
-        .social-links a:hover { color: var(--gold); transform: translateY(-3px); }
+        .social-links a { color: #fff; font-size: 2.2rem; text-decoration: none; }
 
-        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 2000000; display: none; align-items: center; justify-content: center; padding: 10px; }
-        #modal-img { max-width: 100%; max-height: 85vh; border-radius: 8px; }
+        #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 2000000; display: none; align-items: center; justify-content: center; }
+        #modal-img { max-width: 95%; max-height: 85vh; border-radius: 8px; }
 
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 15px; overflow-y: auto; }
         .admin-box { width: 100%; max-width: 900px; margin: 0 auto; background: #151518; padding: 20px; border-radius: 20px; border: 1px solid var(--gold); }
-        .setting-group { background: #0c0c0e; padding: 15px; border-radius: 15px; margin-bottom: 15px; border: 1px solid #222; }
+        .setting-group { background: #0c0c0e; padding: 15px; border-radius: 15px; margin-bottom: 15px; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-size: 16px; }
         .btn-order { width: 100%; padding: 15px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; display: block; text-decoration: none; text-align: center; }
     </style>
@@ -76,7 +76,7 @@
 <main>
     <section id="sec-home" class="sec active">
         <div style="text-align: center;">
-            <div id="promo-box">
+            <div id="promo-box" style="display:none; max-width:450px; margin:0 auto 20px; padding:20px; background:linear-gradient(45deg, #1a1a1d, #2c0505); border:1px solid var(--gold); border-radius:20px;">
                 <h3 id="p-title" style="color:var(--gold); margin-bottom:10px;"></h3>
                 <p id="p-body"></p>
             </div>
@@ -103,75 +103,64 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <button onclick="location.reload()" style="background:var(--danger); color:#fff; border:none; padding:10px 20px; border-radius:10px; float:left;">خروج</button>
-        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة v58</h2>
-        <iframe src="https://www.0zz0.com/" style="width:100%; height:300px; border-radius:10px; background:#fff; margin-bottom:15px;"></iframe>
-
+        <button onclick="location.reload()" style="background:var(--danger); color:#fff; border:none; padding:10px; border-radius:10px; float:left;">خروج</button>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة الكاملة</h2>
         <div class="setting-group">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">📝 تعديل أسماء الأقسام:</p>
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">تعديل أسماء الأقسام:</p>
             <select id="edit-sec-sel" onchange="prepEditSec(this.value)"></select>
             <div id="edit-area" style="display:none;">
                 <input type="text" id="edit-sec-input">
-                <button onclick="saveSecName()" class="btn-order" style="background:var(--success);">حفظ الاسم</button>
+                <button onclick="saveSecName()" class="btn-order">حفظ الاسم</button>
             </div>
         </div>
-
         <div class="setting-group">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">🚀 نشر وحذف الصور:</p>
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">نشر وحذف الصور:</p>
             <select id="target-sel" onchange="loadAdminImgs(this.value)"></select>
-            <textarea id="img-urls" style="height:80px;" placeholder="روابط الصور..."></textarea>
-            <button onclick="publishMany()" class="btn-order" style="background:var(--blue);">نشر الآن</button>
+            <textarea id="img-urls" placeholder="روابط الصور..."></textarea>
+            <button onclick="publishMany()" class="btn-order">نشر</button>
             <div id="admin-imgs-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px; margin-top:15px;"></div>
         </div>
-
         <div class="setting-group">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">⚙️ الإعدادات العامة والسوشيال:</p>
-            <input type="text" id="in-name" placeholder="اسم الموقع">
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">الإعدادات العامة:</p>
+            <input type="text" id="in-name" placeholder="الاسم">
             <input type="text" id="in-wa" placeholder="واتساب">
-            <input type="text" id="in-tiktok" placeholder="رابط تيك توك">
-            <input type="text" id="in-insta" placeholder="رابط انستقرام">
+            <input type="text" id="in-tiktok" placeholder="تيك توك">
+            <input type="text" id="in-insta" placeholder="انستقرام">
             <input type="text" id="in-hours" placeholder="الدوام">
             <input type="text" id="in-map" placeholder="رابط الخريطة">
-            <input type="text" id="in-p-title" placeholder="عنوان الإعلان">
-            <textarea id="in-p-body" placeholder="نص الإعلان"></textarea>
-            <select id="in-p-show"><option value="none">إخفاء الإعلان</option><option value="block">إظهار الإعلان</option></select>
-            <button onclick="saveSettings()" class="btn-order">حفظ الكل</button>
+            <button onclick="saveSettings()" class="btn-order">حفظ</button>
         </div>
     </div>
 </div>
 
 <script>
     const config = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd" };
-    firebase.initializeApp(config); const db = firebase.database(); const DB_PATH = 'site_v28';
+    if (!firebase.apps.length) { firebase.initializeApp(config); }
+    const db = firebase.database(); const DB_PATH = 'site_v28';
     let currentData = {}; let currentTab = 'home'; let activeBG = 1;
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
         renderAll();
         startHeaderSls();
-        setTimeout(() => document.getElementById('splash').classList.add('hide'), 1000);
+        document.getElementById('splash').classList.add('hide');
     });
 
     function renderAll() {
-        const d = currentData; const sName = d.site_name || "بصمة غير";
-        document.getElementById('view-title').innerText = sName;
-        document.getElementById('splash-txt').innerText = d.splash_text || sName;
+        const d = currentData;
+        document.getElementById('view-title').innerText = d.site_name || "بصمة غير";
+        document.getElementById('splash-txt').innerText = d.splash_text || d.site_name || "بصمة غير";
         document.getElementById('h-hours').innerText = d.work_hours || "";
         
         const tk = document.getElementById('link-tiktok'); const ig = document.getElementById('link-insta');
         if(d.tiktok_url) { tk.href = d.tiktok_url; tk.style.display = 'inline-block'; } else tk.style.display = 'none';
         if(d.insta_url) { ig.href = d.insta_url; ig.style.display = 'inline-block'; } else ig.style.display = 'none';
 
-        const pb = document.getElementById('promo-box');
-        if(d.promo_show === 'block') {
-            pb.style.display = 'block'; document.getElementById('p-title').innerText = d.promo_title || ""; document.getElementById('p-body').innerText = d.promo_body || "";
-        } else pb.style.display = 'none';
-
         document.getElementById('wa-main').href = `https://wa.me/${d.whatsapp_num}`;
-        if(d.map_url) document.getElementById('h-map').innerHTML = `<a href="${d.map_url}" target="_blank" style="color:var(--gold); font-weight:bold; text-decoration:none;">📍 الموقع</a>`;
+        if(d.map_url) document.getElementById('h-map').innerHTML = `<a href="${d.map_url}" target="_blank" style="color:var(--gold); text-decoration:none;">📍 الموقع</a>`;
 
         const tSel = document.getElementById('target-sel'); const eSel = document.getElementById('edit-sec-sel');
-        tSel.innerHTML = '<option value="">-- اختر القسم --</option>'; eSel.innerHTML = '<option value="">-- اختر للتعديل --</option>';
+        tSel.innerHTML = '<option value="">-- اختر القسم --</option>'; eSel.innerHTML = '<option value="">-- اختر لتعديل --</option>';
 
         let navH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
         let sectionsH = ""; const aGrid = document.getElementById('albums-grid'); aGrid.innerHTML = "";
@@ -185,7 +174,7 @@
         navH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
         if(d.albums) Object.keys(d.albums).forEach(id => {
             const a = d.albums[id]; 
-            aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:40px 10px; text-align:center; cursor:pointer; background:rgba(197, 160, 89, 0.05);"><h3 style="color:var(--gold);">${a.name}</h3></div>`;
+            aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:40px 10px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${a.name}</h3></div>`;
             sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="background:#222; margin-bottom:15px;" onclick="go('works')">← عودة</button><div class="grid">${drawImgs(a.imgs)}</div></section>`;
             tSel.innerHTML += `<option value="albums/${id}">ألبوم: ${a.name}</option>`; eSel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
         });
@@ -193,13 +182,6 @@
         document.getElementById('navbar').innerHTML = navH; document.getElementById('dynamic-pages').innerHTML = sectionsH;
         document.getElementById('sec-home').classList.toggle('active', currentTab==='home');
         document.getElementById('sec-works').classList.toggle('active', currentTab==='works');
-
-        // ملء حقول الإدارة
-        document.getElementById('in-name').value = d.site_name || ""; document.getElementById('in-wa').value = d.whatsapp_num || "";
-        document.getElementById('in-hours').value = d.work_hours || ""; document.getElementById('in-map').value = d.map_url || "";
-        document.getElementById('in-tiktok').value = d.tiktok_url || ""; document.getElementById('in-insta').value = d.insta_url || "";
-        document.getElementById('in-p-title').value = d.promo_title || ""; document.getElementById('in-p-body').value = d.promo_body || "";
-        document.getElementById('in-p-show').value = d.promo_show || "none";
     }
 
     function drawImgs(imgs) {
@@ -207,13 +189,13 @@
         return Object.keys(imgs).reverse().map(id => {
             const url = imgs[id].url;
             return `<div class="card">
-                <div class="img-container" onclick="zoom('${url}')"><img src="${url}" loading="lazy"><div class="watermark-overlay"><span>${currentData.site_name || 'بصمة غير'}</span></div></div>
+                <div class="img-container" onclick="zoom('${url}')"><img src="${url}" loading="lazy"><div class="watermark-overlay"><span>${currentData.site_name || ''}</span></div></div>
                 <div style="padding:10px;"><button class="btn-order" style="padding:8px; font-size:0.8rem;" onclick="window.open('https://wa.me/${currentData.whatsapp_num}')">استفسار</button></div>
             </div>`;
         }).join('');
     }
 
-    function go(id) { currentTab = id; renderAll(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function go(id) { currentTab = id; renderAll(); window.scrollTo(0,0); }
     function zoom(u) { document.getElementById('modal-img').src=u; document.getElementById('modal').style.display='flex'; }
     function startHeaderSls() {
         const ideaSec = Object.values(currentData.pages || {}).find(p => p.title.includes("خذ فكرة"));
@@ -243,9 +225,8 @@
     function saveSettings() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value,
-            work_hours: document.getElementById('in-hours').value, map_url: document.getElementById('in-map').value,
             tiktok_url: document.getElementById('in-tiktok').value, insta_url: document.getElementById('in-insta').value,
-            promo_title: document.getElementById('in-p-title').value, promo_body: document.getElementById('in-p-body').value, promo_show: document.getElementById('in-p-show').value
+            work_hours: document.getElementById('in-hours').value, map_url: document.getElementById('in-map').value
         }).then(() => alert("تم الحفظ"));
     }
     function publishMany() {
@@ -258,7 +239,7 @@
         const box = document.getElementById('admin-imgs-list'); if(!p) { box.innerHTML=""; return; }
         const path = p.split('/'); const target = currentData[path[0]][path[1]];
         if(target && target.imgs) {
-            box.innerHTML = Object.keys(target.imgs).reverse().map(id => `<div style="position:relative;"><img src="${target.imgs[id].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:5px;"><button onclick="delImg('${p}/imgs/${id}')" style="position:absolute; top:0; right:0; background:red; color:#fff; border:none; border-radius:50%; width:20px; height:20px;">×</button></div>`).join('');
+            box.innerHTML = Object.keys(target.imgs).reverse().map(id => `<div style="position:relative;"><img src="${target.imgs[id].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="delImg('${p}/imgs/${id}')" style="position:absolute; top:0; right:0; background:red; color:#fff; border:none; width:20px; height:20px;">×</button></div>`).join('');
         }
     }
     function delImg(p) { if(confirm("حذف؟")) db.ref(DB_PATH+'/'+p).remove(); }
