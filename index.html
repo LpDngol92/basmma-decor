@@ -3,74 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v73</title>
+    <title>بصمة غير | v78</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;800;900&display=swap');
-        :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.9); }
+        :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.9); --green: #2ecc71; --red: #e74c3c; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; }
 
-        /* Splash */
-        #splash { position: fixed; inset: 0; background: #000; z-index: 999999; display: flex; align-items: center; justify-content: center; transition: 0.6s; }
-        #splash.hide { opacity: 0; visibility: hidden; }
+        .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-left: 8px; vertical-align: middle; }
+        .pulse-green { background: var(--green); box-shadow: 0 0 0 var(--green); animation: pulse-g 2s infinite; }
+        .pulse-red { background: var(--red); box-shadow: 0 0 0 var(--red); animation: pulse-r 2s infinite; }
+        @keyframes pulse-g { 0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(46, 204, 113, 0); } 100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); } }
+        @keyframes pulse-r { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 12px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
 
-        /* Header & Nav */
-        header { height: 40vh; display: flex; align-items: flex-end; justify-content: center; position: relative; padding-bottom: 20px; background: #000; }
+        header { height: 40vh; display: flex; align-items: flex-end; justify-content: center; position: relative; background: #000; overflow: hidden; padding-bottom: 20px; }
         .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; transition: 1.5s; z-index: 1; opacity: 0; }
         header::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to bottom, transparent, var(--bg)); z-index: 2; }
         .header-content { position: relative; z-index: 5; text-align: center; }
+
         nav { position: sticky; top: 0; z-index: 10000; background: rgba(10, 10, 11, 0.95); backdrop-filter: blur(10px); padding: 10px; border-bottom: 1px solid var(--gold); display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-        .nav-btn { padding: 8px 18px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; }
+        .nav-btn { padding: 8px 18px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; transition: 0.3s; }
         .nav-btn.active { background: var(--primary); color: #fff; }
 
-        /* Sections */
         .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; }
         .sec.active { display: block; }
         .grid { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-        @media (min-width: 768px) { .grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; } }
-        
-        .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.2); transition: 0.3s; }
+        @media (min-width: 768px) { .grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); } }
+        .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.2); }
         .img-container { position: relative; width: 100%; aspect-ratio: 1/1; cursor: pointer; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
         .btn-order { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; text-align: center; text-decoration: none; display: block; }
 
-        /* Social Icons Style */
-        .social-link { color: #fff; font-size: 2.8rem; transition: 0.3s; display: inline-block; }
-        .social-link:hover { color: var(--gold); transform: translateY(-5px); }
-        .fa-tiktok { color: #fff; }
+        .social-link { font-size: 2.5rem; transition: 0.3s; }
         .fa-instagram { background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* Modal */
         #modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000000; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); cursor: zoom-out; }
-        .modal-content { max-width: 95%; max-height: 90vh; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
-        #modal-img { max-width: 100%; max-height: 80vh; object-fit: contain; pointer-events: auto; }
+        #modal-img { max-width: 95%; max-height: 80vh; border-radius: 8px; border: 1px solid var(--gold); }
 
-        /* Admin Layout */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 15px; overflow-y: auto; }
         .admin-box { width: 100%; max-width: 900px; margin: 0 auto; background: #151518; padding: 20px; border-radius: 15px; border: 1px solid var(--gold); }
         .setting-group { background: #0c0c0e; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #222; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 8px; background: #000; border: 1px solid #333; color: #fff; border-radius: 5px; font-family: 'Tajawal'; }
-        
-        #move-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 10000005; align-items: center; justify-content: center; }
-        .move-box { background: #151518; padding: 25px; border-radius: 15px; border: 1px solid var(--gold); width: 90%; max-width: 400px; text-align: center; }
+        .day-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: #1a1a1a; padding: 10px; border-radius: 8px; flex-wrap: wrap; border-right: 4px solid var(--gold); }
+        #move-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000005; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
 
-<div id="splash"><h2 style="color:var(--gold);">بصمة غير...</h2></div>
+<div id="splash" style="position:fixed; inset:0; background:#000; z-index:999999; display:flex; align-items:center; justify-content:center;"><h2 style="color:var(--gold);">بصمة غير...</h2></div>
 
 <div id="modal" onclick="closeZoom()">
-    <div class="modal-content"><img id="modal-img" src=""><div id="zoom-wm" style="margin-top:15px; color:var(--gold); font-weight:900;"></div></div>
+    <div style="text-align:center;"><img id="modal-img" src=""><div id="zoom-wm" style="margin-top:10px; color:var(--gold); font-weight:900;"></div></div>
 </div>
 
 <div id="move-overlay">
-    <div class="move-box">
-        <h3 style="color:var(--gold); margin-bottom:15px;">نقل الصورة</h3>
+    <div style="background:#151518; padding:25px; border-radius:15px; border:1px solid var(--gold); width:90%; max-width:400px; text-align:center;">
+        <h3 style="color:var(--gold); margin-bottom:15px;">نقل الصورة للقسم:</h3>
         <select id="move-target-select"></select>
-        <button onclick="confirmMove()" style="width:100%; padding:12px; background:var(--gold); color:#000; border:none; border-radius:5px; font-weight:900;">تأكيد النقل</button>
+        <button onclick="confirmMove()" style="width:100%; padding:12px; background:var(--gold); color:#000; border:none; border-radius:5px; font-weight:900;">إتمام النقل</button>
         <button onclick="document.getElementById('move-overlay').style.display='none'" style="width:100%; background:none; color:#fff; border:none; margin-top:10px;">إلغاء</button>
     </div>
 </div>
@@ -86,78 +79,79 @@
 <main>
     <section id="sec-home" class="sec active">
         <div style="text-align: center;">
-            <div id="promo-box" style="display:none; padding:20px; border:2px solid var(--gold); border-radius:15px; margin-bottom:20px;">
-                <h3 id="p-title" style="color:var(--gold);"></h3><p id="p-body"></p>
-            </div>
-
             <div class="card" style="padding:25px; max-width:450px; margin:0 auto; background:rgba(255,255,255,0.02);">
-                <p style="color:var(--gold); font-weight:bold; font-size:1.2rem; margin-bottom:10px;">🕒 ساعات العمل</p>
-                <p id="h-hours" style="font-size:1.1rem; color:#fff;"></p>
-                <div id="h-map" style="margin-top:15px;"></div>
+                <p style="color:var(--gold); font-weight:bold; font-size:1.2rem; margin-bottom:10px;">🕒 جدول الدوام</p>
+                <div id="work-schedule-display" style="font-size: 0.95rem; color: #bbb; line-height: 1.8; margin-bottom: 15px; text-align: right;"></div>
+                <div id="h-map"></div>
+                <div id="status-indicator" style="margin-top:20px; padding:15px; border-top:1px solid #222; font-weight:900; font-size:1.4rem;">
+                    <span id="status-dot" class="dot"></span>
+                    <span id="status-text">...</span>
+                </div>
             </div>
-
             <br>
-            <a id="wa-main" href="#" target="_blank" class="btn-order" style="display:inline-block; width:auto; padding:15px 50px; border-radius:50px; background:#fff; color:#000; font-size:1.1rem;">تواصل معنا عبر واتساب</a>
+            <a id="wa-main" href="#" target="_blank" class="btn-order" style="display:inline-block; width:auto; padding:15px 50px; border-radius:50px; background:#fff; color:#000;">تواصل واتساب</a>
             <br><br>
-
-            <div class="card" id="social-box" style="padding:25px; max-width:450px; margin:0 auto; background:rgba(255,255,255,0.02);">
-                <p style="color:var(--gold); font-weight:bold; font-size:1.2rem; margin-bottom:20px;">🔗 تابعونا على</p>
+            <div class="card" style="padding:25px; max-width:450px; margin:0 auto; background:rgba(255,255,255,0.02);">
                 <div style="display:flex; justify-content:center; gap:50px; align-items:center;">
-                    <a id="link-tiktok" href="#" target="_blank" class="social-link"><i class="fab fa-tiktok"></i></a>
+                    <a id="link-tiktok" href="#" target="_blank" class="social-link" style="color:#fff;"><i class="fab fa-tiktok"></i></a>
                     <a id="link-insta" href="#" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>
                 </div>
             </div>
         </div>
     </section>
-
-    <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
     <div id="dynamic-pages"></div>
+    <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
 </main>
 
 <div style="position:fixed; bottom:0; left:0; width:50px; height:50px; z-index:999999;" onclick="checkAccess()"></div>
 
 <div id="admin-panel">
     <div class="admin-box">
-        <button onclick="location.reload()" style="background:red; color:#fff; padding:5px 15px; border:none; border-radius:5px; float:left;">إغلاق</button>
-        <h2 style="color:var(--gold); margin-bottom:15px;">إدارة بصمة غير v73</h2>
-        
-        <iframe src="https://www.0zz0.com/" style="width:100%; height:200px; border-radius:10px; background:#fff; margin-bottom:15px; border:none;"></iframe>
+        <button onclick="location.reload()" style="background:red; color:#fff; padding:5px 15px; border:none; border-radius:5px; float:left;">خروج</button>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة الإدارة v78</h2>
+
+        <div class="setting-group">
+            <b style="color:var(--gold);">🕒 إدارة الدوام:</b>
+            <div id="schedule-editor"></div>
+            <button onclick="saveSchedule()" style="width:100%; padding:12px; background:var(--green); color:#fff; border:none; border-radius:5px; margin-top:10px;">حفظ الجدول</button>
+        </div>
+
+        <div class="setting-group">
+            <b style="color:var(--gold);">➕ إضافة أقسام جديدة:</b>
+            <input type="text" id="new-page-name" placeholder="اسم قسم رئيسي (مثال: باركيه)">
+            <button onclick="addNewItem('pages')" style="width:100%; padding:10px; background:var(--gold); border:none; margin-bottom:10px;">إضافة قسم رئيسي</button>
+            <input type="text" id="new-album-name" placeholder="ألبوم جديد في أعمالنا">
+            <button onclick="addNewItem('albums')" style="width:100%; padding:10px; background:var(--gold); border:none;">إضافة ألبوم فرعي</button>
+        </div>
+
+        <div class="setting-group">
+            <b style="color:var(--gold);">🛠️ تعديل أو حذف الأقسام:</b>
+            <select id="edit-sec-sel" onchange="prepEditSec(this.value)"></select>
+            <div id="edit-area" style="display:none; margin-top:10px;">
+                <input type="text" id="edit-sec-input">
+                <div style="display:flex; gap:10px;">
+                    <button onclick="saveSecName()" style="flex:1; padding:10px; background:green; color:#fff; border:none;">تحديث الاسم</button>
+                    <button onclick="deleteEntireSec()" style="flex:1; padding:10px; background:red; color:#fff; border:none;">حذف القسم نهائياً</button>
+                </div>
+            </div>
+        </div>
 
         <div class="setting-group">
             <b style="color:var(--gold);">📷 إدارة الصور:</b>
             <select id="target-sel" onchange="loadAdminImgs(this.value)"></select>
             <textarea id="img-urls" rows="3" placeholder="روابط الصور..."></textarea>
-            <button onclick="publishMany()" style="width:100%; padding:10px; background:#3498db; color:#fff; border:none; border-radius:5px;">نشر الآن</button>
+            <button onclick="publishMany()" style="width:100%; padding:10px; background:#3498db; color:#fff; border:none;">نشر الصور</button>
             <div id="admin-imgs-list" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:8px; margin-top:10px;"></div>
         </div>
 
         <div class="setting-group">
-            <b style="color:var(--gold);">🛠️ تعديل الأقسام:</b>
-            <select id="edit-sec-sel" onchange="prepEditSec(this.value)"></select>
-            <div id="edit-area" style="display:none; margin-top:10px;">
-                <input type="text" id="edit-sec-input">
-                <button onclick="saveSecName()" style="width:48%; padding:10px; background:green; color:#fff; border:none;">تحديث</button>
-                <button onclick="deleteEntireSec()" style="width:48%; padding:10px; background:red; color:#fff; border:none;">حذف القسم</button>
-            </div>
-        </div>
-
-        <div class="setting-group">
-            <b style="color:var(--gold);">➕ إضافة جديد:</b>
-            <input type="text" id="new-page-name" placeholder="اسم قسم رئيسي">
-            <button onclick="addNewItem('pages')" style="width:100%; padding:10px; background:var(--gold); border:none; margin-bottom:5px;">إضافة قسم</button>
-            <input type="text" id="new-album-name" placeholder="ألبوم جديد في أعمالنا">
-            <button onclick="addNewItem('albums')" style="width:100%; padding:10px; background:var(--gold); border:none;">إضافة ألبوم</button>
-        </div>
-
-        <div class="setting-group">
-            <b style="color:var(--gold);">⚙️ إعدادات الموقع:</b>
+            <b style="color:var(--gold);">⚙️ البيانات العامة:</b>
             <input type="text" id="in-name" placeholder="اسم الموقع">
-            <input type="text" id="in-wa" placeholder="رقم الواتساب">
-            <input type="text" id="in-tiktok" placeholder="رابط تيك توك">
-            <input type="text" id="in-insta" placeholder="رابط انستقرام">
-            <input type="text" id="in-hours" placeholder="ساعات العمل">
-            <input type="text" id="in-map" placeholder="رابط الخريطة">
-            <button onclick="saveSettings()" style="width:100%; padding:12px; background:var(--gold); color:#000; border:none; font-weight:900;">حفظ الإعدادات</button>
+            <input type="text" id="in-wa" placeholder="واتساب">
+            <input type="text" id="in-tiktok" placeholder="تيك توك">
+            <input type="text" id="in-insta" placeholder="انستقرام">
+            <input type="text" id="in-map" placeholder="قوقل ماب">
+            <button onclick="saveSettings()" style="width:100%; padding:12px; background:var(--gold); color:#000; border:none;">حفظ البيانات</button>
         </div>
     </div>
 </div>
@@ -166,28 +160,42 @@
     const config = { databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(config); const db = firebase.database(); const DB_PATH = 'site_v28';
     let currentData = {}; let currentTab = 'home'; let activeBG = 1; let pendingMove = null;
+    const DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
     db.ref(DB_PATH).on('value', snap => {
-        currentData = snap.val() || {}; renderAll(); startHeaderSls();
-        setTimeout(() => document.getElementById('splash').classList.add('hide'), 1000);
+        currentData = snap.val() || {}; renderAll(); updateWorkStatus(); startHeaderSls();
+        setTimeout(() => document.getElementById('splash').style.display='none', 1000);
     });
 
     function renderAll() {
         const d = currentData;
         document.getElementById('view-title').innerText = d.site_name || "بصمة غير";
-        document.getElementById('h-hours').innerText = d.work_hours || "";
         document.getElementById('wa-main').href = `https://wa.me/${d.whatsapp_num}`;
-        
-        // روابط التواصل
-        const tk = document.getElementById('link-tiktok'); const ig = document.getElementById('link-insta');
-        if(d.tiktok_url) { tk.href = d.tiktok_url; tk.style.visibility = 'visible'; } else { tk.style.visibility = 'hidden'; }
-        if(d.insta_url) { ig.href = d.insta_url; ig.style.visibility = 'visible'; } else { ig.style.visibility = 'hidden'; }
+        document.getElementById('link-tiktok').href = d.tiktok_url || "#";
+        document.getElementById('link-insta').href = d.insta_url || "#";
+        if(d.map_url) document.getElementById('h-map').innerHTML = `<a href="${d.map_url}" target="_blank" style="color:var(--gold); text-decoration:none; font-weight:bold;">📍 الموقع على الخريطة</a>`;
 
-        if(d.map_url) document.getElementById('h-map').innerHTML = `<a href="${d.map_url}" target="_blank" style="color:var(--gold); text-decoration:none; font-weight:bold;">📍 عرض الموقع على الخريطة</a>`;
+        const sDiv = document.getElementById('work-schedule-display'); let sHTML = "";
+        if(d.work_schedule) {
+            DAYS.forEach((day, i) => {
+                const s = d.work_schedule[i];
+                if(s && s.active) sHTML += `<div><span style="color:var(--gold)">${day}:</span> ${s.s1_start}-${s.s1_end} ${s.s2_active ? `/ ${s.s2_start}-${s.s2_end}` : ''}</div>`;
+                else sHTML += `<div style="opacity:0.4;">${day}: إجازة</div>`;
+            });
+        }
+        sDiv.innerHTML = sHTML;
+
+        const ed = document.getElementById('schedule-editor');
+        if(ed.innerHTML === "") {
+            DAYS.forEach((day, i) => {
+                const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:false, s1_start:"09:00", s1_end:"22:00"};
+                ed.innerHTML += `<div class="day-row"><input type="checkbox" id="check-${i}" ${s.active?'checked':''}> <b>${day}</b><div style="display:flex; gap:5px; margin:5px 0;"><input type="time" id="s1s-${i}" value="${s.s1_start}"> <input type="time" id="s1e-${i}" value="${s.s1_end}"></div><div style="font-size:0.7rem; width:100%; border-top:1px dashed #444; padding-top:5px;"><input type="checkbox" id="s2active-${i}" ${s.s2_active?'checked':''}> شفت 2 <input type="time" id="s2s-${i}" value="${s.s2_start||'16:00'}"> <input type="time" id="s2e-${i}" value="${s.s2_end||'23:00'}"></div></div>`;
+            });
+        }
 
         const tSel = document.getElementById('target-sel'); const mSel = document.getElementById('move-target-select'); const eSel = document.getElementById('edit-sec-sel');
-        tSel.innerHTML = '<option value="">-- القسم للرفع --</option>'; mSel.innerHTML = '<option value="">-- الوجهة --</option>'; eSel.innerHTML = '<option value="">-- تعديل قسم --</option>';
-
+        tSel.innerHTML = '<option value="">-- اختر القسم --</option>'; mSel.innerHTML = '<option value="">-- انقل إلى --</option>'; eSel.innerHTML = '<option value="">-- تعديل/حذف قسم --</option>';
+        
         let nH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
         let sH = ""; const aG = document.getElementById('albums-grid'); aG.innerHTML = "";
 
@@ -196,49 +204,36 @@
             sH += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(p.imgs)}</div></section>`;
             tSel.innerHTML += `<option value="pages/${id}">${p.title}</option>`; mSel.innerHTML += `<option value="pages/${id}">${p.title}</option>`; eSel.innerHTML += `<option value="pages/${id}">${p.title}</option>`;
         });
+        
         nH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
         if(d.albums) Object.keys(d.albums).forEach(id => {
             const a = d.albums[id]; aG.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:35px 10px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${a.name}</h3></div>`;
-            sH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:15px;" onclick="go('works')">← العودة للأعمال</button><div class="grid">${drawImgs(a.imgs)}</div></section>`;
+            sH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="margin-bottom:15px;" onclick="go('works')">← العودة</button><div class="grid">${drawImgs(a.imgs)}</div></section>`;
             tSel.innerHTML += `<option value="albums/${id}">${a.name}</option>`; mSel.innerHTML += `<option value="albums/${id}">${a.name}</option>`; eSel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
         });
         document.getElementById('navbar').innerHTML = nH; document.getElementById('dynamic-pages').innerHTML = sH;
-        document.getElementById('sec-home').classList.toggle('active', currentTab==='home'); document.getElementById('sec-works').classList.toggle('active', currentTab==='works');
-
+        document.getElementById('sec-home').classList.toggle('active', currentTab==='home');
+        document.getElementById('sec-works').classList.toggle('active', currentTab==='works');
         document.getElementById('in-name').value = d.site_name || ""; document.getElementById('in-wa').value = d.whatsapp_num || "";
         document.getElementById('in-tiktok').value = d.tiktok_url || ""; document.getElementById('in-insta').value = d.insta_url || "";
-        document.getElementById('in-hours').value = d.work_hours || ""; document.getElementById('in-map').value = d.map_url || "";
+        document.getElementById('in-map').value = d.map_url || "";
     }
 
-    function drawImgs(imgs) {
-        if(!imgs) return '<p style="text-align:center; padding:50px; grid-column:1/-1;">قريباً...</p>';
-        return Object.keys(imgs).reverse().map(id => `
-            <div class="card">
-                <div class="img-container" onclick="zoom('${imgs[id].url}')"><img src="${imgs[id].url}" loading="lazy"><div style="position:absolute; bottom:5px; width:100%; text-align:center; font-size:10px; color:#fff; background:rgba(0,0,0,0.1);">${currentData.site_name||''}</div></div>
-                <button class="btn-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num}')">استفسار</button>
-            </div>`).join('');
-    }
-
-    function zoom(u) { document.getElementById('modal-img').src=u; document.getElementById('zoom-wm').innerText=currentData.site_name||""; document.getElementById('modal').style.display='flex'; document.body.style.overflow='hidden'; }
-    function closeZoom() { document.getElementById('modal').style.display='none'; document.body.style.overflow='auto'; }
-
-    function openMoveMenu(oldPath, imgId, imgUrl) { pendingMove = { oldPath, imgId, imgUrl }; document.getElementById('move-overlay').style.display='flex'; }
-    function confirmMove() {
-        const target = document.getElementById('move-target-select').value; if(!target) return;
-        db.ref(DB_PATH+'/'+target+'/imgs').push({url:pendingMove.imgUrl}).then(()=>{ db.ref(DB_PATH+'/'+pendingMove.oldPath+'/imgs/'+pendingMove.imgId).remove(); document.getElementById('move-overlay').style.display='none'; alert("تم النقل"); loadAdminImgs(pendingMove.oldPath); });
-    }
-
-    function loadAdminImgs(p) {
-        const box = document.getElementById('admin-imgs-list'); if(!p){box.innerHTML=""; return;}
-        const path = p.split('/'); const target = currentData[path[0]][path[1]];
-        if(target && target.imgs) box.innerHTML = Object.keys(target.imgs).reverse().map(id => `
-            <div style="position:relative;"><img src="${target.imgs[id].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:5px;">
-                <div style="position:absolute; top:2px; right:2px; display:flex; gap:2px;">
-                    <button onclick="openMoveMenu('${p}', '${id}', '${target.imgs[id].url}')" style="background:#f1c40f; border:none; padding:3px; cursor:pointer;"><i class="fas fa-exchange-alt"></i></button>
-                    <button onclick="delImg('${p}/imgs/${id}')" style="background:red; color:#fff; border:none; padding:3px; cursor:pointer;"><i class="fas fa-trash"></i></button>
-                </div>
-            </div>`).join('');
-        else box.innerHTML = "";
+    function updateWorkStatus() {
+        const d = currentData; if(!d.work_schedule) return;
+        const now = new Date(); const dayIdx = now.getDay(); const currentTime = now.getHours() * 60 + now.getMinutes();
+        const todaySched = d.work_schedule[dayIdx]; let isOpen = false;
+        if(todaySched && todaySched.active) {
+            const check = (s, e) => {
+                const [sH, sM] = s.split(':').map(Number); const [eH, eM] = e.split(':').map(Number);
+                const sT = sH * 60 + sM; const eT = eH * 60 + eM; return currentTime >= sT && currentTime <= eT;
+            };
+            if(check(todaySched.s1_start, todaySched.s1_end)) isOpen = true;
+            if(todaySched.s2_active && check(todaySched.s2_start, todaySched.s2_end)) isOpen = true;
+        }
+        const dot = document.getElementById('status-dot'); const txt = document.getElementById('status-text');
+        if(isOpen) { dot.className="dot pulse-green"; txt.innerText="مفتوح الآن"; txt.style.color="var(--green)"; }
+        else { dot.className="dot pulse-red"; txt.innerText="مغلق الآن"; txt.style.color="var(--red)"; }
     }
 
     function prepEditSec(p) {
@@ -250,22 +245,53 @@
         const p = document.getElementById('edit-sec-sel').value; const n = document.getElementById('edit-sec-input').value;
         const path = p.split('/'); db.ref(DB_PATH+'/'+p).update({ [path[0]==='pages'?'title':'name']: n }).then(()=>alert("تم التحديث"));
     }
-    function deleteEntireSec() { if(confirm("حذف القسم؟")) db.ref(DB_PATH+'/'+document.getElementById('edit-sec-sel').value).remove(); }
+    function deleteEntireSec() { if(confirm("حذف القسم نهائياً بكل صوره؟")) db.ref(DB_PATH+'/'+document.getElementById('edit-sec-sel').value).remove(); }
     function addNewItem(t) {
         const inp = document.getElementById(t==='pages'?'new-page-name':'new-album-name');
-        if(inp.value){ db.ref(DB_PATH+'/'+t).push({ [t==='pages'?'title':'name']: inp.value }).then(()=>{inp.value=""; alert("تم");}); }
+        if(inp.value){ db.ref(DB_PATH+'/'+t).push({ [t==='pages'?'title':'name']: inp.value }).then(()=>{inp.value=""; alert("تمت الإضافة");}); }
+    }
+
+    function drawImgs(imgs) {
+        if(!imgs) return '<p style="text-align:center; padding:50px; grid-column:1/-1;">قريباً...</p>';
+        return Object.keys(imgs).reverse().map(id => `
+            <div class="card">
+                <div class="img-container" onclick="zoom('${imgs[id].url}')"><img src="${imgs[id].url}" loading="lazy"></div>
+                <button class="btn-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num}')">استفسار</button>
+            </div>`).join('');
+    }
+    function zoom(u) { document.getElementById('modal-img').src=u; document.getElementById('zoom-wm').innerText=currentData.site_name||""; document.getElementById('modal').style.display='flex'; document.body.style.overflow='hidden'; }
+    function closeZoom() { document.getElementById('modal').style.display='none'; document.body.style.overflow='auto'; }
+    function openMoveMenu(oldPath, imgId, imgUrl) { pendingMove = { oldPath, imgId, imgUrl }; document.getElementById('move-overlay').style.display='flex'; }
+    function confirmMove() {
+        const target = document.getElementById('move-target-select').value; if(!target) return;
+        db.ref(DB_PATH+'/'+target+'/imgs').push({url:pendingMove.imgUrl}).then(()=>{ db.ref(DB_PATH+'/'+pendingMove.oldPath+'/imgs/'+pendingMove.imgId).remove(); document.getElementById('move-overlay').style.display='none'; alert("تم النقل"); loadAdminImgs(pendingMove.oldPath); });
+    }
+    function loadAdminImgs(p) {
+        const box = document.getElementById('admin-imgs-list'); if(!p){box.innerHTML=""; return;}
+        const path = p.split('/'); const target = currentData[path[0]][path[1]];
+        if(target && target.imgs) box.innerHTML = Object.keys(target.imgs).reverse().map(id => `
+            <div style="position:relative;"><img src="${target.imgs[id].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:5px;">
+                <div style="position:absolute; top:2px; right:2px; display:flex; gap:2px;">
+                    <button onclick="openMoveMenu('${p}', '${id}', '${target.imgs[id].url}')" style="background:#f1c40f; border:none; padding:4px; border-radius:4px;"><i class="fas fa-exchange-alt"></i></button>
+                    <button onclick="delImg('${p}/imgs/${id}')" style="background:red; color:#fff; border:none; padding:4px; border-radius:4px;"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>`).join('');
+        else box.innerHTML = "";
+    }
+    function saveSchedule() {
+        let sc = {}; DAYS.forEach((_, i) => { sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_start: document.getElementById(`s1s-${i}`).value, s1_end: document.getElementById(`s1e-${i}`).value, s2_active: document.getElementById(`s2active-${i}`).checked, s2_start: document.getElementById(`s2s-${i}`).value, s2_end: document.getElementById(`s2e-${i}`).value }; });
+        db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم حفظ جدول الدوام"));
     }
     function saveSettings() {
-        db.ref(DB_PATH).update({ site_name:document.getElementById('in-name').value, whatsapp_num:document.getElementById('in-wa').value, tiktok_url:document.getElementById('in-tiktok').value, insta_url:document.getElementById('in-insta').value, work_hours:document.getElementById('in-hours').value, map_url:document.getElementById('in-map').value }).then(()=>alert("تم الحفظ"));
+        db.ref(DB_PATH).update({ site_name:document.getElementById('in-name').value, whatsapp_num:document.getElementById('in-wa').value, tiktok_url:document.getElementById('in-tiktok').value, insta_url:document.getElementById('in-insta').value, map_url:document.getElementById('in-map').value }).then(()=>alert("تم الحفظ"));
     }
     function publishMany() {
         const t = document.getElementById('target-sel').value; const urls = document.getElementById('img-urls').value.split('\n').filter(u=>u.trim());
         if(t && urls.length){ urls.forEach(u=>db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()})); document.getElementById('img-urls').value=""; alert("تم النشر"); }
     }
     function delImg(p) { if(confirm("حذف؟")) db.ref(DB_PATH+'/'+p).remove(); }
-    function checkAccess() { if(prompt("Pass:")==='808090') document.getElementById('admin-panel').style.display='block'; }
-    function go(id) { currentTab=id; renderAll(); window.scrollTo({top:0, behavior:'smooth'}); }
-    
+    function checkAccess() { if(prompt("كلمة المرور:")==='808090') document.getElementById('admin-panel').style.display='block'; }
+    function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
     function startHeaderSls() {
         const p = Object.values(currentData.pages||{}).find(x => x.title && x.title.includes("خذ فكرة"));
         if(!p || !p.imgs) return; const urls = Object.values(p.imgs).map(i => i.url);
