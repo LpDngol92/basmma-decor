@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v38 الكاملة</title>
+    <title>بصمة غير | v39 المستقرة</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
     <style>
@@ -12,7 +12,6 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; }
 
-        /* السبلاش */
         #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: 0.6s ease-in-out; }
         #splash.hide { opacity: 0; pointer-events: none; visibility: hidden; }
         .splash-text { font-size: 2.8rem; font-weight: 900; background: linear-gradient(to bottom, #fff, var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -36,7 +35,6 @@
         .watermark-overlay { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 10; }
         .watermark-overlay span { font-size: 0.8rem; font-weight: 900; color: #fff; text-shadow: 0 0 8px var(--gold); }
 
-        /* لوحة التحكم */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 20px; overflow-y: auto; }
         .admin-box { max-width: 850px; margin: 0 auto; background: #151518; padding: 25px; border-radius: 25px; border: 1px solid var(--gold); }
         .setting-group { background: #0c0c0e; padding: 20px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #222; }
@@ -44,7 +42,6 @@
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: inherit; }
         .btn-order { width: 100%; padding: 15px; border-radius: 12px; background: var(--primary); color: #fff; border: none; font-weight: bold; cursor: pointer; text-align: center; text-decoration: none; display: block; }
         
-        /* شبكة صور الإدارة */
         #admin-imgs-list-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-top: 15px; }
         .admin-img-item { position: relative; aspect-ratio: 1/1; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
         .admin-img-item img { width: 100%; height: 100%; object-fit: cover; }
@@ -66,9 +63,6 @@
 <main>
     <section id="sec-home" class="sec active">
         <div style="text-align: center; padding: 20px 0;">
-            <div id="ann-box" style="display:none; background:rgba(197, 160, 89, 0.05); padding:25px; border-radius:20px; border:2px dashed var(--gold); margin-bottom:30px;">
-                <h2 id="ann-t" style="color:var(--gold);"></h2><p id="ann-b"></p>
-            </div>
             <div class="card" style="padding:25px; max-width:450px; margin:0 auto;">
                 <p style="color:var(--gold); font-weight:800; margin-bottom:10px;">🕒 أوقات العمل</p>
                 <p id="h-hours"></p>
@@ -78,7 +72,6 @@
             <a id="wa-main" href="#" target="_blank" class="btn-order" style="display:inline-block; width:auto; padding:18px 50px; border-radius:50px; background:#fff; color:#000;">تواصل معنا واتساب</a>
         </div>
     </section>
-
     <section id="sec-works" class="sec"><div id="albums-grid" class="grid"></div></section>
     <div id="dynamic-pages"></div>
 </main>
@@ -88,41 +81,39 @@
 <div id="admin-panel">
     <div class="admin-box">
         <button onclick="location.reload()" style="float:left; background:var(--danger); color:#fff; border:none; padding:10px 20px; border-radius:10px; cursor:pointer;">خروج</button>
-        <h2 style="color:var(--gold);">لوحة التحكم v38</h2><br>
+        <h2 style="color:var(--gold);">لوحة التحكم v39</h2><br>
         
         <div style="width:100%; height:300px; border-radius:20px; overflow:hidden; border:1px solid #333; margin-bottom:20px;">
             <iframe src="https://www.0zz0.com/" style="width:100%; height:100%; border:none;"></iframe>
         </div>
 
         <div class="setting-group">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">🚀 نشر صور جديدة:</p>
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">🚀 إدارة صور القسم:</p>
             <select id="target-sel" onchange="loadAdminImgs(this.value)"></select>
-            <textarea id="img-urls" style="height:100px;" placeholder="روابط الصور هنا..."></textarea>
-            <button onclick="publishMany()" class="btn-order" style="background:var(--blue);">نشر في القسم المختار</button>
+            <textarea id="img-urls" style="height:100px;" placeholder="روابط الصور..."></textarea>
+            <button onclick="publishMany()" class="btn-order" style="background:var(--blue);">نشر الصور</button>
             <div id="admin-imgs-list-container"></div>
         </div>
 
         <div class="setting-group">
             <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">📝 تعديل أسماء الأقسام:</p>
-            <select id="edit-sec-sel" onchange="prepEditSec(this.value)">
-                <option value="">-- اختر القسم لتعديل اسمه --</option>
-            </select>
-            <input type="text" id="edit-sec-input" placeholder="اكتب الاسم الجديد هنا..." style="display:none; margin-top:10px;">
-            <button id="edit-sec-btn" onclick="saveSecName()" class="btn-order" style="background:var(--success); display:none; margin-top:10px;">حفظ الاسم الجديد</button>
+            <select id="edit-sec-sel" onchange="prepEditSec(this.value)"></select>
+            <input type="text" id="edit-sec-input" style="display:none; margin-top:10px;">
+            <button id="edit-sec-btn" onclick="saveSecName()" class="btn-order" style="background:var(--success); display:none; margin-top:10px;">حفظ الاسم</button>
         </div>
 
         <div class="setting-group">
-            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">⚙️ إعدادات عامة:</p>
+            <p style="color:var(--gold); font-weight:bold; margin-bottom:10px;">⚙️ الإعدادات العامة:</p>
             <input type="text" id="in-name" placeholder="اسم الموقع">
-            <input type="text" id="in-wa" placeholder="رقم الواتساب">
-            <input type="text" id="in-hours" placeholder="ساعات العمل">
+            <input type="text" id="in-wa" placeholder="واتساب">
+            <input type="text" id="in-hours" placeholder="أوقات الدوام">
             <input type="text" id="in-map" placeholder="رابط الخريطة">
-            <button onclick="saveSettings()" class="btn-order">حفظ الإعدادات</button>
+            <button onclick="saveSettings()" class="btn-order">حفظ</button>
         </div>
 
         <div style="display:flex; gap:10px;">
-            <input type="text" id="new-p" placeholder="قسم جديد"><button onclick="addP()" style="padding:0 15px; border-radius:8px;">إضافة</button>
-            <input type="text" id="new-a" placeholder="مجلد جديد"><button onclick="addA()" style="padding:0 15px; border-radius:8px;">إضافة</button>
+            <input type="text" id="new-p" placeholder="قسم جديد"><button onclick="addP()">إضافة</button>
+            <input type="text" id="new-a" placeholder="مجلد جديد"><button onclick="addA()">إضافة</button>
         </div>
     </div>
 </div>
@@ -136,6 +127,8 @@
         currentData = snap.val() || {};
         renderAll(); updateHeaderBG();
         document.getElementById('splash').classList.add('hide');
+        const ts = document.getElementById('target-sel').value;
+        if(ts) loadAdminImgs(ts);
     });
 
     function renderAll() {
@@ -143,11 +136,10 @@
         document.getElementById('view-title').innerText = data.site_name || "بصمة غير";
         document.getElementById('h-hours').innerText = data.work_hours || "";
         document.getElementById('wa-main').href = `https://wa.me/${data.whatsapp_num}`;
-        if(data.map_url) document.getElementById('h-map').innerHTML = `<a href="${data.map_url}" target="_blank" style="color:var(--gold); font-weight:bold; text-decoration:none;">📍 موقعنا على الخريطة</a>`;
+        if(data.map_url) document.getElementById('h-map').innerHTML = `<a href="${data.map_url}" target="_blank" style="color:var(--gold); font-weight:bold;">📍 الخريطة</a>`;
 
         const sel = document.getElementById('target-sel'); const editSel = document.getElementById('edit-sec-sel');
-        const oldVal = sel.value; 
-        sel.innerHTML = '<option value="">-- اختر الوجهة للنشر --</option>';
+        const oldVal = sel.value; sel.innerHTML = '<option value="">-- اختر القسم --</option>';
         editSel.innerHTML = '<option value="">-- اختر قسم لتعديل اسمه --</option>';
 
         let navH = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
@@ -162,95 +154,77 @@
         });
         navH += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
         if(data.albums) Object.keys(data.albums).forEach(id => {
-            const a = data.albums[id]; 
-            aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:50px 20px; text-align:center;"><h3 style="color:var(--gold);">${a.name}</h3></div>`;
+            const a = data.albums[id]; aGrid.innerHTML += `<div class="card" onclick="go('alb-${id}')" style="padding:50px 20px; text-align:center;"><h3 style="color:var(--gold);">${a.name}</h3></div>`;
             sectionsH += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" style="background:#222; margin-bottom:20px;" onclick="go('works')">← عودة</button><div class="grid">${drawImgs(a.imgs)}</div></section>`;
             sel.innerHTML += `<option value="albums/${id}">مجلد: ${a.name}</option>`;
             editSel.innerHTML += `<option value="albums/${id}">${a.name}</option>`;
         });
-
         sel.value = oldVal; document.getElementById('navbar').innerHTML = navH; document.getElementById('dynamic-pages').innerHTML = sectionsH;
         document.getElementById('sec-home').classList.toggle('active', currentTab==='home');
         document.getElementById('sec-works').classList.toggle('active', currentTab==='works');
-
-        // ملء خانات الإعدادات بالقيم الحالية
+        
         document.getElementById('in-name').value = data.site_name || "";
         document.getElementById('in-wa').value = data.whatsapp_num || "";
         document.getElementById('in-hours').value = data.work_hours || "";
         document.getElementById('in-map').value = data.map_url || "";
     }
 
-    function prepEditSec(path) {
-        const inp = document.getElementById('edit-sec-input'); const btn = document.getElementById('edit-sec-btn');
-        if(!path) { inp.style.display = btn.style.display = 'none'; return; }
-        const p = path.split('/'); const currentName = currentData[p[0]][p[1]].title || currentData[p[0]][p[1]].name;
-        inp.value = currentName; inp.style.display = btn.style.display = 'block';
-    }
-
-    function saveSecName() {
-        const path = document.getElementById('edit-sec-sel').value; const newName = document.getElementById('edit-sec-input').value;
-        if(!path || !newName) return;
-        const p = path.split('/'); const key = p[0] === 'pages' ? 'title' : 'name';
-        db.ref(DB_PATH+'/'+path).update({ [key]: newName }).then(() => alert("تم تحديث الاسم"));
-    }
-
     function drawImgs(imgs) {
-        if(!imgs) return '<p style="text-align:center; padding:50px; width:100%; opacity:0.3;">لا يوجد صور حالياً</p>';
+        if(!imgs) return '<p style="text-align:center; padding:50px; width:100%; opacity:0.3;">لا يوجد صور</p>';
         const wm = `<div class="watermark-overlay"><span>${currentData.site_name || 'بصمة غير'}</span></div>`;
-        return Object.keys(imgs).reverse().map(id => `
-            <div class="card">
-                <div class="img-container" onclick="zoom('${imgs[id].url}')">
-                    <img src="${imgs[id].url}">${wm}
-                </div>
-                <div style="padding:15px;">
-                    <button class="btn-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num}')">استفسر عن هذا العمل</button>
-                </div>
-            </div>`).join('');
+        return Object.keys(imgs).reverse().map(id => `<div class="card"><div class="img-container" onclick="zoom('${imgs[id].url}')"><img src="${imgs[id].url}">${wm}</div><div style="padding:15px;"><button class="btn-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num}')">استفسار</button></div></div>`).join('');
     }
 
-    function go(id) { currentTab = id; renderAll(); window.scrollTo({top:0, behavior:'smooth'}); }
-    
     function loadAdminImgs(p) {
         const box = document.getElementById('admin-imgs-list-container'); if(!p) { box.innerHTML=""; return; }
         const path = p.split('/'); const target = currentData[path[0]][path[1]];
-        if(target && target.imgs) box.innerHTML = Object.keys(target.imgs).reverse().map(id => `
-            <div class="admin-img-item">
-                <img src="${target.imgs[id].url}">
-                <div class="img-actions">
-                    <button class="act-btn" style="background:var(--blue);" onclick="moveImg('${p}','${id}','${target.imgs[id].url}')">🔄</button>
-                    <button class="act-btn" style="background:var(--danger);" onclick="delImg('${p}/imgs/${id}')">✕</button>
-                </div>
-            </div>`).join('');
+        if(target && target.imgs) {
+            box.innerHTML = Object.keys(target.imgs).reverse().map(id => `
+                <div class="admin-img-item">
+                    <img src="${target.imgs[id].url}">
+                    <div class="img-actions">
+                        <button class="act-btn" style="background:var(--blue);" onclick="moveImg('${p}','${id}','${target.imgs[id].url}')">🔄</button>
+                        <button class="act-btn" style="background:var(--danger);" onclick="delImg('${p}/imgs/${id}')">✕</button>
+                    </div>
+                </div>`).join('');
+        } else box.innerHTML = "";
     }
 
     function moveImg(oldP, imgId, url) {
         const options = [];
         if(currentData.pages) Object.keys(currentData.pages).forEach(id => options.push({path:`pages/${id}`, title:currentData.pages[id].title}));
         if(currentData.albums) Object.keys(currentData.albums).forEach(id => options.push({path:`albums/${id}`, title:currentData.albums[id].name}));
-        let choice = prompt("انقل إلى (اكتب الرقم):\n" + options.map((o,i)=>`${i+1}. ${o.title}`).join('\n'));
+        let choice = prompt("انقل إلى الرقم:\n" + options.map((o,i)=>`${i+1}. ${o.title}`).join('\n'));
         if(choice && options[choice-1]) {
-            db.ref(DB_PATH+'/'+options[choice-1].path+'/imgs').push({url:url}).then(() => db.ref(DB_PATH+'/'+oldP+'/imgs/'+imgId).remove());
+            db.ref(DB_PATH+'/'+options[choice-1].path+'/imgs').push({url:url}).then(() => {
+                db.ref(DB_PATH+'/'+oldP+'/imgs/'+imgId).remove();
+            });
         }
     }
 
     function delImg(p) { if(confirm("حذف الصورة؟")) db.ref(DB_PATH+'/'+p).remove(); }
-    
     function publishMany() {
         const t = document.getElementById('target-sel').value; const urls = document.getElementById('img-urls').value.split('\n').filter(u => u.trim());
         if(!t || urls.length===0) return alert("حدد القسم والروابط");
         urls.forEach(u => db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()}));
         document.getElementById('img-urls').value = "";
     }
-
     function saveSettings() {
-        db.ref(DB_PATH).update({
-            site_name: document.getElementById('in-name').value,
-            whatsapp_num: document.getElementById('in-wa').value,
-            work_hours: document.getElementById('in-hours').value,
-            map_url: document.getElementById('in-map').value
-        }).then(()=>alert("تم حفظ الإعدادات بنجاح"));
+        db.ref(DB_PATH).update({ site_name:document.getElementById('in-name').value, whatsapp_num:document.getElementById('in-wa').value, work_hours:document.getElementById('in-hours').value, map_url:document.getElementById('in-map').value }).then(()=>alert("تم الحفظ"));
     }
-
+    function prepEditSec(path) {
+        const inp = document.getElementById('edit-sec-input'); const btn = document.getElementById('edit-sec-btn');
+        if(!path) { inp.style.display = btn.style.display = 'none'; return; }
+        const p = path.split('/'); const currentName = currentData[p[0]][p[1]].title || currentData[p[0]][p[1]].name;
+        inp.value = currentName; inp.style.display = btn.style.display = 'block';
+    }
+    function saveSecName() {
+        const path = document.getElementById('edit-sec-sel').value; const newName = document.getElementById('edit-sec-input').value;
+        if(!path || !newName) return;
+        const p = path.split('/'); const key = p[0] === 'pages' ? 'title' : 'name';
+        db.ref(DB_PATH+'/'+path).update({ [key]: newName }).then(() => alert("تم التحديث"));
+    }
+    function go(id) { currentTab = id; renderAll(); window.scrollTo({top:0, behavior:'smooth'}); }
     function checkAccess() { if(prompt("كلمة المرور:")==='808090') document.getElementById('admin-panel').style.display='block'; }
     function zoom(u) { document.getElementById('modal-img').src=u; document.getElementById('modal').style.display='flex'; }
     function addP() { const t = document.getElementById('new-p').value; if(t) db.ref(DB_PATH+'/pages').push({title:t}); }
