@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v104</title>
+    <title>بصمة غير | v105</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -36,17 +36,17 @@
         .img-container img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         .btn-order { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; text-align: center; text-decoration: none; display: block; }
 
-        /* لوحة التحكم */
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 999999; padding: 15px; overflow-y: auto; }
         .admin-box { width: 100%; max-width: 900px; margin: 0 auto; background: #111; padding: 20px; border-radius: 15px; border: 1px solid var(--gold); }
         .collapse-section { background: #1a1a1c; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; overflow: hidden; }
         .collapse-btn { width: 100%; padding: 15px; background: none; border: none; color: var(--gold); font-weight: 800; text-align: right; cursor: pointer; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 15px; background: #0c0c0e; border-top: 1px solid #333; }
         input, select, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-family: 'Tajawal'; -webkit-user-select: text; user-select: text; }
-        
         .admin-item { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
-        .admin-item input { margin: 0; }
         .btn-sm { padding: 10px; border: none; border-radius: 8px; cursor: pointer; color: #fff; }
+
+        .img-manage-card { display: flex; flex-direction: column; background: #222; border-radius: 8px; padding: 8px; gap: 8px; }
+        .img-manage-card img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 5px; }
 
         .home-social { display: flex; justify-content: center; gap: 25px; margin-top: 20px; }
         .home-social a { color: #fff; font-size: 1.8rem; display: none; }
@@ -83,13 +83,12 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v104</h2>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v105</h2>
         
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c1')">📁 إدارة التبويبات العلوية <i class="fas fa-chevron-down"></i></button>
             <div id="c1" class="collapse-content">
                 <div class="admin-item"><input type="text" id="new-sec-in" placeholder="اسم تبويب جديد"><button onclick="addSec()" class="btn-sm" style="background:var(--green)">إضافة</button></div>
-                <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
                 <div id="admin-sec-list"></div>
             </div>
         </div>
@@ -97,18 +96,25 @@
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_alb')">📂 إدارة مجلدات "أعمالنا" <i class="fas fa-chevron-down"></i></button>
             <div id="c_alb" class="collapse-content">
-                <div class="admin-item"><input type="text" id="new-alb-in" placeholder="اسم مجلد جديد"><button onclick="addAlbum()" class="btn-sm" style="background:var(--green)">إضافة مجلد</button></div>
-                <hr style="border:0; border-top:1px solid #333; margin:10px 0;">
+                <div class="admin-item"><input type="text" id="new-alb-in" placeholder="اسم مجلد جديد"><button onclick="addAlbum()" class="btn-sm" style="background:var(--green)">إضافة</button></div>
                 <div id="admin-alb-list"></div>
             </div>
         </div>
 
         <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c2')">📸 رفع ونشر الصور <i class="fas fa-chevron-down"></i></button>
+            <button class="collapse-btn" onclick="toggleCol('c_imgs')">🖼️ إدارة الصور (حذف ونقل) <i class="fas fa-chevron-down"></i></button>
+            <div id="c_imgs" class="collapse-content">
+                <select id="manage-sec-sel" onchange="renderPhotoManager(this.value)"><option value="">-- اختر القسم لاستعراض صوره --</option></select>
+                <div id="photo-manager-grid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;"></div>
+            </div>
+        </div>
+
+        <div class="collapse-section">
+            <button class="collapse-btn" onclick="toggleCol('c2')">📸 رفع ونشر صور جديدة <i class="fas fa-chevron-down"></i></button>
             <div id="c2" class="collapse-content">
                 <iframe src="https://www.0zz0.com/" style="width:100%; height:400px; background:#fff; border-radius:8px; margin-bottom:10px;"></iframe>
                 <select id="target-sel"></select>
-                <textarea id="img-urls" rows="4" placeholder="روابط الصور (رابط في كل سطر)..."></textarea>
+                <textarea id="img-urls" rows="4" placeholder="روابط الصور..."></textarea>
                 <button onclick="publishMany()" style="width:100%; background:#3498db; color:#fff; padding:12px; border:none; border-radius:8px;">نشر الصور</button>
             </div>
         </div>
@@ -146,43 +152,42 @@
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
-        renderAll(); updateWorkStatus();
-        renderAdminLists();
+        renderAll(); updateWorkStatus(); renderAdminLists();
         setTimeout(() => document.getElementById('splash').style.display='none', 800);
     });
 
     function renderAll() {
         const d = currentData;
         document.getElementById('view-title').innerText = d.site_name || "بصمة غير";
-        const tSel = document.getElementById('target-sel'); tSel.innerHTML = '<option value="">-- انشر في --</option>';
+        
+        const tSel = document.getElementById('target-sel'); 
+        const mSel = document.getElementById('manage-sec-sel');
+        const defaultOpt = '<option value="">-- اختر القسم --</option>';
+        tSel.innerHTML = defaultOpt; mSel.innerHTML = defaultOpt;
         
         let navHtml = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
         if(d.pages) Object.keys(d.pages).forEach(id => {
             navHtml += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}')">${d.pages[id].title}</button>`;
-            tSel.innerHTML += `<option value="pages/${id}">${d.pages[id].title}</option>`;
+            const opt = `<option value="pages/${id}">${d.pages[id].title}</option>`;
+            tSel.innerHTML += opt; mSel.innerHTML += opt;
         });
         navHtml += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
-        if(d.albums) Object.keys(d.albums).forEach(id => tSel.innerHTML += `<option value="albums/${id}">مجلد: ${d.albums[id].name}</option>`);
-        
+        if(d.albums) Object.keys(d.albums).forEach(id => {
+            const opt = `<option value="albums/${id}">مجلد: ${d.albums[id].name}</option>`;
+            tSel.innerHTML += opt; mSel.innerHTML += opt;
+        });
         document.getElementById('navbar').innerHTML = navHtml;
 
         let contentHtml = '';
-        const welcomeMsg = encodeURIComponent("السلام عليكم، أرغب في التواصل معكم.. أنا من طرف موقع بصمة غير للديكور");
-        
+        const welcomeMsg = encodeURIComponent("السلام عليكم، أرغب في التواصل معكم..");
         contentHtml += `<section id="sec-home" class="sec ${currentTab==='home'?'active':''}">
             <div style="text-align:center;">
                 <div style="background:rgba(255,255,255,0.03); padding:25px; border-radius:15px; max-width:500px; margin:0 auto; border: 1px solid #222;">
                    <p style="color:var(--gold); font-weight:800; margin-bottom:15px; font-size:1.2rem;">🕒 أوقات الدوام</p>
                    <div style="margin-bottom:15px; line-height:1.8;">${getWorkDisplay(d)}</div>
-                   <div style="padding-top:15px; border-top:1px solid #333;">
-                        <span id="status-dot" class="dot"></span> <span id="status-text" style="font-weight:900;">...</span>
-                   </div>
+                   <div><span id="status-dot" class="dot"></span> <span id="status-text" style="font-weight:900;">...</span></div>
                 </div>
-                <br>
-                <a href="https://wa.me/${d.whatsapp_num}?text=${welcomeMsg}" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; margin: 0 auto; font-size:1.1rem;">
-                    تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366; font-size:1.5rem;"></i>
-                </a>
-                <div style="margin-top:20px; color:var(--gold); font-weight:900; font-size:1.4rem;">بصمة غير للديكور</div>
+                <br><a href="https://wa.me/${d.whatsapp_num}?text=${welcomeMsg}" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; margin: 0 auto;">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366; font-size:1.5rem;"></i></a>
                 <div class="home-social">
                     <a id="hm-wa" href="https://wa.me/${d.whatsapp_num}?text=${welcomeMsg}" target="_blank" style="display:inline-block;"><i class="fab fa-whatsapp"></i></a>
                     <a id="hm-insta" href="${d.insta_url}" target="_blank" style="${d.insta_url?'display:inline-block':''}"><i class="fab fa-instagram"></i></a>
@@ -192,39 +197,45 @@
             </div>
         </section>`;
 
-        if(d.pages) Object.keys(d.pages).forEach(id => {
-            contentHtml += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`;
-        });
-
+        if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section id="sec-${id}" class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
         contentHtml += `<section id="sec-works" class="sec ${currentTab==='works'?'active':''}"><div class="grid">${drawAlbums(d.albums)}</div></section>`;
-        if(d.albums) Object.keys(d.albums).forEach(id => {
-            contentHtml += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" onclick="go('works')" style="margin-bottom:20px;">← عودة للأعمال</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`;
-        });
-
+        if(d.albums) Object.keys(d.albums).forEach(id => contentHtml += `<section id="sec-alb-${id}" class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" onclick="go('works')" style="margin-bottom:20px;">← عودة للأعمال</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`);
         document.getElementById('content-area').innerHTML = contentHtml;
         if(document.getElementById('schedule-editor').innerHTML === "") fillAdminSchedule(d);
     }
 
-    // إدارة لوحة الإدارة (تعديل وحذف)
-    function renderAdminLists() {
-        const d = currentData;
-        let secList = ''; if(d.pages) Object.keys(d.pages).forEach(id => {
-            secList += `<div class="admin-item"><input type="text" value="${d.pages[id].title}" onchange="updateSecName('${id}', this.value)"><button onclick="deleteItem('pages/${id}')" class="btn-sm" style="background:var(--red)"><i class="fas fa-trash"></i></button></div>`;
-        });
-        document.getElementById('admin-sec-list').innerHTML = secList;
+    function renderPhotoManager(path) {
+        const grid = document.getElementById('photo-manager-grid'); grid.innerHTML = '';
+        if(!path) return;
+        const parts = path.split('/'); 
+        const folder = currentData[parts[0]][parts[1]];
+        if(folder && folder.imgs) {
+            Object.keys(folder.imgs).forEach(imgId => {
+                const imgUrl = folder.imgs[imgId].url;
+                let moveSelect = `<select onchange="movePhoto('${path}', '${imgId}', '${imgUrl}', this.value)" style="font-size:0.7rem; padding:5px;"><option>نقل إلى...</option>`;
+                if(currentData.pages) Object.keys(currentData.pages).forEach(pId => moveSelect += `<option value="pages/${pId}">${currentData.pages[pId].title}</option>`);
+                if(currentData.albums) Object.keys(currentData.albums).forEach(aId => moveSelect += `<option value="albums/${aId}">مجلد: ${currentData.albums[aId].name}</option>`);
+                moveSelect += `</select>`;
 
-        let albList = ''; if(d.albums) Object.keys(d.albums).forEach(id => {
-            albList += `<div class="admin-item"><input type="text" value="${d.albums[id].name}" onchange="updateAlbName('${id}', this.value)"><button onclick="deleteItem('albums/${id}')" class="btn-sm" style="background:var(--red)"><i class="fas fa-trash"></i></button></div>`;
-        });
-        document.getElementById('admin-alb-list').innerHTML = albList;
+                grid.innerHTML += `<div class="img-manage-card"><img src="${imgUrl}"><button onclick="deletePhoto('${path}', '${imgId}')" style="background:var(--red); border:none; color:#fff; border-radius:4px; padding:4px; font-size:0.7rem;">حذف</button>${moveSelect}</div>`;
+            });
+        } else { grid.innerHTML = '<p style="grid-column:1/-1; text-align:center; padding:20px;">لا توجد صور في هذا القسم</p>'; }
     }
 
+    function movePhoto(oldPath, imgId, imgUrl, newPath) { if(!newPath || newPath.startsWith('نقل')) return; db.ref(DB_PATH+'/'+newPath+'/imgs').push({url:imgUrl}).then(()=>{ db.ref(DB_PATH+'/'+oldPath+'/imgs/'+imgId).remove(); alert("تم النقل"); }); }
+    function deletePhoto(path, imgId) { if(confirm("حذف الصورة نهائياً؟")) db.ref(DB_PATH+'/'+path+'/imgs/'+imgId).remove(); }
+    function renderAdminLists() {
+        const d = currentData;
+        let secList = ''; if(d.pages) Object.keys(d.pages).forEach(id => secList += `<div class="admin-item"><input type="text" value="${d.pages[id].title}" onchange="updateSecName('${id}', this.value)"><button onclick="deleteItem('pages/${id}')" class="btn-sm" style="background:var(--red)"><i class="fas fa-trash"></i></button></div>`);
+        document.getElementById('admin-sec-list').innerHTML = secList;
+        let albList = ''; if(d.albums) Object.keys(d.albums).forEach(id => albList += `<div class="admin-item"><input type="text" value="${d.albums[id].name}" onchange="updateAlbName('${id}', this.value)"><button onclick="deleteItem('albums/${id}')" class="btn-sm" style="background:var(--red)"><i class="fas fa-trash"></i></button></div>`);
+        document.getElementById('admin-alb-list').innerHTML = albList;
+    }
     function addSec() { const n = document.getElementById('new-sec-in').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); }
     function addAlbum() { const n = document.getElementById('new-alb-in').value; if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(()=>document.getElementById('new-alb-in').value=''); }
     function updateSecName(id, val) { db.ref(DB_PATH+'/pages/'+id).update({title:val}); }
     function updateAlbName(id, val) { db.ref(DB_PATH+'/albums/'+id).update({name:val}); }
-    function deleteItem(path) { if(confirm("هل أنت متأكد من الحذف؟")) db.ref(DB_PATH+'/'+path).remove(); }
-
+    function deleteItem(path) { if(confirm("حذف القسم وكافة صوره؟")) db.ref(DB_PATH+'/'+path).remove(); }
     function getWorkDisplay(d) {
         if(!d.work_schedule) return "قيد التحديث...";
         let activeGroups = []; let offDays = [];
@@ -233,19 +244,17 @@
             if(s && s.active) {
                 const timeKey = `${s.s1_start}-${s.s1_end}-${s.s2_active}-${s.s2_start}-${s.s2_end}`;
                 let found = activeGroups.find(g => g.timeKey === timeKey);
-                if(found) found.days.push(name);
-                else activeGroups.push({ days: [name], timeKey: timeKey, data: s });
-            } else { offDays.push(name); }
+                if(found) found.days.push(name); else activeGroups.push({ days: [name], timeKey: timeKey, data: s });
+            } else offDays.push(name);
         });
         let html = "";
         activeGroups.forEach(g => {
             let dayRange = g.days.length > 1 ? `من ${g.days[0]} إلى ${g.days[g.days.length-1]}` : g.days[0];
-            html += `<div style="margin-bottom:12px;"><b style="color:var(--gold); font-size:1.1rem;">${dayRange}:</b><br>الصباحية: ${t12(g.data.s1_start)} - ${t12(g.data.s1_end)}${g.data.s2_active ? `<br>المسائية: ${t12(g.data.s2_start)} - ${t12(g.data.s2_end)}` : ''}</div>`;
+            html += `<div style="margin-bottom:12px;"><b style="color:var(--gold);">${dayRange}:</b><br>الصباحية: ${t12(g.data.s1_start)} - ${t12(g.data.s1_end)}${g.data.s2_active ? `<br>المسائية: ${t12(g.data.s2_start)} - ${t12(g.data.s2_end)}` : ''}</div>`;
         });
         if(offDays.length > 0) html += `<div style="color:var(--red); font-weight:bold; margin-top:10px; border-top:1px solid #222; padding-top:10px;">الإجازة: ${offDays.join(' - ')}</div>`;
         return html;
     }
-
     function t12(t) { if(!t) return ""; let [h, m] = t.split(':'); h = parseInt(h); const p = h >= 12 ? 'م' : 'ص'; h = h % 12 || 12; return `${h}:${m} ${p}`; }
     function openImg(url) { document.getElementById('viewer-img').src = url; document.getElementById('full-wm-text').innerText = currentData.wm_text || ""; document.getElementById('viewer').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     function closeImg() { document.getElementById('viewer').style.display = 'none'; document.body.style.overflow = 'auto'; }
@@ -253,10 +262,10 @@
     function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c=> { if(c.id!==id) c.style.display='none'; }); const el = document.getElementById(id); el.style.display = el.style.display==='block'?'none':'block'; }
     function checkAccess() { if(prompt("Pass:")==='808090') document.getElementById('admin-panel').style.display='block'; }
     function updateWorkStatus() { const d = currentData; if(!d.work_schedule) return; const now = new Date(); const curMin = now.getHours() * 60 + now.getMinutes(); const conf = d.work_schedule[now.getDay()]; let open = false; if(conf && conf.active) { const check = (s, e) => { if(!s || !e) return false; const [sh, sm] = s.split(':').map(Number), [eh, em] = e.split(':').map(Number); return curMin >= (sh*60+sm) && curMin <= (eh*60+em); }; if(check(conf.s1_start, conf.s1_end)) open = true; if(conf.s2_active && check(conf.s2_start, conf.s2_end)) open = true; } const dot = document.getElementById('status-dot'), txt = document.getElementById('status-text'); if(open) { dot.className="dot pulse-green"; txt.innerText="مفتوح الآن"; txt.style.color="var(--green)"; } else { dot.className="dot pulse-red"; txt.innerText="مغلق الآن"; txt.style.color="var(--red)"; } }
-    function fillAdminSchedule(d) { const ed = document.getElementById('schedule-editor'); DAYS.forEach((day, i) => { const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:false, s1_start:"09:00", s1_end:"12:00", s2_active:false}; ed.innerHTML += `<div style="background:#222; padding:10px; margin-bottom:5px; border-radius:5px;"><input type="checkbox" id="check-${i}" ${s.active?'checked':''}> <b>${day}</b><br>الصباحية: <input type="time" id="s1s-${i}" value="${s.s1_start}" style="width:80px"> - <input type="time" id="s1e-${i}" value="${s.s1_end}" style="width:80px"><br><input type="checkbox" id="s2active-${i}" ${s.s2_active?'checked':''}> المسائية: <input type="time" id="s2s-${i}" value="${s.s2_start||''}" style="width:80px"> - <input type="time" id="s2e-${i}" value="${s.s2_end||''}" style="width:80px"></div>`; }); }
+    function fillAdminSchedule(d) { const ed = document.getElementById('schedule-editor'); DAYS.forEach((day, i) => { const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:false, s1_start:"09:00", s1_end:"12:00", s2_active:false}; ed.innerHTML += `<div style="background:#222; padding:10px; margin-bottom:5px; border-radius:5px;"><input type="checkbox" id="check-${i}" ${s.active?'checked':''}> <b>${day}</b><br>صباح: <input type="time" id="s1s-${i}" value="${s.s1_start}" style="width:80px"> - <input type="time" id="s1e-${i}" value="${s.s1_end}" style="width:80px"><br><input type="checkbox" id="s2active-${i}" ${s.s2_active?'checked':''}> مساء: <input type="time" id="s2s-${i}" value="${s.s2_start||''}" style="width:80px"> - <input type="time" id="s2e-${i}" value="${s.s2_end||''}" style="width:80px"></div>`; }); }
     function saveSchedule() { let sc = {}; DAYS.forEach((_, i) => { sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_start: document.getElementById(`s1s-${i}`).value, s1_end: document.getElementById(`s1e-${i}`).value, s2_active: document.getElementById(`s2active-${i}`).checked, s2_start: document.getElementById(`s2s-${i}`).value, s2_end: document.getElementById(`s2e-${i}`).value }; }); db.ref(DB_PATH + '/work_schedule').set(sc).then(() => { alert("تم الحفظ"); location.reload(); }); }
     function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, location_url: document.getElementById('in-loc').value, wm_text: document.getElementById('in-wm').value, tiktok_url: document.getElementById('in-tiktok').value, insta_url: document.getElementById('in-insta').value }).then(()=>alert("تم الحفظ")); }
-    function publishMany() { const t = document.getElementById('target-sel').value, urls = document.getElementById('img-urls').value.split('\n').filter(u=>u.trim()); if(t && urls.length){ urls.forEach(u=>db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()})); document.getElementById('img-urls').value=""; alert("تم النشر بنجاح"); } else { alert("اختر الوجهة وضع الروابط"); } }
+    function publishMany() { const t = document.getElementById('target-sel').value, urls = document.getElementById('img-urls').value.split('\n').filter(u=>u.trim()); if(t && urls.length){ urls.forEach(u=>db.ref(DB_PATH+'/'+t+'/imgs').push({url:u.trim()})); document.getElementById('img-urls').value=""; alert("تم النشر بنجاح"); } }
     function drawAlbums(albums) { if(!albums) return ''; return Object.keys(albums).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albums[id].name}</h3><p style="font-size:0.7rem; color:#666;">عرض المجلد</p></div>`).join(''); }
     function drawImgs(imgs) { if(!imgs) return '<p style="grid-column:1/-1; text-align:center; padding:50px;">لا يوجد صور حالياً</p>'; return Object.keys(imgs).reverse().map(id => { const url = imgs[id].url; const inquiryMsg = encodeURIComponent(`السلام عليكم، بصمة غير للديكور.. أرغب في الاستفسار عن هذا العمل:\n${url}`); return `<div class="card"><div class="img-container" onclick="openImg('${url}')"><img src="${url}" loading="lazy"><div class="mini-wm">${currentData.wm_text||''}</div></div><a href="https://wa.me/${currentData.whatsapp_num}?text=${inquiryMsg}" class="btn-order">استفسار</a></div>`; }).join(''); }
 </script>
