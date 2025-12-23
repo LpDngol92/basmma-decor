@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v110</title>
+    <title>بصمة غير | v111</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -17,6 +17,11 @@
         @media (max-width: 768px) { nav { justify-content: flex-start; } }
         .nav-btn { padding: 8px 18px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; transition: 0.3s; }
         .nav-btn.active { background: var(--primary); color: #fff; }
+        
+        /* شريط أحدث الأعمال الجديد */
+        .news-bar { background: var(--primary); color: #fff; padding: 8px 0; overflow: hidden; white-space: nowrap; position: relative; border-bottom: 1px solid var(--gold); display: none; }
+        .news-bar marquee { font-weight: 800; font-size: 0.9rem; }
+
         .full-wm { position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%); font-size: 1.8rem; font-weight: 900; color: rgba(255,255,255,0.15); text-shadow: 0 0 15px rgba(197, 160, 89, 0.6); pointer-events: none; white-space: nowrap; z-index: 101; }
         .mini-wm { position: absolute; bottom: 8px; right: 8px; font-size: 0.6rem; font-weight: 900; color: #fff; text-shadow: 0 0 5px var(--gold); opacity: 0.7; }
         #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); backdrop-filter: blur(20px); z-index: 100000; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -55,6 +60,10 @@
 
 <div id="splash" style="position:fixed; inset:0; background:#000; z-index:9999999; display:flex; align-items:center; justify-content:center;"><h2 style="color:var(--gold);">بصمة غير...</h2></div>
 
+<div id="news-container" class="news-bar">
+    <marquee id="news-text" scrollamount="5" direction="right"></marquee>
+</div>
+
 <div id="viewer" onclick="closeImg()"><div id="viewer-container"><img id="viewer-img" src=""><div id="full-wm-text" class="full-wm"></div></div></div>
 
 <header><div id="header-img" class="header-bg"></div><div class="header-content"><h1 id="view-title">بصمة غير</h1></div></header>
@@ -68,8 +77,17 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v110</h2>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v111</h2>
         
+        <div class="collapse-section">
+            <button class="collapse-btn" onclick="toggleCol('c_news')">📢 شريط الأخبار والأعمال <i class="fas fa-bullhorn"></i></button>
+            <div id="c_news" class="collapse-content">
+                <p style="color:#aaa; font-size:0.8rem; margin-bottom:10px;">اكتب الخبر هنا (اتركه فارغاً لإخفاء الشريط):</p>
+                <textarea id="in-news" rows="2" placeholder="مثال: تم الانتهاء من تنفيذ ديكورات قصر بحي الملقا.."></textarea>
+                <button onclick="saveNews()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">حفظ وتحديث الشريط</button>
+            </div>
+        </div>
+
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c1')">📁 إدارة التبويبات العلوية <i class="fas fa-chevron-down"></i></button><div id="c1" class="collapse-content"><div class="admin-item"><input type="text" id="new-sec-in" placeholder="اسم تبويب جديد"><button onclick="addSec()" class="btn-sm" style="background:var(--green)">إضافة</button></div><div id="admin-sec-list"></div></div></div>
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_alb')">📂 إدارة مجلدات "أعمالنا" <i class="fas fa-chevron-down"></i></button><div id="c_alb" class="collapse-content"><div class="admin-item"><input type="text" id="new-alb-in" placeholder="اسم مجلد جديد"><button onclick="addAlbum()" class="btn-sm" style="background:var(--green)">إضافة</button></div><div id="admin-alb-list"></div></div></div>
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_imgs')">🖼️ إدارة الصور (حذف ونقل) <i class="fas fa-chevron-down"></i></button><div id="c_imgs" class="collapse-content"><select id="manage-sec-sel" onchange="renderPhotoManager(this.value)"><option value="">-- اختر القسم --</option></select><div id="photo-manager-grid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;"></div></div></div>
@@ -100,12 +118,16 @@
     let currentData = {}; let currentTab = 'home';
     const DAYS = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
 
-    // تحديث عداد الزيارات
     db.ref(DB_PATH + '/stats/visits').transaction(c => (c || 0) + 1);
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
         renderAll(); updateWorkStatus(); renderAdminLists();
+        
+        // تحديث شريط الأخبار
+        const nBar = document.getElementById('news-container'), nTxt = document.getElementById('news-text');
+        if(currentData.news_bar) { nBar.style.display = 'block'; nTxt.innerText = currentData.news_bar; } else { nBar.style.display = 'none'; }
+
         if(currentData.stats) document.getElementById('stat-visits').innerText = currentData.stats.visits || 0;
         setTimeout(() => document.getElementById('splash').style.display='none', 800);
     });
@@ -163,8 +185,9 @@
     function t12(t) { if(!t) return ""; let [h, m] = t.split(':'); h = parseInt(h); return `${h%12||12}:${m} ${h>=12?'م':'ص'}`; }
     function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
     function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c=> { if(c.id!==id) c.style.display='none'; }); const el = document.getElementById(id); el.style.display = el.style.display==='block'?'none':'block'; }
-    function fillSettingsFields() { const d = currentData; document.getElementById('in-name').value = d.site_name||""; document.getElementById('in-wa').value = d.whatsapp_num||""; document.getElementById('in-loc').value = d.location_url||""; document.getElementById('in-wm').value = d.wm_text||""; document.getElementById('in-tiktok').value = d.tiktok_url||""; document.getElementById('in-insta').value = d.insta_url||""; }
+    function fillSettingsFields() { const d = currentData; document.getElementById('in-name').value = d.site_name||""; document.getElementById('in-wa').value = d.whatsapp_num||""; document.getElementById('in-loc').value = d.location_url||""; document.getElementById('in-wm').value = d.wm_text||""; document.getElementById('in-tiktok').value = d.tiktok_url||""; document.getElementById('in-insta').value = d.insta_url||""; document.getElementById('in-news').value = d.news_bar||""; }
     function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, location_url: document.getElementById('in-loc').value, wm_text: document.getElementById('in-wm').value, tiktok_url: document.getElementById('in-tiktok').value, insta_url: document.getElementById('in-insta').value }).then(()=>alert("تم الحفظ")); }
+    function saveNews() { db.ref(DB_PATH).update({ news_bar: document.getElementById('in-news').value }).then(()=>alert("تم تحديث الشريط")); }
     function openImg(url) { document.getElementById('viewer-img').src = url; document.getElementById('full-wm-text').innerText = currentData.wm_text || ""; document.getElementById('viewer').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     function closeImg() { document.getElementById('viewer').style.display = 'none'; document.body.style.overflow = 'auto'; }
     function drawAlbums(albums) { if(!albums) return ''; return Object.keys(albums).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albums[id].name}</h3><p style="font-size:0.7rem; color:#666;">عرض الصور</p></div>`).join(''); }
