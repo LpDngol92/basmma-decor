@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v120</title>
+    <title>بصمة غير | v119</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -16,12 +16,11 @@
         /* شاشة الصيانة */
         #maintenance-screen { position: fixed; inset: 0; background: #000; z-index: 9999998; display: none; align-items: center; justify-content: center; text-align: center; flex-direction: column; padding: 20px; }
         #maintenance-screen h1 { color: var(--red); font-size: 1.8rem; font-weight: 900; text-shadow: 0 0 15px rgba(231, 76, 60, 0.4); margin-top: 20px; }
-        .m-brand { color: var(--gold); font-size: 1.6rem; font-weight: 900; margin-top: 15px; text-shadow: 0 0 15px var(--gold); animation: glow 2s infinite alternate; }
-        @keyframes glow { from { text-shadow: 0 0 5px var(--gold); opacity: 0.8; } to { text-shadow: 0 0 25px var(--gold), 0 0 35px var(--gold); opacity: 1; } }
+        .m-brand { color: var(--gold); font-size: 1.5rem; font-weight: 900; margin-top: 15px; text-shadow: 0 0 15px rgba(197, 160, 89, 1); animation: glow 2s infinite alternate; }
+        @keyframes glow { from { text-shadow: 0 0 5px var(--gold); } to { text-shadow: 0 0 20px var(--gold), 0 0 30px var(--gold); } }
         .m-icon { font-size: 3.5rem; color: var(--red); animation: pulse-r 1.5s infinite; }
-        .m-wa-btn { margin-top: 30px; background: #25D366; color: #fff; padding: 12px 30px; border-radius: 50px; text-decoration: none; font-weight: 800; display: flex; align-items: center; gap: 10px; box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3); border: none; cursor: pointer; font-family: 'Tajawal'; }
+        .m-wa-btn { margin-top: 30px; background: #25D366; color: #fff; padding: 12px 30px; border-radius: 50px; text-decoration: none; font-weight: 800; display: flex; align-items: center; gap: 10px; box-shadow: 0 5px 15px rgba(37, 211, 102, 0.3); }
 
-        /* الزر المخفي */
         #hidden-admin-trigger { position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 99999999; cursor: pointer; background: transparent; }
 
         input, textarea, select { -webkit-user-select: text !important; user-select: text !important; width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
@@ -56,10 +55,13 @@
         .collapse-btn { width: 100%; padding: 15px; background: none; border: none; color: var(--gold); font-weight: 800; text-align: right; cursor: pointer; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 15px; background: #0c0c0e; border-top: 1px solid #333; }
         .admin-item { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
+        .btn-sm { padding: 10px; border: none; border-radius: 8px; cursor: pointer; color: #fff; }
         
         .home-social { display: flex; justify-content: center; gap: 25px; margin-top: 20px; min-height: 40px; }
-        .home-social a { color: #fff; font-size: 1.8rem; text-decoration: none; display: none; }
+        .home-social a { color: #fff; font-size: 1.8rem; text-decoration: none; display: none; } /* مخفي افتراضياً */
         
+        .dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; margin-left: 8px; vertical-align: middle; }
+        .pulse-green { background: var(--green); box-shadow: 0 0 0 var(--green); animation: pulse-g 2s infinite; }
         @keyframes pulse-r { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
         footer { background: #050505; padding: 40px 20px; text-align: center; border-top: 1px solid #222; margin-top: 50px; }
     </style>
@@ -71,7 +73,7 @@
     <h1>نعتذر.. سنعود قريباً</h1>
     <p style="color:#888;">نعمل على تحديث الموقع لخدمتكم بشكل أفضل</p>
     <div class="m-brand">بصمة غير للديكور</div>
-    <button onclick="contactWA('maintenance')" class="m-wa-btn"><i class="fab fa-whatsapp"></i> تواصل معنا عبر واتساب</button>
+    <a id="m-wa-link" href="#" class="m-wa-btn"><i class="fab fa-whatsapp"></i> تواصل معنا عبر واتساب</a>
 </div>
 
 <div id="hidden-admin-trigger" onclick="checkAccess()"></div>
@@ -85,19 +87,21 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v120</h2>
-        <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c4')">⚙️ إعدادات الموقع <i class="fas fa-chevron-down"></i></button><div id="c4" class="collapse-content">
-            <label style="color:var(--red); font-weight:800; display:block; margin-bottom:10px;"><input type="checkbox" id="in-maintenance" style="width:auto;"> وضع الصيانة</label>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v119</h2>
+        <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c4')">⚙️ إعدادات الروابط والموقع <i class="fas fa-chevron-down"></i></button><div id="c4" class="collapse-content">
+            <label style="color:var(--red); font-weight:800; display:block; margin-bottom:10px;"><input type="checkbox" id="in-maintenance" style="width:auto;"> وضع الصيانة (إغلاق الموقع)</label>
             <input type="text" id="in-name" placeholder="اسم الموقع">
-            <input type="text" id="in-wa" placeholder="رقم الواتساب">
+            <input type="text" id="in-wa" placeholder="رقم الواتساب (بدون +)">
             <input type="text" id="in-loc" placeholder="رابط اللوكيشن">
-            <input type="text" id="in-tiktok" placeholder="تيك توك">
-            <input type="text" id="in-insta" placeholder="انستقرام">
+            <input type="text" id="in-tiktok" placeholder="رابط تيك توك (اتركه فارغاً للإخفاء)">
+            <input type="text" id="in-insta" placeholder="رابط انستقرام (اتركه فارغاً للإخفاء)">
             <input type="text" id="in-wm" placeholder="نص الواترمارك">
-            <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none; border-radius:8px;">حفظ</button>
+            <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none; border-radius:8px;">حفظ الإعدادات</button>
         </div></div>
-        <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c1')">📁 الأقسام <i class="fas fa-chevron-down"></i></button><div id="c1" class="collapse-content"><div id="admin-sec-list"></div></div></div>
-        <button onclick="location.reload()" style="width:100%; background:red; color:#fff; padding:12px; border:none; border-radius:8px; margin-top:10px;">خروج</button>
+        <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c1')">📁 إدارة التبويبات <i class="fas fa-chevron-down"></i></button><div id="c1" class="collapse-content"><div class="admin-item"><input type="text" id="new-sec-in" placeholder="اسم تبويب"><button onclick="addSec()" class="btn-sm" style="background:var(--green)">إضافة</button></div><div id="admin-sec-list"></div></div></div>
+        <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_alb')">📂 إدارة المجلدات <i class="fas fa-chevron-down"></i></button><div id="c_alb" class="collapse-content"><div class="admin-item"><input type="text" id="new-alb-in" placeholder="اسم مجلد"><button onclick="addAlbum()" class="btn-sm" style="background:var(--green)">إضافة</button></div><div id="admin-alb-list"></div></div></div>
+        <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c2')">📸 رفع ونشر صور <i class="fas fa-chevron-down"></i></button><div id="c2" class="collapse-content"><iframe src="https://www.0zz0.com/" style="width:100%; height:300px; background:#fff; border-radius:8px; margin-bottom:10px;"></iframe><select id="target-sel"></select><textarea id="img-urls" rows="4" placeholder="الروابط هنا..."></textarea><button onclick="publishMany()" style="width:100%; background:#3498db; color:#fff; padding:12px; border:none; border-radius:8px;">نشر</button></div></div>
+        <button onclick="location.reload()" style="width:100%; background:red; color:#fff; padding:12px; border:none; border-radius:8px; margin-top:10px;">خروج وإغلاق</button>
     </div>
 </div>
 
@@ -106,58 +110,56 @@
     firebase.initializeApp(config); const db = firebase.database(); 
     const DB_PATH = 'site_v28'; const AUTH_PATH = 'server_auth/lek'; 
 
-    let currentData = {}; let isAdmin = false;
+    let currentData = {}; let currentTab = 'home'; let isAdmin = false;
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
         const mScreen = document.getElementById('maintenance-screen');
         if(currentData.maintenance_mode && !isAdmin) {
             mScreen.style.display = 'flex';
+            if(currentData.whatsapp_num) document.getElementById('m-wa-link').href = `https://wa.me/${currentData.whatsapp_num}`;
         } else { mScreen.style.display = 'none'; }
-        renderAll();
+        renderAll(); renderAdminLists();
         setTimeout(() => document.getElementById('splash').style.display='none', 800);
     });
-
-    // وظيفة التواصل بالواتساب الذكية
-    function contactWA(type) {
-        const num = currentData.whatsapp_num;
-        if(!num) return;
-        let msg = "";
-        
-        if(type === 'maintenance') {
-            msg = "موقعكم مغلق وحاب استفسر لو في مجال";
-        } else {
-            msg = "السلام عليكم، حاب استفسر عن خدماتكم";
-        }
-        
-        window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
 
     function renderAll() {
         const d = currentData; 
         document.getElementById('view-title').innerText = d.site_name || "بصمة غير";
         
-        let navHtml = `<button class="nav-btn" onclick="go('home')">الرئيسية</button>`;
-        if(d.pages) Object.keys(d.pages).forEach(id => navHtml += `<button class="nav-btn" onclick="go('${id}')">${d.pages[id].title}</button>`);
-        navHtml += `<button class="nav-btn" onclick="go('works')">أعمالنا</button>`;
+        // بناء القائمة والروابط
+        let navHtml = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
+        if(d.pages) Object.keys(d.pages).forEach(id => navHtml += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}')">${d.pages[id].title}</button>`);
+        navHtml += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
         document.getElementById('navbar').innerHTML = navHtml;
 
+        // محتوى الرئيسية مع فحص الروابط (Social Check)
         let socialHtml = '';
-        if(d.whatsapp_num) socialHtml += `<a href="javascript:void(0)" onclick="contactWA('normal')" style="display:inline-block"><i class="fab fa-whatsapp"></i></a>`;
+        if(d.whatsapp_num) socialHtml += `<a href="https://wa.me/${d.whatsapp_num}" style="display:inline-block"><i class="fab fa-whatsapp"></i></a>`;
         if(d.insta_url) socialHtml += `<a href="${d.insta_url}" style="display:inline-block"><i class="fab fa-instagram"></i></a>`;
         if(d.tiktok_url) socialHtml += `<a href="${d.tiktok_url}" style="display:inline-block"><i class="fab fa-tiktok"></i></a>`;
         if(d.location_url) socialHtml += `<a href="${d.location_url}" style="display:inline-block"><i class="fas fa-location-dot"></i></a>`;
 
-        let contentHtml = `<section class="sec active"><div style="text-align:center;"><div class="home-social">${socialHtml}</div><br><button onclick="contactWA('normal')" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; margin: 0 auto; border:none; font-family:'Tajawal'">تواصل معنا</button></div></section>`;
+        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;"><div class="home-social">${socialHtml}</div><br><a href="https://wa.me/${d.whatsapp_num}" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; margin: 0 auto;">تواصل معنا</a></div></section>`;
+        
+        // الأقسام والألبومات
+        if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
+        contentHtml += `<section class="sec ${currentTab==='works'?'active':''}"><div class="grid">${drawAlbums(d.albums)}</div></section>`;
+        if(d.albums) Object.keys(d.albums).forEach(id => contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}"><button class="nav-btn" onclick="go('works')" style="margin-bottom:20px;">← عودة</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`);
+        
         document.getElementById('content-area').innerHTML = contentHtml;
     }
 
+    function drawAlbums(albums) { if(!albums) return ''; return Object.keys(albums).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center;"><h3 style="color:var(--gold);">${albums[id].name}</h3></div>`).join(''); }
+    function drawImgs(imgs) { if(!imgs) return '<p style="text-align:center; padding:50px;">فارغ</p>'; return Object.keys(imgs).reverse().map(id => `<div class="card"><div class="img-container" onclick="openImg('${imgs[id].url}')"><img src="${imgs[id].url}" loading="lazy"><div class="mini-wm">${currentData.wm_text||''}</div></div><a href="https://wa.me/${currentData.whatsapp_num}" class="btn-order">استفسار</a></div>`).join(''); }
+    function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
     function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c=> { if(c.id!==id) c.style.display='none'; }); const el = document.getElementById(id); el.style.display = el.style.display==='block'?'none':'block'; }
     function checkAccess() { const pass = prompt("الرمز:"); if(!pass) return; db.ref(AUTH_PATH).once('value').then(snap => { if(snap.val() && pass.trim() === String(snap.val()).trim()) { isAdmin = true; document.getElementById('admin-panel').style.display = 'block'; document.getElementById('maintenance-screen').style.display = 'none'; fillSettingsFields(); } }); }
     function fillSettingsFields() { const d = currentData; document.getElementById('in-name').value = d.site_name||""; document.getElementById('in-wa').value = d.whatsapp_num||""; document.getElementById('in-loc').value = d.location_url||""; document.getElementById('in-wm').value = d.wm_text||""; document.getElementById('in-tiktok').value = d.tiktok_url||""; document.getElementById('in-insta').value = d.insta_url||""; document.getElementById('in-maintenance').checked = d.maintenance_mode || false; }
     function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, location_url: document.getElementById('in-loc').value, wm_text: document.getElementById('in-wm').value, tiktok_url: document.getElementById('in-tiktok').value, insta_url: document.getElementById('in-insta').value, maintenance_mode: document.getElementById('in-maintenance').checked }).then(()=>alert("تم الحفظ")); }
+    function openImg(url) { document.getElementById('viewer-img').src = url; document.getElementById('full-wm-text').innerText = currentData.wm_text || ""; document.getElementById('viewer').style.display = 'flex'; }
     function closeImg() { document.getElementById('viewer').style.display = 'none'; }
-    function renderAdminLists() { /* ... */ }
+    function renderAdminLists() { /* وظائف الإدارة المعتادة هنا */ }
 </script>
 </body>
 </html>
