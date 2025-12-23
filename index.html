@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v112</title>
+    <title>بصمة غير | v113</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -68,7 +68,7 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v112</h2>
+        <h2 style="color:var(--gold); margin-bottom:20px;">لوحة التحكم v113</h2>
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_news')">📢 شريط الأخبار والأعمال <i class="fas fa-bullhorn"></i></button><div id="c_news" class="collapse-content"><textarea id="in-news" rows="2" placeholder="اكتب الخبر هنا..."></textarea><button onclick="saveNews()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">حفظ وتحديث الشريط</button></div></div>
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c1')">📁 إدارة التبويبات العلوية <i class="fas fa-chevron-down"></i></button><div id="c1" class="collapse-content"><div class="admin-item"><input type="text" id="new-sec-in" placeholder="اسم تبويب جديد"><button onclick="addSec()" class="btn-sm" style="background:var(--green)">إضافة</button></div><div id="admin-sec-list"></div></div></div>
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_alb')">📂 إدارة مجلدات "أعمالنا" <i class="fas fa-chevron-down"></i></button><div id="c_alb" class="collapse-content"><div class="admin-item"><input type="text" id="new-alb-in" placeholder="اسم مجلد جديد"><button onclick="addAlbum()" class="btn-sm" style="background:var(--green)">إضافة</button></div><div id="admin-alb-list"></div></div></div>
@@ -133,18 +133,24 @@
 
     function getWorkDisplay(d) { 
         if(!d.work_schedule) return "قيد التحديث..."; 
-        let html = ""; 
+        let groups = []; let offDays = [];
         DAYS.forEach((name, i) => { 
             const s = d.work_schedule[i]; 
-            html += `<div style="margin-bottom:8px;"><b style="color:var(--gold);">${name}:</b> `;
             if(s && s.active) {
-                html += `<span>${t12(s.s1_start)} - ${t12(s.s1_end)}</span>`;
-                if(s.s2_active) html += `<span> و ${t12(s.s2_start)} - ${t12(s.s2_end)}</span>`;
-            } else {
-                html += `<span style="color:var(--red); font-weight:800;">إجازة</span>`;
-            }
-            html += `</div>`;
+                const key = `${s.s1_start}-${s.s1_end}-${s.s2_active}-${s.s2_start}-${s.s2_end}`;
+                let f = groups.find(g => g.key === key);
+                if(f) f.days.push(name); else groups.push({ days: [name], key: key, data: s });
+            } else { offDays.push(name); }
         }); 
+        let html = "";
+        groups.forEach(g => {
+            let dr = g.days.length > 1 ? `من ${g.days[0]} إلى ${g.days[g.days.length-1]}` : g.days[0];
+            html += `<div style="margin-bottom:8px;"><b style="color:var(--gold);">${dr}:</b><br>صباح: ${t12(g.data.s1_start)} - ${t12(g.data.s1_end)}${g.data.s2_active ? `<br>مساء: ${t12(g.data.s2_start)} - ${t12(g.data.s2_end)}` : ''}</div>`;
+        });
+        if(offDays.length > 0) {
+            let dr = offDays.length > 1 ? `أيام (${offDays.join('، ')})` : offDays[0];
+            html += `<div style="margin-bottom:8px;"><b style="color:var(--red);">${dr}:</b> إجازة</div>`;
+        }
         return html; 
     }
 
