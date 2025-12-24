@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v142</title>
+    <title>بصمة غير | v143</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -13,7 +13,9 @@
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
         
-        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; }
+        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: 0.5s; opacity: 1; visibility: visible; }
+        #splash.hidden { opacity: 0; visibility: hidden; }
+        
         #maintenance-screen { position: fixed; inset: 0; background: #000; z-index: 999999; display: none; align-items: center; justify-content: center; text-align: center; flex-direction: column; }
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 100000000; padding: 15px; overflow-y: auto; }
 
@@ -27,9 +29,9 @@
 
         nav { position: sticky; top: 0; z-index: 1000; background: rgba(10,10,11,0.95); backdrop-filter: blur(10px); padding: 12px 10px; border-bottom: 1px solid var(--gold); display: flex; justify-content: safe center; gap: 10px; overflow-x: auto; scrollbar-width: none; }
         .nav-btn { padding: 8px 22px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; transition: 0.3s; }
-        .nav-btn.active { background: var(--primary); color: #fff; box-shadow: 0 0 10px rgba(92, 10, 10, 0.4); }
+        .nav-btn.active { background: var(--primary); color: #fff; }
 
-        .about-toggle, .review-toggle { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin: 5px; transition: 0.3s; display: inline-block; font-size: 0.85rem; }
+        .about-toggle, .review-toggle { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin: 5px; transition: 0.3s; font-size: 0.85rem; }
         .about-content, .review-form-container { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(255,255,255,0.03); border-radius: 15px; margin: 10px auto; max-width: 550px; }
         .about-content.open, .review-form-container.open { max-height: 1500px; padding: 20px; border: 1px solid rgba(197, 160, 89, 0.2); }
 
@@ -37,26 +39,24 @@
         .review-card { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: right; }
         .review-stars { color: #f1c40f; font-size: 0.75rem; }
 
-        .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; flex-grow: 1; }
+        .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; }
         .sec.active { display: block; }
         .grid { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
         .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.1); position: relative; }
-        .img-container { position: relative; width: 100%; aspect-ratio: 1/1; cursor: pointer; }
+        .img-container { width: 100%; aspect-ratio: 1/1; cursor: pointer; position: relative; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
-        .wm-tag { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 900; color: rgba(255, 255, 255, 0.35); text-shadow: 0 0 8px var(--gold); pointer-events: none; z-index: 2; }
+        .wm-tag { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 900; color: rgba(255, 255, 255, 0.35); text-shadow: 0 0 8px var(--gold); pointer-events: none; }
         .btn-order { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; }
 
         .social-icons { display: flex; justify-content: center; gap: 25px; margin-top: 30px; }
-        .social-icons a { color: var(--gold); font-size: 1.8rem; transition: 0.3s; }
+        .social-icons a { color: var(--gold); font-size: 1.8rem; }
 
-        footer { background: #000; padding: 20px; text-align: center; border-top: 1px solid #1a1a1c; color: #777; font-size: 0.85rem; margin-top: auto; }
+        footer { background: #000; padding: 20px; text-align: center; border-top: 1px solid #1a1a1c; color: #777; font-size: 0.85rem; }
 
         .admin-box { max-width: 900px; margin: 20px auto; background: #111; padding: 20px; border-radius: 15px; border: 1px solid var(--gold); }
         .collapse-section { background: #1a1a1c; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
         .collapse-btn { width: 100%; padding: 15px; background: none; border: none; color: var(--gold); font-weight: 800; text-align: right; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 15px; border-top: 1px solid #333; }
-        .editor-tools { display: flex; gap: 5px; margin-bottom: 10px; }
-        .editor-tools button { background: #333; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
         input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
         #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000000; display: none; align-items: center; justify-content: center; }
         #viewer img { max-width: 95%; max-height: 90vh; border: 1px solid var(--gold); border-radius: 10px; }
@@ -65,7 +65,7 @@
 </head>
 <body>
 
-<div id="splash"><h2 style="color:var(--gold);">بصمة غير...</h2></div>
+<div id="splash"><h2 style="color:var(--gold); font-size: 2rem; font-weight: 900;">بصمة غير...</h2></div>
 <div id="maintenance-screen"><h1>الموقع في صيانة</h1></div>
 
 <header>
@@ -83,7 +83,7 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v142</h2>
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v143</h2>
         
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_up')">📸 رفع الصور <i class="fas fa-upload"></i></button>
@@ -106,11 +106,13 @@
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_tabs')">📁 الأقسام والمجلدات <i class="fas fa-folder"></i></button>
             <div id="c_tabs" class="collapse-content">
+                <h4 style="color:var(--gold);">إدارة الأقسام (Pages)</h4>
                 <div id="admin-sec-list"></div>
-                <div style="display:flex; gap:5px;"><input type="text" id="new-sec-in" placeholder="قسم جديد"><button onclick="addSec()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
+                <div style="display:flex; gap:5px;"><input type="text" id="new-sec-in" placeholder="اسم قسم جديد"><button onclick="addSec()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
                 <hr style="margin:15px 0; border:1px solid #333;">
+                <h4 style="color:var(--gold);">إدارة المجلدات (Albums)</h4>
                 <div id="admin-alb-list"></div>
-                <div style="display:flex; gap:5px;"><input type="text" id="new-alb-in" placeholder="مجلد جديد"><button onclick="addAlbum()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
+                <div style="display:flex; gap:5px;"><input type="text" id="new-alb-in" placeholder="اسم مجلد جديد"><button onclick="addAlbum()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
             </div>
         </div>
 
@@ -118,9 +120,6 @@
             <button class="collapse-btn" onclick="toggleCol('c_about')">📖 من نحن <i class="fas fa-edit"></i></button>
             <div id="c_about" class="collapse-content">
                 <label><input type="checkbox" id="in-about-active"> تفعيل القسم</label>
-                <div class="editor-tools">
-                    <button onclick="execCmd('bold')">B</button><button onclick="execCmd('italic')">I</button><button onclick="execCmd('justifyRight')">R</button><button onclick="execCmd('justifyCenter')">C</button>
-                </div>
                 <div id="editor-about" contenteditable="true" style="min-height:150px; background:#000; border:1px solid #444; padding:10px; border-radius:8px; color:#fff; text-align:right; outline:none; margin-top:10px;"></div>
                 <button onclick="saveAbout()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; margin-top:10px;">حفظ</button>
             </div>
@@ -135,13 +134,12 @@
             <button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات <i class="fas fa-cog"></i></button>
             <div id="c_set" class="collapse-content">
                 <label><input type="checkbox" id="in-maintenance"> وضع الصيانة</label><br><br>
-                <input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-logo" placeholder="رابط الشعار"><input type="text" id="in-hbg" placeholder="رابط الخلفية"><input type="text" id="in-wm" placeholder="نص الوتر مارك"><textarea id="in-news" placeholder="الأخبار"><input type="text" id="in-footer" placeholder="نص الحقوق">
+                <input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-logo" placeholder="رابط الشعار"><input type="text" id="in-hbg" placeholder="رابط الخلفية"><input type="text" id="in-wm" placeholder="نص الوتر مارك"><textarea id="in-news" placeholder="الأخبار"></textarea><input type="text" id="in-footer" placeholder="نص الحقوق">
                 <input type="text" id="in-insta" placeholder="إنستقرام"><input type="text" id="in-tiktok" placeholder="تيك توك"><input type="text" id="in-snap" placeholder="سناب"><input type="text" id="in-loc" placeholder="لوكيشن">
                 <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ</button>
             </div>
         </div>
-
-        <button onclick="location.reload()" style="width:100%; background:var(--red); padding:15px; border:none; margin-top:20px; color:#fff;">خروج</button>
+        <button onclick="location.reload()" style="width:100%; background:var(--red); padding:15px; border:none; margin-top:20px; color:#fff; font-weight:800;">تسجيل خروج</button>
     </div>
 </div>
 
@@ -156,7 +154,7 @@
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
-        document.getElementById('splash').style.display = 'none';
+        document.getElementById('splash').classList.add('hidden');
         document.getElementById('maintenance-screen').style.display = (currentData.maintenance_mode && !isAdmin) ? 'flex' : 'none';
         document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة لبصمة غير للديكور';
         renderAll();
@@ -164,8 +162,6 @@
         else document.getElementById('news-container').style.display='none';
         if(isAdmin) { renderAdminLists(); renderAdminReviews(); }
     });
-
-    function execCmd(c) { document.execCommand(c, false, null); }
 
     function renderAll() {
         const d = currentData;
@@ -192,19 +188,19 @@
         let contentHtml = home;
         if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
         contentHtml += `<section class="sec ${currentTab==='works'?'active':''}"><div class="grid">${drawAlbums(d.albums)}</div></section>`;
-        if(d.albums) Object.keys(d.albums).forEach(id => contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}"><button onclick="go('works')" style="color:var(--gold); margin-bottom:15px; background:none; border:none;">← عودة</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`);
+        if(d.albums) Object.keys(d.albums).forEach(id => contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}"><button onclick="go('works')" style="color:var(--gold); margin-bottom:15px; background:none; border:none; cursor:pointer;">← عودة</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`);
         
         document.getElementById('content-area').innerHTML = contentHtml;
     }
 
     function renderAdminLists() {
-        const d = currentData; let sL = '', aL = '', opts = '<option value="">-- اختر الوجهة --</option>';
+        const d = currentData; let sL = '', aL = '', opts = '<option value="">-- اختر الوجهة (قسم أو مجلد) --</option>';
         if(d.pages) Object.keys(d.pages).forEach(id => {
-            sL += `<div style="display:flex; gap:5px; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="if(confirm('حذف؟')) db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px;">حذف</button></div>`;
+            sL += `<div style="display:flex; gap:5px; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="if(confirm('حذف؟')) db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px; border-radius:5px;">حذف</button></div>`;
             opts += `<option value="pages/${id}">${d.pages[id].title} (قسم)</option>`;
         });
         if(d.albums) Object.keys(d.albums).forEach(id => {
-            aL += `<div style="display:flex; gap:5px; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="if(confirm('حذف؟')) db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px;">حذف</button></div>`;
+            aL += `<div style="display:flex; gap:5px; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="if(confirm('حذف؟')) db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px; border-radius:5px;">حذف</button></div>`;
             opts += `<option value="albums/${id}">${d.albums[id].name} (مجلد)</option>`;
         });
         document.getElementById('admin-sec-list').innerHTML = sL; document.getElementById('admin-alb-list').innerHTML = aL;
@@ -215,20 +211,21 @@
         const grid = document.getElementById('photo-manager-grid'); grid.innerHTML = ''; if(!path) return; 
         const [type, id] = path.split('/'); const folder = currentData[type] && currentData[type][id]; 
         if(folder && folder.imgs) Object.keys(folder.imgs).reverse().forEach(imgId => { 
-            grid.innerHTML += `<div style="background:#222; padding:5px; border-radius:5px;"><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${imgId}')" style="width:100%; background:var(--red); border:none; color:#fff; margin-top:5px; padding:5px;">حذف</button></div>`; 
+            grid.innerHTML += `<div style="background:#222; padding:5px; border-radius:5px;"><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${imgId}')" style="width:100%; background:var(--red); border:none; color:#fff; margin-top:5px; padding:5px; border-radius:5px;">حذف</button></div>`; 
         }); 
     }
 
-    function deleteImg(p, id) { if(confirm("حذف؟")) db.ref(`${DB_PATH}/${p}/imgs/${id}`).remove().then(()=>renderPhotoManager(p)); }
+    function deleteImg(p, id) { if(confirm("حذف الصورة؟")) db.ref(`${DB_PATH}/${p}/imgs/${id}`).remove().then(()=>renderPhotoManager(p)); }
     function sendReview() {
         const n = document.getElementById('rn').value, t = document.getElementById('rt').value, s = document.getElementById('rs').value;
-        if(!n || !t) return alert("املا البيانات");
-        db.ref(DB_PATH + '/reviews').push({ name:n, text:t, stars:s, date: Date.now() }).then(() => { localStorage.setItem('hasRated_v28','true'); alert("تم!"); renderAll(); });
+        if(!n || !t) return alert("يرجى ملء البيانات");
+        db.ref(DB_PATH + '/reviews').push({ name:n, text:t, stars:s, date: Date.now() }).then(() => { localStorage.setItem('hasRated_v28','true'); alert("شكراً لتقييمك!"); renderAll(); });
     }
 
     function drawReviews(revs) { if(!revs) return ''; return Object.keys(revs).reverse().map(id => { const r = revs[id]; return `<div class="review-card"><div><b>${r.name}</b> <span class="review-stars">${'★'.repeat(r.stars)}</span></div><p style="font-size:0.85rem;">${r.text}</p></div>`; }).join(''); }
-    function renderAdminReviews() { const d = currentData; let h = ''; if(d.reviews) Object.keys(d.reviews).reverse().forEach(id => { const r = d.reviews[id]; h += `<div style="background:#222; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between;"><span>${r.name}</span><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px;">حذف</button></div>`; }); document.getElementById('admin-reviews-list').innerHTML = h; }
+    function renderAdminReviews() { const d = currentData; let h = ''; if(d.reviews) Object.keys(d.reviews).reverse().forEach(id => { const r = d.reviews[id]; h += `<div style="background:#222; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between; border-radius:8px;"><span>${r.name}</span><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px; border-radius:5px;">حذف</button></div>`; }); document.getElementById('admin-reviews-list').innerHTML = h; }
     function checkAccess() { const p = prompt("الرمز:"); db.ref(AUTH_PATH).once('value', s => { if(p === String(s.val())) { isAdmin=true; document.getElementById('admin-panel').style.display='block'; fillAdminFields(); } }); }
+    
     function fillAdminFields() {
         const d = currentData; document.getElementById('in-wa').value=d.whatsapp_num||''; document.getElementById('in-logo').value=d.site_logo||'';
         document.getElementById('in-hbg').value=d.header_bg||''; document.getElementById('in-wm').value=d.wm_text||'';
@@ -239,11 +236,11 @@
         document.getElementById('in-about-active').checked=d.about_active||false;
     }
 
-    function saveAbout() { db.ref(DB_PATH).update({ about_text: document.getElementById('editor-about').innerHTML, about_active: document.getElementById('in-about-active').checked }).then(()=>alert("تم")); }
-    function saveSettings() { db.ref(DB_PATH).update({ whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, maintenance_mode: document.getElementById('in-maintenance').checked, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value, insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value }).then(()=>alert("تم")); }
+    function saveAbout() { db.ref(DB_PATH).update({ about_text: document.getElementById('editor-about').innerHTML, about_active: document.getElementById('in-about-active').checked }).then(()=>alert("تم الحفظ")); }
+    function saveSettings() { db.ref(DB_PATH).update({ whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, maintenance_mode: document.getElementById('in-maintenance').checked, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value, insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value }).then(()=>alert("تم الحفظ")); }
     function addSec() { const n = document.getElementById('new-sec-in').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); }
     function addAlbum() { const n = document.getElementById('new-alb-in').value; if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(()=>document.getElementById('new-alb-in').value=''); }
-    function publishPhotos() { const p = document.getElementById('upload-target-sel').value, u = document.getElementById('links-in').value.split('\n').filter(x=>x.trim()); if(!p || !u.length) return alert("حدد الوجهة"); u.forEach(url => db.ref(DB_PATH+'/'+p+'/imgs').push({url})); alert("تم"); document.getElementById('links-in').value=''; }
+    function publishPhotos() { const p = document.getElementById('upload-target-sel').value, u = document.getElementById('links-in').value.split('\n').filter(x=>x.trim()); if(!p || !u.length) return alert("حدد الوجهة والروابط"); u.forEach(url => db.ref(DB_PATH+'/'+p+'/imgs').push({url: url.trim()})); alert("تم النشر"); document.getElementById('links-in').value=''; }
     function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
     function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c=> { if(c.id!==id) c.style.display='none'; }); const el = document.getElementById(id); el.style.display = el.style.display==='block'?'none':'block'; }
     function toggleBox(id) { document.getElementById(id).classList.toggle('open'); }
@@ -251,7 +248,7 @@
     function drawAlbums(albs) { if(!albs) return ''; return Object.keys(albs).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albs[id].name}</h3></div>`).join(''); }
     function openImg(u) { document.getElementById('viewer-img').src = u; document.getElementById('viewer-wm-text').innerText = currentData.wm_text || ''; document.getElementById('viewer').style.display='flex'; }
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num}?text=السلام عليكم`); }
-    function whatsappOrder(u) { window.open(`https://wa.me/${currentData.whatsapp_num}?text=استفسار عن: ${u}`); }
+    function whatsappOrder(u) { window.open(`https://wa.me/${currentData.whatsapp_num}?text=استفسار عن التصميم: ${u}`); }
 </script>
 </body>
 </html>
