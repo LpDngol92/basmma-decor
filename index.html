@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v127</title>
+    <title>بصمة غير | النسخة النهائية v128</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -35,35 +35,42 @@
         .grid { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
         
         .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.1); position: relative; }
-        .img-container { position: relative; width: 100%; aspect-ratio: 1/1; cursor: pointer; }
+        .img-container { position: relative; width: 100%; aspect-ratio: 1/1; cursor: pointer; overflow: hidden; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* الووتر مارك على الكارد */
-        .wm-tag { position: absolute; bottom: 5px; right: 5px; font-size: 0.6rem; color: #fff; background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; pointer-events: none; z-index: 2; }
+        /* الووتر مارك على الكارد (شفافة ومتوهجة بالأسفل) */
+        .wm-tag { 
+            position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            font-size: 0.7rem; font-weight: 900; color: rgba(255, 255, 255, 0.3);
+            text-shadow: 0 0 5px var(--gold); pointer-events: none; z-index: 2; white-space: nowrap;
+        }
         
         .btn-order { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; }
 
         .social-icons { display: flex; justify-content: center; gap: 20px; margin-top: 30px; }
-        .social-icons a { color: var(--gold); font-size: 1.8rem; }
+        .social-icons a { color: var(--gold); font-size: 1.8rem; transition: 0.3s; }
 
-        /* الووتر مارك عند التكبير */
-        .viewer-wm { position: absolute; bottom: 20px; right: 20px; color: rgba(255,255,255,0.7); font-weight: 800; font-size: 1.2rem; pointer-events: none; text-shadow: 1px 1px 5px #000; }
+        /* الووتر مارك عند التكبير (خافتة جداً ومتوهجة في المنتصف بشكل صغير) */
+        #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000000; display: none; align-items: center; justify-content: center; }
+        #viewer img { max-width: 95%; max-height: 90vh; border: 1px solid var(--gold); border-radius: 10px; }
+        .viewer-wm { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.15); font-weight: 900; font-size: 1.2rem;
+            pointer-events: none; text-shadow: 0 0 10px var(--gold); user-select: none; z-index: 1000001;
+        }
 
         .admin-box { max-width: 900px; margin: 20px auto; background: #111; padding: 20px; border-radius: 15px; border: 1px solid var(--gold); }
         .collapse-section { background: #1a1a1c; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
         .collapse-btn { width: 100%; padding: 15px; background: none; border: none; color: var(--gold); font-weight: 800; text-align: right; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 15px; border-top: 1px solid #333; }
         input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
-        
-        #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000000; display: none; align-items: center; justify-content: center; }
-        #viewer img { max-width: 95%; max-height: 90vh; border: 1px solid var(--gold); border-radius: 10px; }
         #hidden-trigger { position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 200000000; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div id="splash"> <h2 style="color:var(--gold); font-size:2rem;">بصمة غير...</h2> </div>
-<div id="maintenance-screen"> <h1 style="color:var(--gold);">الموقع في صيانة</h1> <p>نعود قريباً...</p> </div>
+<div id="maintenance-screen"> <h1 style="color:var(--gold);">الموقع في صيانة</h1> <p>نعمل على التحديث...</p> </div>
 
 <div id="news-container" class="news-ticker">
     <div class="ticker-title">تنبيه</div>
@@ -85,14 +92,14 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">الإدارة v127</h2>
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v128</h2>
         
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_up')">📸 رفع الصور <i class="fas fa-upload"></i></button>
             <div id="c_up" class="collapse-content">
                 <iframe src="https://www.0zz0.com/" style="width:100%; height:250px; background:#fff; border-radius:10px;"></iframe>
                 <select id="upload-target-sel"></select>
-                <textarea id="links-in" placeholder="روابط الصور..."></textarea>
+                <textarea id="links-in" placeholder="روابط الصور هنا..."></textarea>
                 <button onclick="publishPhotos()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">نشر</button>
             </div>
         </div>
@@ -125,25 +132,25 @@
         </div>
 
         <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_social')">🔗 مواقع التواصل <i class="fas fa-share-nodes"></i></button>
+            <button class="collapse-btn" onclick="toggleCol('c_social')">🔗 التواصل الاجتماعي <i class="fas fa-share-nodes"></i></button>
             <div id="c_social" class="collapse-content">
                 <input type="text" id="in-insta" placeholder="إنستقرام">
                 <input type="text" id="in-tiktok" placeholder="تيك توك">
                 <input type="text" id="in-snap" placeholder="سناب">
-                <input type="text" id="in-loc" placeholder="قوقل ماب">
-                <button onclick="saveSocial()" style="width:100%; background:var(--green); padding:10px; border:none;">حفظ</button>
+                <input type="text" id="in-loc" placeholder="رابط الموقع">
+                <button onclick="saveSocial()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none;">حفظ</button>
             </div>
         </div>
 
         <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات <i class="fas fa-cog"></i></button>
+            <button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات العامة <i class="fas fa-cog"></i></button>
             <div id="c_set" class="collapse-content">
                 <label><input type="checkbox" id="in-maintenance"> وضع الصيانة</label><br><br>
                 <input type="text" id="in-name" placeholder="اسم الموقع">
                 <input type="text" id="in-wa" placeholder="واتساب">
                 <input type="text" id="in-logo" placeholder="رابط الشعار">
                 <input type="text" id="in-hbg" placeholder="رابط الخلفية">
-                <input type="text" id="in-wm" placeholder="نص الحقوق (الوتر مارك)">
+                <input type="text" id="in-wm" placeholder="نص الوتر مارك">
                 <textarea id="in-news" placeholder="شريط الأخبار"></textarea>
                 <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ</button>
             </div>
@@ -167,12 +174,11 @@
         currentData = snap.val() || {}; 
         document.getElementById('splash').style.display = 'none';
         const mScreen = document.getElementById('maintenance-screen');
-        if(currentData.maintenance_mode && !isAdmin) mScreen.style.display = 'flex';
-        else mScreen.style.display = 'none';
-
+        mScreen.style.display = (currentData.maintenance_mode && !isAdmin) ? 'flex' : 'none';
         renderAll(); renderAdminLists();
-        if(currentData.news_bar) { document.getElementById('news-container').style.display='flex'; document.getElementById('news-text').innerText=currentData.news_bar; }
-        else document.getElementById('news-container').style.display='none';
+        const nt = document.getElementById('news-container');
+        if(currentData.news_bar) { nt.style.display='flex'; document.getElementById('news-text').innerText=currentData.news_bar; }
+        else nt.style.display='none';
     });
 
     setInterval(updateWorkStatus, 1000);
@@ -323,18 +329,21 @@
     function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c=> { if(c.id!==id) c.style.display='none'; }); const el = document.getElementById(id); el.style.display = el.style.display==='block'?'none':'block'; }
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
     function whatsappOrder(url) { window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); }
+    
     function openImg(url) { 
         document.getElementById('viewer-img').src = url; 
         document.getElementById('viewer-wm-text').innerText = currentData.wm_text || '';
         document.getElementById('viewer').style.display='flex'; 
     }
+
     function drawImgs(imgs) { 
         if(!imgs) return '<p style="text-align:center; padding:50px;">قريباً...</p>'; 
+        const wmTxt = currentData.wm_text || '';
         return Object.keys(imgs).reverse().map(id => `
             <div class="card">
                 <div class="img-container" onclick="openImg('${imgs[id].url}')">
                     <img src="${imgs[id].url}" loading="lazy">
-                    <div class="wm-tag">${currentData.wm_text || ''}</div>
+                    <div class="wm-tag">${wmTxt}</div>
                 </div>
                 <button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button>
             </div>`).join(''); 
