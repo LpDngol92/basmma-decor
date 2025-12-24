@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v141</title>
+    <title>بصمة غير | v142</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -35,6 +35,7 @@
 
         .reviews-display { max-width: 550px; margin: 15px auto; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px solid rgba(197,160,89,0.1); }
         .review-card { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: right; }
+        .review-stars { color: #f1c40f; font-size: 0.75rem; }
 
         .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; flex-grow: 1; }
         .sec.active { display: block; }
@@ -54,6 +55,8 @@
         .collapse-section { background: #1a1a1c; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
         .collapse-btn { width: 100%; padding: 15px; background: none; border: none; color: var(--gold); font-weight: 800; text-align: right; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 15px; border-top: 1px solid #333; }
+        .editor-tools { display: flex; gap: 5px; margin-bottom: 10px; }
+        .editor-tools button { background: #333; color: #fff; border: 1px solid #444; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
         input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
         #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000000; display: none; align-items: center; justify-content: center; }
         #viewer img { max-width: 95%; max-height: 90vh; border: 1px solid var(--gold); border-radius: 10px; }
@@ -80,15 +83,15 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v141</h2>
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v142</h2>
         
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_up')">📸 رفع الصور <i class="fas fa-upload"></i></button>
             <div id="c_up" class="collapse-content">
-                <iframe src="https://www.0zz0.com/" style="width:100%; height:200px; background:#fff; border-radius:10px; margin-bottom:10px;"></iframe>
+                <iframe src="https://www.0zz0.com/" style="width:100%; height:180px; background:#fff; border-radius:10px; margin-bottom:10px;"></iframe>
                 <select id="upload-target-sel"></select>
-                <textarea id="links-in" placeholder="ضع روابط الصور هنا (كل رابط في سطر)"></textarea>
-                <button onclick="publishPhotos()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">نشر الصور</button>
+                <textarea id="links-in" placeholder="روابط الصور..."></textarea>
+                <button onclick="publishPhotos()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">نشر</button>
             </div>
         </div>
 
@@ -103,13 +106,11 @@
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_tabs')">📁 الأقسام والمجلدات <i class="fas fa-folder"></i></button>
             <div id="c_tabs" class="collapse-content">
-                <h4 style="color:var(--gold); margin-bottom:10px;">إدارة الأقسام الأساسية</h4>
                 <div id="admin-sec-list"></div>
-                <div style="display:flex; gap:5px;"><input type="text" id="new-sec-in" placeholder="اسم قسم جديد"><button onclick="addSec()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
+                <div style="display:flex; gap:5px;"><input type="text" id="new-sec-in" placeholder="قسم جديد"><button onclick="addSec()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
                 <hr style="margin:15px 0; border:1px solid #333;">
-                <h4 style="color:var(--gold); margin-bottom:10px;">إدارة مجلدات أعمالنا</h4>
                 <div id="admin-alb-list"></div>
-                <div style="display:flex; gap:5px;"><input type="text" id="new-alb-in" placeholder="اسم مجلد جديد"><button onclick="addAlbum()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
+                <div style="display:flex; gap:5px;"><input type="text" id="new-alb-in" placeholder="مجلد جديد"><button onclick="addAlbum()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
             </div>
         </div>
 
@@ -117,37 +118,30 @@
             <button class="collapse-btn" onclick="toggleCol('c_about')">📖 من نحن <i class="fas fa-edit"></i></button>
             <div id="c_about" class="collapse-content">
                 <label><input type="checkbox" id="in-about-active"> تفعيل القسم</label>
+                <div class="editor-tools">
+                    <button onclick="execCmd('bold')">B</button><button onclick="execCmd('italic')">I</button><button onclick="execCmd('justifyRight')">R</button><button onclick="execCmd('justifyCenter')">C</button>
+                </div>
                 <div id="editor-about" contenteditable="true" style="min-height:150px; background:#000; border:1px solid #444; padding:10px; border-radius:8px; color:#fff; text-align:right; outline:none; margin-top:10px;"></div>
-                <button onclick="saveAbout()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; margin-top:10px;">حفظ التغييرات</button>
+                <button onclick="saveAbout()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; margin-top:10px;">حفظ</button>
             </div>
         </div>
 
         <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_social')">🔗 التواصل واللوكيشن <i class="fas fa-share-nodes"></i></button>
-            <div id="c_social" class="collapse-content">
-                <input type="text" id="in-insta" placeholder="رابط إنستقرام">
-                <input type="text" id="in-tiktok" placeholder="رابط تيك توك">
-                <input type="text" id="in-snap" placeholder="رابط سناب شات">
-                <input type="text" id="in-loc" placeholder="رابط قوقل ماب (اللوكيشن)">
-                <button onclick="saveSocial()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none;">حفظ الروابط</button>
-            </div>
+            <button class="collapse-btn" onclick="toggleCol('c_reviews_adm')">⭐ إدارة التقييمات <i class="fas fa-star"></i></button>
+            <div id="c_reviews_adm" class="collapse-content"><div id="admin-reviews-list"></div></div>
         </div>
 
         <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات العامة <i class="fas fa-cog"></i></button>
+            <button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات <i class="fas fa-cog"></i></button>
             <div id="c_set" class="collapse-content">
                 <label><input type="checkbox" id="in-maintenance"> وضع الصيانة</label><br><br>
-                <input type="text" id="in-wa" placeholder="رقم الواتساب">
-                <input type="text" id="in-logo" placeholder="رابط الشعار">
-                <input type="text" id="in-hbg" placeholder="رابط خلفية الهيدر">
-                <input type="text" id="in-wm" placeholder="نص الوتر مارك">
-                <textarea id="in-news" placeholder="نص شريط الأخبار"></textarea>
-                <input type="text" id="in-footer" placeholder="نص الحقوق الثابت (أسفل الموقع)">
-                <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ الإعدادات</button>
+                <input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-logo" placeholder="رابط الشعار"><input type="text" id="in-hbg" placeholder="رابط الخلفية"><input type="text" id="in-wm" placeholder="نص الوتر مارك"><textarea id="in-news" placeholder="الأخبار"><input type="text" id="in-footer" placeholder="نص الحقوق">
+                <input type="text" id="in-insta" placeholder="إنستقرام"><input type="text" id="in-tiktok" placeholder="تيك توك"><input type="text" id="in-snap" placeholder="سناب"><input type="text" id="in-loc" placeholder="لوكيشن">
+                <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ</button>
             </div>
         </div>
 
-        <button onclick="location.reload()" style="width:100%; background:var(--red); padding:15px; border:none; margin-top:20px; color:#fff; font-weight:800;">تسجيل خروج</button>
+        <button onclick="location.reload()" style="width:100%; background:var(--red); padding:15px; border:none; margin-top:20px; color:#fff;">خروج</button>
     </div>
 </div>
 
@@ -168,8 +162,10 @@
         renderAll();
         if(currentData.news_bar) { document.getElementById('news-container').style.display='flex'; document.getElementById('news-text').innerText=currentData.news_bar; }
         else document.getElementById('news-container').style.display='none';
-        if(isAdmin) { renderAdminLists(); }
+        if(isAdmin) { renderAdminLists(); renderAdminReviews(); }
     });
+
+    function execCmd(c) { document.execCommand(c, false, null); }
 
     function renderAll() {
         const d = currentData;
@@ -182,55 +178,57 @@
         navHtml += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
         document.getElementById('navbar').innerHTML = navHtml;
 
-        let aboutSection = (d.about_active) ? `<button class="about-toggle" onclick="toggleBox('about-box')">من نحن</button><div id="about-box" class="about-content">${d.about_text || ''}</div>` : '';
+        let about = (d.about_active) ? `<button class="about-toggle" onclick="toggleBox('about-box')">من نحن</button><div id="about-box" class="about-content">${d.about_text || ''}</div>` : '';
+        let hasRated = localStorage.getItem('hasRated_v28');
+        let reviewBtn = !hasRated ? `<button class="review-toggle" onclick="toggleBox('rev-f')">أضف تقييمك</button>` : '';
         
-        let homeContent = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutSection}
-            <div style="background:rgba(255,255,255,0.03); padding:30px; border-radius:20px; max-width:550px; margin:20px auto; border: 1px solid #222;">
-                <p style="color:var(--gold); font-weight:900; margin-bottom:15px;">تواصل معنا</p>
-                <button onclick="whatsappGlobal()" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; font-weight:900;">واتساب <i class="fab fa-whatsapp" style="color:#25D366;"></i></button>
-                <div class="social-icons">
-                    ${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}
-                    ${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}
-                    ${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}
-                    ${d.location_url ? `<a href="${d.location_url}" target="_blank"><i class="fas fa-location-dot"></i></a>`:''}
-                </div>
-            </div></div></section>`;
+        let revForm = `<div id="rev-f" class="review-form-container">
+            <input type="text" id="rn" placeholder="الاسم"><select id="rs"><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option><option value="3">⭐⭐⭐</option></select>
+            <textarea id="rt" placeholder="رأيك..."></textarea><button onclick="sendReview()" style="width:100%; background:var(--gold); padding:10px; border:none; border-radius:8px;">إرسال</button>
+        </div>`;
+
+        let home = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${about}${reviewBtn}${revForm}<div class="reviews-display">${drawReviews(d.reviews)}</div><div class="social-icons">${d.insta_url?`<a href="${d.insta_url}"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url?`<a href="${d.tiktok_url}"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url?`<a href="${d.snap_url}"><i class="fab fa-snapchat"></i></a>`:''}${d.location_url?`<a href="${d.location_url}"><i class="fas fa-location-dot"></i></a>`:''}</div><br><button onclick="whatsappGlobal()" class="btn-order" style="width:auto; padding:15px 40px; border-radius:50px; background:#fff; color:#000;">واتساب <i class="fab fa-whatsapp" style="color:#25d366;"></i></button></div></section>`;
         
-        let contentHtml = homeContent;
-        if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs, 'pages/'+id)}</div></section>`);
+        let contentHtml = home;
+        if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
         contentHtml += `<section class="sec ${currentTab==='works'?'active':''}"><div class="grid">${drawAlbums(d.albums)}</div></section>`;
-        if(d.albums) Object.keys(d.albums).forEach(id => contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}"><button onclick="go('works')" style="color:var(--gold); background:none; border:none; margin-bottom:15px; cursor:pointer;">← عودة للأعمال</button><div class="grid">${drawImgs(d.albums[id].imgs, 'albums/'+id)}</div></section>`);
+        if(d.albums) Object.keys(d.albums).forEach(id => contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}"><button onclick="go('works')" style="color:var(--gold); margin-bottom:15px; background:none; border:none;">← عودة</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`);
         
         document.getElementById('content-area').innerHTML = contentHtml;
     }
 
     function renderAdminLists() {
-        const d = currentData; let sL = '', aL = '', options = '<option value="">-- اختر القسم أو المجلد --</option>';
+        const d = currentData; let sL = '', aL = '', opts = '<option value="">-- اختر الوجهة --</option>';
         if(d.pages) Object.keys(d.pages).forEach(id => {
-            sL += `<div style="display:flex; gap:5px; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="if(confirm('حذف؟')) db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:5px; border-radius:5px;">حذف</button></div>`;
-            options += `<option value="pages/${id}">${d.pages[id].title} (قسم)</option>`;
+            sL += `<div style="display:flex; gap:5px; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="if(confirm('حذف؟')) db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px;">حذف</button></div>`;
+            opts += `<option value="pages/${id}">${d.pages[id].title} (قسم)</option>`;
         });
         if(d.albums) Object.keys(d.albums).forEach(id => {
-            aL += `<div style="display:flex; gap:5px; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="if(confirm('حذف؟')) db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:5px; border-radius:5px;">حذف</button></div>`;
-            options += `<option value="albums/${id}">${d.albums[id].name} (مجلد)</option>`;
+            aL += `<div style="display:flex; gap:5px; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="if(confirm('حذف؟')) db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px;">حذف</button></div>`;
+            opts += `<option value="albums/${id}">${d.albums[id].name} (مجلد)</option>`;
         });
-        document.getElementById('admin-sec-list').innerHTML = sL;
-        document.getElementById('admin-alb-list').innerHTML = aL;
-        document.getElementById('upload-target-sel').innerHTML = options;
-        document.getElementById('manage-sec-sel').innerHTML = options;
+        document.getElementById('admin-sec-list').innerHTML = sL; document.getElementById('admin-alb-list').innerHTML = aL;
+        document.getElementById('upload-target-sel').innerHTML = opts; document.getElementById('manage-sec-sel').innerHTML = opts;
     }
 
     function renderPhotoManager(path) { 
         const grid = document.getElementById('photo-manager-grid'); grid.innerHTML = ''; if(!path) return; 
         const [type, id] = path.split('/'); const folder = currentData[type] && currentData[type][id]; 
         if(folder && folder.imgs) Object.keys(folder.imgs).reverse().forEach(imgId => { 
-            grid.innerHTML += `<div style="background:#222; padding:5px; border-radius:5px;"><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${imgId}')" style="width:100%; background:var(--red); border:none; color:#fff; margin-top:5px; padding:5px; border-radius:5px;">حذف</button></div>`; 
+            grid.innerHTML += `<div style="background:#222; padding:5px; border-radius:5px;"><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${imgId}')" style="width:100%; background:var(--red); border:none; color:#fff; margin-top:5px; padding:5px;">حذف</button></div>`; 
         }); 
     }
 
-    function deleteImg(p, id) { if(confirm("حذف الصورة نهائياً؟")) db.ref(`${DB_PATH}/${p}/imgs/${id}`).remove().then(()=>renderPhotoManager(p)); }
-    function publishPhotos() { const path = document.getElementById('upload-target-sel').value; const urls = document.getElementById('links-in').value.split('\n').filter(u=>u.trim()); if(!path || !urls.length) return alert("يرجى تحديد الوجهة وإضافة روابط"); urls.forEach(u => db.ref(DB_PATH+'/'+path+'/imgs').push({url: u.trim()})); alert("تم النشر بنجاح"); document.getElementById('links-in').value = ''; }
-    function checkAccess() { const pass = prompt("رمز الدخول:"); db.ref(AUTH_PATH).once('value').then(snap => { if(pass === String(snap.val())) { isAdmin=true; document.getElementById('admin-panel').style.display='block'; fillAdminFields(); } }); }
+    function deleteImg(p, id) { if(confirm("حذف؟")) db.ref(`${DB_PATH}/${p}/imgs/${id}`).remove().then(()=>renderPhotoManager(p)); }
+    function sendReview() {
+        const n = document.getElementById('rn').value, t = document.getElementById('rt').value, s = document.getElementById('rs').value;
+        if(!n || !t) return alert("املا البيانات");
+        db.ref(DB_PATH + '/reviews').push({ name:n, text:t, stars:s, date: Date.now() }).then(() => { localStorage.setItem('hasRated_v28','true'); alert("تم!"); renderAll(); });
+    }
+
+    function drawReviews(revs) { if(!revs) return ''; return Object.keys(revs).reverse().map(id => { const r = revs[id]; return `<div class="review-card"><div><b>${r.name}</b> <span class="review-stars">${'★'.repeat(r.stars)}</span></div><p style="font-size:0.85rem;">${r.text}</p></div>`; }).join(''); }
+    function renderAdminReviews() { const d = currentData; let h = ''; if(d.reviews) Object.keys(d.reviews).reverse().forEach(id => { const r = d.reviews[id]; h += `<div style="background:#222; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between;"><span>${r.name}</span><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px;">حذف</button></div>`; }); document.getElementById('admin-reviews-list').innerHTML = h; }
+    function checkAccess() { const p = prompt("الرمز:"); db.ref(AUTH_PATH).once('value', s => { if(p === String(s.val())) { isAdmin=true; document.getElementById('admin-panel').style.display='block'; fillAdminFields(); } }); }
     function fillAdminFields() {
         const d = currentData; document.getElementById('in-wa').value=d.whatsapp_num||''; document.getElementById('in-logo').value=d.site_logo||'';
         document.getElementById('in-hbg').value=d.header_bg||''; document.getElementById('in-wm').value=d.wm_text||'';
@@ -241,19 +239,19 @@
         document.getElementById('in-about-active').checked=d.about_active||false;
     }
 
-    function saveAbout() { db.ref(DB_PATH).update({ about_text: document.getElementById('editor-about').innerHTML, about_active: document.getElementById('in-about-active').checked }).then(()=>alert("تم الحفظ")); }
-    function saveSocial() { db.ref(DB_PATH).update({ insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value }).then(()=>alert("تم الحفظ")); }
-    function saveSettings() { db.ref(DB_PATH).update({ whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, maintenance_mode: document.getElementById('in-maintenance').checked, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value }).then(()=>alert("تم الحفظ")); }
+    function saveAbout() { db.ref(DB_PATH).update({ about_text: document.getElementById('editor-about').innerHTML, about_active: document.getElementById('in-about-active').checked }).then(()=>alert("تم")); }
+    function saveSettings() { db.ref(DB_PATH).update({ whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, maintenance_mode: document.getElementById('in-maintenance').checked, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value, insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value }).then(()=>alert("تم")); }
     function addSec() { const n = document.getElementById('new-sec-in').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); }
     function addAlbum() { const n = document.getElementById('new-alb-in').value; if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(()=>document.getElementById('new-alb-in').value=''); }
+    function publishPhotos() { const p = document.getElementById('upload-target-sel').value, u = document.getElementById('links-in').value.split('\n').filter(x=>x.trim()); if(!p || !u.length) return alert("حدد الوجهة"); u.forEach(url => db.ref(DB_PATH+'/'+p+'/imgs').push({url})); alert("تم"); document.getElementById('links-in').value=''; }
     function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
     function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c=> { if(c.id!==id) c.style.display='none'; }); const el = document.getElementById(id); el.style.display = el.style.display==='block'?'none':'block'; }
     function toggleBox(id) { document.getElementById(id).classList.toggle('open'); }
-    function drawImgs(imgs, path) { if(!imgs) return '<p style="text-align:center; padding:50px; width:100%;">قريباً...</p>'; const wmTxt = currentData.wm_text || ''; return Object.keys(imgs).reverse().map(id => `<div class="card"><div class="img-container" onclick="openImg('${imgs[id].url}')"><img src="${imgs[id].url}" loading="lazy"><div class="wm-tag">${wmTxt}</div></div><button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button></div>`).join(''); }
+    function drawImgs(imgs) { if(!imgs) return '<p style="text-align:center; padding:50px; width:100%;">قريباً...</p>'; const wm = currentData.wm_text || ''; return Object.keys(imgs).reverse().map(id => `<div class="card"><div class="img-container" onclick="openImg('${imgs[id].url}')"><img src="${imgs[id].url}" loading="lazy"><div class="wm-tag">${wm}</div></div><button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button></div>`).join(''); }
     function drawAlbums(albs) { if(!albs) return ''; return Object.keys(albs).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albs[id].name}</h3></div>`).join(''); }
-    function openImg(url) { document.getElementById('viewer-img').src = url; document.getElementById('viewer-wm-text').innerText = currentData.wm_text || ''; document.getElementById('viewer').style.display='flex'; }
-    function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
-    function whatsappOrder(url) { window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); }
+    function openImg(u) { document.getElementById('viewer-img').src = u; document.getElementById('viewer-wm-text').innerText = currentData.wm_text || ''; document.getElementById('viewer').style.display='flex'; }
+    function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num}?text=السلام عليكم`); }
+    function whatsappOrder(u) { window.open(`https://wa.me/${currentData.whatsapp_num}?text=استفسار عن: ${u}`); }
 </script>
 </body>
 </html>
