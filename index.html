@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v138</title>
+    <title>بصمة غير | v139</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -11,7 +11,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;800;900&display=swap');
         :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.9); --green: #2ecc71; --red: #e74c3c; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; }
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
         
         #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease; }
         #maintenance-screen { position: fixed; inset: 0; background: #000; z-index: 999999; display: none; align-items: center; justify-content: center; text-align: center; flex-direction: column; }
@@ -36,18 +36,14 @@
 
         .reviews-display { max-width: 550px; margin: 15px auto; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px solid rgba(197,160,89,0.1); }
         .review-card { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: right; }
-        .review-card:last-child { border-bottom: none; }
-        .review-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .review-name { font-weight: 800; color: var(--gold); font-size: 0.9rem; }
         .review-stars { color: #f1c40f; font-size: 0.75rem; }
-        .review-text { font-size: 0.85rem; color: #ccc; line-height: 1.4; }
 
         .star-rating { display: flex; flex-direction: row-reverse; justify-content: center; gap: 5px; margin-bottom: 15px; }
         .star-rating input { display: none; }
         .star-rating label { font-size: 25px; color: #444; cursor: pointer; transition: 0.2s; }
         .star-rating input:checked ~ label, .star-rating label:hover, .star-rating label:hover ~ label { color: #f1c40f; }
 
-        .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; }
+        .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; flex-grow: 1; }
         .sec.active { display: block; }
         .grid { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
         .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.1); position: relative; }
@@ -63,6 +59,8 @@
         .social-icons { display: flex; justify-content: center; gap: 25px; margin-top: 30px; }
         .social-icons a { color: var(--gold); font-size: 1.8rem; transition: 0.3s; }
 
+        footer { background: #000; padding: 20px; text-align: center; border-top: 1px solid #1a1a1c; color: #777; font-size: 0.85rem; margin-top: auto; }
+
         #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 1000000; display: none; align-items: center; justify-content: center; }
         #viewer img { max-width: 95%; max-height: 90vh; border: 1px solid var(--gold); border-radius: 10px; }
 
@@ -70,6 +68,8 @@
         .collapse-section { background: #1a1a1c; border-radius: 10px; margin-bottom: 10px; border: 1px solid #333; }
         .collapse-btn { width: 100%; padding: 15px; background: none; border: none; color: var(--gold); font-weight: 800; text-align: right; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 15px; border-top: 1px solid #333; }
+        .editor-tools { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; background: #222; padding: 8px; border-radius: 8px; }
+        .editor-tools button { background: #333; color: #fff; border: 1px solid #444; padding: 5px 12px; border-radius: 4px; cursor: pointer; }
         input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
         #hidden-trigger { position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 200000000; cursor: pointer; }
     </style>
@@ -81,7 +81,7 @@
 
 <header>
     <div id="header-bg" class="header-bg"></div>
-    <img id="site-logo" class="logo-img" src="" alt="">
+    <img id="site-logo" class="logo-img" src="">
 </header>
 
 <nav id="navbar"></nav>
@@ -92,6 +92,8 @@
 
 <main id="content-area"></main>
 
+<footer id="site-footer"></footer>
+
 <div id="viewer" onclick="this.style.display='none'">
     <img id="viewer-img" src="">
     <div id="viewer-wm-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255, 255, 255, 0.18); font-weight: 900; font-size: 1.3rem; pointer-events: none; text-shadow: 0 0 12px var(--gold); z-index: 1000001;"></div>
@@ -99,7 +101,7 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v138</h2>
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v139</h2>
         
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_reviews_adm')">⭐ إدارة التقييمات <i class="fas fa-star"></i></button>
@@ -110,6 +112,12 @@
             <button class="collapse-btn" onclick="toggleCol('c_about')">📖 من نحن (تنسيق متطور) <i class="fas fa-edit"></i></button>
             <div id="c_about" class="collapse-content">
                 <label><input type="checkbox" id="in-about-active"> تفعيل القسم</label>
+                <div class="editor-tools">
+                    <button onclick="execCmd('bold')"><b>B</b></button>
+                    <button onclick="execCmd('italic')"><i>I</i></button>
+                    <button onclick="execCmd('justifyRight')"><i class="fas fa-align-right"></i></button>
+                    <button onclick="execCmd('justifyCenter')"><i class="fas fa-align-center"></i></button>
+                </div>
                 <div id="editor-about" contenteditable="true" style="min-height:200px; background:#000; border:1px solid #444; padding:15px; border-radius:8px; color:#fff; outline:none; text-align:right;"></div>
                 <button onclick="saveAbout()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px; margin-top:10px;">حفظ</button>
             </div>
@@ -118,7 +126,7 @@
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_up')">📸 رفع الصور <i class="fas fa-upload"></i></button>
             <div id="c_up" class="collapse-content">
-                <iframe src="https://www.0zz0.com/" style="width:100%; height:250px; background:#fff; border-radius:10px;"></iframe>
+                <iframe src="https://www.0zz0.com/" style="width:100%; height:200px; background:#fff; border-radius:10px; margin-bottom:10px;"></iframe>
                 <select id="upload-target-sel"></select>
                 <textarea id="links-in" placeholder="روابط الصور..."></textarea>
                 <button onclick="publishPhotos()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">نشر</button>
@@ -165,6 +173,7 @@
             <div id="c_set" class="collapse-content">
                 <label><input type="checkbox" id="in-maintenance"> وضع الصيانة</label><br><br>
                 <input type="text" id="in-name" placeholder="اسم الموقع"><input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-logo" placeholder="رابط الشعار"><input type="text" id="in-hbg" placeholder="رابط الخلفية"><input type="text" id="in-wm" placeholder="نص الوتر مارك"><textarea id="in-news" placeholder="شريط الأخبار"></textarea>
+                <input type="text" id="in-footer" placeholder="نص الحقوق (أسفل الموقع)">
                 <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ</button>
             </div>
         </div>
@@ -187,11 +196,14 @@
         document.getElementById('splash').style.display = 'none';
         const mScreen = document.getElementById('maintenance-screen');
         mScreen.style.display = (currentData.maintenance_mode && !isAdmin) ? 'flex' : 'none';
+        document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة لبصمة غير للديكور';
         renderAll();
         if(currentData.news_bar) { document.getElementById('news-container').style.display='flex'; document.getElementById('news-text').innerText=currentData.news_bar; }
         else document.getElementById('news-container').style.display='none';
         if(isAdmin) { renderAdminLists(); renderAdminReviews(); }
     });
+
+    function execCmd(command) { document.execCommand(command, false, null); }
 
     function renderAll() {
         const d = currentData;
@@ -237,11 +249,7 @@
         const text = document.getElementById('rev-text').value;
         const star = document.querySelector('input[name="stars"]:checked');
         if(!name || !text || !star) return alert("يرجى ملء جميع الحقول");
-        db.ref(DB_PATH + '/reviews').push({ name: name, text: text, stars: star.value, date: Date.now() }).then(() => {
-            localStorage.setItem('hasRated_v28', 'true');
-            alert("شكراً لتقييمك!");
-            renderAll();
-        });
+        db.ref(DB_PATH + '/reviews').push({ name: name, text: text, stars: star.value, date: Date.now() }).then(() => { localStorage.setItem('hasRated_v28', 'true'); alert("شكراً لتقييمك!"); renderAll(); });
     }
 
     function drawReviews(revs) {
@@ -275,7 +283,6 @@
             const toMins = (t) => { if(!t) return -1; const [h, m] = t.split(':').map(Number); return (h * 60) + m; };
             const curMin = now.getHours() * 60 + now.getMinutes();
             if (curMin >= toMins(conf.s1_s) && curMin < toMins(conf.s1_e)) isOpen = true;
-            if (!isOpen && conf.s2_a) { const s2S = toMins(conf.s2_s), s2E = toMins(conf.s2_e); if (curMin >= s2S && curMin < s2E) isOpen = true; }
         } 
         const cont = document.getElementById('status-container');
         if(cont) cont.innerHTML = isOpen ? `<div class="status-badge open-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مفتوح الآن</div>` : `<div class="status-badge closed-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مغلق الآن</div>`;
@@ -291,10 +298,10 @@
         document.getElementById('in-insta').value=d.insta_url||''; document.getElementById('in-tiktok').value=d.tiktok_url||'';
         document.getElementById('in-snap').value=d.snap_url||''; document.getElementById('in-loc').value=d.location_url||'';
         document.getElementById('editor-about').innerHTML=d.about_text||''; document.getElementById('in-about-active').checked=d.about_active||false;
+        document.getElementById('in-footer').value=d.footer_text||'';
         
         const ed = document.getElementById('schedule-editor'); ed.innerHTML = '';
-        const customOrder = [6, 0, 1, 2, 3, 4, 5];
-        customOrder.forEach((jsDay) => {
+        [6,0,1,2,3,4,5].forEach((jsDay) => {
             const dayName = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay];
             const s = (d.work_schedule && d.work_schedule[jsDay]) ? d.work_schedule[jsDay] : {active:false, s1_s:"09:00", s1_e:"13:00"};
             ed.innerHTML += `<div style="background:#222; padding:10px; margin-bottom:5px; border-radius:8px;"><label><input type="checkbox" id="check-${jsDay}" ${s.active?'checked':''}> ${dayName}</label><div style="display:flex; gap:5px;"><input type="time" id="s1s-${jsDay}" value="${s.s1_s}"><input type="time" id="s1e-${jsDay}" value="${s.s1_e}"></div></div>`;
@@ -303,12 +310,31 @@
 
     function renderAdminLists() {
         const d = currentData; let sL = '', aL = '', upSel = '<option value="">-- اختر الوجهة --</option>';
-        if(d.pages) Object.keys(d.pages).forEach(id => { sL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; upSel += `<option value="pages/${id}">${d.pages[id].title}</option>`; });
-        if(d.albums) Object.keys(d.albums).forEach(id => { aL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; upSel += `<option value="albums/${id}">${d.albums[id].name}</option>`; });
+        if(d.pages) Object.keys(d.pages).forEach(id => { 
+            sL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; 
+            upSel += `<option value="pages/${id}">${d.pages[id].title}</option>`; 
+        });
+        if(d.albums) Object.keys(d.albums).forEach(id => { 
+            aL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; 
+            upSel += `<option value="albums/${id}">${d.albums[id].name}</option>`; 
+        });
         document.getElementById('admin-sec-list').innerHTML = sL; document.getElementById('admin-alb-list').innerHTML = aL;
         document.getElementById('upload-target-sel').innerHTML = upSel; document.getElementById('manage-sec-sel').innerHTML = upSel;
     }
 
+    function renderPhotoManager(path) { 
+        const grid = document.getElementById('photo-manager-grid'); grid.innerHTML = ''; 
+        if(!path) return; 
+        const [type, id] = path.split('/'); 
+        const folder = currentData[type] && currentData[type][id]; 
+        if(folder && folder.imgs) { 
+            Object.keys(folder.imgs).reverse().forEach(imgId => { 
+                grid.innerHTML += `<div style="background:#222; padding:5px; border-radius:5px;"><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${imgId}')" style="width:100%; background:var(--red); border:none; color:#fff; margin-top:5px; padding:5px; border-radius:4px;">حذف</button></div>`; 
+            }); 
+        } 
+    }
+
+    function deleteImg(path, imgId) { if(confirm("حذف الصورة؟")) db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove(); }
     function checkAccess() { const pass = prompt("الرمز:"); db.ref(AUTH_PATH).once('value').then(snap => { if(pass === String(snap.val())) { isAdmin=true; document.getElementById('admin-panel').style.display='block'; fillAdminFields(); } }); }
     function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
     function t12(t) { if(!t) return ""; let [h, m] = t.split(':'); h = parseInt(h); return `${h%12||12}:${m}${h>=12?'م':'ص'}`; }
@@ -316,7 +342,7 @@
     function toggleBox(id) { document.getElementById(id).classList.toggle('open'); }
     function saveAbout() { db.ref(DB_PATH).update({ about_text: document.getElementById('editor-about').innerHTML, about_active: document.getElementById('in-about-active').checked }).then(()=>alert("تم الحفظ")); }
     function saveSocial() { db.ref(DB_PATH).update({ insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value }).then(()=>alert("تم الحفظ")); }
-    function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, maintenance_mode: document.getElementById('in-maintenance').checked, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value }).then(()=>alert("تم الحفظ")); }
+    function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, maintenance_mode: document.getElementById('in-maintenance').checked, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value }).then(()=>alert("تم الحفظ")); }
     function addSec() { const n = document.getElementById('new-sec-in').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); }
     function addAlbum() { const n = document.getElementById('new-alb-in').value; if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(()=>document.getElementById('new-alb-in').value=''); }
     function publishPhotos() { const path = document.getElementById('upload-target-sel').value; const urls = document.getElementById('links-in').value.split('\n').filter(u=>u.trim()); if(!path || !urls.length) return alert("اختر الوجهة والروابط"); urls.forEach(u => db.ref(DB_PATH+'/'+path+'/imgs').push({url: u.trim()})); alert("تم النشر"); document.getElementById('links-in').value = ''; }
