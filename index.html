@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v148</title>
+    <title>بصمة غير | v149</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,7 +12,7 @@
         :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.9); --green: #2ecc71; --red: #e74c3c; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
-        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: 0.5s; opacity: 1; visibility: visible; }
+        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: 0.5s; }
         #splash.hidden { opacity: 0; visibility: hidden; }
         .news-ticker { background: transparent; color: var(--gold); height: 35px; display: none; align-items: center; overflow: hidden; position: relative; z-index: 999; margin-top: 5px; }
         .ticker-content { display: inline-block; white-space: nowrap; padding-right: 100%; animation: ticker-move 20s linear infinite; font-weight: 500; }
@@ -26,12 +26,15 @@
         .about-toggle, .review-toggle { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin: 5px; transition: 0.3s; font-size: 0.85rem; }
         .about-content, .review-form-container { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(255,255,255,0.03); border-radius: 15px; margin: 10px auto; max-width: 550px; }
         .about-content.open, .review-form-container.open { max-height: 1500px; padding: 20px; border: 1px solid rgba(197, 160, 89, 0.2); }
+        .reviews-display { max-width: 550px; margin: 15px auto; padding: 10px; background: rgba(255,255,255,0.02); border-radius: 15px; border: 1px solid rgba(197,160,89,0.1); }
+        .review-card { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: right; }
+        .review-stars { color: #f1c40f; font-size: 0.75rem; }
         .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; margin-top: 5px; font-weight: 800; }
         .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; }
         .sec.active { display: block; }
         .grid { display: grid; gap: 15px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
         .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.1); position: relative; }
-        .img-container { width: 100%; aspect-ratio: 1/1; cursor: pointer; position: relative; }
+        .img-container { width: 100%; aspect-ratio: 1/1; cursor: pointer; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
         .wm-tag { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 900; color: rgba(255, 255, 255, 0.35); text-shadow: 0 0 8px var(--gold); pointer-events: none; }
         .btn-order { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; }
@@ -46,52 +49,35 @@
     </style>
 </head>
 <body>
-
 <div id="splash"><h2 style="color:var(--gold);">بصمة غير...</h2></div>
-
-<header>
-    <div id="header-bg" class="header-bg"></div>
-    <img id="site-logo" class="logo-img" src="">
-</header>
-
+<header><div id="header-bg" class="header-bg"></div><img id="site-logo" class="logo-img" src=""></header>
 <nav id="navbar"></nav>
 <div id="news-container" class="news-ticker"><div class="ticker-content" id="news-text"></div></div>
-
 <main id="content-area"></main>
 <footer id="site-footer"></footer>
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v148</h2>
-        
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v149</h2>
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_up')">📸 رفع الصور <i class="fas fa-upload"></i></button>
             <div id="c_up" class="collapse-content">
                 <iframe src="https://www.0zz0.com/" style="width:100%; height:160px; background:#fff; border-radius:10px; margin-bottom:10px;"></iframe>
-                <select id="adm-up-target"></select>
-                <textarea id="links-in" placeholder="روابط الصور..."></textarea>
+                <select id="adm-up-target"></select><textarea id="links-in" placeholder="روابط الصور..."></textarea>
                 <button onclick="publishPhotos()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none;">نشر</button>
             </div>
         </div>
-
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_del')">🗑️ حذف الصور <i class="fas fa-trash"></i></button>
-            <div id="c_del" class="collapse-content">
-                <select id="adm-del-target" onchange="renderDelGrid(this.value)"></select>
-                <div id="del-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;"></div>
-            </div>
+            <div id="c_del" class="collapse-content"><select id="adm-del-target" onchange="renderDelGrid(this.value)"></select><div id="del-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px;"></div></div>
         </div>
-
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_tabs')">📁 الأقسام والمجلدات <i class="fas fa-folder"></i></button>
-            <div id="c_tabs" class="collapse-content">
-                <div id="admin-sec-list"></div><div style="display:flex; gap:5px;"><input type="text" id="new-sec-in" placeholder="قسم جديد"><button onclick="addSec()" style="background:var(--green); padding:0 10px;">+</button></div>
-                <hr style="margin:15px 0; border:1px solid #333;"><div id="admin-alb-list"></div><div style="display:flex; gap:5px;"><input type="text" id="new-alb-in" placeholder="مجلد جديد"><button onclick="addAlbum()" style="background:var(--green); padding:0 10px;">+</button></div>
-            </div>
+            <div id="c_tabs" class="collapse-content"><div id="admin-sec-list"></div><div style="display:flex; gap:5px;"><input type="text" id="new-sec-in" placeholder="قسم جديد"><button onclick="addSec()" style="background:var(--green); padding:0 10px;">+</button></div><hr style="margin:15px 0; border:1px solid #333;"><div id="admin-alb-list"></div><div style="display:flex; gap:5px;"><input type="text" id="new-alb-in" placeholder="مجلد جديد"><button onclick="addAlbum()" style="background:var(--green); padding:0 10px;">+</button></div></div>
         </div>
-
+        <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_rev')">⭐ إدارة التقييمات <i class="fas fa-star"></i></button>
+            <div id="c_rev" class="collapse-content"><div id="admin-reviews-list"></div></div>
+        </div>
         <div class="collapse-section"><button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات <i class="fas fa-cog"></i></button>
             <div id="c_set" class="collapse-content">
-                <input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-logo" placeholder="رابط الشعار"><input type="text" id="in-hbg" placeholder="رابط الخلفية"><input type="text" id="in-wm" placeholder="الوتر مارك"><textarea id="in-news" placeholder="الأخبار"></textarea><input type="text" id="in-footer" placeholder="نص الحقوق">
-                <input type="text" id="in-insta" placeholder="إنستقرام"><input type="text" id="in-tiktok" placeholder="تيك توك"><input type="text" id="in-snap" placeholder="سناب"><input type="text" id="in-loc" placeholder="لوكيشن">
-                <textarea id="in-about" placeholder="من نحن"></textarea><input type="text" id="in-hours" placeholder="أوقات العمل">
+                <input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-logo" placeholder="رابط الشعار"><input type="text" id="in-hbg" placeholder="رابط الخلفية"><input type="text" id="in-wm" placeholder="الوتر مارك"><textarea id="in-news" placeholder="الأخبار"></textarea><input type="text" id="in-footer" placeholder="الحقوق"><input type="text" id="in-insta" placeholder="إنستقرام"><input type="text" id="in-tiktok" placeholder="تيك توك"><input type="text" id="in-snap" placeholder="سناب"><input type="text" id="in-loc" placeholder="لوكيشن"><textarea id="in-about" placeholder="من نحن"></textarea><input type="text" id="in-hours" placeholder="أوقات العمل">
                 <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ</button>
             </div>
         </div>
@@ -122,20 +108,18 @@
         nav += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
         document.getElementById('navbar').innerHTML = nav;
 
-        const saudiTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Riyadh"}));
-        const hour = saudiTime.getHours();
-        const isOpen = (hour >= 8 && hour < 23);
-        const statusHtml = `<div class="status-badge" style="background:${isOpen?'#2ecc71':'#e74c3c'}">${isOpen?'مفتوح الآن':'مغلق حالياً'}</div>`;
+        const saudiHour = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Riyadh"})).getHours();
+        const isOpen = (saudiHour >= 8 && saudiHour < 23);
 
-        let home = `<section class="sec ${currentTab==='home'?'active':''}">
-            <div style="text-align:center;">
-                <button class="about-toggle" onclick="toggleBox('abx')">من نحن</button>
-                <div id="abx" class="about-content">${d.about_text || ''}</div>
-                <div style="margin:15px 0;">${statusHtml}<br><span style="font-size:0.8rem; color:var(--gold);">${d.work_hours || ''}</span></div>
-                <div class="social-icons">
-                    ${d.insta_url?`<a href="${d.insta_url}"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url?`<a href="${d.tiktok_url}"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url?`<a href="${d.snap_url}"><i class="fab fa-snapchat"></i></a>`:''}${d.location_url?`<a href="${d.location_url}"><i class="fas fa-map-marker-alt"></i></a>`:''}
-                </div><br><button onclick="window.open('https://wa.me/${d.whatsapp_num}')" class="btn-order" style="width:auto; padding:15px 50px; border-radius:50px;">واتساب</button>
-            </div></section>`;
+        let home = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">
+            <button class="about-toggle" onclick="toggleBox('abx')">من نحن</button><div id="abx" class="about-content">${d.about_text || ''}</div>
+            <div style="margin:10px 0;"><div class="status-badge" style="background:${isOpen?'#2ecc71':'#e74c3c'}">${isOpen?'مفتوح الآن':'مغلق حالياً'}</div><br><small style="color:var(--gold);">${d.work_hours || ''}</small></div>
+            <button class="review-toggle" onclick="toggleBox('rvx')">أضف تقييمك</button>
+            <div id="rvx" class="review-form-container"><input type="text" id="rn" placeholder="الاسم"><select id="rs"><option value="5">⭐⭐⭐⭐⭐</option><option value="4">⭐⭐⭐⭐</option></select><textarea id="rt" placeholder="رأيك..."></textarea><button onclick="sendReview()" style="width:100%; background:var(--gold); border:none; padding:10px;">إرسال</button></div>
+            <div class="reviews-display">${drawReviews(d.reviews)}</div>
+            <div class="social-icons">${d.insta_url?`<a href="${d.insta_url}"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url?`<a href="${d.tiktok_url}"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url?`<a href="${d.snap_url}"><i class="fab fa-snapchat"></i></a>`:''}${d.location_url?`<a href="${d.location_url}"><i class="fas fa-location-dot"></i></a>`:''}</div>
+            <br><button onclick="window.open('https://wa.me/${d.whatsapp_num}')" class="btn-order" style="width:auto; padding:15px 50px; border-radius:50px;">واتساب</button>
+        </div></section>`;
         
         let html = home;
         if(d.pages) Object.keys(d.pages).forEach(id => html += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
@@ -146,8 +130,8 @@
 
     function populateAdmin() {
         const d = currentData; let opts = '<option value="">-- اختر الوجهة --</option>';
-        if(d.pages) Object.keys(d.pages).forEach(id => opts += `<option value="pages/${id}">${d.pages[id].title} (قسم)</option>`);
-        if(d.albums) Object.keys(d.albums).forEach(id => opts += `<option value="albums/${id}">${d.albums[id].name} (مجلد)</option>`);
+        if(d.pages) Object.keys(d.pages).forEach(id => opts += `<option value="pages/${id}">${d.pages[id].title}</option>`);
+        if(d.albums) Object.keys(d.albums).forEach(id => opts += `<option value="albums/${id}">${d.albums[id].name}</option>`);
         document.getElementById('adm-up-target').innerHTML = opts; document.getElementById('adm-del-target').innerHTML = opts;
         document.getElementById('in-wa').value=d.whatsapp_num||''; document.getElementById('in-logo').value=d.site_logo||'';
         document.getElementById('in-hbg').value=d.header_bg||''; document.getElementById('in-wm').value=d.wm_text||'';
@@ -155,22 +139,17 @@
         document.getElementById('in-insta').value=d.insta_url||''; document.getElementById('in-tiktok').value=d.tiktok_url||'';
         document.getElementById('in-snap').value=d.snap_url||''; document.getElementById('in-loc').value=d.location_url||'';
         document.getElementById('in-about').value=d.about_text||''; document.getElementById('in-hours').value=d.work_hours||'';
+
+        let rL = ''; if(d.reviews) Object.keys(d.reviews).reverse().forEach(id => rL += `<div style="background:#222; padding:10px; margin-bottom:5px; display:flex; justify-content:space-between;"><span>${d.reviews[id].name}</span><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:5px;">حذف</button></div>`);
+        document.getElementById('admin-reviews-list').innerHTML = rL;
     }
 
-    function saveSettings() {
-        db.ref(DB_PATH).update({
-            whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value, insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value, about_text: document.getElementById('in-about').value, work_hours: document.getElementById('in-hours').value
-        }).then(()=>alert("تم الحفظ"));
-    }
-
-    function renderDelGrid(path) {
-        const grid = document.getElementById('del-grid'); grid.innerHTML = ''; if(!path) return;
-        const [t, id] = path.split('/'); const f = currentData[t][id];
-        if(f && f.imgs) Object.keys(f.imgs).forEach(iId => grid.innerHTML += `<div style="background:#222; padding:5px;"><img src="${f.imgs[iId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${iId}')" style="width:100%; background:var(--red); color:#fff; border:none; margin-top:5px;">حذف</button></div>`);
-    }
-
+    function saveSettings() { db.ref(DB_PATH).update({ whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value, insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value, about_text: document.getElementById('in-about').value, work_hours: document.getElementById('in-hours').value }).then(()=>alert("تم الحفظ")); }
+    function renderDelGrid(path) { const grid = document.getElementById('del-grid'); grid.innerHTML = ''; if(!path) return; const [t, id] = path.split('/'); const f = currentData[t][id]; if(f && f.imgs) Object.keys(f.imgs).forEach(iId => grid.innerHTML += `<div style="background:#222; padding:5px;"><img src="${f.imgs[iId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${iId}')" style="width:100%; background:var(--red); color:#fff; border:none; margin-top:5px;">حذف</button></div>`); }
     function deleteImg(p, id) { if(confirm("حذف؟")) db.ref(`${DB_PATH}/${p}/imgs/${id}`).remove().then(()=>renderDelGrid(p)); }
     function publishPhotos() { const p = document.getElementById('adm-up-target').value, u = document.getElementById('links-in').value.split('\n').filter(x=>x.trim()); if(!p || !u.length) return alert("حدد الوجهة"); u.forEach(url => db.ref(DB_PATH+'/'+p+'/imgs').push({url: url.trim()})); alert("تم"); document.getElementById('links-in').value=''; }
+    function sendReview() { const n=document.getElementById('rn').value, t=document.getElementById('rt').value, s=document.getElementById('rs').value; if(n&&t) db.ref(DB_PATH+'/reviews').push({name:n, text:t, stars:s}).then(()=>{alert("شكراً");}); }
+    function drawReviews(revs) { if(!revs) return ''; return Object.keys(revs).reverse().slice(0,10).map(id => `<div class="review-card"><b>${revs[id].name}</b> <span class="review-stars">${'★'.repeat(revs[id].stars)}</span><p>${revs[id].text}</p></div>`).join(''); }
     function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
     function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c=> { if(c.id!==id) c.style.display='none'; }); const el = document.getElementById(id); el.style.display = el.style.display==='block'?'none':'block'; }
     function toggleBox(id) { document.getElementById(id).classList.toggle('open'); }
