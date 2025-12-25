@@ -25,7 +25,7 @@
         nav::-webkit-scrollbar { display: none; }
         .nav-btn { padding: 8px 22px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: 0.3s; }
         .nav-btn.active { background: var(--primary); color: #fff; box-shadow: 0 0 10px rgba(92, 10, 10, 0.4); }
-        .about-toggle { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin-bottom: 15px; transition: 0.3s; display: inline-block; }
+        .about-toggle { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin-bottom: 15px; transition: 0.3s; display: inline-block; margin-left: 5px; }
         .about-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(255,255,255,0.03); border-radius: 15px; margin: 0 auto 15px; max-width: 550px; line-height: 1.6; color: #ccc; text-align: right; }
         .about-content.open { max-height: 1500px; padding: 20px; border: 1px solid rgba(197, 160, 89, 0.2); }
         .sec { width: 95%; max-width: 1400px; margin: 20px auto 100px; display: none; flex-grow: 1; }
@@ -53,9 +53,14 @@
         #editor-about { min-height: 200px; background: #000; border: 1px solid #444; padding: 15px; border-radius: 8px; color: #fff; outline: none; text-align: right; }
         #hidden-trigger { position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 200000000; cursor: pointer; }
         footer { padding: 20px; text-align: center; color: #666; font-size: 0.9rem; border-top: 1px solid rgba(197, 160, 89, 0.1); margin-top: auto; }
+        
+        /* تقييمات */
         .rating-stars { display: flex; gap: 5px; justify-content: center; margin-bottom: 10px; direction: ltr; }
         .rating-stars i { cursor: pointer; color: #333; font-size: 1.5rem; transition: 0.2s; }
         .rating-stars i.active { color: var(--gold); }
+        .reviews-display-box { background: rgba(197, 160, 89, 0.05); border: 1px solid rgba(197, 160, 89, 0.1); border-radius: 15px; max-width: 550px; margin: 10px auto 20px; padding: 20px; min-height: 120px; display: flex; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
+        .review-item { position: absolute; width: 100%; padding: 20px; transition: opacity 0.5s ease, transform 0.5s ease; opacity: 0; transform: translateY(20px); pointer-events: none; }
+        .review-item.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
     </style>
 </head>
 <body>
@@ -169,7 +174,7 @@
     const config = { databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(config); const db = firebase.database(); 
     const DB_PATH = 'site_v28'; const AUTH_PATH = 'server_auth/lek'; 
-    let currentData = {}; let currentTab = 'home'; let isAdmin = false; let userRating = 0;
+    let currentData = {}; let currentTab = 'home'; let isAdmin = false; let userRating = 0; let reviewIdx = 0;
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
@@ -233,8 +238,21 @@
         
         let aboutBox = (d.about_active) ? `<button class="about-toggle" onclick="toggleAbout('about-box')">من نحن</button><div id="about-box" class="about-content">${d.about_text || ''}</div>` : '';
         
-        // قسم التقييم الجديد
-        let reviewBtn = `<button class="about-toggle" onclick="toggleAbout('review-box')">أضف تقييم</button>
+        // نظام عرض التقييمات المتحرك
+        let reviewsDisplay = '';
+        if(d.reviews) {
+            let revItems = Object.keys(d.reviews).map((id, idx) => {
+                const r = d.reviews[id];
+                return `<div class="review-item" id="rev-${idx}">
+                    <div style="color:var(--gold); margin-bottom:5px;">${'⭐'.repeat(r.rating)}</div>
+                    <p style="font-style:italic; color:#eee; margin-bottom:5px;">"${r.message}"</p>
+                    <b style="color:var(--gold); font-size:0.9rem;">- ${r.name}</b>
+                </div>`;
+            }).join('');
+            reviewsDisplay = `<div class="reviews-display-box">${revItems}</div>`;
+        }
+
+        let reviewForm = `<button class="about-toggle" onclick="toggleAbout('review-box')">أضف تقييم</button>
         <div id="review-box" class="about-content">
             <div id="review-form-container">
                 <input type="text" id="rev-name" placeholder="الاسم الكريم">
@@ -242,17 +260,35 @@
                     <i class="fas fa-star" onclick="setStar(5)"></i><i class="fas fa-star" onclick="setStar(4)"></i><i class="fas fa-star" onclick="setStar(3)"></i><i class="fas fa-star" onclick="setStar(2)"></i><i class="fas fa-star" onclick="setStar(1)"></i>
                 </div>
                 <textarea id="rev-msg" placeholder="اكتب تجربتك هنا..."></textarea>
-                <button onclick="submitReview()" style="width:100%; background:var(--gold); border:none; padding:10px; border-radius:8px; font-weight:900;">إرسال التقييم</button>
+                <button onclick="submitReview()" style="width:100%; background:var(--gold); border:none; padding:10px; border-radius:8px; font-weight:900; color:#000;">إرسال التقييم</button>
             </div>
         </div>`;
 
-        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewBtn}<div style="background:rgba(255,255,255,0.03); padding:30px; border-radius:20px; max-width:550px; margin:0 auto 20px; border: 1px solid #222;"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; font-weight:900;">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}${d.location_url ? `<a href="${d.location_url}" target="_blank"><i class="fas fa-location-dot"></i></a>`:''}</div></div></section>`;
+        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewForm}${reviewsDisplay}<div style="background:rgba(255,255,255,0.03); padding:30px; border-radius:20px; max-width:550px; margin:0 auto 20px; border: 1px solid #222;"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; font-weight:900;">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}${d.location_url ? `<a href="${d.location_url}" target="_blank"><i class="fas fa-location-dot"></i></a>`:''}</div></div></section>`;
         
         if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
         contentHtml += `<section class="sec ${currentTab==='works'?'active':''}"><div class="grid">${drawAlbums(d.albums)}</div></section>`;
         if(d.albums) Object.keys(d.albums).forEach(id => contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}"><button onclick="go('works')" style="color:var(--gold); background:none; border:none; margin-bottom:15px;">← عودة للأعمال</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`);
         document.getElementById('content-area').innerHTML = contentHtml;
         updateWorkStatus();
+        startReviewSlider();
+    }
+
+    function startReviewSlider() {
+        if(!currentData.reviews) return;
+        const total = Object.keys(currentData.reviews).length;
+        if(total === 0) return;
+        
+        const cycle = () => {
+            const all = document.querySelectorAll('.review-item');
+            all.forEach(el => el.classList.remove('active'));
+            const current = document.getElementById(`rev-${reviewIdx}`);
+            if(current) current.classList.add('active');
+            reviewIdx = (reviewIdx + 1) % total;
+        };
+        cycle();
+        if(window.reviewInterval) clearInterval(window.reviewInterval);
+        window.reviewInterval = setInterval(cycle, 4000);
     }
 
     function setStar(n) {
