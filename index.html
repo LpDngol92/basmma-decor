@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v141</title>
+    <title>بصمة غير | v143</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,7 +12,7 @@
         :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.9); --green: #2ecc71; --red: #e74c3c; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
-        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; }
         header { height: 35vh; display: flex; align-items: center; justify-content: center; position: relative; }
         .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.4); z-index: 1; }
         .logo-img { max-height: 140px; position: relative; z-index: 5; max-width: 80%; }
@@ -25,24 +25,22 @@
         .card { background: var(--card); border-radius: 12px; overflow: hidden; border: 1px solid rgba(197, 160, 89, 0.1); }
         .img-container { position: relative; width: 100%; aspect-ratio: 1/1; cursor: pointer; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
-        .wm-tag { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 900; color: rgba(255, 255, 255, 0.35); text-shadow: 0 0 8px var(--gold); white-space: nowrap; pointer-events: none; }
-        .status-badge { padding: 8px 25px; border-radius: 50px; font-weight: 900; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; margin-top: 10px; }
+        .wm-tag { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 900; color: rgba(255, 255, 255, 0.35); text-shadow: 0 0 8px var(--gold); white-space: nowrap; }
+        .status-badge { padding: 8px 25px; border-radius: 50px; font-weight: 900; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; margin-top: 15px; }
         .open-glow { background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1.5px solid #2ecc71; box-shadow: 0 0 10px #2ecc71; }
         .closed-glow { background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1.5px solid #e74c3c; }
-        .about-toggle, .time-toggle { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin: 5px; }
-        .about-content, .time-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(255,255,255,0.03); border-radius: 15px; margin: 10px auto; max-width: 600px; line-height: 1.6; }
-        .about-content.open, .time-content.open { max-height: 1500px; padding: 20px; border: 1px solid rgba(197,160,89,0.2); }
-        /* الوتر مارك في العرض الكبير */
+        .toggle-btn { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin: 5px; }
+        .collapse-box { max-height: 0; overflow: hidden; transition: max-height 0.5s ease; background: rgba(255,255,255,0.03); border-radius: 15px; margin: 10px auto; max-width: 600px; }
+        .collapse-box.open { max-height: 1000px; padding: 20px; border: 1px solid rgba(197,160,89,0.2); }
+        .time-card { background: rgba(255,255,255,0.03); border: 1px solid #222; border-radius: 15px; padding: 20px; max-width: 500px; margin: 20px auto; text-align: center; }
         #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9999999; display: none; align-items: center; justify-content: center; }
-        #viewer img { max-width: 95%; max-height: 90vh; border: 1px solid var(--gold); position: relative; }
-        .viewer-wm-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.15); font-weight: 900; font-size: 2rem; white-space: nowrap; pointer-events: none; text-shadow: 0 0 15px var(--gold), 0 0 30px var(--gold); z-index: 10; }
-        /* الكتالوجات */
+        .viewer-wm-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.12); font-weight: 900; font-size: 2.2rem; white-space: nowrap; pointer-events: none; text-shadow: 0 0 15px var(--gold); z-index: 10; }
         .cat-item { width: 100%; background: #1a1a1c; border: 1px solid var(--gold); color: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; font-weight: 800; display: flex; justify-content: space-between; }
         .cat-viewer { display: none; margin-bottom: 20px; border: 1px solid var(--gold); border-radius: 10px; overflow: hidden; }
-        footer { padding: 40px 20px; text-align: center; color: #777; font-size: 0.9rem; border-top: 1px solid rgba(197, 160, 89, 0.1); margin-top: auto; font-weight: 500; }
+        footer { padding: 40px 20px; text-align: center; color: #777; font-size: 0.9rem; border-top: 1px solid rgba(197, 160, 89, 0.1); margin-top: auto; }
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 15px; overflow-y: auto; }
         .admin-box { max-width: 800px; margin: auto; background: #111; padding: 20px; border: 1px solid var(--gold); border-radius: 15px; }
-        input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
+        input, textarea { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
         #hidden-trigger { position: fixed; bottom: 0; left: 0; width: 50px; height: 50px; z-index: 99999999; }
     </style>
 </head>
@@ -55,28 +53,20 @@
 
 <div id="viewer" onclick="this.style.display='none'">
     <div style="position:relative; display:inline-block;">
-        <img id="viewer-img">
+        <img id="viewer-img" style="max-width:95%; max-height:90vh; border:1px solid var(--gold);">
         <div class="viewer-wm-center" id="v-wm-center"></div>
     </div>
 </div>
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="text-align:center; color:var(--gold); margin-bottom:20px;">لوحة الإدارة v141</h2>
+        <h2 style="text-align:center; color:var(--gold); margin-bottom:20px;">لوحة الإدارة v143</h2>
         <div style="background:#1a1a1c; padding:15px; border-radius:10px; margin-bottom:10px;">
-            <p style="color:var(--gold); margin-bottom:10px;">📚 إضافة كتالوج جديد</p>
-            <div id="ad-cat-list"></div><hr style="border:0.5px solid #333; margin:10px 0;">
-            <input type="text" id="cat-n" placeholder="اسم الكتالوج">
-            <textarea id="cat-c" placeholder="كود iframe"></textarea>
-            <button onclick="addCat()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none; border-radius:5px;">إضافة</button>
+            <p style="color:var(--gold); margin-bottom:10px;">🕒 المواعيد</p>
+            <div id="ad-time-editor"></div><button onclick="saveTime()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none;">حفظ</button>
         </div>
         <div style="background:#1a1a1c; padding:15px; border-radius:10px; margin-bottom:10px;">
-            <p style="color:var(--gold); margin-bottom:10px;">🕒 أوقات العمل</p>
-            <div id="ad-time-editor"></div>
-            <button onclick="saveTime()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none; border-radius:5px;">حفظ المواعيد</button>
-        </div>
-        <div style="background:#1a1a1c; padding:15px; border-radius:10px; margin-bottom:10px;">
-            <p style="color:var(--gold); margin-bottom:10px;">⚙️ الإعدادات العامة</p>
+            <p style="color:var(--gold); margin-bottom:10px;">⚙️ الإعدادات</p>
             <input type="text" id="set-wa" placeholder="واتساب"><input type="text" id="set-logo" placeholder="الشعار"><input type="text" id="set-hbg" placeholder="الخلفية"><input type="text" id="set-wm" placeholder="الوتر مارك"><input type="text" id="set-foot" placeholder="نص الحقوق">
             <button onclick="saveSet()" style="width:100%; background:var(--gold); padding:10px; border:none;">حفظ</button>
         </div>
@@ -93,8 +83,7 @@
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
-        document.getElementById('splash').style.opacity = '0';
-        setTimeout(() => document.getElementById('splash').style.display='none', 500);
+        document.getElementById('splash').style.display='none';
         renderAll(); renderAdmin();
     });
 
@@ -104,24 +93,31 @@
         document.getElementById('site-logo').src = d.site_logo || '';
         document.getElementById('site-footer').innerText = d.footer_text || '';
 
-        let nav = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
-        nav += `<button class="nav-btn ${currentTab==='cat'?'active':''}" onclick="go('cat')">الكتالوجات</button>`;
+        let nav = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>
+                   <button class="nav-btn ${currentTab==='cat'?'active':''}" onclick="go('cat')">الكتالوجات</button>`;
         if(d.pages) Object.keys(d.pages).forEach(id => nav += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}')">${d.pages[id].title}</button>`);
         document.getElementById('navbar').innerHTML = nav;
 
         let content = `<section class="sec ${currentTab==='home'?'active':''}">
             <div style="text-align:center;">
-                <button class="about-toggle" onclick="tgl('about-box')">من نحن</button>
-                <div id="about-box" class="about-content">${d.about_text || ''}</div>
-                <div id="status-box"></div>
-                <button class="time-toggle" onclick="tgl('time-box')">أوقات العمل</button>
-                <div id="time-box" class="time-content" style="text-align:right;">${getTimes(d)}</div>
-                <br><button onclick="window.open('https://wa.me/${d.whatsapp_num}')" class="btn-order" style="width:auto; padding:12px 40px; border-radius:50px; background:#fff; color:#000;">تواصل معنا</button>
+                <button class="toggle-btn" onclick="tgl('ab-box')">من نحن</button>
+                <div id="ab-box" class="collapse-box" style="text-align:right;">${d.about_text || ''}</div>
+                
+                <button class="toggle-btn" onclick="tgl('rev-box')">ماذا يقول عملاؤنا</button>
+                <div id="rev-box" class="collapse-box">${getRevs(d)}</div>
+
+                <div class="time-card">
+                    <p style="color:var(--gold); font-weight:800; margin-bottom:15px;">🕒 أوقات العمل</p>
+                    <div style="text-align:right; font-size:0.9rem;">${getTimes(d)}</div>
+                    <div id="status-box"></div>
+                </div>
+
+                <button onclick="window.open('https://wa.me/${d.whatsapp_num}')" class="btn-order" style="width:auto; padding:12px 40px; border-radius:50px; background:#fff; color:#000; margin-top:10px;">تواصل معنا</button>
             </div></section>`;
 
         let cats = ''; if(d.catalogs) Object.keys(d.catalogs).forEach(id => {
             cats += `<div class="cat-item" onclick="tglCat('c-${id}')">${d.catalogs[id].name} <i class="fas fa-chevron-down"></i></div>
-                     <div id="c-${id}" class="cat-viewer"><div style="background:var(--red); padding:5px; text-align:center;" onclick="tglCat('c-${id}')">إغلاق X</div>${d.catalogs[id].code}</div>`;
+                     <div id="c-${id}" class="cat-viewer"><div style="background:var(--red); padding:5px; text-align:center; cursor:pointer;" onclick="tglCat('c-${id}')">إغلاق X</div>${d.catalogs[id].code}</div>`;
         });
         content += `<section class="sec ${currentTab==='cat'?'active':''}" style="max-width:800px; margin:auto;">${cats || 'قريباً...'}</section>`;
 
@@ -130,43 +126,38 @@
         checkStatus();
     }
 
+    function getRevs(d) {
+        if(!d.reviews) return 'لا يوجد تقييمات';
+        return Object.keys(d.reviews).map(id => `<div style="border-bottom:1px solid #222; padding:10px; text-align:right;">
+            <div style="color:#f1c40f;">★★★★★</div><b>${d.reviews[id].name}</b><p style="font-size:0.9rem; color:#aaa;">${d.reviews[id].text}</p>
+        </div>`).join('');
+    }
+
     function getTimes(d) {
-        if(!d.work_schedule) return 'لم يتم الضبط';
+        if(!d.work_schedule) return 'جاري التحميل...';
         const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        let h = '<div style="padding:15px;">';
-        days.forEach((n, i) => {
+        return days.map((n, i) => {
             const s = d.work_schedule[i];
-            if(s && s.active) {
-                h += `<div style="margin-bottom:8px;"><b>${n}:</b><br>الفترة الأولى: ${s.s1_s} - ${s.s1_e} ${s.s2_a ? '<br>الفترة الثانية: '+s.s2_s+' - '+s.s2_e : ''}</div>`;
-            } else { h += `<div style="color:var(--red); margin-bottom:8px;"><b>${n}:</b> إجازة</div>`; }
-        });
-        return h + '</div>';
+            if(s && s.active) return `<div style="margin-bottom:8px;"><b>${n}:</b> ${s.s1_s} - ${s.s1_e} ${s.s2_a ? '/ '+s.s2_s+' - '+s.s2_e : ''}</div>`;
+            return `<div style="color:var(--red); margin-bottom:8px;"><b>${n}:</b> إجازة</div>`;
+        }).join('');
     }
 
     function drawImgs(imgs) {
         if(!imgs) return '<p style="text-align:center; width:100%; padding:50px;">قريباً...</p>';
-        return Object.keys(imgs).reverse().map(id => `
-            <div class="card">
-                <div class="img-container" onclick="openV('${imgs[id].url}')">
-                    <img src="${imgs[id].url}" loading="lazy">
-                    <div class="wm-tag">${currentData.wm_text || ''}</div>
-                </div>
-                <button class="btn-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num}?text='+encodeURIComponent('${imgs[id].url}'))">استفسار</button>
-            </div>`).join('');
+        return Object.keys(imgs).reverse().map(id => `<div class="card">
+            <div class="img-container" onclick="openV('${imgs[id].url}')"><img src="${imgs[id].url}"><div class="wm-tag">${currentData.wm_text || ''}</div></div>
+            <button class="btn-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num}?text='+encodeURIComponent('${imgs[id].url}'))">استفسار</button>
+        </div>`).join('');
     }
 
-    function openV(url) { 
-        document.getElementById('viewer-img').src = url; 
-        document.getElementById('v-wm-center').innerText = currentData.wm_text || '';
-        document.getElementById('viewer').style.display = 'flex'; 
-    }
-
+    function openV(url) { document.getElementById('viewer-img').src = url; document.getElementById('v-wm-center').innerText = currentData.wm_text || ''; document.getElementById('viewer').style.display = 'flex'; }
+    
     function checkStatus() {
         const d = currentData; if(!d.work_schedule) return;
         const now = new Date(), day = now.getDay(), s = d.work_schedule[day]; let open = false;
         if(s && s.active) {
-            const cur = now.getHours()*60 + now.getMinutes();
-            const toM = (t) => { if(!t) return 0; const [h,m] = t.split(':').map(Number); return h*60+m; };
+            const cur = now.getHours()*60 + now.getMinutes(); const toM = (t) => { if(!t) return 0; const [h,m] = t.split(':').map(Number); return h*60+m; };
             if(cur >= toM(s.s1_s) && cur < toM(s.s1_e)) open = true;
             if(!open && s.s2_a && cur >= toM(s.s2_s) && cur < toM(s.s2_e)) open = true;
         }
@@ -190,29 +181,20 @@
         [0,1,2,3,4,5,6].forEach(i => {
             const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:false};
             ed.innerHTML += `<div style="background:#000; padding:10px; margin-bottom:5px;">
-                <label><input type="checkbox" id="check-${i}" ${s.active?'checked':''}> يوم ${i}</label><br>
-                <input type="time" id="s1s-${i}" value="${s.s1_s||''}"> إلى <input type="time" id="s1e-${i}" value="${s.s1_e||''}"><br>
-                <label><input type="checkbox" id="s2a-${i}" ${s.s2_a?'checked':''}> فترة ثانية</label><br>
-                <input type="time" id="s2s-${i}" value="${s.s2_s||''}"> إلى <input type="time" id="s2e-${i}" value="${s.s2_e||''}">
+                <label><input type="checkbox" id="check-${i}" ${s.active?'checked':''}> يوم ${i}</label> 
+                1: <input type="time" id="s1s-${i}" value="${s.s1_s||''}">-<input type="time" id="s1e-${i}" value="${s.s1_e||''}">
+                <label><input type="checkbox" id="s2a-${i}" ${s.s2_a?'checked':''}> 2</label>
+                2: <input type="time" id="s2s-${i}" value="${s.s2_s||''}">-<input type="time" id="s2e-${i}" value="${s.s2_e||''}">
             </div>`;
         });
     }
 
-    function renderAdmin() {
-        const d = currentData; let cL = '';
-        if(d.catalogs) Object.keys(d.catalogs).forEach(id => { cL += `<div>${d.catalogs[id].name} <button onclick="db.ref('${DB_PATH}/catalogs/${id}').remove()">حذف</button></div>`; });
-        document.getElementById('ad-cat-list').innerHTML = cL;
-    }
-
+    function renderAdmin() { } // Admin functions handled by db triggers or direct calls
     function saveTime() {
-        let sc = {}; [0,1,2,3,4,5,6].forEach(i => {
-            sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_s: document.getElementById(`s1s-${i}`).value, s1_e: document.getElementById(`s1e-${i}`).value, s2_a: document.getElementById(`s2a-${i}`).checked, s2_s: document.getElementById(`s2s-${i}`).value, s2_e: document.getElementById(`s2e-${i}`).value };
-        });
-        db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم الحفظ"));
+        let sc = {}; [0,1,2,3,4,5,6].forEach(i => { sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_s: document.getElementById(`s1s-${i}`).value, s1_e: document.getElementById(`s1e-${i}`).value, s2_a: document.getElementById(`s2a-${i}`).checked, s2_s: document.getElementById(`s2s-${i}`).value, s2_e: document.getElementById(`s2e-${i}`).value }; });
+        db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم"));
     }
-
     function saveSet() { db.ref(DB_PATH).update({ whatsapp_num: document.getElementById('set-wa').value, site_logo: document.getElementById('set-logo').value, header_bg: document.getElementById('set-hbg').value, wm_text: document.getElementById('set-wm').value, footer_text: document.getElementById('set-foot').value }).then(()=>alert("تم")); }
-    function addCat() { const n = document.getElementById('cat-n').value, c = document.getElementById('cat-c').value; if(n && c) db.ref(DB_PATH+'/catalogs').push({name:n, code:c}); }
 </script>
 </body>
 </html>
