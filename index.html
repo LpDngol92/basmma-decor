@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v140</title>
+    <title>بصمة غير | v141</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,7 +12,7 @@
         :root { --primary: #5c0a0a; --gold: #c5a059; --bg: #0a0a0b; --card: rgba(20, 20, 22, 0.9); --green: #2ecc71; --red: #e74c3c; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { font-family: 'Tajawal', sans-serif; background: var(--bg); color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
-        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; }
+        #splash { position: fixed; inset: 0; background: #000; z-index: 99999999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; }
         header { height: 35vh; display: flex; align-items: center; justify-content: center; position: relative; }
         .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.4); z-index: 1; }
         .logo-img { max-height: 140px; position: relative; z-index: 5; max-width: 80%; }
@@ -26,59 +26,58 @@
         .img-container { position: relative; width: 100%; aspect-ratio: 1/1; cursor: pointer; }
         .img-container img { width: 100%; height: 100%; object-fit: cover; }
         .wm-tag { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: 900; color: rgba(255, 255, 255, 0.35); text-shadow: 0 0 8px var(--gold); white-space: nowrap; pointer-events: none; }
-        .btn-order { width: 100%; padding: 12px; background: var(--primary); color: #fff; border: none; font-weight: 800; cursor: pointer; }
         .status-badge { padding: 8px 25px; border-radius: 50px; font-weight: 900; display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; margin-top: 10px; }
-        .open-glow { background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1.5px solid #2ecc71; }
+        .open-glow { background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1.5px solid #2ecc71; box-shadow: 0 0 10px #2ecc71; }
         .closed-glow { background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1.5px solid #e74c3c; }
         .about-toggle, .time-toggle { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin: 5px; }
-        .about-content, .time-content { max-height: 0; overflow: hidden; transition: max-height 0.5s; background: rgba(255,255,255,0.03); border-radius: 15px; margin: 10px auto; max-width: 600px; text-align: right; }
-        .about-content.open, .time-content.open { max-height: 1000px; padding: 20px; border: 1px solid rgba(197,160,89,0.2); }
-        #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9999999; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        #viewer img { max-width: 95%; max-height: 85vh; border: 1px solid var(--gold); }
-        .viewer-wm { color: rgba(255,255,255,0.2); font-weight: 900; font-size: 1.5rem; margin-top: 15px; text-shadow: 0 0 10px var(--gold); white-space: nowrap; }
-        .cat-btn { width: 100%; background: #1a1a1c; border: 1px solid var(--gold); color: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px; text-align: right; font-weight: 800; display: flex; justify-content: space-between; cursor: pointer; }
-        .cat-box { display: none; margin-bottom: 20px; background: #000; border-radius: 10px; border: 1px solid #333; overflow: hidden; }
-        footer { padding: 30px; text-align: center; color: #666; font-size: 0.9rem; border-top: 1px solid rgba(197, 160, 89, 0.1); margin-top: auto; }
+        .about-content, .time-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(255,255,255,0.03); border-radius: 15px; margin: 10px auto; max-width: 600px; line-height: 1.6; }
+        .about-content.open, .time-content.open { max-height: 1500px; padding: 20px; border: 1px solid rgba(197,160,89,0.2); }
+        /* الوتر مارك في العرض الكبير */
+        #viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 9999999; display: none; align-items: center; justify-content: center; }
+        #viewer img { max-width: 95%; max-height: 90vh; border: 1px solid var(--gold); position: relative; }
+        .viewer-wm-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255,255,255,0.15); font-weight: 900; font-size: 2rem; white-space: nowrap; pointer-events: none; text-shadow: 0 0 15px var(--gold), 0 0 30px var(--gold); z-index: 10; }
+        /* الكتالوجات */
+        .cat-item { width: 100%; background: #1a1a1c; border: 1px solid var(--gold); color: #fff; padding: 15px; border-radius: 10px; margin-bottom: 10px; cursor: pointer; text-align: right; font-weight: 800; display: flex; justify-content: space-between; }
+        .cat-viewer { display: none; margin-bottom: 20px; border: 1px solid var(--gold); border-radius: 10px; overflow: hidden; }
+        footer { padding: 40px 20px; text-align: center; color: #777; font-size: 0.9rem; border-top: 1px solid rgba(197, 160, 89, 0.1); margin-top: auto; font-weight: 500; }
         #admin-panel { display: none; position: fixed; inset: 0; background: #000; z-index: 10000000; padding: 15px; overflow-y: auto; }
         .admin-box { max-width: 800px; margin: auto; background: #111; padding: 20px; border: 1px solid var(--gold); border-radius: 15px; }
         input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #333; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
-        .collapse-btn { width: 100%; padding: 15px; background: #1a1a1c; color: var(--gold); border: none; text-align: right; margin-bottom: 5px; font-weight: 800; }
-        .collapse-content { display: none; padding: 15px; border: 1px solid #222; margin-bottom: 10px; }
         #hidden-trigger { position: fixed; bottom: 0; left: 0; width: 50px; height: 50px; z-index: 99999999; }
     </style>
 </head>
 <body>
-<div id="splash"> <h2 style="color:var(--gold);">بصمة غير...</h2> </div>
+<div id="splash"> <h2 style="color:var(--gold); font-size:2rem;">بصمة غير...</h2> </div>
 <header><div id="header-bg" class="header-bg"></div><img id="site-logo" class="logo-img" src=""></header>
 <nav id="navbar"></nav>
 <main id="content-area"></main>
 <footer id="site-footer"></footer>
 
-<div id="viewer" onclick="this.style.display='none'"><img id="viewer-img"><div class="viewer-wm" id="v-wm"></div><p style="color:#666; margin-top:10px;">اضغط للإغلاق</p></div>
+<div id="viewer" onclick="this.style.display='none'">
+    <div style="position:relative; display:inline-block;">
+        <img id="viewer-img">
+        <div class="viewer-wm-center" id="v-wm-center"></div>
+    </div>
+</div>
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="text-align:center; color:var(--gold); margin-bottom:20px;">لوحة الإدارة v140</h2>
-        <button class="collapse-btn" onclick="toggleCol('ad_cat')">📚 المجلدات والكتالوجات</button>
-        <div id="ad_cat" class="collapse-content">
-            <div id="ad-cat-list"></div><hr>
-            <input type="text" id="cat-n" placeholder="اسم الكتالوج"><textarea id="cat-c" placeholder="كود iframe"></textarea>
-            <button onclick="addCat()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none;">إضافة كتالوج</button>
+        <h2 style="text-align:center; color:var(--gold); margin-bottom:20px;">لوحة الإدارة v141</h2>
+        <div style="background:#1a1a1c; padding:15px; border-radius:10px; margin-bottom:10px;">
+            <p style="color:var(--gold); margin-bottom:10px;">📚 إضافة كتالوج جديد</p>
+            <div id="ad-cat-list"></div><hr style="border:0.5px solid #333; margin:10px 0;">
+            <input type="text" id="cat-n" placeholder="اسم الكتالوج">
+            <textarea id="cat-c" placeholder="كود iframe"></textarea>
+            <button onclick="addCat()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none; border-radius:5px;">إضافة</button>
         </div>
-        <button class="collapse-btn" onclick="toggleCol('ad_sec')">📁 الأقسام الصور</button>
-        <div id="ad_sec" class="collapse-content">
-            <div id="ad-sec-list"></div>
-            <input type="text" id="new-sec-n" placeholder="اسم القسم الجديد"><button onclick="addSec()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none;">إضافة قسم</button>
+        <div style="background:#1a1a1c; padding:15px; border-radius:10px; margin-bottom:10px;">
+            <p style="color:var(--gold); margin-bottom:10px;">🕒 أوقات العمل</p>
+            <div id="ad-time-editor"></div>
+            <button onclick="saveTime()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none; border-radius:5px;">حفظ المواعيد</button>
         </div>
-        <button class="collapse-btn" onclick="toggleCol('ad_up')">📸 رفع ونشر الصور</button>
-        <div id="ad_up" class="collapse-content">
-            <iframe src="https://www.0zz0.com/" style="width:100%; height:200px;"></iframe>
-            <select id="ad-up-to"></select><textarea id="ad-urls" placeholder="الروابط..."></textarea>
-            <button onclick="pub()" style="width:100%; background:var(--green); padding:10px; border:none;">نشر</button>
-        </div>
-        <button class="collapse-btn" onclick="toggleCol('ad_set')">⚙️ إعدادات الموقع</button>
-        <div id="ad_set" class="collapse-content">
-            <input type="text" id="set-wa" placeholder="رقم الواتساب"><input type="text" id="set-logo" placeholder="رابط الشعار"><input type="text" id="set-hbg" placeholder="رابط الخلفية"><input type="text" id="set-wm" placeholder="نص الوتر مارك"><input type="text" id="set-foot" placeholder="نص الحقوق">
+        <div style="background:#1a1a1c; padding:15px; border-radius:10px; margin-bottom:10px;">
+            <p style="color:var(--gold); margin-bottom:10px;">⚙️ الإعدادات العامة</p>
+            <input type="text" id="set-wa" placeholder="واتساب"><input type="text" id="set-logo" placeholder="الشعار"><input type="text" id="set-hbg" placeholder="الخلفية"><input type="text" id="set-wm" placeholder="الوتر مارك"><input type="text" id="set-foot" placeholder="نص الحقوق">
             <button onclick="saveSet()" style="width:100%; background:var(--gold); padding:10px; border:none;">حفظ</button>
         </div>
         <button onclick="location.reload()" style="width:100%; background:var(--red); color:#fff; padding:15px; border:none; margin-top:20px;">خروج</button>
@@ -94,7 +93,8 @@
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
-        document.getElementById('splash').style.display = 'none';
+        document.getElementById('splash').style.opacity = '0';
+        setTimeout(() => document.getElementById('splash').style.display='none', 500);
         renderAll(); renderAdmin();
     });
 
@@ -115,30 +115,41 @@
                 <div id="about-box" class="about-content">${d.about_text || ''}</div>
                 <div id="status-box"></div>
                 <button class="time-toggle" onclick="tgl('time-box')">أوقات العمل</button>
-                <div id="time-box" class="time-content">${getTimes(d)}</div>
+                <div id="time-box" class="time-content" style="text-align:right;">${getTimes(d)}</div>
                 <br><button onclick="window.open('https://wa.me/${d.whatsapp_num}')" class="btn-order" style="width:auto; padding:12px 40px; border-radius:50px; background:#fff; color:#000;">تواصل معنا</button>
-            </div>
-        </section>`;
+            </div></section>`;
 
         let cats = ''; if(d.catalogs) Object.keys(d.catalogs).forEach(id => {
-            cats += `<div class="cat-btn" onclick="tgl('c-${id}')">${d.catalogs[id].name} <i class="fas fa-chevron-down"></i></div>
-                     <div id="c-${id}" class="cat-box"><div style="background:var(--red); padding:5px; text-align:center; cursor:pointer;" onclick="tgl('c-${id}')">إغلاق X</div>${d.catalogs[id].code}</div>`;
+            cats += `<div class="cat-item" onclick="tglCat('c-${id}')">${d.catalogs[id].name} <i class="fas fa-chevron-down"></i></div>
+                     <div id="c-${id}" class="cat-viewer"><div style="background:var(--red); padding:5px; text-align:center;" onclick="tglCat('c-${id}')">إغلاق X</div>${d.catalogs[id].code}</div>`;
         });
-        content += `<section class="sec ${currentTab==='cat'?'active':''}" style="max-width:800px; margin:auto;">${cats || 'قريباً'}</section>`;
+        content += `<section class="sec ${currentTab==='cat'?'active':''}" style="max-width:800px; margin:auto;">${cats || 'قريباً...'}</section>`;
 
         if(d.pages) Object.keys(d.pages).forEach(id => content += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
         document.getElementById('content-area').innerHTML = content;
         checkStatus();
     }
 
+    function getTimes(d) {
+        if(!d.work_schedule) return 'لم يتم الضبط';
+        const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        let h = '<div style="padding:15px;">';
+        days.forEach((n, i) => {
+            const s = d.work_schedule[i];
+            if(s && s.active) {
+                h += `<div style="margin-bottom:8px;"><b>${n}:</b><br>الفترة الأولى: ${s.s1_s} - ${s.s1_e} ${s.s2_a ? '<br>الفترة الثانية: '+s.s2_s+' - '+s.s2_e : ''}</div>`;
+            } else { h += `<div style="color:var(--red); margin-bottom:8px;"><b>${n}:</b> إجازة</div>`; }
+        });
+        return h + '</div>';
+    }
+
     function drawImgs(imgs) {
         if(!imgs) return '<p style="text-align:center; width:100%; padding:50px;">قريباً...</p>';
-        const wm = currentData.wm_text || '';
         return Object.keys(imgs).reverse().map(id => `
             <div class="card">
                 <div class="img-container" onclick="openV('${imgs[id].url}')">
                     <img src="${imgs[id].url}" loading="lazy">
-                    <div class="wm-tag">${wm}</div>
+                    <div class="wm-tag">${currentData.wm_text || ''}</div>
                 </div>
                 <button class="btn-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num}?text='+encodeURIComponent('${imgs[id].url}'))">استفسار</button>
             </div>`).join('');
@@ -146,35 +157,26 @@
 
     function openV(url) { 
         document.getElementById('viewer-img').src = url; 
-        document.getElementById('v-wm').innerText = currentData.wm_text || '';
+        document.getElementById('v-wm-center').innerText = currentData.wm_text || '';
         document.getElementById('viewer').style.display = 'flex'; 
-    }
-
-    function getTimes(d) {
-        if(!d.work_schedule) return 'لم يتم الضبط';
-        const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        return days.map((n, i) => {
-            const s = d.work_schedule[i];
-            return s && s.active ? `<div>${n}: ${s.s1_s} - ${s.s1_e}</div>` : '';
-        }).join('');
     }
 
     function checkStatus() {
         const d = currentData; if(!d.work_schedule) return;
-        const now = new Date(), day = now.getDay(), s = d.work_schedule[day];
-        let open = false;
+        const now = new Date(), day = now.getDay(), s = d.work_schedule[day]; let open = false;
         if(s && s.active) {
             const cur = now.getHours()*60 + now.getMinutes();
-            const toM = (t) => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+            const toM = (t) => { if(!t) return 0; const [h,m] = t.split(':').map(Number); return h*60+m; };
             if(cur >= toM(s.s1_s) && cur < toM(s.s1_e)) open = true;
+            if(!open && s.s2_a && cur >= toM(s.s2_s) && cur < toM(s.s2_e)) open = true;
         }
         const box = document.getElementById('status-box');
         if(box) box.innerHTML = open ? '<div class="status-badge open-glow">مفتوح الآن</div>' : '<div class="status-badge closed-glow">مغلق الآن</div>';
     }
 
-    function go(id) { currentTab = id; renderAll(); window.scrollTo(0,0); }
-    function tgl(id) { const el = document.getElementById(id); el.classList.toggle('open'); if(id.startsWith('c-')) el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
-    function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c => c.style.display='none'); document.getElementById(id).style.display = 'block'; }
+    function go(id) { currentTab = id; renderAll(); }
+    function tgl(id) { document.getElementById(id).classList.toggle('open'); }
+    function tglCat(id) { const el = document.getElementById(id); el.style.display = el.style.display === 'block' ? 'none' : 'block'; }
     function checkAccess() { const p = prompt("الرمز:"); db.ref('server_auth/lek').once('value').then(s => { if(p === String(s.val())) { isAdmin=true; document.getElementById('admin-panel').style.display='block'; fillAdmin(); } }); }
 
     function fillAdmin() {
@@ -184,27 +186,33 @@
         document.getElementById('set-hbg').value = d.header_bg || '';
         document.getElementById('set-wm').value = d.wm_text || '';
         document.getElementById('set-foot').value = d.footer_text || '';
+        const ed = document.getElementById('ad-time-editor'); ed.innerHTML = '';
+        [0,1,2,3,4,5,6].forEach(i => {
+            const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:false};
+            ed.innerHTML += `<div style="background:#000; padding:10px; margin-bottom:5px;">
+                <label><input type="checkbox" id="check-${i}" ${s.active?'checked':''}> يوم ${i}</label><br>
+                <input type="time" id="s1s-${i}" value="${s.s1_s||''}"> إلى <input type="time" id="s1e-${i}" value="${s.s1_e||''}"><br>
+                <label><input type="checkbox" id="s2a-${i}" ${s.s2_a?'checked':''}> فترة ثانية</label><br>
+                <input type="time" id="s2s-${i}" value="${s.s2_s||''}"> إلى <input type="time" id="s2e-${i}" value="${s.s2_e||''}">
+            </div>`;
+        });
     }
 
     function renderAdmin() {
-        const d = currentData;
-        let pL = '', cL = '', upS = '';
-        if(d.pages) Object.keys(d.pages).forEach(id => {
-            pL += `<div>${d.pages[id].title} <button onclick="db.ref('${DB_PATH}/pages/${id}').remove()">حذف</button></div>`;
-            upS += `<option value="pages/${id}">${d.pages[id].title}</option>`;
-        });
-        if(d.catalogs) Object.keys(d.catalogs).forEach(id => {
-            cL += `<div>${d.catalogs[id].name} <button onclick="db.ref('${DB_PATH}/catalogs/${id}').remove()">حذف</button></div>`;
-        });
-        document.getElementById('ad-sec-list').innerHTML = pL;
+        const d = currentData; let cL = '';
+        if(d.catalogs) Object.keys(d.catalogs).forEach(id => { cL += `<div>${d.catalogs[id].name} <button onclick="db.ref('${DB_PATH}/catalogs/${id}').remove()">حذف</button></div>`; });
         document.getElementById('ad-cat-list').innerHTML = cL;
-        document.getElementById('ad-up-to').innerHTML = upS;
+    }
+
+    function saveTime() {
+        let sc = {}; [0,1,2,3,4,5,6].forEach(i => {
+            sc[i] = { active: document.getElementById(`check-${i}`).checked, s1_s: document.getElementById(`s1s-${i}`).value, s1_e: document.getElementById(`s1e-${i}`).value, s2_a: document.getElementById(`s2a-${i}`).checked, s2_s: document.getElementById(`s2s-${i}`).value, s2_e: document.getElementById(`s2e-${i}`).value };
+        });
+        db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم الحفظ"));
     }
 
     function saveSet() { db.ref(DB_PATH).update({ whatsapp_num: document.getElementById('set-wa').value, site_logo: document.getElementById('set-logo').value, header_bg: document.getElementById('set-hbg').value, wm_text: document.getElementById('set-wm').value, footer_text: document.getElementById('set-foot').value }).then(()=>alert("تم")); }
     function addCat() { const n = document.getElementById('cat-n').value, c = document.getElementById('cat-c').value; if(n && c) db.ref(DB_PATH+'/catalogs').push({name:n, code:c}); }
-    function addSec() { const n = document.getElementById('new-sec-n').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}); }
-    function pub() { const t = document.getElementById('ad-up-to').value, u = document.getElementById('ad-urls').value.split('\n').filter(x=>x.trim()); if(t && u.length) u.forEach(url => db.ref(DB_PATH+'/'+t+'/imgs').push({url:url.trim()})); alert("تم"); }
 </script>
 </body>
 </html>
