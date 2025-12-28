@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير | v136</title>
+    <title>بصمة غير | v137</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -34,8 +34,6 @@
         .nav-btn:nth-child(2) { animation-delay: 0.5s; }
         .nav-btn:nth-child(3) { animation-delay: 1s; }
         .nav-btn:nth-child(4) { animation-delay: 1.5s; }
-        .nav-btn:nth-child(5) { animation-delay: 2s; }
-        .nav-btn:nth-child(n+6) { animation-delay: 2.5s; }
 
         .about-toggle { background: none; border: 1.5px solid var(--gold); color: var(--gold); padding: 8px 25px; border-radius: 40px; font-weight: 800; cursor: pointer; margin-bottom: 15px; transition: 0.3s; display: inline-block; margin-left: 5px; }
         .about-content { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; background: rgba(255,255,255,0.03); border-radius: 15px; margin: 0 auto 15px; max-width: 550px; line-height: 1.6; color: #ccc; text-align: right; }
@@ -60,19 +58,16 @@
         .collapse-btn { width: 100%; padding: 15px; background: none; border: none; color: var(--gold); font-weight: 800; text-align: right; display: flex; justify-content: space-between; }
         .collapse-content { display: none; padding: 15px; border-top: 1px solid #333; }
         input, textarea, select { width: 100%; padding: 12px; margin-bottom: 10px; background: #000; border: 1px solid #444; color: #fff; border-radius: 8px; font-family: 'Tajawal'; }
-        .editor-tools { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 10px; background: #222; padding: 8px; border-radius: 8px; }
-        .editor-tools button { background: #333; color: #fff; border: 1px solid #444; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
-        #editor-about { min-height: 200px; background: #000; border: 1px solid #444; padding: 15px; border-radius: 8px; color: #fff; outline: none; text-align: right; }
         #hidden-trigger { position: fixed; bottom: 0; left: 0; width: 60px; height: 60px; z-index: 200000000; cursor: pointer; }
         footer { padding: 20px; text-align: center; color: #666; font-size: 0.9rem; border-top: 1px solid rgba(197, 160, 89, 0.1); margin-top: auto; }
         
-        /* تقييمات */
-        .rating-stars { display: flex; gap: 5px; justify-content: center; margin-bottom: 10px; direction: ltr; }
-        .rating-stars i { cursor: pointer; color: #333; font-size: 1.5rem; transition: 0.2s; }
-        .rating-stars i.active { color: var(--gold); }
-        .reviews-display-box { background: rgba(197, 160, 89, 0.05); border: 1px solid rgba(197, 160, 89, 0.1); border-radius: 15px; max-width: 550px; margin: 10px auto 20px; padding: 20px; min-height: 120px; display: flex; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
-        .review-item { position: absolute; width: 100%; padding: 20px; transition: opacity 0.5s ease, transform 0.5s ease; opacity: 0; transform: translateY(20px); pointer-events: none; }
-        .review-item.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        /* مخصص للكتالوجات */
+        .catalog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .catalog-card { background: rgba(197, 160, 89, 0.05); border: 1px solid var(--gold); border-radius: 15px; padding: 30px 15px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .catalog-card:hover { background: var(--primary); transform: translateY(-5px); }
+        .catalog-card i { font-size: 2.5rem; color: var(--gold); margin-bottom: 15px; }
+        .catalog-card h3 { color: #fff; font-weight: 800; }
+        .iframe-container { width: 100%; max-width: 1000px; margin: 0 auto; height: 85vh; border: 2px solid var(--gold); border-radius: 20px; overflow: hidden; background: #000; }
     </style>
 </head>
 <body>
@@ -97,20 +92,24 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v136</h2>
-        
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v137</h2>
+
+        <div class="collapse-section">
+            <button class="collapse-btn" onclick="toggleCol('c_catalogs')">📚 إدارة الكتالوجات <i class="fas fa-book-open"></i></button>
+            <div id="c_catalogs" class="collapse-content">
+                <div id="admin-catalog-list"></div>
+                <hr style="margin:10px 0; border:1px solid #333;">
+                <input type="text" id="cat-name-in" placeholder="اسم الكتالوج (مثال: كتالوج 2024)">
+                <textarea id="cat-code-in" placeholder="الصق كود الـ iframe هنا..." style="height:100px;"></textarea>
+                <button onclick="addCatalog()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">إضافة كتالوج جديد</button>
+            </div>
+        </div>
+
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_about')">📖 من نحن (تنسيق متطور) <i class="fas fa-info-circle"></i></button>
             <div id="c_about" class="collapse-content">
                 <label><input type="checkbox" id="in-about-active"> تفعيل القسم</label>
-                <div class="editor-tools">
-                    <button onclick="execCmd('bold')"><b>B</b></button>
-                    <button onclick="execCmd('italic')"><i>I</i></button>
-                    <button onclick="execCmd('justifyRight')"><i class="fas fa-align-right"></i></button>
-                    <button onclick="execCmd('justifyCenter')"><i class="fas fa-align-center"></i></button>
-                    <button onclick="execCmd('justifyLeft')"><i class="fas fa-align-left"></i></button>
-                </div>
-                <div id="editor-about" contenteditable="true"></div>
+                <div id="editor-about" contenteditable="true" style="min-height:150px; background:#000; border:1px solid #444; padding:10px; border-radius:8px;"></div>
                 <button onclick="saveAbout()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px; margin-top:10px;">حفظ</button>
             </div>
         </div>
@@ -133,14 +132,6 @@
         </div>
 
         <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_imgs')">🗑️ حذف الصور <i class="fas fa-trash"></i></button>
-            <div id="c_imgs" class="collapse-content">
-                <select id="manage-sec-sel" onchange="renderPhotoManager(this.value)"></select>
-                <div id="photo-manager-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px;"></div>
-            </div>
-        </div>
-
-        <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_tabs')">📁 الأقسام والمجلدات <i class="fas fa-folder"></i></button>
             <div id="c_tabs" class="collapse-content">
                 <div id="admin-sec-list"></div>
@@ -148,22 +139,6 @@
                 <hr style="margin:10px 0; border:1px solid #333;">
                 <div id="admin-alb-list"></div>
                 <div style="display:flex; gap:5px;"><input type="text" id="new-alb-in" placeholder="اسم مجلد"><button onclick="addAlbum()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
-            </div>
-        </div>
-
-        <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_time')">🕒 المواعيد <i class="fas fa-clock"></i></button>
-            <div id="c_time" class="collapse-content">
-                <div id="schedule-editor"></div>
-                <button onclick="saveSchedule()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none;">حفظ</button>
-            </div>
-        </div>
-
-        <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_social')">🔗 التواصل <i class="fas fa-share-nodes"></i></button>
-            <div id="c_social" class="collapse-content">
-                <input type="text" id="in-insta" placeholder="إنستقرام"><input type="text" id="in-tiktok" placeholder="تيك توك"><input type="text" id="in-snap" placeholder="سناب"><input type="text" id="in-loc" placeholder="قوقل ماب">
-                <button onclick="saveSocial()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none;">حفظ</button>
             </div>
         </div>
 
@@ -186,191 +161,105 @@
     const config = { databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(config); const db = firebase.database(); 
     const DB_PATH = 'site_v28'; const AUTH_PATH = 'server_auth/lek'; 
-    let currentData = {}; let currentTab = 'home'; let isAdmin = false; let userRating = 0; let reviewIdx = 0;
+    let currentData = {}; let currentTab = 'home'; let activeCatId = null; let isAdmin = false;
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
         document.getElementById('splash').style.display = 'none';
         const mScreen = document.getElementById('maintenance-screen');
         mScreen.style.display = (currentData.maintenance_mode && !isAdmin) ? 'flex' : 'none';
-        renderAll(); renderAdminLists(); renderAdminReviews();
+        renderAll(); renderAdminLists(); renderAdminReviews(); renderAdminCatalogs();
         if(currentData.news_bar) { document.getElementById('news-container').style.display='flex'; document.getElementById('news-text').innerText=currentData.news_bar; }
         else document.getElementById('news-container').style.display='none';
-        document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
     });
-
-    function execCmd(command) { document.execCommand(command, false, null); }
-
-    function getSmartSchedule(d) {
-        if(!d.work_schedule) return "...";
-        let groups = []; let off = [];
-        const customOrder = [6, 0, 1, 2, 3, 4, 5];
-        customOrder.forEach((jsDay) => {
-            const s = d.work_schedule[jsDay];
-            const n = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay];
-            if(s && s.active) {
-                const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}-${s.s2_s}-${s.s2_e}`;
-                let found = groups.find(g => g.key === key);
-                if(found) found.days.push(n); else groups.push({ days:[n], key:key, data:s });
-            } else off.push(n);
-        });
-        let html = "";
-        groups.forEach(g => {
-            let dayT = g.days.length > 1 ? `من ${g.days[0]} إلى ${g.days[g.days.length-1]}` : g.days[0];
-            html += `<div style="margin-bottom:10px;"><b>${dayT}:</b><br>${t12(g.data.s1_s)} - ${t12(g.data.s1_e)} ${g.data.s2_a ? ' / '+t12(g.data.s2_s)+' - '+t12(g.data.s2_e) : ''}</div>`;
-        });
-        if(off.length) html += `<div style="color:var(--red);">إجازة: ${off.join('، ')}</div>`;
-        return html;
-    }
-
-    function updateWorkStatus() { 
-        const d = currentData; if(!d.work_schedule) return; 
-        const now = new Date(), dayJS = now.getDay(); const conf = d.work_schedule[dayJS]; 
-        let isOpen = false; 
-        if(conf && conf.active) { 
-            const toMins = (t) => { if(!t) return -1; const [h, m] = t.split(':').map(Number); return (h * 60) + m; };
-            const curMin = now.getHours() * 60 + now.getMinutes();
-            if (curMin >= toMins(conf.s1_s) && curMin < toMins(conf.s1_e)) isOpen = true;
-            if (!isOpen && conf.s2_a) { const s2S = toMins(conf.s2_s), s2E = toMins(conf.s2_e); if (curMin >= s2S && curMin < s2E) isOpen = true; }
-        } 
-        const cont = document.getElementById('status-container');
-        if(cont) cont.innerHTML = isOpen ? `<div class="status-badge open-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مفتوح الآن</div>` : `<div class="status-badge closed-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مغلق الآن</div>`;
-    }
-    setInterval(updateWorkStatus, 1000);
 
     function renderAll() {
         const d = currentData;
         document.getElementById('header-bg').style.backgroundImage = `url('${d.header_bg || ''}')`;
         document.getElementById('site-logo').src = d.site_logo || '';
-        document.getElementById('site-logo').style.display = d.site_logo ? 'block' : 'none';
         
         let navHtml = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
-        navHtml += `<button class="nav-btn ${currentTab==='catalog'?'active':''}" onclick="go('catalog')">الكتالوج</button>`;
+        navHtml += `<button class="nav-btn ${currentTab==='catalogs'||currentTab.startsWith('cat-')?'active':''}" onclick="go('catalogs')">الكتالوجات</button>`;
         if(d.pages) Object.keys(d.pages).forEach(id => navHtml += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}')">${d.pages[id].title}</button>`);
         navHtml += `<button class="nav-btn ${currentTab==='works'||currentTab.startsWith('alb-')?'active':''}" onclick="go('works')">أعمالنا</button>`;
         document.getElementById('navbar').innerHTML = navHtml;
         
-        let aboutBox = (d.about_active) ? `<button class="about-toggle" onclick="toggleAbout('about-box')">من نحن</button><div id="about-box" class="about-content">${d.about_text || ''}</div>` : '';
+        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">
+            ${(d.about_active) ? `<button class="about-toggle" onclick="toggleAbout('about-box')">من نحن</button><div id="about-box" class="about-content">${d.about_text || ''}</div>` : ''}
+            <button onclick="whatsappGlobal()" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; font-weight:900;">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button>
+        </div></section>`;
         
-        let reviewsDisplay = '';
-        if(d.reviews) {
-            let revItems = Object.keys(d.reviews).map((id, idx) => {
-                const r = d.reviews[id];
-                return `<div class="review-item" id="rev-${idx}">
-                    <div style="color:var(--gold); margin-bottom:5px;">${'⭐'.repeat(r.rating)}</div>
-                    <p style="font-style:italic; color:#eee; margin-bottom:5px;">"${r.message}"</p>
-                    <b style="color:var(--gold); font-size:0.9rem;">- ${r.name}</b>
-                </div>`;
-            }).join('');
-            reviewsDisplay = `<div class="reviews-display-box">${revItems}</div>`;
-        }
+        // تبويب عرض قائمة الكتالوجات
+        contentHtml += `<section class="sec ${currentTab==='catalogs'?'active':''}"><div class="catalog-grid">${drawCatalogs(d.catalogs)}</div></section>`;
 
-        let reviewForm = `<button class="about-toggle" onclick="toggleAbout('review-box')">أضف تقييم</button>
-        <div id="review-box" class="about-content">
-            <div id="review-form-container">
-                <input type="text" id="rev-name" placeholder="الاسم الكريم">
-                <div class="rating-stars" id="star-row">
-                    <i class="fas fa-star" onclick="setStar(5)"></i><i class="fas fa-star" onclick="setStar(4)"></i><i class="fas fa-star" onclick="setStar(3)"></i><i class="fas fa-star" onclick="setStar(2)"></i><i class="fas fa-star" onclick="setStar(1)"></i>
-                </div>
-                <textarea id="rev-msg" placeholder="اكتب تجربتك هنا..."></textarea>
-                <button onclick="submitReview()" style="width:100%; background:var(--gold); border:none; padding:10px; border-radius:8px; font-weight:900; color:#000;">إرسال التقييم</button>
-            </div>
-        </div>`;
-
-        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewForm}${reviewsDisplay}<div style="background:rgba(255,255,255,0.03); padding:30px; border-radius:20px; max-width:550px; margin:0 auto 20px; border: 1px solid #222;"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; font-weight:900;">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}${d.location_url ? `<a href="${d.location_url}" target="_blank"><i class="fas fa-location-dot"></i></a>`:''}</div></div></section>`;
-        
-        // قسم الكتالوج الجديد
-        contentHtml += `<section class="sec ${currentTab==='catalog'?'active':''}"><div style="width:100%; max-width:900px; margin:0 auto; height:80vh; border:2px solid var(--gold); border-radius:15px; overflow:hidden;"><iframe allowfullscreen="allowfullscreen" allow="clipboard-write" scrolling="no" class="fp-iframe" src="https://heyzine.com/flip-book/a044c0c3b5.html" style="border:none; width: 100%; height: 100%;"></iframe></div></section>`;
+        // تبويب عرض كتالوج محدد
+        if(d.catalogs) Object.keys(d.catalogs).forEach(id => {
+            contentHtml += `<section class="sec ${currentTab==='cat-'+id?'active':''}">
+                <button onclick="go('catalogs')" style="color:var(--gold); background:none; border:none; margin-bottom:15px; cursor:pointer; font-weight:800;">← عودة لقائمة الكتالوجات</button>
+                <div class="iframe-container">${d.catalogs[id].code}</div>
+            </section>`;
+        });
 
         if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
         contentHtml += `<section class="sec ${currentTab==='works'?'active':''}"><div class="grid">${drawAlbums(d.albums)}</div></section>`;
         if(d.albums) Object.keys(d.albums).forEach(id => contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}"><button onclick="go('works')" style="color:var(--gold); background:none; border:none; margin-bottom:15px;">← عودة للأعمال</button><div class="grid">${drawImgs(d.albums[id].imgs)}</div></section>`);
+        
         document.getElementById('content-area').innerHTML = contentHtml;
-        updateWorkStatus();
-        startReviewSlider();
-    }
-
-    function startReviewSlider() {
-        if(!currentData.reviews) return;
-        const total = Object.keys(currentData.reviews).length;
-        if(total === 0) return;
-        
-        const cycle = () => {
-            const all = document.querySelectorAll('.review-item');
-            all.forEach(el => el.classList.remove('active'));
-            const current = document.getElementById(`rev-${reviewIdx}`);
-            if(current) current.classList.add('active');
-            reviewIdx = (reviewIdx + 1) % total;
-        };
-        cycle();
-        if(window.reviewInterval) clearInterval(window.reviewInterval);
-        window.reviewInterval = setInterval(cycle, 4000);
-    }
-
-    function setStar(n) {
-        userRating = n;
-        const stars = document.querySelectorAll('#star-row i');
-        stars.forEach((s, i) => {
-            if (5 - i <= n) s.classList.add('active');
-            else s.classList.remove('active');
+        // تصحيح الأبعاد للأكواد المضافة يدوياً
+        document.querySelectorAll('.iframe-container iframe').forEach(frame => {
+            frame.style.width = '100%';
+            frame.style.height = '100%';
+            frame.style.border = 'none';
         });
     }
 
-    function submitReview() {
-        if(localStorage.getItem('v28_voted')) return alert("لقد قمت بالتقييم مسبقاً، شكراً لك!");
-        const name = document.getElementById('rev-name').value;
-        const msg = document.getElementById('rev-msg').value;
-        if(!name || !msg || userRating === 0) return alert("فضلاً أكمل جميع الحقول والنجوم");
-        
-        db.ref(DB_PATH + '/reviews').push({
-            name: name,
-            message: msg,
-            rating: userRating,
-            date: new Date().toLocaleDateString('ar-SA')
-        }).then(() => {
-            localStorage.setItem('v28_voted', 'true');
-            alert("شكراً لتقييمك!");
-            renderAll();
-        });
+    function drawCatalogs(cats) {
+        if(!cats) return '<p style="text-align:center; padding:50px;">سيتم إضافة الكتالوجات قريباً...</p>';
+        return Object.keys(cats).map(id => `
+            <div class="catalog-card" onclick="go('cat-${id}')">
+                <i class="fas fa-book-open"></i>
+                <h3>${cats[id].name}</h3>
+                <p style="color:var(--gold); font-size:0.8rem; margin-top:10px;">اضغط للتصفح</p>
+            </div>`).join('');
     }
 
-    function renderAdminReviews() {
-        const list = document.getElementById('admin-reviews-list');
+    function renderAdminCatalogs() {
+        const list = document.getElementById('admin-catalog-list');
         list.innerHTML = '';
-        if(currentData.reviews) {
-            Object.keys(currentData.reviews).forEach(id => {
-                const r = currentData.reviews[id];
-                list.innerHTML += `<div style="background:#000; padding:10px; margin-bottom:10px; border-radius:8px; border-right:3px solid var(--gold);">
-                    <div style="display:flex; justify-content:space-between; color:var(--gold);"><b>${r.name}</b> <span>${r.rating} ⭐</span></div>
-                    <p style="font-size:0.8rem; margin:5px 0;">${r.message}</p>
-                    <button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.7rem;">حذف</button>
+        if(currentData.catalogs) {
+            Object.keys(currentData.catalogs).forEach(id => {
+                list.innerHTML += `<div style="background:#000; padding:10px; margin-bottom:10px; border-radius:8px; border-right:3px solid var(--gold); display:flex; justify-content:space-between; align-items:center;">
+                    <span style="color:#fff; font-weight:800;">${currentData.catalogs[id].name}</span>
+                    <button onclick="db.ref(DB_PATH+'/catalogs/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 15px; border-radius:5px;">حذف</button>
                 </div>`;
             });
-        } else { list.innerHTML = 'لا توجد تقييمات'; }
+        } else { list.innerHTML = 'لا توجد كتالوجات مضافة'; }
     }
 
-    function toggleAbout(id) { document.getElementById(id).classList.toggle('open'); }
+    function addCatalog() {
+        const name = document.getElementById('cat-name-in').value;
+        const code = document.getElementById('cat-code-in').value;
+        if(name && code) {
+            db.ref(DB_PATH + '/catalogs').push({ name: name, code: code }).then(() => {
+                document.getElementById('cat-name-in').value = '';
+                document.getElementById('cat-code-in').value = '';
+                alert("تمت إضافة الكتالوج بنجاح!");
+            });
+        } else { alert("يرجى إدخال الاسم والكود"); }
+    }
+
+    // الوظائف الأساسية
     function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
-    function t12(t) { if(!t) return ""; let [h, m] = t.split(':'); h = parseInt(h); return `${h%12||12}:${m}${h>=12?'م':'ص'}`; }
     function toggleCol(id) { document.querySelectorAll('.collapse-content').forEach(c=> { if(c.id!==id) c.style.display='none'; }); const el = document.getElementById(id); el.style.display = el.style.display==='block'?'none':'block'; }
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
-    function whatsappOrder(url) { window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); }
     function openImg(url) { document.getElementById('viewer-img').src = url; document.getElementById('viewer-wm-text').innerText = currentData.wm_text || ''; document.getElementById('viewer').style.display='flex'; }
     function drawImgs(imgs) { if(!imgs) return '<p style="text-align:center; padding:50px;">قريباً...</p>'; const wmTxt = currentData.wm_text || ''; return Object.keys(imgs).reverse().map(id => `<div class="card"><div class="img-container" onclick="openImg('${imgs[id].url}')"><img src="${imgs[id].url}" loading="lazy"><div class="wm-tag">${wmTxt}</div></div><button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button></div>`).join(''); }
     function drawAlbums(albs) { if(!albs) return ''; return Object.keys(albs).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albs[id].name}</h3></div>`).join(''); }
-    function checkAccess() { const pass = prompt("الرمز:"); db.ref(AUTH_PATH).once('value').then(snap => { if(pass === String(snap.val())) { isAdmin=true; document.getElementById('admin-panel').style.display='block'; document.getElementById('maintenance-screen').style.display='none'; fillAdminFields(); } }); }
-    function renderPhotoManager(path) { const grid = document.getElementById('photo-manager-grid'); grid.innerHTML = ''; if(!path) return; const [type, id] = path.split('/'); const folder = currentData[type] && currentData[type][id]; if(folder && folder.imgs) { Object.keys(folder.imgs).reverse().forEach(imgId => { grid.innerHTML += `<div style="background:#222; padding:5px; border-radius:5px;"><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${imgId}')" style="width:100%; background:var(--red); border:none; color:#fff; margin-top:5px; padding:5px; border-radius:4px;">حذف</button></div>`; }); } }
-    function deleteImg(path, imgId) { if(confirm("هل أنت متأكد من الحذف؟")) db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove(); }
-    function renderAdminLists() { const d = currentData; let sL = '', aL = '', upSel = '<option value="">-- اختر الوجهة --</option>'; if(d.pages) Object.keys(d.pages).forEach(id => { sL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; upSel += `<option value="pages/${id}">${d.pages[id].title}</option>`; }); if(d.albums) Object.keys(d.albums).forEach(id => { aL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; upSel += `<option value="albums/${id}">${d.albums[id].name}</option>`; }); document.getElementById('admin-sec-list').innerHTML = sL; document.getElementById('admin-alb-list').innerHTML = aL; document.getElementById('upload-target-sel').innerHTML = upSel; document.getElementById('manage-sec-sel').innerHTML = upSel; }
-    function fillAdminFields() { const d = currentData; document.getElementById('in-name').value=d.site_name||''; document.getElementById('in-wa').value=d.whatsapp_num||''; document.getElementById('in-logo').value=d.site_logo||''; document.getElementById('in-hbg').value=d.header_bg||''; document.getElementById('in-wm').value=d.wm_text||''; document.getElementById('in-news').value=d.news_bar||''; document.getElementById('in-maintenance').checked=d.maintenance_mode||false; document.getElementById('in-insta').value=d.insta_url||''; document.getElementById('in-tiktok').value=d.tiktok_url||''; document.getElementById('in-snap').value=d.snap_url||''; document.getElementById('in-loc').value=d.location_url||''; document.getElementById('editor-about').innerHTML=d.about_text||''; document.getElementById('in-about-active').checked=d.about_active||false; document.getElementById('in-footer').value=d.footer_text||''; fillAdminSchedule(d); }
-    function fillAdminSchedule(d) { const ed = document.getElementById('schedule-editor'); ed.innerHTML = ''; const customOrder = [6, 0, 1, 2, 3, 4, 5]; customOrder.forEach((jsDay) => { const dayName = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay]; const s = (d.work_schedule && d.work_schedule[jsDay]) ? d.work_schedule[jsDay] : {active:false, s1_s:"09:00", s1_e:"13:00"}; ed.innerHTML += `<div style="background:#222; padding:10px; margin-bottom:5px; border-radius:8px;"><label><input type="checkbox" id="check-${jsDay}" ${s.active?'checked':''}> ${dayName}</label><div style="display:flex; gap:5px;"><input type="time" id="s1s-${jsDay}" value="${s.s1_s}"><input type="time" id="s1e-${jsDay}" value="${s.s1_e}"></div><label style="font-size:0.8rem;"><input type="checkbox" id="s2a-${jsDay}" ${s.s2_a?'checked':''}> شفت مسائي</label><div style="display:flex; gap:5px;"><input type="time" id="s2s-${jsDay}" value="${s.s2_s||''}"><input type="time" id="s2e-${jsDay}" value="${s.s2_e||''}"></div></div>`; }); }
-    function saveAbout() { db.ref(DB_PATH).update({ about_text: document.getElementById('editor-about').innerHTML, about_active: document.getElementById('in-about-active').checked }).then(()=>alert("تم حفظ قسم من نحن")); }
-    function saveSchedule() { let sc = {}; [0,1,2,3,4,5,6].forEach((jsDay) => { sc[jsDay] = { active: document.getElementById(`check-${jsDay}`).checked, s1_s: document.getElementById(`s1s-${jsDay}`).value, s1_e: document.getElementById(`s1e-${jsDay}`).value, s2_a: document.getElementById(`s2a-${jsDay}`).checked, s2_s: document.getElementById(`s2s-${jsDay}`).value, s2_e: document.getElementById(`s2e-${jsDay}`).value }; }); db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم الحفظ")); }
-    function saveSocial() { db.ref(DB_PATH).update({ insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value }).then(()=>alert("تم الحفظ")); }
+    function checkAccess() { const pass = prompt("الرمز:"); db.ref(AUTH_PATH).once('value').then(snap => { if(pass === String(snap.val())) { isAdmin=true; document.getElementById('admin-panel').style.display='block'; fillAdminFields(); } }); }
+    function toggleAbout(id) { document.getElementById(id).classList.toggle('open'); }
+    function renderAdminLists() { const d = currentData; let sL = '', aL = '', upSel = '<option value="">-- اختر الوجهة --</option>'; if(d.pages) Object.keys(d.pages).forEach(id => { sL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; upSel += `<option value="pages/${id}">${d.pages[id].title}</option>`; }); if(d.albums) Object.keys(d.albums).forEach(id => { aL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; upSel += `<option value="albums/${id}">${d.albums[id].name}</option>`; }); document.getElementById('admin-sec-list').innerHTML = sL; document.getElementById('admin-alb-list').innerHTML = aL; document.getElementById('upload-target-sel').innerHTML = upSel; }
     function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, maintenance_mode: document.getElementById('in-maintenance').checked, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value }).then(()=>alert("تم الحفظ")); }
-    function addSec() { const n = document.getElementById('new-sec-in').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); }
-    function addAlbum() { const n = document.getElementById('new-alb-in').value; if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(()=>document.getElementById('new-alb-in').value=''); }
-    function publishPhotos() { const path = document.getElementById('upload-target-sel').value; const urls = document.getElementById('links-in').value.split('\n').filter(u=>u.trim()); if(!path || !urls.length) return alert("اختر الوجهة والروابط"); urls.forEach(u => db.ref(DB_PATH+'/'+path+'/imgs').push({url: u.trim()})); alert("تم النشر"); document.getElementById('links-in').value = ''; }
+    function fillAdminFields() { const d = currentData; document.getElementById('in-name').value=d.site_name||''; document.getElementById('in-wa').value=d.whatsapp_num||''; document.getElementById('in-logo').value=d.site_logo||''; document.getElementById('in-hbg').value=d.header_bg||''; document.getElementById('in-wm').value=d.wm_text||''; document.getElementById('in-news').value=d.news_bar||''; document.getElementById('in-maintenance').checked=d.maintenance_mode||false; document.getElementById('editor-about').innerHTML=d.about_text||''; document.getElementById('in-about-active').checked=d.about_active||false; document.getElementById('in-footer').value=d.footer_text||''; }
 </script>
 </body>
 </html>
