@@ -344,7 +344,17 @@
             if (!isOpen && conf.s2_a) { const s2S = toMins(conf.s2_s), s2E = toMins(conf.s2_e); if (curMin >= s2S && curMin < s2E) isOpen = true; }
         } 
         const cont = document.getElementById('status-container');
-        if(cont) cont.innerHTML = isOpen ? `<div class="status-badge open-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مفتوح الآن</div>` : `<div class="status-badge closed-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مغلق الآن</div>`;
+        if(cont) {
+            let statusHtml = isOpen ? `<div class="status-badge open-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مفتوح الآن</div>` : `<div class="status-badge closed-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مغلق الآن</div>`;
+            if(d.location_url) {
+                statusHtml += `
+                <div style="margin-top:20px; border-top:1px solid rgba(197, 160, 89, 0.1); padding-top:15px;">
+                    <p style="font-size:0.8rem; color:#888; margin-bottom:10px;">موقعنا على الخريطة</p>
+                    <a href="${d.location_url}" target="_blank" style="color:var(--gold); font-size:2rem; transition:0.3s; display:inline-block;"><i class="fas fa-location-dot"></i></a>
+                </div>`;
+            }
+            cont.innerHTML = statusHtml;
+        }
     }
     setInterval(updateWorkStatus, 1000);
 
@@ -397,14 +407,14 @@
                 <div class="work-path-container">
                     <div class="path-step"><i class="fas fa-comments"></i><h4>الاستشارة</h4><p>نسمع أفكارك ونرسم التصور الأولي لمساحتك</p></div>
                     <div class="path-step"><i class="fas fa-ruler-combined"></i><h4>المعاينة</h4><p>زيارة الموقع ورفع المقاسات بدقة متناهية</p></div>
-                    <div class="path-step"><i class="fas fa-pencil-ruler"></i><h4>التصميم</h4><p>تحويل الخيال لواقع عبر نماذج 3D احترافية</p></div>
+                    <div class="path-step"><i class="fas fa-pencil-ruler"></i><h4>التصميم</h4><p>تحويل الخيال لواقع عبر نماذج احترافية</p></div>
                     <div class="path-step"><i class="fas fa-hammer"></i><h4>التنفيذ</h4><p>تطبيق التصميم بأعلى معايير الجودة وبصمة غير</p></div>
                 </div>
             </div>`;
 
         let reviewForm = `<button class="about-toggle" onclick="toggleAbout('review-box')">أضف تقييم</button><div id="review-box" class="about-content"><div id="review-form-container"><input type="text" id="rev-name" placeholder="الاسم الكريم"><div class="rating-stars" id="star-row" style="display:flex; gap:5px; justify-content:center; margin-bottom:10px; direction:ltr;"><i class="fas fa-star" onclick="setStar(5)"></i><i class="fas fa-star" onclick="setStar(4)"></i><i class="fas fa-star" onclick="setStar(3)"></i><i class="fas fa-star" onclick="setStar(2)"></i><i class="fas fa-star" onclick="setStar(1)"></i></div><textarea id="rev-msg" placeholder="اكتب تجربتك هنا..."></textarea><button onclick="submitReview()" style="width:100%; background:var(--gold); border:none; padding:10px; border-radius:8px; font-weight:900; color:#000;">إرسال التقييم</button></div></div>`;
 
-        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewForm}${reviewsDisplay}${workPath}<div style="background:rgba(255,255,255,0.03); padding:30px; border-radius:20px; max-width:550px; margin:20px auto; border: 1px solid #222;"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; font-weight:900;">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}${d.location_url ? `<a href="${d.location_url}" target="_blank"><i class="fas fa-location-dot"></i></a>`:''}</div></div></section>`;
+        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewForm}${reviewsDisplay}${workPath}<div style="background:rgba(255,255,255,0.03); padding:30px; border-radius:20px; max-width:550px; margin:20px auto; border: 1px solid #222;"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:#fff; color:#000; font-weight:900;">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}</div></div></section>`;
         
         contentHtml += `<section class="sec ${currentTab==='catalogs'?'active':''}"><div class="grid">${drawFolders(d.catalogs, 'cat')}</div></section>`;
         if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
