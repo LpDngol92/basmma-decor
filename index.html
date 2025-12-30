@@ -18,10 +18,32 @@
         .news-ticker { background: transparent; color: var(--gold); height: 35px; display: none; align-items: center; overflow: hidden; position: relative; z-index: 999; margin-top: 5px; }
         .ticker-content { display: inline-block; white-space: nowrap; padding-right: 100%; animation: ticker-move 20s linear infinite; font-weight: 500; }
         @keyframes ticker-move { 0% { transform: translateX(0); } 100% { transform: translateX(100%); } }
-        header { height: 35vh; display: flex; align-items: center; justify-content: center; position: relative; }
-        .header-bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.4); z-index: 1; }
-        .logo-img { max-height: 140px; position: relative; z-index: 5; max-width: 80%; }
         
+        /* تعديل الهيدر ليصبح قسم شركاء النجاح */
+        header { display: none; } /* تم إخفاء الهيدر بناءً على طلبك */
+        
+        .partners-section { 
+            height: 35vh; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            position: relative; 
+            background: #000; 
+            overflow: hidden; 
+            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+        }
+        .partner-slide { 
+            position: absolute; 
+            inset: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            opacity: 0; 
+            transition: opacity 1s ease-in-out; 
+        }
+        .partner-slide.active { opacity: 1; }
+        .partner-img { max-height: 180px; max-width: 80%; object-fit: contain; filter: drop-shadow(0 0 10px rgba(197, 160, 89, 0.3)); }
+
         nav { position: sticky; top: 0; z-index: 1000; background: rgba(10,10,11,0.95); backdrop-filter: blur(10px); padding: 12px 10px; border-bottom: 1px solid var(--gold); display: flex; justify-content: safe center; gap: 10px; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         nav::-webkit-scrollbar { display: none; }
         .nav-btn { padding: 8px 22px; border: none; background: rgba(255,255,255,0.05); color: #aaa; font-weight: 800; border-radius: 40px; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: 0.3s; animation: sequentialGlow 5s infinite; }
@@ -73,13 +95,16 @@
         .reviews-display-box { background: rgba(197, 160, 89, 0.05); border: 1px solid rgba(197, 160, 89, 0.1); border-radius: 15px; max-width: 550px; margin: 10px auto 20px; padding: 20px; min-height: 120px; display: flex; align-items: center; justify-content: center; text-align: center; position: relative; overflow: hidden; }
         .review-item { position: absolute; width: 100%; padding: 20px; transition: opacity 0.5s ease, transform 0.5s ease; opacity: 0; transform: translateY(20px); pointer-events: none; }
         .review-item.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
-        /* ستايل الكتالوج */
         #cat-overlay { display: none; position: fixed; inset: 0; background: #000; z-index: 100000001; flex-direction: column; }
     </style>
 </head>
 <body>
 <div id="splash"> <h2 style="color:var(--gold); font-size:2rem;">بصمة غير...</h2> </div>
 <div id="maintenance-screen"> <h1 style="color:var(--gold);">الموقع في صيانة</h1> <p>نعمل على التحديث...</p> </div>
+
+<div id="partners-display" class="partners-section">
+    </div>
+
 <header>
     <div id="header-bg" class="header-bg"></div>
     <img id="site-logo" class="logo-img" src="" alt="">
@@ -106,6 +131,15 @@
     <div class="admin-box">
         <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v136</h2>
         
+        <div class="collapse-section">
+            <button class="collapse-btn" onclick="toggleCol('c_partners')">🤝 شركاء النجاح <i class="fas fa-handshake"></i></button>
+            <div id="c_partners" class="collapse-content">
+                <div id="admin-partners-list"></div>
+                <input type="text" id="new-partner-url" placeholder="رابط شعار الشركة">
+                <button onclick="addPartner()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">إضافة شعار</button>
+            </div>
+        </div>
+
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_cat')">📚 إدارة الكتالوج <i class="fas fa-book"></i></button>
             <div id="c_cat" class="collapse-content">
@@ -203,17 +237,18 @@
     const config = { databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
     firebase.initializeApp(config); const db = firebase.database(); 
     const DB_PATH = 'site_v28'; const AUTH_PATH = 'server_auth/lek'; 
-    let currentData = {}; let currentTab = 'home'; let isAdmin = false; let userRating = 0; let reviewIdx = 0;
+    let currentData = {}; let currentTab = 'home'; let isAdmin = false; let userRating = 0; let reviewIdx = 0; let partnerIdx = 0;
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
         document.getElementById('splash').style.display = 'none';
         const mScreen = document.getElementById('maintenance-screen');
         mScreen.style.display = (currentData.maintenance_mode && !isAdmin) ? 'flex' : 'none';
-        renderAll(); renderAdminLists(); renderAdminReviews();
+        renderAll(); renderAdminLists(); renderAdminReviews(); renderAdminPartners();
         if(currentData.news_bar) { document.getElementById('news-container').style.display='flex'; document.getElementById('news-text').innerText=currentData.news_bar; }
         else document.getElementById('news-container').style.display='none';
         document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
+        startPartnersSlider();
     });
 
     function execCmd(command) { document.execCommand(command, false, null); }
@@ -254,6 +289,32 @@
         if(cont) cont.innerHTML = isOpen ? `<div class="status-badge open-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مفتوح الآن</div>` : `<div class="status-badge closed-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مغلق الآن</div>`;
     }
     setInterval(updateWorkStatus, 1000);
+
+    // دالة سلايدر شركاء النجاح
+    function startPartnersSlider() {
+        const container = document.getElementById('partners-display');
+        if(!currentData.partners) {
+            container.innerHTML = '<h2 style="color:var(--gold);">بصمة غير</h2>'; // عرض بديل في حال عدم وجود شركاء
+            return;
+        }
+        const ids = Object.keys(currentData.partners);
+        if(ids.length === 0) return;
+        
+        let html = ids.map((id, idx) => `<div class="partner-slide" id="partner-${idx}"><img src="${currentData.partners[id].url}" class="partner-img"></div>`).join('');
+        container.innerHTML = html;
+
+        const cycle = () => {
+            const all = document.querySelectorAll('.partner-slide');
+            if(all.length === 0) return;
+            all.forEach(el => el.classList.remove('active'));
+            const current = document.getElementById(`partner-${partnerIdx}`);
+            if(current) current.classList.add('active');
+            partnerIdx = (partnerIdx + 1) % ids.length;
+        };
+        cycle();
+        if(window.partnerInterval) clearInterval(window.partnerInterval);
+        window.partnerInterval = setInterval(cycle, 3000); // تغيير كل 3 ثوانٍ
+    }
 
     function renderAll() {
         const d = currentData;
@@ -351,6 +412,31 @@
         } else { list.innerHTML = 'لا توجد تقييمات'; }
     }
 
+    // إدارة شركاء النجاح في لوحة الإدارة
+    function addPartner() {
+        const url = document.getElementById('new-partner-url').value;
+        if(url) {
+            db.ref(DB_PATH + '/partners').push({ url: url.trim() }).then(() => {
+                document.getElementById('new-partner-url').value = '';
+                alert("تمت إضافة الشعار بنجاح");
+            });
+        }
+    }
+
+    function renderAdminPartners() {
+        const list = document.getElementById('admin-partners-list');
+        list.innerHTML = '';
+        if(currentData.partners) {
+            Object.keys(currentData.partners).forEach(id => {
+                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:#000; padding:10px; margin-bottom:10px; border-radius:8px;">
+                    <img src="${currentData.partners[id].url}" style="height:40px; width:40px; object-fit:contain;">
+                    <span style="flex-grow:1; font-size:0.7rem; color:#666; overflow:hidden;">${currentData.partners[id].url}</span>
+                    <button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button>
+                </div>`;
+            });
+        } else { list.innerHTML = 'لا يوجد شركاء مضافين'; }
+    }
+
     function toggleAbout(id) { document.getElementById(id).classList.toggle('open'); }
     function go(id) { currentTab=id; renderAll(); window.scrollTo(0,0); }
     function t12(t) { if(!t) return ""; let [h, m] = t.split(':'); h = parseInt(h); return `${h%12||12}:${m}${h>=12?'م':'ص'}`; }
@@ -386,7 +472,7 @@
     function fillAdminSchedule(d) { const ed = document.getElementById('schedule-editor'); ed.innerHTML = ''; const customOrder = [6, 0, 1, 2, 3, 4, 5]; customOrder.forEach((jsDay) => { const dayName = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay]; const s = (d.work_schedule && d.work_schedule[jsDay]) ? d.work_schedule[jsDay] : {active:false, s1_s:"09:00", s1_e:"13:00"}; ed.innerHTML += `<div style="background:#222; padding:10px; margin-bottom:5px; border-radius:8px;"><label><input type="checkbox" id="check-${jsDay}" ${s.active?'checked':''}> ${dayName}</label><div style="display:flex; gap:5px;"><input type="time" id="s1s-${jsDay}" value="${s.s1_s}"><input type="time" id="s1e-${jsDay}" value="${s.s1_e}"></div><label style="font-size:0.8rem;"><input type="checkbox" id="s2a-${jsDay}" ${s.s2_a?'checked':''}> شفت مسائي</label><div style="display:flex; gap:5px;"><input type="time" id="s2s-${jsDay}" value="${s.s2_s||''}"><input type="time" id="s2e-${jsDay}" value="${s.s2_e||''}"></div></div>`; }); }
     function saveAbout() { db.ref(DB_PATH).update({ about_text: document.getElementById('editor-about').innerHTML, about_active: document.getElementById('in-about-active').checked }).then(()=>alert("تم حفظ قسم من نحن")); }
     function saveSchedule() { let sc = {}; [0,1,2,3,4,5,6].forEach((jsDay) => { sc[jsDay] = { active: document.getElementById(`check-${jsDay}`).checked, s1_s: document.getElementById(`s1s-${jsDay}`).value, s1_e: document.getElementById(`s1e-${jsDay}`).value, s2_a: document.getElementById(`s2a-${jsDay}`).checked, s2_s: document.getElementById(`s2s-${jsDay}`).value, s2_e: document.getElementById(`s2e-${jsDay}`).value }; }); db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم الحفظ")); }
-    function saveSocial() { db.ref(DB_PATH).update({ insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snap').value, location_url: document.getElementById('in-loc').value }).then(()=>alert("تم الحفظ")); }
+    function saveSocial() { db.ref(DB_PATH).update({ insta_url: document.getElementById('in-insta').value, tiktok_url: document.getElementById('in-tiktok').value, snap_url: document.getElementById('in-snapchat').value, location_url: document.getElementById('in-loc').value }).then(()=>alert("تم الحفظ")); }
     function saveSettings() { db.ref(DB_PATH).update({ site_name: document.getElementById('in-name').value, whatsapp_num: document.getElementById('in-wa').value, site_logo: document.getElementById('in-logo').value, header_bg: document.getElementById('in-hbg').value, maintenance_mode: document.getElementById('in-maintenance').checked, wm_text: document.getElementById('in-wm').value, news_bar: document.getElementById('in-news').value, footer_text: document.getElementById('in-footer').value }).then(()=>alert("تم الحفظ")); }
     function addSec() { const n = document.getElementById('new-sec-in').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); }
     function addAlbum() { const n = document.getElementById('new-alb-in').value; if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(()=>document.getElementById('new-alb-in').value=''); }
@@ -394,5 +480,3 @@
 </script>
 </body>
 </html>
-
-
