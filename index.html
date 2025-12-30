@@ -32,7 +32,6 @@
             overflow: hidden; 
             border-bottom: 1px solid rgba(197, 160, 89, 0.2);
         }
-        /* ستايل العبارة الذهبية الأنيقة مع الظلال */
         .partners-title {
             color: var(--gold);
             font-weight: 900;
@@ -45,6 +44,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+            pointer-events: none; /* منع التفاعل مع النص */
         }
         .partner-slide-container {
             position: relative;
@@ -62,9 +62,18 @@
             opacity: 0; 
             transition: opacity 1s ease-in-out; 
             width: 100%;
+            pointer-events: none; /* منع التفاعل مع الحاوية */
         }
         .partner-slide.active { opacity: 1; }
-        .partner-img { max-height: 160px; max-width: 80%; object-fit: contain; filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2)); }
+        .partner-img { 
+            max-height: 160px; 
+            max-width: 80%; 
+            object-fit: contain; 
+            filter: drop-shadow(0 0 15px rgba(197, 160, 89, 0.2));
+            pointer-events: none; /* منع الضغط أو الحفظ */
+            -webkit-user-drag: none; /* منع السحب في المتصفحات */
+            user-select: none; /* منع التحديد */
+        }
 
         nav { position: sticky; top: 0; z-index: 1000; background: rgba(10,10,11,0.95); backdrop-filter: blur(10px); padding: 12px 10px; border-bottom: 1px solid var(--gold); display: flex; justify-content: safe center; gap: 10px; overflow-x: auto; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         nav::-webkit-scrollbar { display: none; }
@@ -276,7 +285,6 @@
         else document.getElementById('news-container').style.display='none';
         document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
         
-        // عرض عنوان شركاء النجاح
         document.getElementById('partners-title-text').innerText = currentData.partners_title || '';
         startPartnersSlider();
     });
@@ -329,7 +337,7 @@
         const ids = Object.keys(currentData.partners);
         if(ids.length === 0) return;
         
-        let html = ids.map((id, idx) => `<div class="partner-slide" id="partner-${idx}"><img src="${currentData.partners[id].url}" class="partner-img"></div>`).join('');
+        let html = ids.map((id, idx) => `<div class="partner-slide" id="partner-${idx}"><img src="${currentData.partners[id].url}" class="partner-img" oncontextmenu="return false;"></div>`).join('');
         container.innerHTML = html;
 
         const cycle = () => {
@@ -441,7 +449,6 @@
         } else { list.innerHTML = 'لا توجد تقييمات'; }
     }
 
-    // إدارة شركاء النجاح
     function savePartnersTitle() {
         const title = document.getElementById('admin-partners-title').value;
         db.ref(DB_PATH).update({ partners_title: title }).then(() => alert("تم حفظ العبارة"));
