@@ -74,7 +74,35 @@
             filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.15));
         }
         
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            margin: 0; 
+            padding: 0; 
+            user-select: none; /* منع التحديد */
+            -webkit-user-select: none; /* لسفاري وكروم */
+            -moz-user-select: none; /* فايرفوكس */
+            -ms-user-select: none; /* انترنت إكسبلورر */
+        }
+        
+        /* ========== بداية حماية الصور ========== */
+        img {
+            -webkit-user-drag: none; /* منع السحب في سفاري */
+            -khtml-user-drag: none; /* منع السحب في متصفحات قديمة */
+            -moz-user-drag: none; /* منع السحب في فايرفوكس */
+            -o-user-drag: none; /* منع السحب في أوبرا */
+            user-drag: none; /* منع السحب */
+            pointer-events: none; /* منع الأحداث على الصور */
+        }
+        
+        /* استثناء للصور داخل المعرض */
+        #viewer-img, .partner-img, .admin-box img {
+            pointer-events: auto !important;
+            -webkit-user-drag: auto !important;
+            user-drag: auto !important;
+        }
+        /* ========== نهاية حماية الصور ========== */
+        
         body { 
             font-family: var(--header-font); 
             background: var(--bg); 
@@ -85,6 +113,57 @@
             flex-direction: column; 
             transition: background-color 0.3s ease, color 0.3s ease;
         }
+        
+        /* ========== شاشة الحماية ========== */
+        #protection-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 999999999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        
+        .protection-message {
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid var(--red);
+            max-width: 90%;
+            box-shadow: 0 0 30px rgba(231, 76, 60, 0.5);
+            animation: protection-pulse 2s infinite;
+        }
+        
+        @keyframes protection-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .protection-icon {
+            font-size: 4rem;
+            color: var(--red);
+            margin-bottom: 20px;
+        }
+        
+        .protection-text {
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .protection-warning {
+            color: var(--gold);
+            font-size: 0.9rem;
+            margin-top: 15px;
+            font-style: italic;
+        }
+        /* ========== نهاية شاشة الحماية ========== */
         
         #splash { 
             position: fixed; 
@@ -585,7 +664,7 @@
             transform: scale(1.2);
         }
         
-        /* ========== بداية التعديلات على المعرض ========== */
+        /* ========== بداية المعرض المحسن ========== */
         #viewer { 
             position: fixed; 
             inset: 0; 
@@ -801,7 +880,7 @@
             background: rgba(255,255,255,0.9);
             color: #333;
         }
-        /* ========== نهاية التعديلات على المعرض ========== */
+        /* ========== نهاية المعرض المحسن ========== */
         
         .admin-box { 
             max-width: 900px; 
@@ -991,9 +1070,53 @@
         .font-option.almarai { font-family: 'Almarai', sans-serif; }
         .font-option.changa { font-family: 'Changa', sans-serif; }
         .font-option.lalezar { font-family: 'Lalezar', cursive; }
+        
+        /* زر تفعيل/تعطيل الحماية للمشرف */
+        #protection-toggle {
+            position: fixed;
+            bottom: 70px;
+            left: 10px;
+            width: 50px;
+            height: 50px;
+            background: var(--green);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 200000001;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        
+        #protection-toggle.active {
+            background: var(--red);
+        }
+        
+        #protection-toggle:hover {
+            transform: scale(1.1);
+        }
     </style>
 </head>
 <body>
+<!-- شاشة الحماية -->
+<div id="protection-overlay">
+    <div class="protection-message">
+        <div class="protection-icon">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="protection-text">
+            <strong>ممنوع حفظ الصور أو النسخ!</strong><br>
+            هذا المحتوى محمي بحقوق النشر
+        </div>
+        <div class="protection-warning">
+            © جميع الحقوق محفوظة لـ بصمة غير للديكور
+        </div>
+    </div>
+</div>
+
 <div id="splash"> 
     <h2 style="color:var(--gold); font-size:2rem;">بصمة غير...</h2> 
 </div>
@@ -1041,6 +1164,11 @@
     <div style="background:var(--primary); padding:15px; text-align:center; color:#fff; font-weight:bold; cursor:pointer;" onclick="this.parentElement.style.display='none'">إغلاق الكتالوج X</div>
     <div id="cat-frame" style="flex-grow:1; background:#fff;"></div>
 </div>
+
+<!-- زر تفعيل/تعطيل الحماية للمشرف -->
+<button id="protection-toggle" onclick="toggleProtection()" title="تفعيل/تعطيل الحماية">
+    <i class="fas fa-shield-alt"></i>
+</button>
 
 <!-- ========== بداية المعرض المحسن ========== -->
 <div id="viewer" onclick="closeViewerOnOverlay(event)">
@@ -1099,6 +1227,51 @@
 <div id="admin-panel">
     <div class="admin-box">
         <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v163</h2>
+        
+        <!-- قسم إدارة الحماية -->
+        <div class="collapse-section">
+            <button class="collapse-btn" onclick="toggleCol('c_protection')">🛡️ إعدادات الحماية <i class="fas fa-shield-alt"></i></button>
+            <div id="c_protection" class="collapse-content">
+                <div style="text-align:center; padding:20px;">
+                    <h3 style="color:var(--gold); margin-bottom:20px;">إعدادات حماية المحتوى</h3>
+                    <p style="color:var(--text-secondary); margin-bottom:15px;">تحكم في مستوى حماية الموقع من النسخ والسرقة</p>
+                    
+                    <div style="text-align:right; margin-bottom:20px;">
+                        <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
+                            <input type="checkbox" id="enable-right-click-protection" checked>
+                            منع النقر بالزر الأيمن
+                        </label>
+                        <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
+                            <input type="checkbox" id="enable-keyboard-protection" checked>
+                            منع اختصارات لوحة المفاتيح (F12, Ctrl+U, etc.)
+                        </label>
+                        <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
+                            <input type="checkbox" id="enable-image-protection" checked>
+                            منع سحب وحفظ الصور
+                        </label>
+                        <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
+                            <input type="checkbox" id="enable-selection-protection" checked>
+                            منع نسخ النصوص
+                        </label>
+                        <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
+                            <input type="checkbox" id="enable-dev-tools-protection" checked>
+                            منع أدوات المطورين
+                        </label>
+                    </div>
+                    
+                    <div style="margin-top:20px; padding:15px; background:rgba(197, 160, 89, 0.1); border-radius:10px;">
+                        <p style="color:var(--gold); font-weight:bold; margin-bottom:5px;">رسالة الحماية:</p>
+                        <textarea id="protection-message-text" rows="3" style="width:100%; background:var(--input-bg); color:var(--text-primary); border:1px solid var(--border); padding:10px; border-radius:5px;">ممنوع حفظ الصور أو النسخ! هذا المحتوى محمي بحقوق النشر</textarea>
+                        <button onclick="saveProtectionSettings()" style="width:100%; background:var(--gold); color:#000; padding:10px; border:none; border-radius:8px; margin-top:10px; font-weight:bold;">حفظ إعدادات الحماية</button>
+                    </div>
+                    
+                    <div style="margin-top:20px; padding:15px; background:rgba(46, 204, 113, 0.1); border-radius:10px;">
+                        <p style="color:var(--green); font-weight:bold; margin-bottom:5px;">ملاحظة:</p>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">يمكنك تفعيل/تعطيل الحماية مؤقتاً من الزر الأخضر في الزاوية</p>
+                    </div>
+                </div>
+            </div>
+        </div>
         
         <!-- قسم إدارة الخطوط -->
         <div class="collapse-section">
@@ -1301,16 +1474,249 @@
     let currentTheme = 'black';
     let selectedFont = 'tajawal';
     
+    // ========== متغيرات الحماية ==========
+    let isProtectionEnabled = true;
+    let protectionSettings = {
+        rightClick: true,
+        keyboardShortcuts: true,
+        imageProtection: true,
+        textSelection: true,
+        devTools: true
+    };
+    
+    // ========== دوال الحماية ==========
+    
+    // تفعيل/تعطيل الحماية
+    function toggleProtection() {
+        isProtectionEnabled = !isProtectionEnabled;
+        const toggleBtn = document.getElementById('protection-toggle');
+        
+        if (isProtectionEnabled) {
+            enableProtection();
+            toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = '<i class="fas fa-shield-alt"></i>';
+            toggleBtn.title = 'تعطيل الحماية';
+        } else {
+            disableProtection();
+            toggleBtn.classList.add('active');
+            toggleBtn.innerHTML = '<i class="fas fa-shield-slash"></i>';
+            toggleBtn.title = 'تفعيل الحماية';
+        }
+    }
+    
+    // تفعيل الحماية
+    function enableProtection() {
+        // 1. منع النقر بالزر الأيمن
+        if (protectionSettings.rightClick) {
+            document.addEventListener('contextmenu', preventRightClick);
+        }
+        
+        // 2. منع اختصارات لوحة المفاتيح
+        if (protectionSettings.keyboardShortcuts) {
+            document.addEventListener('keydown', preventKeyboardShortcuts);
+        }
+        
+        // 3. منع سحب الصور
+        if (protectionSettings.imageProtection) {
+            document.addEventListener('dragstart', preventImageDrag);
+            document.addEventListener('drop', preventImageDrop);
+        }
+        
+        // 4. منع نسخ النصوص
+        if (protectionSettings.textSelection) {
+            document.addEventListener('copy', preventCopy);
+            document.addEventListener('cut', preventCopy);
+        }
+        
+        // 5. منع أدوات المطورين (متقدم)
+        if (protectionSettings.devTools) {
+            preventDevTools();
+        }
+        
+        console.log("✅ تم تفعيل الحماية");
+    }
+    
+    // تعطيل الحماية
+    function disableProtection() {
+        // إزالة جميع مستمعات الأحداث
+        document.removeEventListener('contextmenu', preventRightClick);
+        document.removeEventListener('keydown', preventKeyboardShortcuts);
+        document.removeEventListener('dragstart', preventImageDrag);
+        document.removeEventListener('drop', preventImageDrop);
+        document.removeEventListener('copy', preventCopy);
+        document.removeEventListener('cut', preventCopy);
+        
+        console.log("❌ تم تعطيل الحماية");
+    }
+    
+    // 1. منع النقر بالزر الأيمن
+    function preventRightClick(e) {
+        e.preventDefault();
+        showProtectionMessage();
+        return false;
+    }
+    
+    // 2. منع اختصارات لوحة المفاتيح
+    function preventKeyboardShortcuts(e) {
+        // Ctrl+Shift+I (أدوات المطورين)
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+            e.preventDefault();
+            showProtectionMessage();
+            return false;
+        }
+        // F12 (أدوات المطورين)
+        if (e.keyCode === 123) {
+            e.preventDefault();
+            showProtectionMessage();
+            return false;
+        }
+        // Ctrl+U (عرض المصدر)
+        if (e.ctrlKey && e.keyCode === 85) {
+            e.preventDefault();
+            showProtectionMessage();
+            return false;
+        }
+        // Ctrl+S (حفظ الصفحة)
+        if (e.ctrlKey && e.keyCode === 83) {
+            e.preventDefault();
+            showProtectionMessage();
+            return false;
+        }
+        // Ctrl+P (طباعة)
+        if (e.ctrlKey && e.keyCode === 80) {
+            e.preventDefault();
+            showProtectionMessage();
+            return false;
+        }
+        // Ctrl+C (نسخ)
+        if (e.ctrlKey && e.keyCode === 67) {
+            // نسمح بالنسخ فقط في حقول الإدخال
+            const tagName = e.target.tagName;
+            if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                showProtectionMessage();
+                return false;
+            }
+        }
+    }
+    
+    // 3. منع سحب الصور
+    function preventImageDrag(e) {
+        if (e.target.tagName === 'IMG') {
+            e.preventDefault();
+            return false;
+        }
+    }
+    
+    function preventImageDrop(e) {
+        e.preventDefault();
+        return false;
+    }
+    
+    // 4. منع نسخ النصوص
+    function preventCopy(e) {
+        // نسمح بالنسخ فقط في حقول الإدخال ومنطقة الإدارة
+        const tagName = e.target.tagName;
+        const isAdminArea = e.target.closest('#admin-panel');
+        
+        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA' && !isAdminArea) {
+            e.preventDefault();
+            showProtectionMessage();
+            return false;
+        }
+    }
+    
+    // 5. منع أدوات المطورين (طريقة متقدمة)
+    function preventDevTools() {
+        // طريقة للكشف عن فتح أدوات المطورين
+        const devtools = /./;
+        devtools.toString = function() {
+            showProtectionMessage();
+            return '';
+        };
+        
+        console.log('%c', devtools);
+        
+        // كشف تغيير حجم النافذة (بعض المتصفحات تفتح أدوات المطورين على الجانب)
+        let windowWidth = window.innerWidth;
+        setInterval(() => {
+            if (windowWidth !== window.innerWidth) {
+                windowWidth = window.innerWidth;
+                showProtectionMessage();
+            }
+        }, 1000);
+    }
+    
+    // عرض رسالة الحماية
+    function showProtectionMessage() {
+        const overlay = document.getElementById('protection-overlay');
+        overlay.style.display = 'flex';
+        
+        // إخفاء الرسالة بعد 3 ثواني
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 3000);
+    }
+    
+    // حفظ إعدادات الحماية
+    function saveProtectionSettings() {
+        protectionSettings = {
+            rightClick: document.getElementById('enable-right-click-protection').checked,
+            keyboardShortcuts: document.getElementById('enable-keyboard-protection').checked,
+            imageProtection: document.getElementById('enable-image-protection').checked,
+            textSelection: document.getElementById('enable-selection-protection').checked,
+            devTools: document.getElementById('enable-dev-tools-protection').checked
+        };
+        
+        const message = document.getElementById('protection-message-text').value;
+        
+        db.ref(DB_PATH).update({
+            protection_settings: protectionSettings,
+            protection_message: message
+        }).then(() => {
+            alert("تم حفظ إعدادات الحماية");
+            
+            // إعادة تفعيل الحماية بالإعدادات الجديدة
+            if (isProtectionEnabled) {
+                disableProtection();
+                enableProtection();
+            }
+        });
+    }
+    
+    // تحميل إعدادات الحماية من Firebase
+    function loadProtectionSettings() {
+        if (currentData.protection_settings) {
+            protectionSettings = currentData.protection_settings;
+            
+            // تحديث واجهة الإدارة
+            document.getElementById('enable-right-click-protection').checked = protectionSettings.rightClick;
+            document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts;
+            document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection;
+            document.getElementById('enable-selection-protection').checked = protectionSettings.textSelection;
+            document.getElementById('enable-dev-tools-protection').checked = protectionSettings.devTools;
+        }
+        
+        if (currentData.protection_message) {
+            document.getElementById('protection-message-text').value = currentData.protection_message;
+        }
+        
+        // تفعيل الحماية تلقائياً
+        if (isProtectionEnabled) {
+            enableProtection();
+        }
+    }
+    
     // ========== متغيرات جديدة للمعرض ==========
-    let currentImages = []; // جميع الصور في المجلد الحالي
-    let currentImageIndex = 0; // الفهرس الحالي
-    let currentImageSection = ''; // القسم الحالي
-    let currentZoom = 1; // مستوى التكبير الحالي
-    let isDragging = false; // حالة السحب
-    let startX = 0, startY = 0; // إحداثيات بداية السحب
-    let translateX = 0, translateY = 0; // إحداثيات الترجمة
-    let maxZoom = 3; // أقصى تكبير
-    let minZoom = 0.5; // أقل تكبير
+    let currentImages = [];
+    let currentImageIndex = 0;
+    let currentImageSection = '';
+    let currentZoom = 1;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let translateX = 0, translateY = 0;
+    let maxZoom = 3;
+    let minZoom = 0.5;
 
     // ========== دوال جديدة للمعرض ==========
     
@@ -1319,16 +1725,16 @@
         const viewer = document.getElementById('viewer');
         const img = document.getElementById('viewer-img');
         
-        // تحديد القسم الحالي وجمع جميع الصور
+        // تعطيل الحماية مؤقتاً أثناء عرض الصورة
+        disableProtection();
+        
         currentImageSection = section;
         currentImageIndex = index;
         
-        // جمع جميع الصور من القسم الحالي
         if (section && currentData[section]) {
             const sectionData = currentData[section];
             currentImages = [];
             
-            // البحث عن الصور في جميع الأقسام والمجلدات
             Object.keys(sectionData).forEach(key => {
                 if (sectionData[key].imgs) {
                     Object.keys(sectionData[key].imgs).reverse().forEach(imgId => {
@@ -1341,7 +1747,6 @@
                 }
             });
             
-            // إذا لم نجد صوراً، نبحث في الصفحات
             if (currentImages.length === 0 && section === 'pages') {
                 Object.keys(sectionData).forEach(key => {
                     if (sectionData[key].imgs) {
@@ -1356,7 +1761,6 @@
                 });
             }
             
-            // إذا لم نجد صوراً، نبحث في الألبومات
             if (currentImages.length === 0 && section === 'albums') {
                 const albumKey = currentTab.replace('alb-', '');
                 if (sectionData[albumKey] && sectionData[albumKey].imgs) {
@@ -1370,7 +1774,6 @@
                 }
             }
             
-            // تحديث الفهرس الحالي بناءً على الرابط
             currentImageIndex = currentImages.findIndex(img => img.url === url);
             if (currentImageIndex === -1) currentImageIndex = 0;
         } else {
@@ -1378,26 +1781,13 @@
             currentImageIndex = 0;
         }
         
-        // تعيين الصورة
         img.src = url;
-        
-        // إعادة تعيين التكبير والترجمة
         resetZoom();
-        
-        // إظهار المعرض
         viewer.style.display = 'flex';
         document.body.style.overflow = 'hidden';
-        
-        // تحديث عداد الصور
         updateImageCounter();
-        
-        // إظهار/إخفاء أزرار التنقل
         updateNavigationButtons();
-        
-        // إضافة مستمعات الأحداث
         setupViewerListeners();
-        
-        // إظهار إشعار التعليمات لمدة 3 ثواني
         showZoomNotice();
     }
     
@@ -1432,24 +1822,16 @@
         
         currentImageIndex += direction;
         
-        // تدوير الفهرس
         if (currentImageIndex < 0) {
             currentImageIndex = currentImages.length - 1;
         } else if (currentImageIndex >= currentImages.length) {
             currentImageIndex = 0;
         }
         
-        // تغيير الصورة
         const img = document.getElementById('viewer-img');
         img.src = currentImages[currentImageIndex].url;
-        
-        // إعادة تعيين التكبير والترجمة
         resetZoom();
-        
-        // تحديث العداد
         updateImageCounter();
-        
-        // إظهار إشعار التعليمات
         showZoomNotice();
     }
     
@@ -1460,14 +1842,11 @@
         
         currentZoom += amount;
         
-        // تحديد الحدود
         if (currentZoom < minZoom) currentZoom = minZoom;
         if (currentZoom > maxZoom) currentZoom = maxZoom;
         
-        // تطبيق التكبير
         img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
         
-        // تغيير شكل المؤشر
         if (currentZoom > 1) {
             viewer.classList.add('zoomed');
             img.classList.remove('zoomable');
@@ -1497,6 +1876,11 @@
         viewer.style.display = 'none';
         document.body.style.overflow = 'auto';
         removeViewerListeners();
+        
+        // إعادة تفعيل الحماية بعد إغلاق المعرض
+        if (isProtectionEnabled) {
+            enableProtection();
+        }
     }
     
     // إغلاق عند الضغط خارج الصورة
@@ -1525,7 +1909,6 @@
         const img = document.getElementById('viewer-img');
         const viewer = document.getElementById('viewer');
         
-        // النقر المزدوج للتكبير/التصغير
         img.addEventListener('dblclick', function(e) {
             e.stopPropagation();
             if (currentZoom === 1) {
@@ -1535,7 +1918,6 @@
             }
         });
         
-        // عجلة الماوس للتكبير/التصغير
         img.addEventListener('wheel', function(e) {
             e.preventDefault();
             e.stopPropagation();
@@ -1547,11 +1929,9 @@
             }
         });
         
-        // السحب للتحريك عند التكبير
         img.addEventListener('mousedown', startDrag);
         img.addEventListener('touchstart', startDragTouch);
         
-        // مستمعات لوحة المفاتيح
         document.addEventListener('keydown', handleKeydown);
     }
     
@@ -1662,7 +2042,6 @@
     function drawImgs(imgs) { 
         if(!imgs) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
         
-        // تحديد القسم الحالي
         let section = '';
         if (currentTab === 'works' || currentTab.startsWith('alb-')) {
             section = 'albums';
@@ -1686,11 +2065,19 @@
         `).join(''); 
     }
 
-    // ========== نهاية الدوال الجديدة ==========
+    // ========== دوال إدارة الحماية ==========
     
-    // الباقي من الكود الأصلي يبقى كما هو...
-    // سأستمر مع بقية الكود الأصلي كما هو:
-
+    // إظهار زر الحماية للمشرف
+    function showProtectionToggle() {
+        const toggleBtn = document.getElementById('protection-toggle');
+        if (isAdmin) {
+            toggleBtn.style.display = 'flex';
+        } else {
+            toggleBtn.style.display = 'none';
+        }
+    }
+    
+    // الباقي من الكود الأصلي مع تعديلات طفيفة
     function initThemeAndFont() {
         if (currentData.current_theme) {
             setTheme(currentData.current_theme, false);
@@ -1854,6 +2241,7 @@
         }
         
         initThemeAndFont();
+        loadProtectionSettings(); // تحميل إعدادات الحماية
         renderAll(); 
         renderAdminLists(); 
         renderAdminReviews(); 
@@ -1870,6 +2258,7 @@
         document.getElementById('partners-title-text').innerText = currentData.partners_title || '';
         
         startPartnersSlider();
+        showProtectionToggle(); // إظهار زر الحماية
     });
 
     function getSmartSchedule(d) {
@@ -2133,6 +2522,7 @@
             if(pass === String(snap.val())) { 
                 isAdmin=true; 
                 document.getElementById('admin-panel').style.display='block'; 
+                document.getElementById('protection-toggle').style.display='flex'; // إظهار زر الحماية
                 hideMaintenanceScreen();
                 fillAdminFields(); 
             } 
@@ -2294,9 +2684,10 @@
         document.getElementById('links-in').value = ''; 
     }
 
+    // تفعيل الحماية عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', function() {
-        // لا شيء إضافي هنا
+        enableProtection();
     });
 </script>
 </body>
-    </html>
+                    </html>
