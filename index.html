@@ -2863,6 +2863,168 @@
     document.addEventListener('DOMContentLoaded', function() {
         enableProtection();
     });
+        // تفعيل الحماية المتقدمة عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        enableProtection();
+    });
+    
+    // ========== حماية متقدمة لروابط Firebase JSON ==========
+    
+    function setupFirebaseJSONProtection() {
+        // قائمة بعناوين Firebase التي تريد حمايتها
+        const blockedDomains = [
+            'firebasedatabase.app',
+            '.json',
+            'firebaseio.com',
+            'firebase.google'
+        ];
+        
+        // 1. التحقق من رابط الصفحة الحالي
+        const currentUrl = window.location.href;
+        let isBlocked = false;
+        
+        blockedDomains.forEach(domain => {
+            if(currentUrl.includes(domain)) {
+                isBlocked = true;
+            }
+        });
+        
+        // إذا كان رابط JSON، أحجب الصفحة
+        if(isBlocked && currentUrl.includes('.json')) {
+            // منع عرض أي محتوى
+            document.documentElement.style.display = 'none';
+            
+            // عرض رسالة بديلة
+            setTimeout(() => {
+                document.documentElement.style.display = 'block';
+                document.body.innerHTML = `
+                    <style>
+                        body {
+                            margin: 0;
+                            padding: 0;
+                            background: #0a0a0a;
+                            font-family: 'Tajawal', sans-serif;
+                            color: #fff;
+                        }
+                        .protection-screen {
+                            position: fixed;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            text-align: center;
+                            padding: 20px;
+                            z-index: 999999999;
+                        }
+                        .protection-icon {
+                            font-size: 4rem;
+                            color: #c5a059;
+                            margin-bottom: 20px;
+                            animation: pulse 2s infinite;
+                        }
+                        @keyframes pulse {
+                            0% { transform: scale(1); }
+                            50% { transform: scale(1.1); }
+                            100% { transform: scale(1); }
+                        }
+                        h1 {
+                            color: #e74c3c;
+                            margin-bottom: 20px;
+                            font-size: 2rem;
+                        }
+                        p {
+                            margin-bottom: 30px;
+                            font-size: 1.1rem;
+                            line-height: 1.6;
+                            max-width: 500px;
+                        }
+                        .back-btn {
+                            background: linear-gradient(135deg, #c5a059, #b8860b);
+                            color: #000;
+                            padding: 15px 40px;
+                            border-radius: 50px;
+                            text-decoration: none;
+                            font-weight: bold;
+                            font-size: 1.1rem;
+                            border: none;
+                            cursor: pointer;
+                            transition: transform 0.3s;
+                        }
+                        .back-btn:hover {
+                            transform: translateY(-3px);
+                        }
+                    </style>
+                    <div class="protection-screen">
+                        <div class="protection-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h1>🛡️ حماية المحتوى</h1>
+                        <p>
+                            الوصول المباشر لملفات قاعدة البيانات غير مسموح به<br>
+                            جميع محتويات الموقع محمية بحقوق النشر والتأليف
+                        </p>
+                        <button class="back-btn" onclick="window.location.href='/'">
+                            العودة للموقع الرسمي
+                        </button>
+                    </div>
+                `;
+            }, 100);
+            return;
+        }
+        
+        // 2. منع فتح روابط JSON في نافذة جديدة
+        const originalOpen = window.open;
+        window.open = function(url, target, features) {
+            if(url && url.includes('.json')) {
+                showProtectionNotification('⛔ لا يمكن فتح ملفات قاعدة البيانات');
+                return null;
+            }
+            return originalOpen.call(window, url, target, features);
+        };
+        
+        // 3. مراقبة جميع الروابط في الصفحة
+        document.addEventListener('click', function(e) {
+            let target = e.target;
+            
+            // البحث عن الرابط في العناصر الأم
+            while(target && target.tagName !== 'A') {
+                target = target.parentElement;
+            }
+            
+            if(target && target.href) {
+                blockedDomains.forEach(domain => {
+                    if(target.href.includes(domain) && target.href.includes('.json')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // إظهار إشعار الحماية
+                        showProtectionNotification('🚫 ملفات قاعدة البيانات محمية ولا يمكن الوصول لها مباشرة');
+                        
+                        // تسجيل المحاولة (اختياري)
+                        console.warn('محاولة الوصول لملف JSON محمي:', target.href);
+                        
+                        return false;
+                    }
+                });
+            }
+        });
+    }
+    
+    // تفعيل الحماية عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        enableProtection();
+        setupFirebaseJSONProtection(); // ← هذا هو السطر المهم
+    });
+    
+    // تفعيل الحماية أيضاً عند تحديث الصفحة
+    window.addEventListener('load', setupFirebaseJSONProtection);
+    
 </script>
 </body>
     </html>
+
