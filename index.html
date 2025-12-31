@@ -1433,6 +1433,10 @@
         fullscreenProtection: true
     };
     
+    // ========== إضافة: مستمعين للثيم والخط للتحديث الفوري ==========
+    let themeListenerActive = false;
+    let fontListenerActive = false;
+    
     // ========== طبقة الحماية المتقدمة ==========
     let protectionLayer = null;
     
@@ -1456,6 +1460,46 @@
             // إعادة رفع الطبقة إلى الأعلى
             protectionLayer.parentNode.appendChild(protectionLayer);
         }
+    }
+    
+    // ========== إضافة: مستمع الثيم للتحديث الفوري ==========
+    function setupThemeListener() {
+        if (themeListenerActive) return;
+        
+        // مستمع للتغيرات في الثيم فقط
+        db.ref(DB_PATH + '/current_theme').on('value', (snapshot) => {
+            const newTheme = snapshot.val();
+            if (newTheme && newTheme !== currentTheme) {
+                currentTheme = newTheme;
+                setTheme(newTheme, false); // false لأن القيمة تأتي من Firebase
+                console.log("تم تحديث الثيم فورياً إلى:", newTheme);
+                
+                // إشعار للمستخدم (اختياري)
+                showProtectionNotification('تم تحديث التصميم تلقائياً');
+            }
+        });
+        
+        themeListenerActive = true;
+    }
+    
+    // ========== إضافة: مستمع الخط للتحديث الفوري ==========
+    function setupFontListener() {
+        if (fontListenerActive) return;
+        
+        // مستمع للتغيرات في الخط فقط
+        db.ref(DB_PATH + '/header_font').on('value', (snapshot) => {
+            const newFont = snapshot.val();
+            if (newFont && newFont !== selectedFont) {
+                selectedFont = newFont;
+                setFont(newFont, false); // false لأن القيمة تأتي من Firebase
+                console.log("تم تحديث الخط فورياً إلى:", newFont);
+                
+                // إشعار للمستخدم (اختياري)
+                showProtectionNotification('تم تحديث الخط تلقائياً');
+            }
+        });
+        
+        fontListenerActive = true;
     }
     
     // تفعيل الحماية المتقدمة في المعرض
@@ -1547,8 +1591,47 @@
             case 'touchProtection':
                 message = '⛔ هذه الخاصية معطلة على الهواتف';
                 break;
+            case 'themeUpdated':
+                message = '🎨 تم تحديث تصميم الموقع تلقائياً';
+                break;
+            case 'fontChanged':
+                message = '🔠 تم تحديث خط الموقع تلقائياً';
+                break;
+            case 'protectionEnabled':
+                message = '🛡️ تم تفعيل الحماية';
+                break;
+            case 'protectionDisabled':
+                message = '⚠️ تم تعطيل الحماية مؤقتاً';
+                break;
+            case 'settingsSaved':
+                message = '✅ تم حفظ الإعدادات بنجاح';
+                break;
+            case 'alreadyVoted':
+                message = '⚠️ لقد قمت بالتقييم مسبقاً';
+                break;
+            case 'incompleteReview':
+                message = '⚠️ يرجى إكمال جميع حقول التقييم';
+                break;
+            case 'reviewSubmitted':
+                message = '⭐ شكراً لتقييمك!';
+                break;
+            case 'partnerAdded':
+                message = '🤝 تم إضافة شعار الشريك';
+                break;
+            case 'catalogAdded':
+                message = '📚 تم إضافة الكتالوج';
+                break;
+            case 'uploadError':
+                message = '⚠️ يرجى تحديد وجهة وروابط الصور';
+                break;
+            case 'photosPublished':
+                message = '📸 تم نشر الصور بنجاح';
+                break;
+            case 'fontError':
+                message = '⚠️ يرجى إدخال اسم خط صحيح';
+                break;
             default:
-                message = '⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر';
+                message = actionType || '⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر';
         }
         
         messageContent.textContent = message;
@@ -2177,6 +2260,10 @@
         } else {
             setFont('tajawal', false);
         }
+        
+        // تفعيل المستمعين للتحديث الفوري
+        setupThemeListener();
+        setupFontListener();
     }
 
     function setTheme(theme, saveToFirebase = true) {
@@ -2191,6 +2278,7 @@
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ current_theme: theme }).then(() => {
                 console.log("تم حفظ الثيم في Firebase");
+                showProtectionNotification('تم تغيير التصميم بنجاح');
             });
         }
     }
@@ -2228,6 +2316,7 @@
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ header_font: fontName }).then(() => {
                 console.log("تم حفظ الخط في Firebase");
+                showProtectionNotification('تم تغيير الخط بنجاح');
             });
         }
     }
@@ -2273,14 +2362,12 @@
     
     function selectFont(fontName) {
         setFont(fontName, true);
-        showProtectionNotification('fontChanged');
     }
     
     function selectCustomFont() {
         const customFont = document.getElementById('custom-font-input').value.trim();
         if (customFont) {
             setFont(customFont, true);
-            showProtectionNotification('fontChanged');
             document.getElementById('custom-font-input').value = '';
         } else {
             showProtectionNotification('fontError');
@@ -2778,4 +2865,4 @@
     });
 </script>
 </body>
-</html>
+    </html>
