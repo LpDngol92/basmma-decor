@@ -779,6 +779,33 @@
             color: #000;
             transform: scale(1.1);
         }
+        
+        /* الوترمارك في المعرض */
+        #viewer-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 3rem;
+            font-weight: 900;
+            color: rgba(197, 160, 89, 0.48); /* الذهبي مع شفافية 48% */
+            z-index: 1000001;
+            pointer-events: none;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+            user-select: none;
+        }
+        
+        #viewer-watermark.visible {
+            opacity: 1;
+        }
+        
+        .theme-white #viewer-watermark {
+            color: rgba(184, 134, 11, 0.48); /* لون ذهبي أفتح للثيم الأبيض */
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
         /* ========== نهاية المعرض المحسن ========== */
         
         .admin-box { 
@@ -885,7 +912,7 @@
             position: absolute; 
             width: 100%; 
             padding: 20px; 
-            transition: 0.5s; 
+            transition: opacity 0.5s ease, transform 0.5s ease; 
             opacity: 0; 
             transform: translateY(20px); 
             pointer-events: none; 
@@ -895,6 +922,25 @@
             opacity: 1; 
             transform: translateY(0); 
             pointer-events: auto; 
+        }
+        
+        .review-rating {
+            color: var(--gold);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .review-message {
+            font-style: italic;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .review-name {
+            color: var(--gold);
+            font-weight: bold;
+            font-size: 0.9rem;
         }
         
         #cat-overlay { 
@@ -1097,6 +1143,9 @@
             </button>
         </div>
     </div>
+    
+    <!-- إضافة عنصر الوترمارك هنا -->
+    <div id="viewer-watermark"></div>
 </div>
 <!-- ========== نهاية المعرض المحسن ========== -->
 
@@ -1308,6 +1357,14 @@
     // ========== متغيرات الحماية ==========
     let isProtectionEnabled = true;
     
+    // ========== متغيرات جديدة للمعرض ==========
+    let currentZoom = 1;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let translateX = 0, translateY = 0;
+    let maxZoom = 3;
+    let minZoom = 0.5;
+    
     // ========== دوال الحماية ==========
     
     // تفعيل/تعطيل الحماية
@@ -1406,14 +1463,23 @@
         }
     }
     
-    // ========== متغيرات جديدة للمعرض (بدون تنقل بين الصور) ==========
-    let currentZoom = 1;
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let translateX = 0, translateY = 0;
-    let maxZoom = 3;
-    let minZoom = 0.5;
-
+    // ========== دوال جديدة للوترمارك في المعرض ==========
+    
+    // دالة لتحديث الوترمارك
+    function updateWatermark() {
+        const watermark = document.getElementById('viewer-watermark');
+        const wmText = currentData.wm_text || 'بصمة غير';
+        
+        watermark.textContent = wmText;
+        
+        // إظهار الوترمارك فقط عند التكبير
+        if (currentZoom > 1) {
+            watermark.classList.add('visible');
+        } else {
+            watermark.classList.remove('visible');
+        }
+    }
+    
     // ========== دوال جديدة للمعرض ==========
     
     // دالة فتح الصورة (بدون تنقل بين الصور)
@@ -1426,6 +1492,9 @@
         viewer.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         setupViewerListeners();
+        
+        // إعداد الوترمارك
+        updateWatermark();
     }
     
     // تكبير/تصغير الصورة
@@ -1447,6 +1516,9 @@
             viewer.classList.remove('zoomed');
             img.classList.add('zoomable');
         }
+        
+        // تحديث الوترمارك
+        updateWatermark();
     }
     
     // إعادة تعيين التكبير
@@ -1461,6 +1533,9 @@
         img.style.transform = 'scale(1) translate(0px, 0px)';
         viewer.classList.remove('zoomed');
         img.classList.add('zoomable');
+        
+        // تحديث الوترمارك
+        updateWatermark();
     }
     
     // إغلاق المعرض
@@ -1790,7 +1865,7 @@
         initThemeAndFont();
         renderAll(); 
         renderAdminLists(); 
-        renderAdminReviews(); 
+        renderAdminReviews(); // تحديث التقييمات في لوحة الإدارة
         renderAdminPartners();
         
         if(currentData.news_bar) { 
@@ -1899,7 +1974,11 @@
         if(d.reviews) {
             let revItems = Object.keys(d.reviews).map((id, idx) => {
                 const r = d.reviews[id];
-                return `<div class="review-item" id="rev-${idx}"><div style="color:var(--gold); margin-bottom:5px;">${'⭐'.repeat(r.rating)}</div><p style="font-style:italic; color:var(--text-primary); margin-bottom:5px;">"${r.message}"</p><b style="color:var(--gold); font-size:0.9rem;">- ${r.name}</b></div>`;
+                return `<div class="review-item" id="rev-${idx}">
+                    <div class="review-rating">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+                    <p class="review-message">"${r.message}"</p>
+                    <div class="review-name">- ${r.name}</div>
+                </div>`;
             }).join('');
             reviewsDisplay = `<div class="reviews-display-box">${revItems}</div>`;
         }
@@ -1932,6 +2011,7 @@
         if(!currentData.reviews) return;
         const total = Object.keys(currentData.reviews).length;
         if(total === 0) return;
+        
         const cycle = () => {
             const all = document.querySelectorAll('.review-item');
             all.forEach(el => el.classList.remove('active'));
@@ -1939,8 +2019,14 @@
             if(current) current.classList.add('active');
             reviewIdx = (reviewIdx + 1) % total;
         };
+        
+        // تشغيل أول مرة
         cycle();
+        
+        // إزالة أي interval سابق
         if(window.reviewInterval) clearInterval(window.reviewInterval);
+        
+        // ضبط الوقت إلى 4 ثواني
         window.reviewInterval = setInterval(cycle, 4000);
     }
 
@@ -1967,18 +2053,32 @@
             localStorage.setItem('v28_voted', 'true'); 
             alert("شكراً لتقييمك!"); 
             renderAll(); 
+            renderAdminReviews(); // تحديث لوحة الإدارة
         }); 
     }
     
+    // ========== تعديل دالة renderAdminReviews ==========
     function renderAdminReviews() { 
         const list = document.getElementById('admin-reviews-list'); 
         list.innerHTML = ''; 
         if(currentData.reviews) { 
             Object.keys(currentData.reviews).forEach(id => { 
                 const r = currentData.reviews[id]; 
-                list.innerHTML += `<div style="background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px; border-right:3px solid var(--gold);"><div style="display:flex; justify-content:space-between; color:var(--gold);"><b>${r.name}</b> <span>${r.rating} ⭐</span></div><p style="font-size:0.8rem; margin:5px 0; color:var(--text-primary);">${r.message}</p><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.7rem;">حذف</button></div>`; 
+                list.innerHTML += `<div style="background:var(--input-bg); padding:15px; margin-bottom:15px; border-radius:8px; border-right:3px solid var(--gold);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="color:var(--gold); font-weight:bold; font-size:1.1rem;">${r.name}</div>
+                            <div style="color:var(--gold);">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+                        </div>
+                        <div style="font-size:0.8rem; color:var(--text-secondary);">${r.date || ''}</div>
+                    </div>
+                    <p style="color:var(--text-primary); margin:10px 0; line-height:1.6; padding:10px; background:rgba(255,255,255,0.05); border-radius:5px;">"${r.message}"</p>
+                    <button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:8px 15px; border-radius:5px; font-size:0.9rem; cursor:pointer; margin-top:10px;">حذف التقييم</button>
+                </div>`; 
             }); 
-        } 
+        } else {
+            list.innerHTML = '<p style="text-align:center; color:var(--text-secondary); padding:20px;">لا توجد تقييمات حتى الآن</p>';
+        }
     }
     
     function savePartnersTitle() { 
@@ -2236,4 +2336,4 @@
     });
 </script>
 </body>
-                           </html>
+    </html>
