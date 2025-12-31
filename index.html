@@ -77,16 +77,126 @@
             transition: opacity 0.5s ease; 
         }
         
+        /* شاشة الصيانة مع الأنيميشن الجديد */
         #maintenance-screen { 
             position: fixed; 
             inset: 0; 
             background: #000; 
-            z-index: 999999; 
+            z-index: 99999999; 
             display: none; 
             align-items: center; 
             justify-content: center; 
             text-align: center; 
             flex-direction: column; 
+            overflow: hidden;
+        }
+        
+        .maintenance-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(45deg, #000 0%, #111 50%, #000 100%);
+            animation: maintenance-bg 3s infinite alternate;
+        }
+        
+        @keyframes maintenance-bg {
+            0% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .maintenance-content {
+            position: relative;
+            z-index: 2;
+            padding: 40px;
+            background: rgba(10, 10, 10, 0.9);
+            border-radius: 20px;
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 50px rgba(197, 160, 89, 0.3);
+            max-width: 90%;
+            animation: maintenance-pulse 2s infinite alternate;
+        }
+        
+        @keyframes maintenance-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 30px rgba(197, 160, 89, 0.3); }
+            100% { transform: scale(1.02); box-shadow: 0 0 60px rgba(197, 160, 89, 0.5); }
+        }
+        
+        .maintenance-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--gold), #ffd700, var(--gold));
+            animation: maintenance-scan 2s linear infinite;
+            z-index: 3;
+        }
+        
+        @keyframes maintenance-scan {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .maintenance-title {
+            color: var(--gold);
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 900;
+            text-shadow: 0 0 10px rgba(197, 160, 89, 0.5);
+            animation: title-glow 1.5s infinite alternate;
+        }
+        
+        @keyframes title-glow {
+            0% { text-shadow: 0 0 10px rgba(197, 160, 89, 0.5); }
+            100% { text-shadow: 0 0 20px rgba(197, 160, 89, 0.8), 0 0 30px rgba(197, 160, 89, 0.4); }
+        }
+        
+        .maintenance-message {
+            color: #fff;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+        
+        .maintenance-icon {
+            font-size: 4rem;
+            color: var(--gold);
+            margin-bottom: 20px;
+            animation: icon-spin 3s infinite linear;
+        }
+        
+        @keyframes icon-spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .maintenance-progress {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .maintenance-progress-bar {
+            height: 100%;
+            width: 30%;
+            background: linear-gradient(90deg, var(--gold), #ffd700);
+            border-radius: 5px;
+            animation: progress-move 2s infinite ease-in-out;
+        }
+        
+        @keyframes progress-move {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(330%); }
+        }
+        
+        .maintenance-footer {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 30px;
+            font-style: italic;
         }
         
         #admin-panel { 
@@ -573,59 +683,6 @@
             flex-direction: column; 
         }
         
-        /* أزرار التحكم بالثيم */
-        .theme-controls {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 10000;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .theme-btn {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .theme-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-        
-        .theme-btn.active {
-            background: var(--gold);
-            color: #000;
-        }
-        
-        /* زر تبديل الثيم في لوحة الإدارة */
-        .theme-toggle-admin {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 100000001;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .theme-toggle-admin button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-        
         /* تحسينات للثيم الأبيض */
         .theme-white .wm-tag {
             color: rgba(0, 0, 0, 0.35);
@@ -647,7 +704,39 @@
             color: rgba(0, 0, 0, 0.18);
         }
         
-        /* تحسينات للزر الذهبي */
+        /* زر تبديل الثيم في لوحة الإدارة */
+        .theme-toggle-admin {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100000001;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .theme-toggle-admin button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle-admin button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .theme-toggle-admin button.active {
+            background: var(--gold);
+            color: #000;
+        }
+        
+        /* زر الذهبي */
         .gold-btn {
             background: linear-gradient(135deg, var(--gold), #b8860b);
             color: #000;
@@ -670,15 +759,21 @@
     <h2 style="color:var(--gold); font-size:2rem;">بصمة غير...</h2> 
 </div>
 
+<!-- شاشة الصيانة مع الأنيميشن الجديد -->
 <div id="maintenance-screen"> 
-    <h1 style="color:var(--gold);">الموقع في صيانة</h1> 
-    <p>نعمل على التحديث...</p> 
-</div>
-
-<!-- أزرار التحكم بالثيم (تظهر فقط للمستخدم العادي) -->
-<div class="theme-controls" id="theme-controls">
-    <button class="theme-btn active" onclick="setTheme('black')" id="btn-black">الأسود</button>
-    <button class="theme-btn" onclick="setTheme('white')" id="btn-white">الأبيض</button>
+    <div class="maintenance-overlay"></div>
+    <div class="maintenance-bar"></div>
+    <div class="maintenance-content">
+        <div class="maintenance-icon">
+            <i class="fas fa-tools"></i>
+        </div>
+        <h1 class="maintenance-title" id="maintenance-title">الموقع في صيانة</h1>
+        <p class="maintenance-message" id="maintenance-message">نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز</p>
+        <div class="maintenance-progress">
+            <div class="maintenance-progress-bar"></div>
+        </div>
+        <p class="maintenance-footer" id="maintenance-footer">© بصمة غير للديكور</p>
+    </div>
 </div>
 
 <div class="partners-section">
@@ -716,8 +811,8 @@
 <div id="admin-panel">
     <!-- زر تبديل الثيم في لوحة الإدارة -->
     <div class="theme-toggle-admin">
-        <button onclick="setTheme('black')" style="background:#000; color:#fff;">الثيم الأسود</button>
-        <button onclick="setTheme('white')" style="background:#fff; color:#000;">الثيم الأبيض</button>
+        <button class="active" onclick="setTheme('black')" id="btn-admin-black">الأسود</button>
+        <button onclick="setTheme('white')" id="btn-admin-white">الأبيض</button>
     </div>
     
     <div class="admin-box">
@@ -744,7 +839,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="collapse-section">
             <button class="collapse-btn" onclick="toggleCol('c_partners')">🤝 شركاء النجاح <i class="fas fa-handshake"></i></button>
             <div id="c_partners" class="collapse-content">
@@ -828,10 +923,21 @@
             </div>
         </div>
 
+        <!-- قسم إعدادات الصيانة -->
         <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات <i class="fas fa-cog"></i></button>
+            <button class="collapse-btn" onclick="toggleCol('c_maintenance')">🔧 إعدادات الصيانة <i class="fas fa-tools"></i></button>
+            <div id="c_maintenance" class="collapse-content">
+                <label><input type="checkbox" id="in-maintenance"> تفعيل وضع الصيانة</label><br><br>
+                <input type="text" id="in-maintenance-title" placeholder="عنوان شاشة الصيانة" value="الموقع في صيانة">
+                <textarea id="in-maintenance-message" placeholder="رسالة الصيانة" rows="3">نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز</textarea>
+                <input type="text" id="in-maintenance-footer" placeholder="نص التذييل" value="© بصمة غير للديكور">
+                <button onclick="saveMaintenanceSettings()" style="width:100%; background:var(--gold); color:#000; padding:12px; border:none; font-weight:bold;">حفظ إعدادات الصيانة</button>
+            </div>
+        </div>
+
+        <div class="collapse-section">
+            <button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات العامة <i class="fas fa-cog"></i></button>
             <div id="c_set" class="collapse-content">
-                <label><input type="checkbox" id="in-maintenance"> وضع الصيانة</label><br><br>
                 <input type="text" id="in-name" placeholder="اسم الموقع"><input type="text" id="in-wa" placeholder="واتساب"><input type="text" id="in-logo" placeholder="رابط الشعار"><input type="text" id="in-hbg" placeholder="رابط الخلفية"><input type="text" id="in-wm" placeholder="نص الوتر مارك"><textarea id="in-news" placeholder="شريط الأخبار"></textarea>
                 <input type="text" id="in-footer" placeholder="نص حقوق الحفظ">
                 <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ</button>
@@ -879,34 +985,65 @@
             document.body.classList.remove('theme-white');
         }
         
-        // تحديث أزرار التحكم بالثيم
-        const btnBlack = document.getElementById('btn-black');
-        const btnWhite = document.getElementById('btn-white');
+        // تحديث أزرار التحكم بالثيم في لوحة الإدارة
+        const btnAdminBlack = document.getElementById('btn-admin-black');
+        const btnAdminWhite = document.getElementById('btn-admin-white');
         
-        if (btnBlack && btnWhite) {
+        if (btnAdminBlack && btnAdminWhite) {
             if (theme === 'black') {
-                btnBlack.classList.add('active');
-                btnWhite.classList.remove('active');
+                btnAdminBlack.classList.add('active');
+                btnAdminWhite.classList.remove('active');
             } else {
-                btnWhite.classList.add('active');
-                btnBlack.classList.remove('active');
+                btnAdminWhite.classList.add('active');
+                btnAdminBlack.classList.remove('active');
             }
         }
     }
 
-    // إخفاء أزرار التحكم بالثيم في لوحة الإدارة
-    function toggleThemeControls() {
-        const themeControls = document.getElementById('theme-controls');
-        if (themeControls) {
-            themeControls.style.display = isAdmin ? 'none' : 'flex';
-        }
+    // عرض شاشة الصيانة مع الرسائل المخصصة
+    function showMaintenanceScreen() {
+        const maintenanceScreen = document.getElementById('maintenance-screen');
+        const title = currentData.maintenance_title || 'الموقع في صيانة';
+        const message = currentData.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز';
+        const footer = currentData.maintenance_footer || '© بصمة غير للديكور';
+        
+        document.getElementById('maintenance-title').innerText = title;
+        document.getElementById('maintenance-message').innerText = message;
+        document.getElementById('maintenance-footer').innerText = footer;
+        
+        maintenanceScreen.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // إضافة تأثير دخول
+        maintenanceScreen.style.opacity = '0';
+        setTimeout(() => {
+            maintenanceScreen.style.transition = 'opacity 0.5s ease';
+            maintenanceScreen.style.opacity = '1';
+        }, 10);
+    }
+
+    // إخفاء شاشة الصيانة
+    function hideMaintenanceScreen() {
+        const maintenanceScreen = document.getElementById('maintenance-screen');
+        maintenanceScreen.style.opacity = '0';
+        setTimeout(() => {
+            maintenanceScreen.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }, 500);
     }
 
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
         document.getElementById('splash').style.display = 'none';
+        
+        // التحكم في عرض شاشة الصيانة
         const mScreen = document.getElementById('maintenance-screen');
-        mScreen.style.display = (currentData.maintenance_mode && !isAdmin) ? 'flex' : 'none';
+        if (currentData.maintenance_mode && !isAdmin) {
+            showMaintenanceScreen();
+        } else {
+            hideMaintenanceScreen();
+        }
+        
         renderAll(); 
         renderAdminLists(); 
         renderAdminReviews(); 
@@ -1197,9 +1334,8 @@
             if(pass === String(snap.val())) { 
                 isAdmin=true; 
                 document.getElementById('admin-panel').style.display='block'; 
-                document.getElementById('maintenance-screen').style.display='none'; 
+                hideMaintenanceScreen();
                 fillAdminFields(); 
-                toggleThemeControls();
             } 
         }); 
     }
@@ -1258,6 +1394,12 @@
         document.getElementById('editor-about').innerHTML=d.about_text||''; 
         document.getElementById('in-about-active').checked=d.about_active||false; 
         document.getElementById('in-footer').value=d.footer_text||''; 
+        
+        // تعبئة إعدادات الصيانة
+        document.getElementById('in-maintenance-title').value = d.maintenance_title || 'الموقع في صيانة';
+        document.getElementById('in-maintenance-message').value = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز';
+        document.getElementById('in-maintenance-footer').value = d.maintenance_footer || '© بصمة غير للديكور';
+        
         fillAdminSchedule(d); 
     }
     
@@ -1316,6 +1458,22 @@
         }).then(()=>alert("تم الحفظ")); 
     }
     
+    // دالة حفظ إعدادات الصيانة
+    function saveMaintenanceSettings() {
+        db.ref(DB_PATH).update({
+            maintenance_mode: document.getElementById('in-maintenance').checked,
+            maintenance_title: document.getElementById('in-maintenance-title').value,
+            maintenance_message: document.getElementById('in-maintenance-message').value,
+            maintenance_footer: document.getElementById('in-maintenance-footer').value
+        }).then(() => {
+            alert("تم حفظ إعدادات الصيانة");
+            // تحديث شاشة الصيانة مباشرة إذا كانت مفعلة
+            if (currentData.maintenance_mode && !isAdmin) {
+                showMaintenanceScreen();
+            }
+        });
+    }
+    
     function addSec() { 
         const n = document.getElementById('new-sec-in').value; 
         if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); 
@@ -1338,8 +1496,7 @@
     // تهيئة الثيم عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', function() {
         initTheme();
-        toggleThemeControls();
     });
 </script>
 </body>
-                              </html>
+    </html>
