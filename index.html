@@ -2777,17 +2777,36 @@
         }); 
     }
     
-    function checkAccess() { 
-        const pass = prompt("الرمز:"); 
-        db.ref(AUTH_PATH).once('value').then(snap => { 
-            if(pass === String(snap.val())) { 
-                isAdmin=true; 
-                document.getElementById('admin-panel').style.display='block'; 
-                document.getElementById('protection-toggle').style.display='flex'; // إظهار زر الحماية
+    function checkAccess() {
+    const pass = prompt("الرمز:");
+    
+    // 1. تسجيل دخول مجهول أولاً
+    firebase.auth().signInAnonymously()
+        .then(() => {
+            // 2. التحقق من الرمز
+            return db.ref('server_auth/lek').once('value');
+        })
+        .then(snap => {
+            if(pass === String(snap.val())) {
+                isAdmin = true;
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('protection-toggle').style.display = 'flex';
                 hideMaintenanceScreen();
-                fillAdminFields(); 
-            } 
-        }); 
+                fillAdminFields();
+                showProtectionNotification('تم الدخول للإدارة');
+                
+                // حفظ حالة الإدارة
+                localStorage.setItem('isAdmin', 'true');
+                localStorage.setItem('adminTime', Date.now().toString());
+            } else {
+                alert("رمز غير صحيح!");
+                firebase.auth().signOut();
+            }
+        })
+        .catch(error => {
+            console.error("خطأ:", error);
+            alert("حدث خطأ في الدخول!");
+        });
     }
     
     function renderPhotoManager(path) { 
@@ -3113,6 +3132,7 @@
 </script>
 </body>
     </html>
+
 
 
 
