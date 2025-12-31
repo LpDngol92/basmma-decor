@@ -114,56 +114,56 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
-        /* ========== شاشة الحماية ========== */
-        #protection-overlay {
+        /* ========== تنبيه الحماية الجديد (صغير في الزاوية) ========== */
+        #protection-notification {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            top: 20px;
+            left: 20px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
             z-index: 999999999;
             display: none;
-            justify-content: center;
             align-items: center;
+            gap: 10px;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: protection-notification-slide 0.3s ease-out;
+            max-width: 300px;
         }
         
-        .protection-message {
-            background: var(--card);
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            border: 2px solid var(--red);
-            max-width: 90%;
-            box-shadow: 0 0 30px rgba(231, 76, 60, 0.5);
-            animation: protection-pulse 2s infinite;
+        @keyframes protection-notification-slide {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
         
-        @keyframes protection-pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-        
-        .protection-icon {
-            font-size: 4rem;
-            color: var(--red);
-            margin-bottom: 20px;
-        }
-        
-        .protection-text {
-            color: var(--text-primary);
+        .protection-icon-small {
             font-size: 1.2rem;
-            margin-bottom: 10px;
+            color: white;
         }
         
-        .protection-warning {
-            color: var(--gold);
-            font-size: 0.9rem;
-            margin-top: 15px;
-            font-style: italic;
+        .protection-text-small {
+            flex-grow: 1;
+            line-height: 1.4;
         }
-        /* ========== نهاية شاشة الحماية ========== */
+        
+        .protection-close {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        
+        .protection-close:hover {
+            opacity: 1;
+        }
+        /* ========== نهاية تنبيه الحماية الجديد ========== */
         
         #splash { 
             position: fixed; 
@@ -1101,20 +1101,17 @@
     </style>
 </head>
 <body>
-<!-- شاشة الحماية -->
-<div id="protection-overlay">
-    <div class="protection-message">
-        <div class="protection-icon">
-            <i class="fas fa-shield-alt"></i>
-        </div>
-        <div class="protection-text">
-            <strong>ممنوع حفظ الصور أو النسخ!</strong><br>
-            هذا المحتوى محمي بحقوق النشر
-        </div>
-        <div class="protection-warning">
-            © جميع الحقوق محفوظة لـ بصمة غير للديكور
-        </div>
+<!-- تنبيه الحماية الجديد (صغير في الزاوية) -->
+<div id="protection-notification">
+    <div class="protection-icon-small">
+        <i class="fas fa-shield-alt"></i>
     </div>
+    <div class="protection-text-small" id="protection-message-content">
+        تم تعطيل الخاصية من قبل الحماية
+    </div>
+    <button class="protection-close" onclick="closeProtectionNotification()">
+        <i class="fas fa-times"></i>
+    </button>
 </div>
 
 <div id="splash"> 
@@ -1261,7 +1258,7 @@
                     
                     <div style="margin-top:20px; padding:15px; background:rgba(197, 160, 89, 0.1); border-radius:10px;">
                         <p style="color:var(--gold); font-weight:bold; margin-bottom:5px;">رسالة الحماية:</p>
-                        <textarea id="protection-message-text" rows="3" style="width:100%; background:var(--input-bg); color:var(--text-primary); border:1px solid var(--border); padding:10px; border-radius:5px;">ممنوع حفظ الصور أو النسخ! هذا المحتوى محمي بحقوق النشر</textarea>
+                        <textarea id="protection-message-text" rows="3" style="width:100%; background:var(--input-bg); color:var(--text-primary); border:1px solid var(--border); padding:10px; border-radius:5px;">تم تعطيل الخاصية من قبل الحماية</textarea>
                         <button onclick="saveProtectionSettings()" style="width:100%; background:var(--gold); color:#000; padding:10px; border:none; border-radius:8px; margin-top:10px; font-weight:bold;">حفظ إعدادات الحماية</button>
                     </div>
                     
@@ -1486,6 +1483,40 @@
     
     // ========== دوال الحماية ==========
     
+    // إغلاق تنبيه الحماية
+    function closeProtectionNotification() {
+        document.getElementById('protection-notification').style.display = 'none';
+    }
+    
+    // عرض تنبيه الحماية
+    function showProtectionNotification(actionType = '') {
+        const notification = document.getElementById('protection-notification');
+        const messageContent = document.getElementById('protection-message-content');
+        
+        let message = 'تم تعطيل الخاصية من قبل الحماية';
+        
+        // تخصيص الرسالة حسب نوع المحاولة
+        if (actionType === 'rightClick') {
+            message = '⛔ النقر بالزر الأيمن معطل';
+        } else if (actionType === 'viewSource') {
+            message = '⛔ عرض مصدر الصفحة معطل';
+        } else if (actionType === 'devTools') {
+            message = '⛔ أدوات المطورين معطلة';
+        } else if (actionType === 'copy') {
+            message = '⛔ النسخ معطل';
+        }
+        
+        messageContent.textContent = message;
+        notification.style.display = 'flex';
+        
+        // إخفاء التنبيه تلقائياً بعد 3 ثوانٍ
+        setTimeout(() => {
+            if (notification.style.display === 'flex') {
+                notification.style.display = 'none';
+            }
+        }, 3000);
+    }
+    
     // تفعيل/تعطيل الحماية
     function toggleProtection() {
         isProtectionEnabled = !isProtectionEnabled;
@@ -1496,11 +1527,13 @@
             toggleBtn.classList.remove('active');
             toggleBtn.innerHTML = '<i class="fas fa-shield-alt"></i>';
             toggleBtn.title = 'تعطيل الحماية';
+            showProtectionNotification('protectionEnabled');
         } else {
             disableProtection();
             toggleBtn.classList.add('active');
             toggleBtn.innerHTML = '<i class="fas fa-shield-slash"></i>';
             toggleBtn.title = 'تفعيل الحماية';
+            showProtectionNotification('protectionDisabled');
         }
     }
     
@@ -1552,7 +1585,7 @@
     // 1. منع النقر بالزر الأيمن
     function preventRightClick(e) {
         e.preventDefault();
-        showProtectionMessage();
+        showProtectionNotification('rightClick');
         return false;
     }
     
@@ -1561,31 +1594,31 @@
         // Ctrl+Shift+I (أدوات المطورين)
         if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
             e.preventDefault();
-            showProtectionMessage();
+            showProtectionNotification('devTools');
             return false;
         }
         // F12 (أدوات المطورين)
         if (e.keyCode === 123) {
             e.preventDefault();
-            showProtectionMessage();
+            showProtectionNotification('devTools');
             return false;
         }
         // Ctrl+U (عرض المصدر)
         if (e.ctrlKey && e.keyCode === 85) {
             e.preventDefault();
-            showProtectionMessage();
+            showProtectionNotification('viewSource');
             return false;
         }
         // Ctrl+S (حفظ الصفحة)
         if (e.ctrlKey && e.keyCode === 83) {
             e.preventDefault();
-            showProtectionMessage();
+            showProtectionNotification();
             return false;
         }
         // Ctrl+P (طباعة)
         if (e.ctrlKey && e.keyCode === 80) {
             e.preventDefault();
-            showProtectionMessage();
+            showProtectionNotification();
             return false;
         }
         // Ctrl+C (نسخ)
@@ -1594,9 +1627,15 @@
             const tagName = e.target.tagName;
             if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
                 e.preventDefault();
-                showProtectionMessage();
+                showProtectionNotification('copy');
                 return false;
             }
+        }
+        // Ctrl+Shift+C (أدوات المطورين - فحص العنصر)
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+            e.preventDefault();
+            showProtectionNotification('devTools');
+            return false;
         }
     }
     
@@ -1604,12 +1643,14 @@
     function preventImageDrag(e) {
         if (e.target.tagName === 'IMG') {
             e.preventDefault();
+            showProtectionNotification();
             return false;
         }
     }
     
     function preventImageDrop(e) {
         e.preventDefault();
+        showProtectionNotification();
         return false;
     }
     
@@ -1621,7 +1662,7 @@
         
         if (tagName !== 'INPUT' && tagName !== 'TEXTAREA' && !isAdminArea) {
             e.preventDefault();
-            showProtectionMessage();
+            showProtectionNotification('copy');
             return false;
         }
     }
@@ -1631,7 +1672,7 @@
         // طريقة للكشف عن فتح أدوات المطورين
         const devtools = /./;
         devtools.toString = function() {
-            showProtectionMessage();
+            showProtectionNotification('devTools');
             return '';
         };
         
@@ -1642,20 +1683,18 @@
         setInterval(() => {
             if (windowWidth !== window.innerWidth) {
                 windowWidth = window.innerWidth;
-                showProtectionMessage();
+                showProtectionNotification('devTools');
             }
         }, 1000);
-    }
-    
-    // عرض رسالة الحماية
-    function showProtectionMessage() {
-        const overlay = document.getElementById('protection-overlay');
-        overlay.style.display = 'flex';
         
-        // إخفاء الرسالة بعد 3 ثواني
-        setTimeout(() => {
-            overlay.style.display = 'none';
-        }, 3000);
+        // كشف محاولة فتح وحدة التحكم
+        (function() {
+            const noop = () => {};
+            const methods = ['log', 'debug', 'info', 'warn', 'error', 'clear'];
+            methods.forEach(method => {
+                console[method] = noop;
+            });
+        })();
     }
     
     // حفظ إعدادات الحماية
@@ -1674,7 +1713,7 @@
             protection_settings: protectionSettings,
             protection_message: message
         }).then(() => {
-            alert("تم حفظ إعدادات الحماية");
+            showProtectionNotification('settingsSaved');
             
             // إعادة تفعيل الحماية بالإعدادات الجديدة
             if (isProtectionEnabled) {
@@ -2186,17 +2225,17 @@
     
     function selectFont(fontName) {
         setFont(fontName, true);
-        alert("تم تغيير الخط إلى " + getFontName(fontName) + " - سيظهر التغيير لجميع المستخدمين");
+        showProtectionNotification('fontChanged');
     }
     
     function selectCustomFont() {
         const customFont = document.getElementById('custom-font-input').value.trim();
         if (customFont) {
             setFont(customFont, true);
-            alert("تم تطبيق الخط المخصص: " + customFont + " - سيظهر التغيير لجميع المستخدمين");
+            showProtectionNotification('fontChanged');
             document.getElementById('custom-font-input').value = '';
         } else {
-            alert("الرجاء إدخال اسم الخط");
+            showProtectionNotification('fontError');
         }
     }
 
@@ -2419,7 +2458,7 @@
             date: new Date().toLocaleDateString('ar-SA') 
         }).then(() => { 
             localStorage.setItem('v28_voted', 'true'); 
-            alert("شكراً لتقييمك!"); 
+            showProtectionNotification('reviewSubmitted');
             renderAll(); 
         }); 
     }
@@ -2437,14 +2476,14 @@
     
     function savePartnersTitle() { 
         const title = document.getElementById('admin-partners-title').value; 
-        db.ref(DB_PATH).update({ partners_title: title }).then(() => alert("تم حفظ العبارة")); 
+        db.ref(DB_PATH).update({ partners_title: title }).then(() => showProtectionNotification('settingsSaved')); 
     }
     
     function addPartner() { 
         const url = document.getElementById('new-partner-url').value; 
         if(url) db.ref(DB_PATH + '/partners').push({ url: url.trim() }).then(() => { 
             document.getElementById('new-partner-url').value = ''; 
-            alert("تمت إضافة الشعار"); 
+            showProtectionNotification('partnerAdded');
         }); 
     }
     
@@ -2513,6 +2552,7 @@
         if(name && code) db.ref(DB_PATH+'/catalogs').push({name, code}).then(()=>{ 
             document.getElementById('new-cat-name').value=''; 
             document.getElementById('new-cat-code').value=''; 
+            showProtectionNotification('catalogAdded');
         }); 
     }
     
@@ -2611,7 +2651,7 @@
         db.ref(DB_PATH).update({ 
             about_text: document.getElementById('editor-about').innerHTML, 
             about_active: document.getElementById('in-about-active').checked 
-        }).then(()=>alert("تم الحفظ")); 
+        }).then(()=> showProtectionNotification('settingsSaved')); 
     }
     
     function saveSchedule() { 
@@ -2626,7 +2666,7 @@
                 s2_e: document.getElementById(`s2e-${jsDay}`).value 
             }; 
         }); 
-        db.ref(DB_PATH + '/work_schedule').set(sc).then(() => alert("تم الحفظ")); 
+        db.ref(DB_PATH + '/work_schedule').set(sc).then(() => showProtectionNotification('settingsSaved')); 
     }
     
     function saveSocial() { 
@@ -2635,7 +2675,7 @@
             tiktok_url: document.getElementById('in-tiktok').value, 
             snap_url: document.getElementById('in-snap').value, 
             location_url: document.getElementById('in-loc').value 
-        }).then(()=>alert("تم الحفظ")); 
+        }).then(()=> showProtectionNotification('settingsSaved')); 
     }
     
     function saveSettings() { 
@@ -2648,7 +2688,7 @@
             wm_text: document.getElementById('in-wm').value, 
             news_bar: document.getElementById('in-news').value, 
             footer_text: document.getElementById('in-footer').value 
-        }).then(()=>alert("تم الحفظ")); 
+        }).then(()=> showProtectionNotification('settingsSaved')); 
     }
     
     function saveMaintenanceSettings() {
@@ -2658,7 +2698,7 @@
             maintenance_message: document.getElementById('in-maintenance-message').value,
             maintenance_footer: document.getElementById('in-maintenance-footer').value
         }).then(() => {
-            alert("تم حفظ إعدادات الصيانة");
+            showProtectionNotification('settingsSaved');
             if (currentData.maintenance_mode && !isAdmin) {
                 showMaintenanceScreen();
             }
@@ -2678,9 +2718,9 @@
     function publishPhotos() { 
         const path = document.getElementById('upload-target-sel').value; 
         const urls = document.getElementById('links-in').value.split('\n').filter(u=>u.trim()); 
-        if(!path || !urls.length) return alert("اختر الوجهة والروابط"); 
+        if(!path || !urls.length) return showProtectionNotification('uploadError'); 
         urls.forEach(u => db.ref(DB_PATH+'/'+path+'/imgs').push({url: u.trim()})); 
-        alert("تم النشر"); 
+        showProtectionNotification('photosPublished');
         document.getElementById('links-in').value = ''; 
     }
 
@@ -2690,7 +2730,4 @@
     });
 </script>
 </body>
-                    </html>
-
-
-خلب الكود عندك بس لاتسوي شي ولاتكتب شي
+</html>
