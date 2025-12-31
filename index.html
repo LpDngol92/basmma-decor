@@ -6,6 +6,7 @@
     <title>بصمة غير | v164</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- إضافة الخطوط العربية -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;800;900&family=Amiri:wght@400;700&family=Lateef&family=Almarai:wght@300;400;800&family=Changa:wght@200;400;600;800&family=Lalezar&display=swap" rel="stylesheet">
@@ -1400,19 +1401,36 @@
                 <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ</button>
             </div>
         </div>
-        <button onclick="location.reload()" style="width:100%; background:var(--red); color:#fff; padding:15px; border:none; margin-top:20px;">خروج</button>
+        <button onclick="logoutAdmin()" style="width:100%; background:var(--red); color:#fff; padding:15px; border:none; margin-top:20px;">تسجيل الخروج</button>
     </div>
 </div>
 
 <div id="hidden-trigger" onclick="checkAccess()"></div>
 
 <script>
-    const config = { databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
-    firebase.initializeApp(config); 
-    const db = firebase.database(); 
-    const DB_PATH = 'site_v28'; 
-    const AUTH_PATH = 'server_auth/lek'; 
+    // ========== تهيئة Firebase ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyCbKjXG_X_-95fGf7osM41XlhF5pDZih8k",
+        authDomain: "mydecor-b29bd.firebaseapp.com",
+        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mydecor-b29bd",
+        storageBucket: "mydebor-b29bd.appspot.com",
+        messagingSenderId: "983615455825",
+        appId: "1:983615455825:web:41092c064da29f43ab8ed8"
+    };
     
+    // تهيئة Firebase ببيانات آمنة
+    try {
+        firebase.initializeApp(firebaseConfig);
+    } catch (err) {
+        console.log("✅ تم تهيئة التطبيق");
+    }
+    
+    const db = firebase.database(); 
+    const auth = firebase.auth();
+    const DB_PATH = 'site_v28';
+    
+    // ========== متغيرات التطبيق ==========
     let currentData = {}; 
     let currentTab = 'home'; 
     let isAdmin = false; 
@@ -1437,141 +1455,287 @@
     let themeListenerActive = false;
     let fontListenerActive = false;
     
+    // ========== UID الخاص بالإدارة ==========
+    const ADMIN_UID = "nRo7Fpwk7RRUswehFKLzdTUF2CO2";
+    const ADMIN_EMAIL = "admin@basma.com";
+    
     // ========== طبقة الحماية المتقدمة ==========
     let protectionLayer = null;
+    
+    // ========== متغيرات المعرض ==========
+    let currentZoom = 1;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let translateX = 0, translateY = 0;
+    let maxZoom = 3;
+    let minZoom = 0.5;
+
+    // ========== إعدادات الحماية المتقدمة ==========
     
     // إعداد طبقة الحماية
     function setupProtectionLayer() {
         protectionLayer = document.getElementById('protection-shield');
-        
-        // جعل الطبقة تفاعلية عند الحاجة
         protectionLayer.style.pointerEvents = 'none';
-        
-        // إعادة ضبط الطبقة بانتظام لمنع الاختراق
         setInterval(resetProtectionLayer, 1000);
     }
     
     // إعادة ضبط طبقة الحماية
     function resetProtectionLayer() {
         if (protectionLayer) {
-            // التأكد من بقاء الطبقة في الأعلى
             protectionLayer.style.zIndex = '2147483647';
-            
-            // إعادة رفع الطبقة إلى الأعلى
             protectionLayer.parentNode.appendChild(protectionLayer);
         }
     }
     
-    // ========== إضافة: مستمع الثيم للتحديث الفوري ==========
-    function setupThemeListener() {
-        if (themeListenerActive) return;
+    // ========== تفعيل الحماية المتقدمة ==========
+    function enableAdvancedProtection() {
+        // 1. منع النقر بالزر الأيمن بشكل متقدم
+        if (protectionSettings.rightClick) {
+            document.addEventListener('contextmenu', advancedPreventRightClick);
+            document.addEventListener('mousedown', detectRightClick);
+        }
         
-        // مستمع للتغيرات في الثيم فقط
-        db.ref(DB_PATH + '/current_theme').on('value', (snapshot) => {
-            const newTheme = snapshot.val();
-            if (newTheme && newTheme !== currentTheme) {
-                currentTheme = newTheme;
-                setTheme(newTheme, false); // false لأن القيمة تأتي من Firebase
-                console.log("تم تحديث الثيم فورياً إلى:", newTheme);
-                
-                // إشعار للمستخدم (اختياري)
-                showProtectionNotification('تم تحديث التصميم تلقائياً');
-            }
-        });
+        // 2. منع اختصارات لوحة المفاتيح بشكل متقدم
+        if (protectionSettings.keyboardShortcuts) {
+            document.addEventListener('keydown', advancedPreventKeyboardShortcuts);
+        }
         
-        themeListenerActive = true;
+        // 3. حماية الصور المتقدمة
+        if (protectionSettings.imageProtection) {
+            protectAllImages();
+        }
+        
+        // 4. منع نسخ النصوص بشكل متقدم
+        if (protectionSettings.textSelection) {
+            document.addEventListener('copy', advancedPreventCopy);
+            document.addEventListener('cut', advancedPreventCopy);
+            document.addEventListener('selectstart', preventSelection);
+        }
+        
+        // 5. منع أدوات المطورين بشكل متقدم
+        if (protectionSettings.devTools) {
+            preventAdvancedDevTools();
+        }
+        
+        // 6. حماية خاصة عند التكبير
+        if (protectionSettings.fullscreenProtection) {
+            setupViewerProtection();
+        }
     }
     
-    // ========== إضافة: مستمع الخط للتحديث الفوري ==========
-    function setupFontListener() {
-        if (fontListenerActive) return;
-        
-        // مستمع للتغيرات في الخط فقط
-        db.ref(DB_PATH + '/header_font').on('value', (snapshot) => {
-            const newFont = snapshot.val();
-            if (newFont && newFont !== selectedFont) {
-                selectedFont = newFont;
-                setFont(newFont, false); // false لأن القيمة تأتي من Firebase
-                console.log("تم تحديث الخط فورياً إلى:", newFont);
-                
-                // إشعار للمستخدم (اختياري)
-                showProtectionNotification('تم تحديث الخط تلقائياً');
-            }
-        });
-        
-        fontListenerActive = true;
+    // تعطيل الحماية المتقدمة
+    function disableAdvancedProtection() {
+        document.removeEventListener('contextmenu', advancedPreventRightClick);
+        document.removeEventListener('mousedown', detectRightClick);
+        document.removeEventListener('keydown', advancedPreventKeyboardShortcuts);
+        document.removeEventListener('copy', advancedPreventCopy);
+        document.removeEventListener('cut', advancedPreventCopy);
+        document.removeEventListener('selectstart', preventSelection);
+        unprotectAllImages();
     }
     
-    // تفعيل الحماية المتقدمة في المعرض
-    function enableViewerProtection() {
-        const viewer = document.getElementById('viewer');
-        if (viewer) {
-            viewer.classList.add('protected');
-            
-            // إضافة حماية متقدمة عند التكبير
-            const img = document.getElementById('viewer-img');
-            if (img) {
-                // منع جميع المحاولات لفحص الصورة
-                img.oncontextmenu = function(e) {
-                    e.preventDefault();
-                    showProtectionNotification('rightClick');
-                    return false;
-                };
-                
-                // حماية ضد محاولات سحب الصورة
-                img.ondragstart = function(e) {
-                    e.preventDefault();
-                    showProtectionNotification('imageProtection');
-                    return false;
-                };
-                
-                // حماية ضد النقر المطوّل على الهواتف
-                img.addEventListener('touchstart', function(e) {
-                    if (e.touches.length > 1) {
-                        e.preventDefault();
-                        showProtectionNotification('touchProtection');
-                    }
-                }, { passive: false });
-                
-                // حماية ضد الزوم المتعدد الأصابع
-                img.addEventListener('gesturestart', function(e) {
-                    e.preventDefault();
-                });
+    // 1. منع النقر بالزر الأيمن بشكل متقدم
+    function advancedPreventRightClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showProtectionNotification('rightClick');
+        return false;
+    }
+    
+    // كشف النقر بالزر الأيمن بشكل متقدم
+    function detectRightClick(e) {
+        if (e.button === 2) {
+            e.preventDefault();
+            e.stopPropagation();
+            showProtectionNotification('rightClick');
+            return false;
+        }
+    }
+    
+    // 2. منع اختصارات لوحة المفاتيح بشكل متقدم
+    function advancedPreventKeyboardShortcuts(e) {
+        const blockedCombinations = [
+            {keyCode: 123, ctrl: false, shift: false, alt: false},
+            {keyCode: 73, ctrl: true, shift: true, alt: false},
+            {keyCode: 74, ctrl: true, shift: true, alt: false},
+            {keyCode: 67, ctrl: true, shift: true, alt: false},
+            {keyCode: 85, ctrl: true, shift: false, alt: false},
+            {keyCode: 83, ctrl: true, shift: false, alt: false},
+            {keyCode: 80, ctrl: true, shift: false, alt: false},
+            {keyCode: 80, ctrl: true, shift: true, alt: false},
+            {keyCode: 73, ctrl: false, shift: true, alt: true}
+        ];
+        
+        for (const combo of blockedCombinations) {
+            if (e.keyCode === combo.keyCode &&
+                e.ctrlKey === combo.ctrl &&
+                e.shiftKey === combo.shift &&
+                e.altKey === combo.alt) {
+                e.preventDefault();
+                e.stopPropagation();
+                showProtectionNotification('devTools');
+                return false;
+            }
+        }
+        
+        if (e.ctrlKey && e.keyCode === 67) {
+            const tagName = e.target.tagName;
+            if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
+                e.preventDefault();
+                e.stopPropagation();
+                showProtectionNotification('copy');
+                return false;
             }
         }
     }
     
-    // تعطيل حماية المعرض
-    function disableViewerProtection() {
-        const viewer = document.getElementById('viewer');
-        if (viewer) {
-            viewer.classList.remove('protected');
+    // 3. حماية الصور المتقدمة
+    function protectAllImages() {
+        const images = document.getElementsByTagName('img');
+        for (let img of images) {
+            img.style.pointerEvents = 'none';
+            img.style.userSelect = 'none';
+            img.style.WebkitUserSelect = 'none';
+            img.style.MozUserSelect = 'none';
+            img.style.msUserSelect = 'none';
             
-            const img = document.getElementById('viewer-img');
-            if (img) {
-                img.oncontextmenu = null;
-                img.ondragstart = null;
-            }
+            img.ondragstart = function(e) {
+                e.preventDefault();
+                showProtectionNotification('imageProtection');
+                return false;
+            };
+            
+            img.oncontextmenu = function(e) {
+                e.preventDefault();
+                showProtectionNotification('rightClick');
+                return false;
+            };
         }
     }
     
-    // ========== دوال الحماية العامة ==========
+    // إزالة حماية الصور
+    function unprotectAllImages() {
+        const images = document.getElementsByTagName('img');
+        for (let img of images) {
+            img.style.pointerEvents = '';
+            img.style.userSelect = '';
+            img.style.WebkitUserSelect = '';
+            img.style.MozUserSelect = '';
+            img.style.msUserSelect = '';
+            img.ondragstart = null;
+            img.oncontextmenu = null;
+        }
+    }
     
-    // إغلاق تنبيه الحماية
+    // 4. منع نسخ النصوص بشكل متقدم
+    function advancedPreventCopy(e) {
+        const tagName = e.target.tagName;
+        const isAdminArea = e.target.closest('#admin-panel');
+        
+        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA' && !isAdminArea) {
+            e.preventDefault();
+            e.stopPropagation();
+            showProtectionNotification('copy');
+            return false;
+        }
+    }
+    
+    function preventSelection(e) {
+        const tagName = e.target.tagName;
+        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            return false;
+        }
+    }
+    
+    // 5. منع أدوات المطورين بشكل متقدم
+    function preventAdvancedDevTools() {
+        const element = new Image();
+        Object.defineProperty(element, 'id', {
+            get: function() {
+                showProtectionNotification('devTools');
+                return '';
+            }
+        });
+        
+        console.log('%c ', element);
+        
+        let windowWidth = window.innerWidth;
+        setInterval(() => {
+            if (Math.abs(windowWidth - window.innerWidth) > 100) {
+                windowWidth = window.innerWidth;
+                showProtectionNotification('devTools');
+            }
+        }, 500);
+        
+        const noop = () => {};
+        const methods = ['log', 'debug', 'info', 'warn', 'error', 'assert', 'clear', 'dir', 'dirxml', 'table', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'profile', 'profileEnd', 'count', 'time', 'timeEnd', 'timeStamp', 'timeline', 'timelineEnd'];
+        methods.forEach(method => {
+            console[method] = noop;
+        });
+    }
+    
+    // 6. إعداد حماية المعرض
+    function setupViewerProtection() {
+        const viewer = document.getElementById('viewer');
+        if (viewer) {
+            viewer.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                showProtectionNotification('rightClick');
+                return false;
+            });
+            
+            viewer.addEventListener('keydown', function(e) {
+                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'))) {
+                    e.preventDefault();
+                    showProtectionNotification('devTools');
+                    return false;
+                }
+            });
+        }
+    }
+    
+    // ========== دوال الحماية البسيطة ==========
+    function enableProtection() {
+        enableAdvancedProtection();
+    }
+    
+    function disableProtection() {
+        disableAdvancedProtection();
+    }
+    
+    function toggleProtection() {
+        isProtectionEnabled = !isProtectionEnabled;
+        const toggleBtn = document.getElementById('protection-toggle');
+        
+        if (isProtectionEnabled) {
+            enableProtection();
+            toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = '<i class="fas fa-shield-alt"></i>';
+            toggleBtn.title = 'تعطيل الحماية';
+            showProtectionNotification('protectionEnabled');
+        } else {
+            disableProtection();
+            toggleBtn.classList.add('active');
+            toggleBtn.innerHTML = '<i class="fas fa-shield-slash"></i>';
+            toggleBtn.title = 'تفعيل الحماية';
+            showProtectionNotification('protectionDisabled');
+        }
+    }
+    
+    // ========== نظام الإشعارات ==========
     function closeProtectionNotification() {
         document.getElementById('protection-notification').style.display = 'none';
     }
     
-    // عرض تنبيه الحماية
     function showProtectionNotification(actionType = '') {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled && !['settingsSaved', 'reviewSubmitted', 'partnerAdded', 'catalogAdded', 'photosPublished'].includes(actionType)) return;
         
         const notification = document.getElementById('protection-notification');
         const messageContent = document.getElementById('protection-message-content');
         
         let message = '⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر';
         
-        // تخصيص الرسالة حسب نوع المحاولة
         switch(actionType) {
             case 'rightClick':
                 message = '⛔ النقر بالزر الأيمن معطل لحماية المحتوى';
@@ -1630,6 +1794,12 @@
             case 'fontError':
                 message = '⚠️ يرجى إدخال اسم خط صحيح';
                 break;
+            case 'adminWelcome':
+                message = '👋 مرحباً بك في لوحة الإدارة';
+                break;
+            case 'logoutSuccess':
+                message = '✅ تم تسجيل الخروج بنجاح';
+                break;
             default:
                 message = actionType || '⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر';
         }
@@ -1637,7 +1807,6 @@
         messageContent.textContent = message;
         notification.style.display = 'flex';
         
-        // إخفاء التنبيه تلقائياً بعد 3 ثوانٍ
         setTimeout(() => {
             if (notification.style.display === 'flex') {
                 notification.style.display = 'none';
@@ -1645,302 +1814,7 @@
         }, 3000);
     }
     
-    // تفعيل/تعطيل الحماية
-    function toggleProtection() {
-        isProtectionEnabled = !isProtectionEnabled;
-        const toggleBtn = document.getElementById('protection-toggle');
-        
-        if (isProtectionEnabled) {
-            enableProtection();
-            toggleBtn.classList.remove('active');
-            toggleBtn.innerHTML = '<i class="fas fa-shield-alt"></i>';
-            toggleBtn.title = 'تعطيل الحماية';
-            showProtectionNotification('protectionEnabled');
-        } else {
-            disableProtection();
-            toggleBtn.classList.add('active');
-            toggleBtn.innerHTML = '<i class="fas fa-shield-slash"></i>';
-            toggleBtn.title = 'تفعيل الحماية';
-            showProtectionNotification('protectionDisabled');
-        }
-    }
-    
-    // ========== نظام الحماية المتقدم ==========
-    
-    // تفعيل الحماية المتقدمة
-    function enableAdvancedProtection() {
-        // 1. منع النقر بالزر الأيمن بشكل متقدم
-        if (protectionSettings.rightClick) {
-            document.addEventListener('contextmenu', advancedPreventRightClick);
-            document.addEventListener('mousedown', detectRightClick);
-        }
-        
-        // 2. منع اختصارات لوحة المفاتيح بشكل متقدم
-        if (protectionSettings.keyboardShortcuts) {
-            document.addEventListener('keydown', advancedPreventKeyboardShortcuts);
-        }
-        
-        // 3. حماية الصور المتقدمة
-        if (protectionSettings.imageProtection) {
-            protectAllImages();
-        }
-        
-        // 4. منع نسخ النصوص بشكل متقدم
-        if (protectionSettings.textSelection) {
-            document.addEventListener('copy', advancedPreventCopy);
-            document.addEventListener('cut', advancedPreventCopy);
-            document.addEventListener('selectstart', preventSelection);
-        }
-        
-        // 5. منع أدوات المطورين بشكل متقدم
-        if (protectionSettings.devTools) {
-            preventAdvancedDevTools();
-        }
-        
-        // 6. حماية خاصة عند التكبير
-        if (protectionSettings.fullscreenProtection) {
-            setupViewerProtection();
-        }
-        
-        console.log("✅ تم تفعيل الحماية المتقدمة");
-    }
-    
-    // تعطيل الحماية المتقدمة
-    function disableAdvancedProtection() {
-        // إزالة جميع مستمعات الأحداث المتقدمة
-        document.removeEventListener('contextmenu', advancedPreventRightClick);
-        document.removeEventListener('mousedown', detectRightClick);
-        document.removeEventListener('keydown', advancedPreventKeyboardShortcuts);
-        document.removeEventListener('copy', advancedPreventCopy);
-        document.removeEventListener('cut', advancedPreventCopy);
-        document.removeEventListener('selectstart', preventSelection);
-        
-        // إزالة حماية الصور
-        unprotectAllImages();
-        
-        console.log("❌ تم تعطيل الحماية المتقدمة");
-    }
-    
-    // 1. منع النقر بالزر الأيمن بشكل متقدم
-    function advancedPreventRightClick(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionNotification('rightClick');
-        return false;
-    }
-    
-    // كشف النقر بالزر الأيمن بشكل متقدم
-    function detectRightClick(e) {
-        if (e.button === 2) { // زر الماوس الأيمن
-            e.preventDefault();
-            e.stopPropagation();
-            showProtectionNotification('rightClick');
-            return false;
-        }
-    }
-    
-    // 2. منع اختصارات لوحة المفاتيح بشكل متقدم
-    function advancedPreventKeyboardShortcuts(e) {
-        // منع جميع اختصارات فحص الصفحة
-        const blockedCombinations = [
-            // F12
-            {keyCode: 123, ctrl: false, shift: false, alt: false},
-            // Ctrl+Shift+I
-            {keyCode: 73, ctrl: true, shift: true, alt: false},
-            // Ctrl+Shift+J
-            {keyCode: 74, ctrl: true, shift: true, alt: false},
-            // Ctrl+Shift+C
-            {keyCode: 67, ctrl: true, shift: true, alt: false},
-            // Ctrl+U
-            {keyCode: 85, ctrl: true, shift: false, alt: false},
-            // Ctrl+S
-            {keyCode: 83, ctrl: true, shift: false, alt: false},
-            // Ctrl+P
-            {keyCode: 80, ctrl: true, shift: false, alt: false},
-            // Ctrl+Shift+P
-            {keyCode: 80, ctrl: true, shift: true, alt: false},
-            // Alt+Shift+I
-            {keyCode: 73, ctrl: false, shift: true, alt: true}
-        ];
-        
-        for (const combo of blockedCombinations) {
-            if (e.keyCode === combo.keyCode &&
-                e.ctrlKey === combo.ctrl &&
-                e.shiftKey === combo.shift &&
-                e.altKey === combo.alt) {
-                e.preventDefault();
-                e.stopPropagation();
-                showProtectionNotification('devTools');
-                return false;
-            }
-        }
-        
-        // منع Ctrl+C خارج حقول الإدخال
-        if (e.ctrlKey && e.keyCode === 67) {
-            const tagName = e.target.tagName;
-            if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
-                e.preventDefault();
-                e.stopPropagation();
-                showProtectionNotification('copy');
-                return false;
-            }
-        }
-    }
-    
-    // 3. حماية الصور المتقدمة
-    function protectAllImages() {
-        const images = document.getElementsByTagName('img');
-        for (let img of images) {
-            // إضافة طبقة حماية فوق الصور
-            img.style.pointerEvents = 'none';
-            img.style.userSelect = 'none';
-            img.style.WebkitUserSelect = 'none';
-            img.style.MozUserSelect = 'none';
-            img.style.msUserSelect = 'none';
-            
-            // منع سحب الصور
-            img.ondragstart = function(e) {
-                e.preventDefault();
-                showProtectionNotification('imageProtection');
-                return false;
-            };
-            
-            // منع القائمة السياقية
-            img.oncontextmenu = function(e) {
-                e.preventDefault();
-                showProtectionNotification('rightClick');
-                return false;
-            };
-        }
-    }
-    
-    // إزالة حماية الصور
-    function unprotectAllImages() {
-        const images = document.getElementsByTagName('img');
-        for (let img of images) {
-            img.style.pointerEvents = '';
-            img.style.userSelect = '';
-            img.style.WebkitUserSelect = '';
-            img.style.MozUserSelect = '';
-            img.style.msUserSelect = '';
-            img.ondragstart = null;
-            img.oncontextmenu = null;
-        }
-    }
-    
-    // 4. منع نسخ النصوص بشكل متقدم
-    function advancedPreventCopy(e) {
-        const tagName = e.target.tagName;
-        const isAdminArea = e.target.closest('#admin-panel');
-        
-        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA' && !isAdminArea) {
-            e.preventDefault();
-            e.stopPropagation();
-            showProtectionNotification('copy');
-            return false;
-        }
-    }
-    
-    function preventSelection(e) {
-        const tagName = e.target.tagName;
-        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
-            e.preventDefault();
-            return false;
-        }
-    }
-    
-    // 5. منع أدوات المطورين بشكل متقدم
-    function preventAdvancedDevTools() {
-        // طريقة متقدمة للكشف عن أدوات المطورين
-        const element = new Image();
-        Object.defineProperty(element, 'id', {
-            get: function() {
-                showProtectionNotification('devTools');
-                return '';
-            }
-        });
-        
-        console.log('%c ', element);
-        
-        // كشف تغيير حجم النافذة
-        let windowWidth = window.innerWidth;
-        setInterval(() => {
-            if (Math.abs(windowWidth - window.innerWidth) > 100) {
-                windowWidth = window.innerWidth;
-                showProtectionNotification('devTools');
-            }
-        }, 500);
-        
-        // تعطيل console.log
-        const noop = () => {};
-        const methods = ['log', 'debug', 'info', 'warn', 'error', 'assert', 'clear', 'dir', 'dirxml', 'table', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'profile', 'profileEnd', 'count', 'time', 'timeEnd', 'timeStamp', 'timeline', 'timelineEnd'];
-        methods.forEach(method => {
-            console[method] = noop;
-        });
-    }
-    
-    // 6. إعداد حماية المعرض
-    function setupViewerProtection() {
-        const viewer = document.getElementById('viewer');
-        if (viewer) {
-            viewer.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                showProtectionNotification('rightClick');
-                return false;
-            });
-            
-            // منع اختصارات لوحة المفاتيح في المعرض
-            viewer.addEventListener('keydown', function(e) {
-                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'))) {
-                    e.preventDefault();
-                    showProtectionNotification('devTools');
-                    return false;
-                }
-            });
-        }
-    }
-    
-    // ========== دوال الحماية البسيطة للتوافق ==========
-    
-    function enableProtection() {
-        enableAdvancedProtection();
-    }
-    
-    function disableProtection() {
-        disableAdvancedProtection();
-    }
-    
-    function preventRightClick(e) {
-        advancedPreventRightClick(e);
-    }
-    
-    function preventKeyboardShortcuts(e) {
-        advancedPreventKeyboardShortcuts(e);
-    }
-    
-    function preventImageDrag(e) {
-        if (e.target.tagName === 'IMG') {
-            e.preventDefault();
-            showProtectionNotification('imageProtection');
-            return false;
-        }
-    }
-    
-    function preventImageDrop(e) {
-        e.preventDefault();
-        showProtectionNotification('imageProtection');
-        return false;
-    }
-    
-    function preventCopy(e) {
-        advancedPreventCopy(e);
-    }
-    
-    function preventDevTools() {
-        preventAdvancedDevTools();
-    }
-    
-    // حفظ إعدادات الحماية
+    // ========== دوال إدارة الحماية ==========
     function saveProtectionSettings() {
         protectionSettings = {
             rightClick: document.getElementById('enable-right-click-protection').checked,
@@ -1958,8 +1832,6 @@
             protection_message: message
         }).then(() => {
             showProtectionNotification('settingsSaved');
-            
-            // إعادة تفعيل الحماية بالإعدادات الجديدة
             if (isProtectionEnabled) {
                 disableProtection();
                 enableProtection();
@@ -1967,12 +1839,9 @@
         });
     }
     
-    // تحميل إعدادات الحماية من Firebase
     function loadProtectionSettings() {
         if (currentData.protection_settings) {
             protectionSettings = currentData.protection_settings;
-            
-            // تحديث واجهة الإدارة
             document.getElementById('enable-right-click-protection').checked = protectionSettings.rightClick || true;
             document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts || true;
             document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection || true;
@@ -1985,31 +1854,18 @@
             document.getElementById('protection-message-text').value = currentData.protection_message;
         }
         
-        // تفعيل الحماية تلقائياً
         if (isProtectionEnabled) {
             enableProtection();
         }
         
-        // إعداد طبقة الحماية
         setupProtectionLayer();
     }
     
-    // ========== متغيرات المعرض (بدون تقليب صور) ==========
-    let currentZoom = 1;
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let translateX = 0, translateY = 0;
-    let maxZoom = 3;
-    let minZoom = 0.5;
-
-    // ========== دوال المعرض المعدل ==========
-    
-    // دالة فتح الصورة (بدون تقليب)
+    // ========== دوال المعرض ==========
     function openImg(url) {
         const viewer = document.getElementById('viewer');
         const img = document.getElementById('viewer-img');
         
-        // تفعيل حماية المعرض
         enableViewerProtection();
         
         img.src = url;
@@ -2017,12 +1873,55 @@
         viewer.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         
-        // إعداد مستمعات الأحداث
         setupViewerListeners();
         showZoomNotice();
     }
     
-    // تكبير/تصغير الصورة
+    function enableViewerProtection() {
+        const viewer = document.getElementById('viewer');
+        if (viewer) {
+            viewer.classList.add('protected');
+            
+            const img = document.getElementById('viewer-img');
+            if (img) {
+                img.oncontextmenu = function(e) {
+                    e.preventDefault();
+                    showProtectionNotification('rightClick');
+                    return false;
+                };
+                
+                img.ondragstart = function(e) {
+                    e.preventDefault();
+                    showProtectionNotification('imageProtection');
+                    return false;
+                };
+                
+                img.addEventListener('touchstart', function(e) {
+                    if (e.touches.length > 1) {
+                        e.preventDefault();
+                        showProtectionNotification('touchProtection');
+                    }
+                }, { passive: false });
+                
+                img.addEventListener('gesturestart', function(e) {
+                    e.preventDefault();
+                });
+            }
+        }
+    }
+    
+    function disableViewerProtection() {
+        const viewer = document.getElementById('viewer');
+        if (viewer) {
+            viewer.classList.remove('protected');
+            const img = document.getElementById('viewer-img');
+            if (img) {
+                img.oncontextmenu = null;
+                img.ondragstart = null;
+            }
+        }
+    }
+    
     function zoomImage(amount) {
         const img = document.getElementById('viewer-img');
         const viewer = document.getElementById('viewer');
@@ -2043,7 +1942,6 @@
         }
     }
     
-    // إعادة تعيين التكبير
     function resetZoom() {
         const img = document.getElementById('viewer-img');
         const viewer = document.getElementById('viewer');
@@ -2057,25 +1955,20 @@
         img.classList.add('zoomable');
     }
     
-    // إغلاق المعرض
     function closeViewer() {
         const viewer = document.getElementById('viewer');
         viewer.style.display = 'none';
         document.body.style.overflow = 'auto';
         removeViewerListeners();
-        
-        // تعطيل حماية المعرض
         disableViewerProtection();
     }
     
-    // إغلاق عند الضغط خارج الصورة
     function closeViewerOnOverlay(event) {
         if (event.target.id === 'viewer') {
             closeViewer();
         }
     }
     
-    // إظهار إشعار التعليمات
     function showZoomNotice() {
         const notice = document.getElementById('zoom-notice');
         notice.style.display = 'block';
@@ -2089,7 +1982,6 @@
         }, 3000);
     }
     
-    // إعداد مستمعات الأحداث للمعرض
     function setupViewerListeners() {
         const img = document.getElementById('viewer-img');
         const viewer = document.getElementById('viewer');
@@ -2116,11 +2008,9 @@
         
         img.addEventListener('mousedown', startDrag);
         img.addEventListener('touchstart', startDragTouch);
-        
         document.addEventListener('keydown', handleKeydown);
     }
     
-    // إزالة مستمعات الأحداث
     function removeViewerListeners() {
         const img = document.getElementById('viewer-img');
         img.removeEventListener('dblclick', null);
@@ -2130,7 +2020,6 @@
         document.removeEventListener('keydown', handleKeydown);
     }
     
-    // بدء السحب (ماوس)
     function startDrag(e) {
         if (currentZoom <= 1) return;
         
@@ -2146,7 +2035,6 @@
         viewer.style.cursor = 'grabbing';
     }
     
-    // بدء السحب (لمس)
     function startDragTouch(e) {
         if (currentZoom <= 1) return;
         
@@ -2160,7 +2048,6 @@
         document.addEventListener('touchend', stopDrag);
     }
     
-    // التنفيذ أثناء السحب (ماوس)
     function doDrag(e) {
         if (!isDragging) return;
         
@@ -2171,7 +2058,6 @@
         img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
     }
     
-    // التنفيذ أثناء السحب (لمس)
     function doDragTouch(e) {
         if (!isDragging) return;
         
@@ -2183,7 +2069,6 @@
         img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
     }
     
-    // إيقاف السحب
     function stopDrag() {
         isDragging = false;
         document.removeEventListener('mousemove', doDrag);
@@ -2195,7 +2080,6 @@
         viewer.style.cursor = 'grab';
     }
     
-    // التعامل مع ضغطات المفاتيح
     function handleKeydown(e) {
         const viewer = document.getElementById('viewer');
         if (viewer.style.display !== 'flex') return;
@@ -2217,55 +2101,7 @@
         }
     }
     
-    // تعديل دالة drawImgs لفتح صورة واحدة فقط
-    function drawImgs(imgs) { 
-        if(!imgs) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
-        
-        const wmTxt = currentData.wm_text || ''; 
-        const imgsArray = Object.keys(imgs).reverse();
-        
-        return imgsArray.map((id, index) => `
-            <div class="card">
-                <div class="img-container" onclick="openImg('${imgs[id].url}')">
-                    <img src="${imgs[id].url}" loading="lazy">
-                    <div class="wm-tag">${wmTxt}</div>
-                </div>
-                <button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button>
-            </div>
-        `).join(''); 
-    }
-
-    // ========== دوال إدارة الحماية ==========
-    
-    // إظهار زر الحماية للمشرف
-    function showProtectionToggle() {
-        const toggleBtn = document.getElementById('protection-toggle');
-        if (isAdmin) {
-            toggleBtn.style.display = 'flex';
-        } else {
-            toggleBtn.style.display = 'none';
-        }
-    }
-    
-    // الباقي من الكود الأصلي مع تعديلات طفيفة
-    function initThemeAndFont() {
-        if (currentData.current_theme) {
-            setTheme(currentData.current_theme, false);
-        } else {
-            setTheme('black', false);
-        }
-        
-        if (currentData.header_font) {
-            setFont(currentData.header_font, false);
-        } else {
-            setFont('tajawal', false);
-        }
-        
-        // تفعيل المستمعين للتحديث الفوري
-        setupThemeListener();
-        setupFontListener();
-    }
-
+    // ========== إدارة الثيمات والخطوط ==========
     function setTheme(theme, saveToFirebase = true) {
         currentTheme = theme;
         
@@ -2277,7 +2113,6 @@
         
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ current_theme: theme }).then(() => {
-                console.log("تم حفظ الثيم في Firebase");
                 showProtectionNotification('تم تغيير التصميم بنجاح');
             });
         }
@@ -2315,7 +2150,6 @@
         
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ header_font: fontName }).then(() => {
-                console.log("تم حفظ الخط في Firebase");
                 showProtectionNotification('تم تغيير الخط بنجاح');
             });
         }
@@ -2373,7 +2207,87 @@
             showProtectionNotification('fontError');
         }
     }
-
+    
+    // ========== إدارة المصادقة والإدارة ==========
+    function checkAccess() { 
+        const pass = prompt("🔐 أدخل كلمة المرور:");
+        if (!pass) return;
+        
+        auth.signInWithEmailAndPassword(ADMIN_EMAIL, pass)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                
+                if (user.uid === ADMIN_UID) {
+                    isAdmin = true;
+                    document.getElementById('admin-panel').style.display = 'block';
+                    document.getElementById('protection-toggle').style.display = 'flex';
+                    hideMaintenanceScreen();
+                    fillAdminFields();
+                    showProtectionNotification('adminWelcome');
+                } else {
+                    auth.signOut();
+                    alert("⛔ ليس لديك صلاحية الدخول");
+                }
+            })
+            .catch((error) => {
+                console.error("خطأ في المصادقة:", error);
+                alert("⛔ كلمة المرور غير صحيحة");
+            });
+    }
+    
+    function logoutAdmin() {
+        auth.signOut().then(() => {
+            isAdmin = false;
+            document.getElementById('admin-panel').style.display = 'none';
+            document.getElementById('protection-toggle').style.display = 'none';
+            showProtectionNotification('logoutSuccess');
+            location.reload();
+        });
+    }
+    
+    // التحقق من حالة تسجيل الدخول
+    auth.onAuthStateChanged((user) => {
+        if (user && user.uid === ADMIN_UID) {
+            isAdmin = true;
+            document.getElementById('protection-toggle').style.display = 'flex';
+        } else {
+            isAdmin = false;
+            document.getElementById('protection-toggle').style.display = 'none';
+        }
+    });
+    
+    // ========== مستمعات Firebase للتحديث الفوري ==========
+    function setupThemeListener() {
+        if (themeListenerActive) return;
+        
+        db.ref(DB_PATH + '/current_theme').on('value', (snapshot) => {
+            const newTheme = snapshot.val();
+            if (newTheme && newTheme !== currentTheme) {
+                currentTheme = newTheme;
+                setTheme(newTheme, false);
+                showProtectionNotification('themeUpdated');
+            }
+        });
+        
+        themeListenerActive = true;
+    }
+    
+    function setupFontListener() {
+        if (fontListenerActive) return;
+        
+        db.ref(DB_PATH + '/header_font').on('value', (snapshot) => {
+            const newFont = snapshot.val();
+            if (newFont && newFont !== selectedFont) {
+                selectedFont = newFont;
+                setFont(newFont, false);
+                showProtectionNotification('fontChanged');
+            }
+        });
+        
+        fontListenerActive = true;
+    }
+    
+    // ========== شاشة الصيانة ==========
     function showMaintenanceScreen() {
         const maintenanceScreen = document.getElementById('maintenance-screen');
         const title = currentData.maintenance_title || 'الموقع في صيانة';
@@ -2402,12 +2316,12 @@
             document.body.style.overflow = 'auto';
         }, 500);
     }
-
+    
+    // ========== دوال Firebase الرئيسية ==========
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {}; 
         document.getElementById('splash').style.display = 'none';
         
-        const mScreen = document.getElementById('maintenance-screen');
         if (currentData.maintenance_mode && !isAdmin) {
             showMaintenanceScreen();
         } else {
@@ -2415,7 +2329,7 @@
         }
         
         initThemeAndFont();
-        loadProtectionSettings(); // تحميل إعدادات الحماية
+        loadProtectionSettings();
         renderAll(); 
         renderAdminLists(); 
         renderAdminReviews(); 
@@ -2432,9 +2346,26 @@
         document.getElementById('partners-title-text').innerText = currentData.partners_title || '';
         
         startPartnersSlider();
-        showProtectionToggle(); // إظهار زر الحماية
     });
 
+    function initThemeAndFont() {
+        if (currentData.current_theme) {
+            setTheme(currentData.current_theme, false);
+        } else {
+            setTheme('black', false);
+        }
+        
+        if (currentData.header_font) {
+            setFont(currentData.header_font, false);
+        } else {
+            setFont('tajawal', false);
+        }
+        
+        setupThemeListener();
+        setupFontListener();
+    }
+    
+    // ========== دوال العرض الرئيسية ==========
     function getSmartSchedule(d) {
         if(!d.work_schedule) return "...";
         let groups = []; 
@@ -2507,6 +2438,23 @@
         cycle();
         if(window.partnerInterval) clearInterval(window.partnerInterval);
         window.partnerInterval = setInterval(cycle, 4000);
+    }
+
+    function drawImgs(imgs) { 
+        if(!imgs) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
+        
+        const wmTxt = currentData.wm_text || ''; 
+        const imgsArray = Object.keys(imgs).reverse();
+        
+        return imgsArray.map((id, index) => `
+            <div class="card">
+                <div class="img-container" onclick="openImg('${imgs[id].url}')">
+                    <img src="${imgs[id].url}" loading="lazy">
+                    <div class="wm-tag">${wmTxt}</div>
+                </div>
+                <button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button>
+            </div>
+        `).join(''); 
     }
 
     function renderAll() {
@@ -2598,6 +2546,7 @@
         }); 
     }
     
+    // ========== دوال الإدارة ==========
     function renderAdminReviews() { 
         const list = document.getElementById('admin-reviews-list'); 
         list.innerHTML = ''; 
@@ -2688,19 +2637,6 @@
             document.getElementById('new-cat-name').value=''; 
             document.getElementById('new-cat-code').value=''; 
             showProtectionNotification('catalogAdded');
-        }); 
-    }
-    
-    function checkAccess() { 
-        const pass = prompt("الرمز:"); 
-        db.ref(AUTH_PATH).once('value').then(snap => { 
-            if(pass === String(snap.val())) { 
-                isAdmin=true; 
-                document.getElementById('admin-panel').style.display='block'; 
-                document.getElementById('protection-toggle').style.display='flex'; // إظهار زر الحماية
-                hideMaintenanceScreen();
-                fillAdminFields(); 
-            } 
         }); 
     }
     
@@ -2859,12 +2795,70 @@
         document.getElementById('links-in').value = ''; 
     }
 
-    // تفعيل الحماية المتقدمة عند تحميل الصفحة
+    // تفعيل الحماية عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', function() {
         enableProtection();
+        
+        // حماية إضافية لمنع فحص الكود
+        setInterval(() => {
+            if (document.hidden) {
+                location.reload();
+            }
+        }, 5000);
     });
+    
+    // ========== حماية ضد تفتيش الكود ==========
+    (function() {
+        'use strict';
+        
+        // منع فتح أدوات المطورين
+        function blockDevTools() {
+            const devtools = /./;
+            devtools.toString = function() {
+                showProtectionNotification('devTools');
+                return '';
+            };
+            console.log('%c', devtools);
+        }
+        
+        // تشغيل الحماية بانتظام
+        setInterval(blockDevTools, 1000);
+        blockDevTools();
+        
+        // منع التعامل مع الكود
+        Object.defineProperty(window, 'eval', {
+            value: function() {
+                showProtectionNotification('devTools');
+                return function(){};
+            },
+            writable: false
+        });
+        
+        // إخفاء البيانات الحساسة
+        Object.defineProperty(window, 'firebaseConfig', {
+            value: null,
+            writable: false,
+            configurable: false
+        });
+        
+        Object.defineProperty(window, 'ADMIN_UID', {
+            value: null,
+            writable: false,
+            configurable: false
+        });
+        
+        Object.defineProperty(window, 'ADMIN_EMAIL', {
+            value: null,
+            writable: false,
+            configurable: false
+        });
+        
+        Object.defineProperty(window, 'DB_PATH', {
+            value: null,
+            writable: false,
+            configurable: false
+        });
+    })();
 </script>
 </body>
-    </html>
-
- 
+</html>
