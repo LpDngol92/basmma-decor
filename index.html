@@ -54,6 +54,15 @@
             --admin-section: #f0f0f0;
         }
         
+        /* الظل الإضافي للثيم الأبيض في منطقة الهيدر */
+        .theme-white .partners-section {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08) inset;
+        }
+        
+        .theme-white .partner-img {
+            filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.15));
+        }
+        
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
         body { 
             font-family: 'Tajawal', sans-serif; 
@@ -268,6 +277,7 @@
             pointer-events: none;
             position: relative;
             display: inline-block;
+            font-family: 'Tajawal', sans-serif; /* الحفاظ على نفس الخط */
         }
         
         .partners-title::after {
@@ -499,6 +509,29 @@
             background: #7a0a0a;
         }
         
+        .whatsapp-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border-radius: 50px;
+            padding: 15px 40px;
+            width: auto;
+            background: #fff; /* اللون الأبيض */
+            color: #000; /* النص أسود */
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .whatsapp-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
         .status-badge { 
             padding: 8px 25px; 
             border-radius: 50px; 
@@ -704,38 +737,6 @@
             color: rgba(0, 0, 0, 0.18);
         }
         
-        /* زر تبديل الثيم في لوحة الإدارة */
-        .theme-toggle-admin {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 100000001;
-            display: flex;
-            gap: 10px;
-        }
-        
-        .theme-toggle-admin button {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-        
-        .theme-toggle-admin button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        
-        .theme-toggle-admin button.active {
-            background: var(--gold);
-            color: #000;
-        }
-        
         /* زر الذهبي */
         .gold-btn {
             background: linear-gradient(135deg, var(--gold), #b8860b);
@@ -809,12 +810,6 @@
 </div>
 
 <div id="admin-panel">
-    <!-- زر تبديل الثيم في لوحة الإدارة -->
-    <div class="theme-toggle-admin">
-        <button class="active" onclick="setTheme('black')" id="btn-admin-black">الأسود</button>
-        <button onclick="setTheme('white')" id="btn-admin-white">الأبيض</button>
-    </div>
-    
     <div class="admin-box">
         <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v163</h2>
         
@@ -983,20 +978,6 @@
             document.body.classList.add('theme-white');
         } else {
             document.body.classList.remove('theme-white');
-        }
-        
-        // تحديث أزرار التحكم بالثيم في لوحة الإدارة
-        const btnAdminBlack = document.getElementById('btn-admin-black');
-        const btnAdminWhite = document.getElementById('btn-admin-white');
-        
-        if (btnAdminBlack && btnAdminWhite) {
-            if (theme === 'black') {
-                btnAdminBlack.classList.add('active');
-                btnAdminWhite.classList.remove('active');
-            } else {
-                btnAdminWhite.classList.add('active');
-                btnAdminBlack.classList.remove('active');
-            }
         }
     }
 
@@ -1171,7 +1152,8 @@
 
         let reviewForm = `<button class="about-toggle" onclick="toggleAbout('review-box')">أضف تقييم</button><div id="review-box" class="about-content"><div id="review-form-container"><input type="text" id="rev-name" placeholder="الاسم الكريم"><div class="rating-stars" id="star-row" style="display:flex; gap:5px; justify-content:center; margin-bottom:10px; direction:ltr;"><i class="fas fa-star" onclick="setStar(5)"></i><i class="fas fa-star" onclick="setStar(4)"></i><i class="fas fa-star" onclick="setStar(3)"></i><i class="fas fa-star" onclick="setStar(2)"></i><i class="fas fa-star" onclick="setStar(1)"></i></div><textarea id="rev-msg" placeholder="اكتب تجربتك هنا..."></textarea><button onclick="submitReview()" style="width:100%; background:var(--gold); border:none; padding:10px; border-radius:8px; font-weight:900; color:#000;">إرسال التقييم</button></div></div>`;
 
-        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewForm}${reviewsDisplay}${workPath}<div style="background:var(--status-bg); padding:30px; border-radius:20px; max-width:550px; margin:20px auto; border: 1px solid var(--border);"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="btn-order" style="display:inline-flex; align-items:center; justify-content:center; gap:10px; border-radius:50px; padding:15px 40px; width:auto; background:var(--gold); color:#000; font-weight:900;">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}</div></div></section>`;
+        // تغيير زر التواصل معنا إلى أبيض
+        let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewForm}${reviewsDisplay}${workPath}<div style="background:var(--status-bg); padding:30px; border-radius:20px; max-width:550px; margin:20px auto; border: 1px solid var(--border);"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="whatsapp-btn">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}</div></div></section>`;
         
         contentHtml += `<section class="sec ${currentTab==='catalogs'?'active':''}"><div class="grid">${drawFolders(d.catalogs, 'cat')}</div></section>`;
         if(d.pages) Object.keys(d.pages).forEach(id => contentHtml += `<section class="sec ${currentTab===id?'active':''}"><div class="grid">${drawImgs(d.pages[id].imgs)}</div></section>`);
@@ -1499,4 +1481,4 @@
     });
 </script>
 </body>
-    </html>
+                    </html>
