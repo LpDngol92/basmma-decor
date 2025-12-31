@@ -1374,22 +1374,24 @@
 <div id="hidden-trigger" onclick="showLoginScreen()"></div>
 
 <script>
-// تكوين Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
-    authDomain: "mydecor-b29bd.firebaseapp.com",
-    databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "mydecor-b29bd",
-    storageBucket: "mydecor-b29bd.firebasestorage.app",
-    messagingSenderId: "302609299720",
-    appId: "1:302609299720:web:e086b600c3ee824acd54bd"
-};
+    // ========== تكوين Firebase ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+        authDomain: "mydecor-b29bd.firebaseapp.com",
+        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mydecor-b29bd",
+        storageBucket: "mydecor-b29bd.firebasestorage.app",
+        messagingSenderId: "302609299720",
+        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
+    };
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const auth = firebase.auth();
-const DB_PATH = 'site_v28';
-    // متغيرات عامة
+    // ========== تهيئة Firebase ==========
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+    const DB_PATH = 'site_v28';
+    
+    // ========== متغيرات عامة ==========
     let currentData = {};
     let currentTab = 'home';
     let isAdmin = false;
@@ -1400,7 +1402,7 @@ const DB_PATH = 'site_v28';
     let selectedFont = 'tajawal';
     let isProtectionEnabled = true;
     
-    // متغيرات المعرض
+    // ========== متغيرات المعرض ==========
     let currentZoom = 1;
     let isDragging = false;
     let startX = 0, startY = 0;
@@ -1452,6 +1454,8 @@ const DB_PATH = 'site_v28';
                 errorElement.style.display = 'none';
                 
                 await enablePublicAccess();
+                // إعادة تحميل البيانات كمسؤول
+                db.ref(DB_PATH).once('value', handleDataChange);
             } else {
                 errorElement.style.display = 'block';
                 errorElement.textContent = 'ليس لديك صلاحية الوصول';
@@ -1480,7 +1484,7 @@ const DB_PATH = 'site_v28';
     async function enablePublicAccess() {
         try {
             await db.ref('server_auth/public_access').set('enabled');
-            console.log('تم تمكين الوصول العام');
+            console.log('✅ تم تمكين الوصول العام');
         } catch (error) {
             console.error('Error enabling public access:', error);
         }
@@ -1489,7 +1493,7 @@ const DB_PATH = 'site_v28';
     async function disablePublicAccess() {
         try {
             await db.ref('server_auth/public_access').set('disabled');
-            console.log('تم تعطيل الوصول العام');
+            console.log('✅ تم تعطيل الوصول العام');
         } catch (error) {
             console.error('Error disabling public access:', error);
         }
@@ -1560,6 +1564,15 @@ const DB_PATH = 'site_v28';
                 alert.style.display = 'none';
             }, 300);
         }, 3000);
+    }
+    
+    function showProtectionToggle() {
+        const toggleBtn = document.getElementById('protection-toggle');
+        if (isAdmin) {
+            toggleBtn.style.display = 'flex';
+        } else {
+            toggleBtn.style.display = 'none';
+        }
     }
     
     // ========== نظام المعرض ==========
@@ -1741,43 +1754,7 @@ const DB_PATH = 'site_v28';
         }
     }
     
-    // ========== دوال التحميل والعرض ==========
-    function loadPublicData() {
-        const promises = [
-            db.ref(DB_PATH + '/site_name').once('value'),
-            db.ref(DB_PATH + '/whatsapp_num').once('value'),
-            db.ref(DB_PATH + '/site_logo').once('value'),
-            db.ref(DB_PATH + '/header_bg').once('value'),
-            db.ref(DB_PATH + '/pages').once('value'),
-            db.ref(DB_PATH + '/albums').once('value'),
-            db.ref(DB_PATH + '/partners').once('value'),
-            db.ref(DB_PATH + '/reviews').once('value'),
-            db.ref(DB_PATH + '/work_schedule').once('value'),
-            db.ref(DB_PATH + '/about_text').once('value'),
-            db.ref(DB_PATH + '/insta_url').once('value'),
-            db.ref(DB_PATH + '/tiktok_url').once('value'),
-            db.ref(DB_PATH + '/snap_url').once('value'),
-            db.ref(DB_PATH + '/wm_text').once('value'),
-            db.ref(DB_PATH + '/news_bar').once('value'),
-            db.ref(DB_PATH + '/footer_text').once('value'),
-            db.ref(DB_PATH + '/current_theme').once('value'),
-            db.ref(DB_PATH + '/header_font').once('value'),
-            db.ref(DB_PATH + '/partners_title').once('value')
-        ];
-        
-        Promise.allSettled(promises).then(results => {
-            currentData = {};
-            results.forEach((result, index) => {
-                if (result.status === 'fulfilled' && result.value.exists()) {
-                    const ref = promises[index]._path.pieces_;
-                    const key = ref[ref.length - 1];
-                    currentData[key] = result.value.val();
-                }
-            });
-            renderAll();
-        });
-    }
-    
+    // ========== معالجة البيانات ==========
     function handleDataChange(snap) {
         currentData = snap.val() || {}; 
         document.getElementById('splash').style.display = 'none';
@@ -1808,6 +1785,67 @@ const DB_PATH = 'site_v28';
         showProtectionToggle();
     }
     
+    function loadPublicData() {
+        console.log('جاري تحميل البيانات العامة...');
+        
+        // قائمة البيانات المطلوبة
+        const dataPaths = [
+            'site_name', 'whatsapp_num', 'site_logo', 'header_bg', 'wm_text',
+            'news_bar', 'footer_text', 'about_text', 'about_active',
+            'maintenance_mode', 'maintenance_title', 'maintenance_message', 'maintenance_footer',
+            'insta_url', 'tiktok_url', 'snap_url', 'location_url',
+            'current_theme', 'header_font', 'partners_title'
+        ];
+        
+        // محاولة الحصول على البيانات
+        Promise.allSettled([
+            // البيانات العامة
+            ...dataPaths.map(path => db.ref(DB_PATH + '/' + path).once('value')),
+            // المجلدات
+            db.ref(DB_PATH + '/pages').once('value'),
+            db.ref(DB_PATH + '/albums').once('value'),
+            db.ref(DB_PATH + '/catalogs').once('value'),
+            db.ref(DB_PATH + '/partners').once('value'),
+            db.ref(DB_PATH + '/reviews').once('value'),
+            db.ref(DB_PATH + '/work_schedule').once('value')
+        ]).then(results => {
+            currentData = {};
+            
+            // معالجة النتائج
+            results.forEach((result, index) => {
+                if (result.status === 'fulfilled' && result.value.exists()) {
+                    if (index < dataPaths.length) {
+                        // البيانات العامة
+                        currentData[dataPaths[index]] = result.value.val();
+                    } else {
+                        // المجلدات
+                        const folderIndex = index - dataPaths.length;
+                        const folderNames = ['pages', 'albums', 'catalogs', 'partners', 'reviews', 'work_schedule'];
+                        currentData[folderNames[folderIndex]] = result.value.val();
+                    }
+                }
+            });
+            
+            console.log('✅ تم تحميل البيانات');
+            document.getElementById('splash').style.display = 'none';
+            renderAll();
+        }).catch(error => {
+            console.error('❌ خطأ في تحميل البيانات:', error);
+            // في حالة الخطأ، نعرض الموقع مع رسالة
+            document.getElementById('splash').style.display = 'none';
+            document.getElementById('content-area').innerHTML = `
+                <section class="sec active">
+                    <div style="text-align:center; padding:50px;">
+                        <h2 style="color:var(--gold);">بصمة غير للديكور</h2>
+                        <p style="color:var(--text-secondary); margin:20px 0;">نظام الديكور والتشطيبات</p>
+                        <button onclick="location.reload()" class="gold-btn">إعادة تحميل</button>
+                    </div>
+                </section>
+            `;
+        });
+    }
+    
+    // ========== إخفاء/إظهار شاشة الصيانة ==========
     function showMaintenanceScreen() {
         const maintenanceScreen = document.getElementById('maintenance-screen');
         const title = currentData.maintenance_title || 'الموقع في صيانة';
@@ -1844,19 +1882,16 @@ const DB_PATH = 'site_v28';
                 isAdmin = true;
                 document.getElementById('protection-toggle').style.display = 'flex';
                 db.ref(DB_PATH).on('value', handleDataChange);
+                console.log('✅ تم الدخول كمسؤول');
             } else {
-                isAdmin = false;
-                document.getElementById('protection-toggle').style.display = 'none';
                 loadPublicData();
             }
         } else {
-            isAdmin = false;
-            document.getElementById('protection-toggle').style.display = 'none';
             loadPublicData();
         }
     });
     
-    // ========== دوال العرض ==========
+    // ========== الثيمات والخطوط ==========
     function initThemeAndFont() {
         if (currentData.current_theme) {
             setTheme(currentData.current_theme, false);
@@ -1961,15 +1996,6 @@ const DB_PATH = 'site_v28';
             document.getElementById('custom-font-input').value = '';
         } else {
             alert("الرجاء إدخال اسم الخط");
-        }
-    }
-    
-    function showProtectionToggle() {
-        const toggleBtn = document.getElementById('protection-toggle');
-        if (isAdmin) {
-            toggleBtn.style.display = 'flex';
-        } else {
-            toggleBtn.style.display = 'none';
         }
     }
     
@@ -2439,11 +2465,41 @@ const DB_PATH = 'site_v28';
         document.getElementById('links-in').value = ''; 
     }
 
-    // تفعيل الحماية عند تحميل الصفحة
+    // ========== بدء التشغيل ==========
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 جاري تشغيل بصمة غير v165...');
+        
+        // تفعيل الحماية
         enableProtection();
-        loadPublicData();
+        
+        // إخفاء السبلاش بعد 3 ثواني كحد أقصى (في حال فشل الاتصال)
+        setTimeout(() => {
+            document.getElementById('splash').style.display = 'none';
+        }, 3000);
+        
+        // اختبار الاتصال بـ Firebase
+        try {
+            db.ref('.info/connected').on('value', function(snap) {
+                if (snap.val() === true) {
+                    console.log('✅ متصل بـ Firebase');
+                } else {
+                    console.log('⚠️ غير متصل بـ Firebase، جاري المحاولة...');
+                }
+            });
+        } catch (error) {
+            console.error('❌ خطأ في الاتصال:', error);
+            document.getElementById('splash').style.display = 'none';
+            document.getElementById('content-area').innerHTML = `
+                <section class="sec active">
+                    <div style="text-align:center; padding:50px;">
+                        <h3 style="color:var(--red);">⚠️ خطأ في الاتصال</h3>
+                        <p style="color:var(--text-secondary); margin:20px 0;">تعذر الاتصال بالخادم</p>
+                        <button onclick="location.reload()" class="gold-btn">إعادة المحاولة</button>
+                    </div>
+                </section>
+            `;
+        }
     });
 </script>
 </body>
-    </html>
+                                </html>
