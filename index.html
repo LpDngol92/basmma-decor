@@ -585,6 +585,7 @@
             transform: scale(1.2);
         }
         
+        /* ========== بداية التعديلات على المعرض ========== */
         #viewer { 
             position: fixed; 
             inset: 0; 
@@ -593,14 +594,214 @@
             display: none; 
             align-items: center; 
             justify-content: center; 
+            cursor: zoom-out;
+            transition: background-color 0.3s ease;
         }
         
-        #viewer img { 
-            max-width: 95%; 
-            max-height: 90vh; 
-            border: 1px solid var(--gold); 
-            border-radius: 10px; 
+        .theme-white #viewer {
+            background: rgba(255,255,255,0.98);
         }
+        
+        #viewer.zoomed {
+            cursor: grab;
+        }
+        
+        #viewer.zoomed:active {
+            cursor: grabbing;
+        }
+        
+        #viewer-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        #viewer-img { 
+            max-width: 95%; 
+            max-height: 95vh; 
+            object-fit: contain;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        
+        #viewer-img.zoomable {
+            cursor: zoom-in;
+        }
+        
+        /* أزرار التحكم */
+        .viewer-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000002;
+        }
+        
+        .viewer-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-white .viewer-btn {
+            background: rgba(255,255,255,0.7);
+            color: #333;
+        }
+        
+        .viewer-btn:hover {
+            background: var(--gold);
+            color: #000;
+            transform: scale(1.1);
+        }
+        
+        .viewer-btn.close-btn {
+            background: rgba(231, 76, 60, 0.7);
+        }
+        
+        .viewer-btn.close-btn:hover {
+            background: #e74c3c;
+        }
+        
+        /* أزرار التنقل بين الصور */
+        .nav-btn-left, .nav-btn-right {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000002;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-white .nav-btn-left, 
+        .theme-white .nav-btn-right {
+            background: rgba(255,255,255,0.5);
+            color: #333;
+        }
+        
+        .nav-btn-left:hover, .nav-btn-right:hover {
+            background: var(--gold);
+            color: #000;
+            transform: translateY(-50%) scale(1.1);
+        }
+        
+        .nav-btn-left {
+            right: 30px;
+        }
+        
+        .nav-btn-right {
+            left: 30px;
+        }
+        
+        /* عداد الصور */
+        .image-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            z-index: 1000002;
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-white .image-counter {
+            background: rgba(255,255,255,0.7);
+            color: #333;
+        }
+        
+        /* تأثيرات الزوم */
+        .zoom-controls {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 1000002;
+        }
+        
+        .zoom-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-white .zoom-btn {
+            background: rgba(255,255,255,0.7);
+            color: #333;
+        }
+        
+        .zoom-btn:hover {
+            background: var(--gold);
+            color: #000;
+            transform: scale(1.1);
+        }
+        
+        /* إشعار الزوم */
+        .zoom-notice {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            z-index: 1000002;
+            display: none;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            border: 1px solid var(--gold);
+        }
+        
+        .theme-white .zoom-notice {
+            background: rgba(255,255,255,0.9);
+            color: #333;
+        }
+        /* ========== نهاية التعديلات على المعرض ========== */
         
         .admin-box { 
             max-width: 900px; 
@@ -736,16 +937,8 @@
             background: rgba(0,0,0,0.05);
         }
         
-        .theme-white #viewer {
-            background: rgba(255,255,255,0.98);
-        }
-        
         .theme-white #viewer img {
             border-color: var(--gold);
-        }
-        
-        .theme-white #viewer-wm-text {
-            color: rgba(0, 0, 0, 0.18);
         }
         
         /* زر الذهبي */
@@ -849,10 +1042,59 @@
     <div id="cat-frame" style="flex-grow:1; background:#fff;"></div>
 </div>
 
-<div id="viewer" onclick="this.style.display='none'">
-    <img id="viewer-img" src="">
-    <div id="viewer-wm-text" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: rgba(255, 255, 255, 0.18); font-weight: 900; font-size: 1.3rem; pointer-events: none; text-shadow: 0 0 12px var(--gold), 0 0 20px var(--gold); user-select: none; z-index: 1000001;"></div>
+<!-- ========== بداية المعرض المحسن ========== -->
+<div id="viewer" onclick="closeViewerOnOverlay(event)">
+    <div id="viewer-container">
+        <img id="viewer-img" src="" class="zoomable">
+        
+        <!-- أزرار التحكم العلوية -->
+        <div class="viewer-controls">
+            <button class="viewer-btn zoom-in-btn" onclick="zoomImage(0.2)" title="تكبير">
+                <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="viewer-btn zoom-out-btn" onclick="zoomImage(-0.2)" title="تصغير">
+                <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="viewer-btn reset-btn" onclick="resetZoom()" title="إعادة تعيين">
+                <i class="fas fa-expand-alt"></i>
+            </button>
+            <button class="viewer-btn close-btn" onclick="closeViewer()" title="إغلاق (ESC)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- أزرار التنقل -->
+        <button class="nav-btn-left" onclick="navigateImage(-1)" title="الصورة السابقة (←)">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        <button class="nav-btn-right" onclick="navigateImage(1)" title="الصورة التالية (→)">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <!-- عداد الصور -->
+        <div class="image-counter" id="image-counter"></div>
+        
+        <!-- أزرار الزوم السفلية -->
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="zoomImage(0.2)" title="تكبير">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="zoom-btn" onclick="zoomImage(-0.2)" title="تصغير">
+                <i class="fas fa-minus"></i>
+            </button>
+            <button class="zoom-btn" onclick="resetZoom()" title="إعادة تعيين">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        
+        <!-- إشعار التعليمات -->
+        <div class="zoom-notice" id="zoom-notice">
+            <div>🖱️ استخدم عجلة الماوس للتكبير</div>
+            <div style="font-size:0.8rem; margin-top:5px; opacity:0.8;">أو المس وشبك للتحريك</div>
+        </div>
+    </div>
 </div>
+<!-- ========== نهاية المعرض المحسن ========== -->
 
 <div id="admin-panel">
     <div class="admin-box">
@@ -1056,27 +1298,413 @@
     let userRating = 0; 
     let reviewIdx = 0; 
     let partnerIdx = 0;
-    let currentTheme = 'black'; // الثيم الافتراضي
-    let selectedFont = 'tajawal'; // الخط الافتراضي
+    let currentTheme = 'black';
+    let selectedFont = 'tajawal';
+    
+    // ========== متغيرات جديدة للمعرض ==========
+    let currentImages = []; // جميع الصور في المجلد الحالي
+    let currentImageIndex = 0; // الفهرس الحالي
+    let currentImageSection = ''; // القسم الحالي
+    let currentZoom = 1; // مستوى التكبير الحالي
+    let isDragging = false; // حالة السحب
+    let startX = 0, startY = 0; // إحداثيات بداية السحب
+    let translateX = 0, translateY = 0; // إحداثيات الترجمة
+    let maxZoom = 3; // أقصى تكبير
+    let minZoom = 0.5; // أقل تكبير
 
-    // تهيئة الثيم والخط من Firebase
+    // ========== دوال جديدة للمعرض ==========
+    
+    // دالة فتح الصورة مع إمكانية التنقل
+    function openImg(url, section = '', index = 0) {
+        const viewer = document.getElementById('viewer');
+        const img = document.getElementById('viewer-img');
+        
+        // تحديد القسم الحالي وجمع جميع الصور
+        currentImageSection = section;
+        currentImageIndex = index;
+        
+        // جمع جميع الصور من القسم الحالي
+        if (section && currentData[section]) {
+            const sectionData = currentData[section];
+            currentImages = [];
+            
+            // البحث عن الصور في جميع الأقسام والمجلدات
+            Object.keys(sectionData).forEach(key => {
+                if (sectionData[key].imgs) {
+                    Object.keys(sectionData[key].imgs).reverse().forEach(imgId => {
+                        currentImages.push({
+                            url: sectionData[key].imgs[imgId].url,
+                            id: imgId,
+                            section: section + '/' + key
+                        });
+                    });
+                }
+            });
+            
+            // إذا لم نجد صوراً، نبحث في الصفحات
+            if (currentImages.length === 0 && section === 'pages') {
+                Object.keys(sectionData).forEach(key => {
+                    if (sectionData[key].imgs) {
+                        Object.keys(sectionData[key].imgs).reverse().forEach(imgId => {
+                            currentImages.push({
+                                url: sectionData[key].imgs[imgId].url,
+                                id: imgId,
+                                section: section + '/' + key
+                            });
+                        });
+                    }
+                });
+            }
+            
+            // إذا لم نجد صوراً، نبحث في الألبومات
+            if (currentImages.length === 0 && section === 'albums') {
+                const albumKey = currentTab.replace('alb-', '');
+                if (sectionData[albumKey] && sectionData[albumKey].imgs) {
+                    Object.keys(sectionData[albumKey].imgs).reverse().forEach(imgId => {
+                        currentImages.push({
+                            url: sectionData[albumKey].imgs[imgId].url,
+                            id: imgId,
+                            section: section + '/' + albumKey
+                        });
+                    });
+                }
+            }
+            
+            // تحديث الفهرس الحالي بناءً على الرابط
+            currentImageIndex = currentImages.findIndex(img => img.url === url);
+            if (currentImageIndex === -1) currentImageIndex = 0;
+        } else {
+            currentImages = [{ url: url }];
+            currentImageIndex = 0;
+        }
+        
+        // تعيين الصورة
+        img.src = url;
+        
+        // إعادة تعيين التكبير والترجمة
+        resetZoom();
+        
+        // إظهار المعرض
+        viewer.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        
+        // تحديث عداد الصور
+        updateImageCounter();
+        
+        // إظهار/إخفاء أزرار التنقل
+        updateNavigationButtons();
+        
+        // إضافة مستمعات الأحداث
+        setupViewerListeners();
+        
+        // إظهار إشعار التعليمات لمدة 3 ثواني
+        showZoomNotice();
+    }
+    
+    // تحديث عداد الصور
+    function updateImageCounter() {
+        const counter = document.getElementById('image-counter');
+        if (currentImages.length > 1) {
+            counter.textContent = `${currentImageIndex + 1} / ${currentImages.length}`;
+            counter.style.display = 'block';
+        } else {
+            counter.style.display = 'none';
+        }
+    }
+    
+    // تحديث أزرار التنقل
+    function updateNavigationButtons() {
+        const leftBtn = document.querySelector('.nav-btn-left');
+        const rightBtn = document.querySelector('.nav-btn-right');
+        
+        if (currentImages.length > 1) {
+            leftBtn.style.display = 'flex';
+            rightBtn.style.display = 'flex';
+        } else {
+            leftBtn.style.display = 'none';
+            rightBtn.style.display = 'none';
+        }
+    }
+    
+    // التنقل بين الصور
+    function navigateImage(direction) {
+        if (currentImages.length === 0) return;
+        
+        currentImageIndex += direction;
+        
+        // تدوير الفهرس
+        if (currentImageIndex < 0) {
+            currentImageIndex = currentImages.length - 1;
+        } else if (currentImageIndex >= currentImages.length) {
+            currentImageIndex = 0;
+        }
+        
+        // تغيير الصورة
+        const img = document.getElementById('viewer-img');
+        img.src = currentImages[currentImageIndex].url;
+        
+        // إعادة تعيين التكبير والترجمة
+        resetZoom();
+        
+        // تحديث العداد
+        updateImageCounter();
+        
+        // إظهار إشعار التعليمات
+        showZoomNotice();
+    }
+    
+    // تكبير/تصغير الصورة
+    function zoomImage(amount) {
+        const img = document.getElementById('viewer-img');
+        const viewer = document.getElementById('viewer');
+        
+        currentZoom += amount;
+        
+        // تحديد الحدود
+        if (currentZoom < minZoom) currentZoom = minZoom;
+        if (currentZoom > maxZoom) currentZoom = maxZoom;
+        
+        // تطبيق التكبير
+        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+        
+        // تغيير شكل المؤشر
+        if (currentZoom > 1) {
+            viewer.classList.add('zoomed');
+            img.classList.remove('zoomable');
+        } else {
+            viewer.classList.remove('zoomed');
+            img.classList.add('zoomable');
+        }
+    }
+    
+    // إعادة تعيين التكبير
+    function resetZoom() {
+        const img = document.getElementById('viewer-img');
+        const viewer = document.getElementById('viewer');
+        
+        currentZoom = 1;
+        translateX = 0;
+        translateY = 0;
+        
+        img.style.transform = 'scale(1) translate(0px, 0px)';
+        viewer.classList.remove('zoomed');
+        img.classList.add('zoomable');
+    }
+    
+    // إغلاق المعرض
+    function closeViewer() {
+        const viewer = document.getElementById('viewer');
+        viewer.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        removeViewerListeners();
+    }
+    
+    // إغلاق عند الضغط خارج الصورة
+    function closeViewerOnOverlay(event) {
+        if (event.target.id === 'viewer' || event.target.classList.contains('viewer-overlay')) {
+            closeViewer();
+        }
+    }
+    
+    // إظهار إشعار التعليمات
+    function showZoomNotice() {
+        const notice = document.getElementById('zoom-notice');
+        notice.style.display = 'block';
+        
+        setTimeout(() => {
+            notice.style.opacity = '0';
+            setTimeout(() => {
+                notice.style.display = 'none';
+                notice.style.opacity = '1';
+            }, 500);
+        }, 3000);
+    }
+    
+    // إعداد مستمعات الأحداث للمعرض
+    function setupViewerListeners() {
+        const img = document.getElementById('viewer-img');
+        const viewer = document.getElementById('viewer');
+        
+        // النقر المزدوج للتكبير/التصغير
+        img.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            if (currentZoom === 1) {
+                zoomImage(1);
+            } else {
+                resetZoom();
+            }
+        });
+        
+        // عجلة الماوس للتكبير/التصغير
+        img.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (e.deltaY < 0) {
+                zoomImage(0.2);
+            } else {
+                zoomImage(-0.2);
+            }
+        });
+        
+        // السحب للتحريك عند التكبير
+        img.addEventListener('mousedown', startDrag);
+        img.addEventListener('touchstart', startDragTouch);
+        
+        // مستمعات لوحة المفاتيح
+        document.addEventListener('keydown', handleKeydown);
+    }
+    
+    // إزالة مستمعات الأحداث
+    function removeViewerListeners() {
+        const img = document.getElementById('viewer-img');
+        img.removeEventListener('dblclick', null);
+        img.removeEventListener('wheel', null);
+        img.removeEventListener('mousedown', startDrag);
+        img.removeEventListener('touchstart', startDragTouch);
+        document.removeEventListener('keydown', handleKeydown);
+    }
+    
+    // بدء السحب (ماوس)
+    function startDrag(e) {
+        if (currentZoom <= 1) return;
+        
+        e.preventDefault();
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
+        
+        const viewer = document.getElementById('viewer');
+        viewer.style.cursor = 'grabbing';
+    }
+    
+    // بدء السحب (لمس)
+    function startDragTouch(e) {
+        if (currentZoom <= 1) return;
+        
+        e.preventDefault();
+        isDragging = true;
+        const touch = e.touches[0];
+        startX = touch.clientX - translateX;
+        startY = touch.clientY - translateY;
+        
+        document.addEventListener('touchmove', doDragTouch);
+        document.addEventListener('touchend', stopDrag);
+    }
+    
+    // التنفيذ أثناء السحب (ماوس)
+    function doDrag(e) {
+        if (!isDragging) return;
+        
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        
+        const img = document.getElementById('viewer-img');
+        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+    }
+    
+    // التنفيذ أثناء السحب (لمس)
+    function doDragTouch(e) {
+        if (!isDragging) return;
+        
+        const touch = e.touches[0];
+        translateX = touch.clientX - startX;
+        translateY = touch.clientY - startY;
+        
+        const img = document.getElementById('viewer-img');
+        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+    }
+    
+    // إيقاف السحب
+    function stopDrag() {
+        isDragging = false;
+        document.removeEventListener('mousemove', doDrag);
+        document.removeEventListener('touchmove', doDragTouch);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchend', stopDrag);
+        
+        const viewer = document.getElementById('viewer');
+        viewer.style.cursor = 'grab';
+    }
+    
+    // التعامل مع ضغطات المفاتيح
+    function handleKeydown(e) {
+        const viewer = document.getElementById('viewer');
+        if (viewer.style.display !== 'flex') return;
+        
+        switch(e.key) {
+            case 'Escape':
+                closeViewer();
+                break;
+            case 'ArrowLeft':
+                navigateImage(-1);
+                break;
+            case 'ArrowRight':
+                navigateImage(1);
+                break;
+            case '+':
+            case '=':
+                zoomImage(0.2);
+                break;
+            case '-':
+                zoomImage(-0.2);
+                break;
+            case '0':
+                resetZoom();
+                break;
+        }
+    }
+    
+    // تعديل دالة drawImgs لتمرير المعلومات اللازمة
+    function drawImgs(imgs) { 
+        if(!imgs) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
+        
+        // تحديد القسم الحالي
+        let section = '';
+        if (currentTab === 'works' || currentTab.startsWith('alb-')) {
+            section = 'albums';
+        } else if (currentTab === 'home') {
+            section = '';
+        } else {
+            section = 'pages';
+        }
+        
+        const wmTxt = currentData.wm_text || ''; 
+        const imgsArray = Object.keys(imgs).reverse();
+        
+        return imgsArray.map((id, index) => `
+            <div class="card">
+                <div class="img-container" onclick="openImg('${imgs[id].url}', '${section}', ${index})">
+                    <img src="${imgs[id].url}" loading="lazy">
+                    <div class="wm-tag">${wmTxt}</div>
+                </div>
+                <button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button>
+            </div>
+        `).join(''); 
+    }
+
+    // ========== نهاية الدوال الجديدة ==========
+    
+    // الباقي من الكود الأصلي يبقى كما هو...
+    // سأستمر مع بقية الكود الأصلي كما هو:
+
     function initThemeAndFont() {
-        // نقرأ من Firebase مباشرة بدون localStorage أولاً
-        // لأننا نريد أن يظهر التغيير لجميع المستخدمين
         if (currentData.current_theme) {
-            setTheme(currentData.current_theme, false); // false يعني لا تحفظ في Firebase مرة أخرى
+            setTheme(currentData.current_theme, false);
         } else {
             setTheme('black', false);
         }
         
         if (currentData.header_font) {
-            setFont(currentData.header_font, false); // false يعني لا تحفظ في Firebase مرة أخرى
+            setFont(currentData.header_font, false);
         } else {
             setFont('tajawal', false);
         }
     }
 
-    // دالة تبديل الثيم - معدلة لحفظ في Firebase
     function setTheme(theme, saveToFirebase = true) {
         currentTheme = theme;
         
@@ -1086,7 +1714,6 @@
             document.body.classList.remove('theme-white');
         }
         
-        // ✅ حفظ في Firebase لكي يظهر التغيير لجميع المستخدمين
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ current_theme: theme }).then(() => {
                 console.log("تم حفظ الثيم في Firebase");
@@ -1094,7 +1721,6 @@
         }
     }
     
-    // دالة تغيير الخط - معدلة لحفظ في Firebase
     function setFont(fontName, saveToFirebase = true) {
         selectedFont = fontName;
         
@@ -1122,13 +1748,9 @@
                 fontFamily = "'" + fontName + "', sans-serif";
         }
         
-        // تحديث المتغير CSS
         document.documentElement.style.setProperty('--header-font', fontFamily);
-        
-        // تحديث معاينة الخط
         updateFontPreview();
         
-        // ✅ حفظ في Firebase لكي يظهر التغيير لجميع المستخدمين
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ header_font: fontName }).then(() => {
                 console.log("تم حفظ الخط في Firebase");
@@ -1136,7 +1758,6 @@
         }
     }
     
-    // تحديث معاينة الخط في لوحة الإدارة
     function updateFontPreview() {
         const preview = document.getElementById('current-font-preview');
         if (preview) {
@@ -1144,7 +1765,6 @@
             preview.textContent = "عينة من النص بالخط الحالي: " + getFontName(selectedFont);
         }
         
-        // تحديث خيارات الخط المحدد
         document.querySelectorAll('.font-option').forEach(option => {
             option.classList.remove('selected');
             if (option.classList.contains(selectedFont)) {
@@ -1153,7 +1773,6 @@
         });
     }
     
-    // الحصول على اسم الخط
     function getFontName(fontKey) {
         const fontNames = {
             'tajawal': 'تاجوال',
@@ -1166,7 +1785,6 @@
         return fontNames[fontKey] || fontKey;
     }
     
-    // الحصول على عائلة الخط
     function getFontFamily(fontKey) {
         switch(fontKey) {
             case 'tajawal': return "'Tajawal', sans-serif";
@@ -1179,17 +1797,15 @@
         }
     }
     
-    // اختيار خط من القائمة
     function selectFont(fontName) {
-        setFont(fontName, true); // true يعني احفظ في Firebase
+        setFont(fontName, true);
         alert("تم تغيير الخط إلى " + getFontName(fontName) + " - سيظهر التغيير لجميع المستخدمين");
     }
     
-    // اختيار خط مخصص
     function selectCustomFont() {
         const customFont = document.getElementById('custom-font-input').value.trim();
         if (customFont) {
-            setFont(customFont, true); // true يعني احفظ في Firebase
+            setFont(customFont, true);
             alert("تم تطبيق الخط المخصص: " + customFont + " - سيظهر التغيير لجميع المستخدمين");
             document.getElementById('custom-font-input').value = '';
         } else {
@@ -1197,7 +1813,6 @@
         }
     }
 
-    // عرض شاشة الصيانة مع الرسائل المخصصة
     function showMaintenanceScreen() {
         const maintenanceScreen = document.getElementById('maintenance-screen');
         const title = currentData.maintenance_title || 'الموقع في صيانة';
@@ -1211,7 +1826,6 @@
         maintenanceScreen.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         
-        // إضافة تأثير دخول
         maintenanceScreen.style.opacity = '0';
         setTimeout(() => {
             maintenanceScreen.style.transition = 'opacity 0.5s ease';
@@ -1219,7 +1833,6 @@
         }, 10);
     }
 
-    // إخفاء شاشة الصيانة
     function hideMaintenanceScreen() {
         const maintenanceScreen = document.getElementById('maintenance-screen');
         maintenanceScreen.style.opacity = '0';
@@ -1233,7 +1846,6 @@
         currentData = snap.val() || {}; 
         document.getElementById('splash').style.display = 'none';
         
-        // التحكم في عرض شاشة الصيانة
         const mScreen = document.getElementById('maintenance-screen');
         if (currentData.maintenance_mode && !isAdmin) {
             showMaintenanceScreen();
@@ -1241,9 +1853,7 @@
             hideMaintenanceScreen();
         }
         
-        // تطبيق الثيم والخط من Firebase
         initThemeAndFont();
-        
         renderAll(); 
         renderAdminLists(); 
         renderAdminReviews(); 
@@ -1372,7 +1982,6 @@
 
         let reviewForm = `<button class="about-toggle" onclick="toggleAbout('review-box')">أضف تقييم</button><div id="review-box" class="about-content"><div id="review-form-container"><input type="text" id="rev-name" placeholder="الاسم الكريم"><div class="rating-stars" id="star-row" style="display:flex; gap:5px; justify-content:center; margin-bottom:10px; direction:ltr;"><i class="fas fa-star" onclick="setStar(5)"></i><i class="fas fa-star" onclick="setStar(4)"></i><i class="fas fa-star" onclick="setStar(3)"></i><i class="fas fa-star" onclick="setStar(2)"></i><i class="fas fa-star" onclick="setStar(1)"></i></div><textarea id="rev-msg" placeholder="اكتب تجربتك هنا..."></textarea><button onclick="submitReview()" style="width:100%; background:var(--gold); border:none; padding:10px; border-radius:8px; font-weight:900; color:#000;">إرسال التقييم</button></div></div>`;
 
-        // تغيير زر التواصل معنا إلى أبيض
         let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewForm}${reviewsDisplay}${workPath}<div style="background:var(--status-bg); padding:30px; border-radius:20px; max-width:550px; margin:20px auto; border: 1px solid var(--border);"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="whatsapp-btn">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}</div></div></section>`;
         
         contentHtml += `<section class="sec ${currentTab==='catalogs'?'active':''}"><div class="grid">${drawFolders(d.catalogs, 'cat')}</div></section>`;
@@ -1494,18 +2103,6 @@
         window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); 
     }
     
-    function openImg(url) { 
-        document.getElementById('viewer-img').src = url; 
-        document.getElementById('viewer-wm-text').innerText = currentData.wm_text || ''; 
-        document.getElementById('viewer').style.display='flex'; 
-    }
-    
-    function drawImgs(imgs) { 
-        if(!imgs) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
-        const wmTxt = currentData.wm_text || ''; 
-        return Object.keys(imgs).reverse().map(id => `<div class="card"><div class="img-container" onclick="openImg('${imgs[id].url}')"><img src="${imgs[id].url}" loading="lazy"><div class="wm-tag">${wmTxt}</div></div><button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button></div>`).join(''); 
-    }
-    
     function drawAlbums(albs) { 
         if(!albs) return ''; 
         return Object.keys(albs).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albs[id].name}</h3></div>`).join(''); 
@@ -1597,12 +2194,10 @@
         document.getElementById('in-about-active').checked=d.about_active||false; 
         document.getElementById('in-footer').value=d.footer_text||''; 
         
-        // تعبئة إعدادات الصيانة
         document.getElementById('in-maintenance-title').value = d.maintenance_title || 'الموقع في صيانة';
         document.getElementById('in-maintenance-message').value = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز';
         document.getElementById('in-maintenance-footer').value = d.maintenance_footer || '© بصمة غير للديكور';
         
-        // تحديث معاينة الخط
         if (d.header_font) {
             selectedFont = d.header_font;
             updateFontPreview();
@@ -1666,7 +2261,6 @@
         }).then(()=>alert("تم الحفظ")); 
     }
     
-    // دالة حفظ إعدادات الصيانة
     function saveMaintenanceSettings() {
         db.ref(DB_PATH).update({
             maintenance_mode: document.getElementById('in-maintenance').checked,
@@ -1675,7 +2269,6 @@
             maintenance_footer: document.getElementById('in-maintenance-footer').value
         }).then(() => {
             alert("تم حفظ إعدادات الصيانة");
-            // تحديث شاشة الصيانة مباشرة إذا كانت مفعلة
             if (currentData.maintenance_mode && !isAdmin) {
                 showMaintenanceScreen();
             }
@@ -1701,11 +2294,9 @@
         document.getElementById('links-in').value = ''; 
     }
 
-    // تهيئة عند تحميل الصفحة
     document.addEventListener('DOMContentLoaded', function() {
-        // لا نحتاج لتهيئة من localStorage لأننا نقرأ من Firebase مباشرة
-        // initThemeAndFont() يتم استدعاؤها من داخل db.ref().on('value')
+        // لا شيء إضافي هنا
     });
 </script>
 </body>
-            </html>
+    </html>
