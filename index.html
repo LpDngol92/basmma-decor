@@ -6,6 +6,7 @@
     <title>بصمة غير | v164</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- إضافة الخطوط العربية -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;800;900&family=Amiri:wght@400;700&family=Lateef&family=Almarai:wght@300;400;800&family=Changa:wght@200;400;600;800&family=Lalezar&display=swap" rel="stylesheet">
@@ -1064,6 +1065,11 @@
         #protection-toggle:hover {
             transform: scale(1.1);
         }
+        
+        /* زر تسجيل الخروج */
+        .logout-btn {
+            margin-top: 20px !important;
+        }
     </style>
 </head>
 <body>
@@ -1407,11 +1413,25 @@
 <div id="hidden-trigger" onclick="checkAccess()"></div>
 
 <script>
-    const config = { databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
-    firebase.initializeApp(config); 
-    const db = firebase.database(); 
-    const DB_PATH = 'site_v28'; 
-    const AUTH_PATH = 'server_auth/lek'; 
+    // ========== تهيئة Firebase الكاملة ==========
+    const firebaseConfig = {
+        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+        authDomain: "mydecor-b29bd.firebaseapp.com",
+        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mydecor-b29bd",
+        storageBucket: "mydecor-b29bd.firebasestorage.app",
+        messagingSenderId: "302609299720",
+        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    
+    // المتغيرات الأساسية
+    const db = firebase.database();
+    const auth = firebase.auth();
+    const DB_PATH = 'site_v28';
+    const AUTH_PATH = 'server_auth/lek';
     
     let currentData = {}; 
     let currentTab = 'home'; 
@@ -1422,7 +1442,7 @@
     let currentTheme = 'black';
     let selectedFont = 'tajawal';
     
-    // ========== متغيرات الحماية المتقدمة ==========
+    // ========== متغيرات الحماية ==========
     let isProtectionEnabled = true;
     let protectionSettings = {
         rightClick: true,
@@ -1433,151 +1453,271 @@
         fullscreenProtection: true
     };
     
-    // ========== إضافة: مستمعين للثيم والخط للتحديث الفوري ==========
-    let themeListenerActive = false;
-    let fontListenerActive = false;
+    // ========== تهيئة الصفحة ==========
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("✅ تم تحميل الصفحة");
+        enableProtection();
+        setupAuthListener();
+    });
     
-    // ========== طبقة الحماية المتقدمة ==========
-    let protectionLayer = null;
-    
-    // إعداد طبقة الحماية
-    function setupProtectionLayer() {
-        protectionLayer = document.getElementById('protection-shield');
-        
-        // جعل الطبقة تفاعلية عند الحاجة
-        protectionLayer.style.pointerEvents = 'none';
-        
-        // إعادة ضبط الطبقة بانتظام لمنع الاختراق
-        setInterval(resetProtectionLayer, 1000);
-    }
-    
-    // إعادة ضبط طبقة الحماية
-    function resetProtectionLayer() {
-        if (protectionLayer) {
-            // التأكد من بقاء الطبقة في الأعلى
-            protectionLayer.style.zIndex = '2147483647';
-            
-            // إعادة رفع الطبقة إلى الأعلى
-            protectionLayer.parentNode.appendChild(protectionLayer);
-        }
-    }
-    
-    // ========== إضافة: مستمع الثيم للتحديث الفوري ==========
-    function setupThemeListener() {
-        if (themeListenerActive) return;
-        
-        // مستمع للتغيرات في الثيم فقط
-        db.ref(DB_PATH + '/current_theme').on('value', (snapshot) => {
-            const newTheme = snapshot.val();
-            if (newTheme && newTheme !== currentTheme) {
-                currentTheme = newTheme;
-                setTheme(newTheme, false); // false لأن القيمة تأتي من Firebase
-                console.log("تم تحديث الثيم فورياً إلى:", newTheme);
-                
-                // إشعار للمستخدم (اختياري)
-                showProtectionNotification('تم تحديث التصميم تلقائياً');
+    // ========== نظام المصادقة ==========
+    function setupAuthListener() {
+        // استمع لتغير حالة المستخدم
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                console.log("👤 المستخدم مسجل:", user.email);
+                isAdmin = true;
+                activateAdminPanel(user);
+            } else {
+                console.log("👤 لا يوجد مستخدم مسجل");
+                isAdmin = false;
             }
         });
-        
-        themeListenerActive = true;
     }
     
-    // ========== إضافة: مستمع الخط للتحديث الفوري ==========
-    function setupFontListener() {
-        if (fontListenerActive) return;
+    // ========== دالة الدخول الأساسية ==========
+    function checkAccess() {
+        const loginMethod = prompt("اختر طريقة الدخول:\n1. بالإيميل والباسوورد (مستحسن)\n2. بالكود القديم\n\nأدخل 1 أو 2:");
         
-        // مستمع للتغيرات في الخط فقط
-        db.ref(DB_PATH + '/header_font').on('value', (snapshot) => {
-            const newFont = snapshot.val();
-            if (newFont && newFont !== selectedFont) {
-                selectedFont = newFont;
-                setFont(newFont, false); // false لأن القيمة تأتي من Firebase
-                console.log("تم تحديث الخط فورياً إلى:", newFont);
+        if (loginMethod === "1") {
+            loginWithEmailPassword();
+        } else if (loginMethod === "2") {
+            loginWithLegacyCode();
+        } else {
+            alert("يرجى اختيار 1 أو 2");
+        }
+    }
+    
+    // الدخول بالإيميل والباسوورد
+    function loginWithEmailPassword() {
+        const email = prompt("📧 أدخل بريد المشرف:");
+        if (!email) return;
+        
+        const password = prompt("🔐 أدخل كلمة المرور:");
+        if (!password) return;
+        
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                console.log("✅ تم الدخول:", user.email);
+                showProtectionNotification(`مرحباً ${user.email}`);
+            })
+            .catch((error) => {
+                console.error("❌ خطأ في الدخول:", error.message);
+                alert(`خطأ في الدخول:\n${error.message}\n\nجرب الكود القديم.`);
+                loginWithLegacyCode();
+            });
+    }
+    
+    // الدخول بالكود القديم
+    function loginWithLegacyCode() {
+        const pass = prompt("🔑 أدخل كلمة مرور النظام القديم:");
+        db.ref(AUTH_PATH).once('value').then(snap => {
+            if (pass === String(snap.val())) {
+                isAdmin = true;
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('protection-toggle').style.display = 'flex';
+                hideMaintenanceScreen();
+                fillAdminFields();
+                showProtectionNotification("تم الدخول بالنظام القديم");
                 
-                // إشعار للمستخدم (اختياري)
-                showProtectionNotification('تم تحديث الخط تلقائياً');
+                // إضافة زر تسجيل الخروج اليدوي
+                addManualLogoutButton();
+            } else {
+                alert("❌ كلمة المرور خاطئة!");
             }
+        }).catch(error => {
+            console.error("Legacy login error:", error);
+            alert("خطأ في الاتصال بقاعدة البيانات");
         });
+    }
+    
+    // تفعيل لوحة الإدارة
+    function activateAdminPanel(user) {
+        isAdmin = true;
+        document.getElementById('admin-panel').style.display = 'block';
+        document.getElementById('protection-toggle').style.display = 'flex';
+        hideMaintenanceScreen();
+        fillAdminFields();
         
-        fontListenerActive = true;
+        // إضافة زر تسجيل الخروج
+        addLogoutButton(user);
     }
     
-    // تفعيل الحماية المتقدمة في المعرض
-    function enableViewerProtection() {
-        const viewer = document.getElementById('viewer');
-        if (viewer) {
-            viewer.classList.add('protected');
-            
-            // إضافة حماية متقدمة عند التكبير
-            const img = document.getElementById('viewer-img');
-            if (img) {
-                // منع جميع المحاولات لفحص الصورة
-                img.oncontextmenu = function(e) {
-                    e.preventDefault();
-                    showProtectionNotification('rightClick');
-                    return false;
-                };
-                
-                // حماية ضد محاولات سحب الصورة
-                img.ondragstart = function(e) {
-                    e.preventDefault();
-                    showProtectionNotification('imageProtection');
-                    return false;
-                };
-                
-                // حماية ضد النقر المطوّل على الهواتف
-                img.addEventListener('touchstart', function(e) {
-                    if (e.touches.length > 1) {
-                        e.preventDefault();
-                        showProtectionNotification('touchProtection');
-                    }
-                }, { passive: false });
-                
-                // حماية ضد الزوم المتعدد الأصابع
-                img.addEventListener('gesturestart', function(e) {
-                    e.preventDefault();
-                });
-            }
-        }
+    // إضافة زر تسجيل الخروج
+    function addLogoutButton(user) {
+        // إزالة أي زر تسجيل خروج موجود
+        const existingLogout = document.querySelector('.logout-btn');
+        if (existingLogout) existingLogout.remove();
+        
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'logout-btn';
+        logoutBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> تسجيل خروج (${user.email})`;
+        logoutBtn.style.cssText = `
+            width: 100%;
+            background: var(--red);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        `;
+        logoutBtn.onclick = logoutAdmin;
+        
+        document.querySelector('.admin-box').appendChild(logoutBtn);
     }
     
-    // تعطيل حماية المعرض
-    function disableViewerProtection() {
-        const viewer = document.getElementById('viewer');
-        if (viewer) {
-            viewer.classList.remove('protected');
-            
-            const img = document.getElementById('viewer-img');
-            if (img) {
-                img.oncontextmenu = null;
-                img.ondragstart = null;
-            }
-        }
+    // إضافة زر تسجيل الخروج اليدوي (للنظام القديم)
+    function addManualLogoutButton() {
+        const existingLogout = document.querySelector('.logout-btn');
+        if (existingLogout) existingLogout.remove();
+        
+        const logoutBtn = document.createElement('button');
+        logoutBtn.className = 'logout-btn';
+        logoutBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> تسجيل خروج`;
+        logoutBtn.style.cssText = `
+            width: 100%;
+            background: var(--red);
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-weight: bold;
+            cursor: pointer;
+        `;
+        logoutBtn.onclick = function() {
+            isAdmin = false;
+            document.getElementById('admin-panel').style.display = 'none';
+            showProtectionNotification("تم تسجيل الخروج");
+        };
+        
+        document.querySelector('.admin-box').appendChild(logoutBtn);
     }
     
-    // ========== دوال الحماية العامة ==========
-    
-    // إغلاق تنبيه الحماية
-    function closeProtectionNotification() {
-        document.getElementById('protection-notification').style.display = 'none';
+    // تسجيل الخروج
+    function logoutAdmin() {
+        auth.signOut().then(() => {
+            isAdmin = false;
+            document.getElementById('admin-panel').style.display = 'none';
+            showProtectionNotification("تم تسجيل الخروج");
+        }).catch(error => {
+            console.error("Logout error:", error);
+            // إذا فشل تسجيل الخروج، نعطيه يدوياً
+            isAdmin = false;
+            document.getElementById('admin-panel').style.display = 'none';
+            showProtectionNotification("تم تسجيل الخروج");
+        });
     }
     
-    // عرض تنبيه الحماية
-    function showProtectionNotification(actionType = '') {
+    // ========== نظام الحماية ==========
+    function enableProtection() {
         if (!isProtectionEnabled) return;
         
+        // منع النقر الأيمن
+        document.addEventListener('contextmenu', preventRightClick);
+        
+        // منع اختصارات المفاتيح
+        document.addEventListener('keydown', preventKeyboardShortcuts);
+        
+        // حماية الصور
+        document.addEventListener('dragstart', preventImageDrag);
+        document.addEventListener('drop', preventImageDrop);
+        
+        // منع النسخ
+        document.addEventListener('copy', preventCopy);
+        document.addEventListener('cut', preventCopy);
+        
+        console.log("✅ تم تفعيل الحماية");
+    }
+    
+    function disableProtection() {
+        document.removeEventListener('contextmenu', preventRightClick);
+        document.removeEventListener('keydown', preventKeyboardShortcuts);
+        document.removeEventListener('dragstart', preventImageDrag);
+        document.removeEventListener('drop', preventImageDrop);
+        document.removeEventListener('copy', preventCopy);
+        document.removeEventListener('cut', preventCopy);
+        
+        console.log("❌ تم تعطيل الحماية");
+    }
+    
+    function toggleProtection() {
+        isProtectionEnabled = !isProtectionEnabled;
+        const toggleBtn = document.getElementById('protection-toggle');
+        
+        if (isProtectionEnabled) {
+            enableProtection();
+            toggleBtn.classList.remove('active');
+            toggleBtn.innerHTML = '<i class="fas fa-shield-alt"></i>';
+            showProtectionNotification('تم تفعيل الحماية');
+        } else {
+            disableProtection();
+            toggleBtn.classList.add('active');
+            toggleBtn.innerHTML = '<i class="fas fa-shield-slash"></i>';
+            showProtectionNotification('تم تعطيل الحماية مؤقتاً');
+        }
+    }
+    
+    // دوال الحماية
+    function preventRightClick(e) {
+        if (!isProtectionEnabled) return;
+        e.preventDefault();
+        showProtectionNotification('rightClick');
+        return false;
+    }
+    
+    function preventKeyboardShortcuts(e) {
+        if (!isProtectionEnabled) return;
+        
+        // منع F12, Ctrl+Shift+I, Ctrl+U, etc.
+        if (e.keyCode === 123 || // F12
+            (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+            (e.ctrlKey && e.keyCode === 85)) { // Ctrl+U
+            e.preventDefault();
+            showProtectionNotification('devTools');
+            return false;
+        }
+    }
+    
+    function preventImageDrag(e) {
+        if (!isProtectionEnabled) return;
+        if (e.target.tagName === 'IMG') {
+            e.preventDefault();
+            showProtectionNotification('imageProtection');
+            return false;
+        }
+    }
+    
+    function preventImageDrop(e) {
+        if (!isProtectionEnabled) return;
+        e.preventDefault();
+        showProtectionNotification('imageProtection');
+        return false;
+    }
+    
+    function preventCopy(e) {
+        if (!isProtectionEnabled) return;
+        const tagName = e.target.tagName;
+        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
+            e.preventDefault();
+            showProtectionNotification('copy');
+            return false;
+        }
+    }
+    
+    // إشعارات الحماية
+    function showProtectionNotification(actionType = '') {
         const notification = document.getElementById('protection-notification');
         const messageContent = document.getElementById('protection-message-content');
         
         let message = '⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر';
         
-        // تخصيص الرسالة حسب نوع المحاولة
         switch(actionType) {
             case 'rightClick':
                 message = '⛔ النقر بالزر الأيمن معطل لحماية المحتوى';
-                break;
-            case 'viewSource':
-                message = '⛔ عرض مصدر الصفحة معطل لحماية المحتوى';
                 break;
             case 'devTools':
                 message = '⛔ أدوات المطورين معطلة لحماية المحتوى';
@@ -1587,21 +1727,6 @@
                 break;
             case 'imageProtection':
                 message = '⛔ حفظ الصور معطل لحماية المحتوى';
-                break;
-            case 'touchProtection':
-                message = '⛔ هذه الخاصية معطلة على الهواتف';
-                break;
-            case 'themeUpdated':
-                message = '🎨 تم تحديث تصميم الموقع تلقائياً';
-                break;
-            case 'fontChanged':
-                message = '🔠 تم تحديث خط الموقع تلقائياً';
-                break;
-            case 'protectionEnabled':
-                message = '🛡️ تم تفعيل الحماية';
-                break;
-            case 'protectionDisabled':
-                message = '⚠️ تم تعطيل الحماية مؤقتاً';
                 break;
             case 'settingsSaved':
                 message = '✅ تم حفظ الإعدادات بنجاح';
@@ -1627,9 +1752,6 @@
             case 'photosPublished':
                 message = '📸 تم نشر الصور بنجاح';
                 break;
-            case 'fontError':
-                message = '⚠️ يرجى إدخال اسم خط صحيح';
-                break;
             default:
                 message = actionType || '⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر';
         }
@@ -1637,7 +1759,6 @@
         messageContent.textContent = message;
         notification.style.display = 'flex';
         
-        // إخفاء التنبيه تلقائياً بعد 3 ثوانٍ
         setTimeout(() => {
             if (notification.style.display === 'flex') {
                 notification.style.display = 'none';
@@ -1645,384 +1766,31 @@
         }, 3000);
     }
     
-    // تفعيل/تعطيل الحماية
-    function toggleProtection() {
-        isProtectionEnabled = !isProtectionEnabled;
-        const toggleBtn = document.getElementById('protection-toggle');
-        
-        if (isProtectionEnabled) {
-            enableProtection();
-            toggleBtn.classList.remove('active');
-            toggleBtn.innerHTML = '<i class="fas fa-shield-alt"></i>';
-            toggleBtn.title = 'تعطيل الحماية';
-            showProtectionNotification('protectionEnabled');
-        } else {
-            disableProtection();
-            toggleBtn.classList.add('active');
-            toggleBtn.innerHTML = '<i class="fas fa-shield-slash"></i>';
-            toggleBtn.title = 'تفعيل الحماية';
-            showProtectionNotification('protectionDisabled');
-        }
+    function closeProtectionNotification() {
+        document.getElementById('protection-notification').style.display = 'none';
     }
     
-    // ========== نظام الحماية المتقدم ==========
-    
-    // تفعيل الحماية المتقدمة
-    function enableAdvancedProtection() {
-        // 1. منع النقر بالزر الأيمن بشكل متقدم
-        if (protectionSettings.rightClick) {
-            document.addEventListener('contextmenu', advancedPreventRightClick);
-            document.addEventListener('mousedown', detectRightClick);
-        }
-        
-        // 2. منع اختصارات لوحة المفاتيح بشكل متقدم
-        if (protectionSettings.keyboardShortcuts) {
-            document.addEventListener('keydown', advancedPreventKeyboardShortcuts);
-        }
-        
-        // 3. حماية الصور المتقدمة
-        if (protectionSettings.imageProtection) {
-            protectAllImages();
-        }
-        
-        // 4. منع نسخ النصوص بشكل متقدم
-        if (protectionSettings.textSelection) {
-            document.addEventListener('copy', advancedPreventCopy);
-            document.addEventListener('cut', advancedPreventCopy);
-            document.addEventListener('selectstart', preventSelection);
-        }
-        
-        // 5. منع أدوات المطورين بشكل متقدم
-        if (protectionSettings.devTools) {
-            preventAdvancedDevTools();
-        }
-        
-        // 6. حماية خاصة عند التكبير
-        if (protectionSettings.fullscreenProtection) {
-            setupViewerProtection();
-        }
-        
-        console.log("✅ تم تفعيل الحماية المتقدمة");
-    }
-    
-    // تعطيل الحماية المتقدمة
-    function disableAdvancedProtection() {
-        // إزالة جميع مستمعات الأحداث المتقدمة
-        document.removeEventListener('contextmenu', advancedPreventRightClick);
-        document.removeEventListener('mousedown', detectRightClick);
-        document.removeEventListener('keydown', advancedPreventKeyboardShortcuts);
-        document.removeEventListener('copy', advancedPreventCopy);
-        document.removeEventListener('cut', advancedPreventCopy);
-        document.removeEventListener('selectstart', preventSelection);
-        
-        // إزالة حماية الصور
-        unprotectAllImages();
-        
-        console.log("❌ تم تعطيل الحماية المتقدمة");
-    }
-    
-    // 1. منع النقر بالزر الأيمن بشكل متقدم
-    function advancedPreventRightClick(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        showProtectionNotification('rightClick');
-        return false;
-    }
-    
-    // كشف النقر بالزر الأيمن بشكل متقدم
-    function detectRightClick(e) {
-        if (e.button === 2) { // زر الماوس الأيمن
-            e.preventDefault();
-            e.stopPropagation();
-            showProtectionNotification('rightClick');
-            return false;
-        }
-    }
-    
-    // 2. منع اختصارات لوحة المفاتيح بشكل متقدم
-    function advancedPreventKeyboardShortcuts(e) {
-        // منع جميع اختصارات فحص الصفحة
-        const blockedCombinations = [
-            // F12
-            {keyCode: 123, ctrl: false, shift: false, alt: false},
-            // Ctrl+Shift+I
-            {keyCode: 73, ctrl: true, shift: true, alt: false},
-            // Ctrl+Shift+J
-            {keyCode: 74, ctrl: true, shift: true, alt: false},
-            // Ctrl+Shift+C
-            {keyCode: 67, ctrl: true, shift: true, alt: false},
-            // Ctrl+U
-            {keyCode: 85, ctrl: true, shift: false, alt: false},
-            // Ctrl+S
-            {keyCode: 83, ctrl: true, shift: false, alt: false},
-            // Ctrl+P
-            {keyCode: 80, ctrl: true, shift: false, alt: false},
-            // Ctrl+Shift+P
-            {keyCode: 80, ctrl: true, shift: true, alt: false},
-            // Alt+Shift+I
-            {keyCode: 73, ctrl: false, shift: true, alt: true}
-        ];
-        
-        for (const combo of blockedCombinations) {
-            if (e.keyCode === combo.keyCode &&
-                e.ctrlKey === combo.ctrl &&
-                e.shiftKey === combo.shift &&
-                e.altKey === combo.alt) {
-                e.preventDefault();
-                e.stopPropagation();
-                showProtectionNotification('devTools');
-                return false;
-            }
-        }
-        
-        // منع Ctrl+C خارج حقول الإدخال
-        if (e.ctrlKey && e.keyCode === 67) {
-            const tagName = e.target.tagName;
-            if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
-                e.preventDefault();
-                e.stopPropagation();
-                showProtectionNotification('copy');
-                return false;
-            }
-        }
-    }
-    
-    // 3. حماية الصور المتقدمة
-    function protectAllImages() {
-        const images = document.getElementsByTagName('img');
-        for (let img of images) {
-            // إضافة طبقة حماية فوق الصور
-            img.style.pointerEvents = 'none';
-            img.style.userSelect = 'none';
-            img.style.WebkitUserSelect = 'none';
-            img.style.MozUserSelect = 'none';
-            img.style.msUserSelect = 'none';
-            
-            // منع سحب الصور
-            img.ondragstart = function(e) {
-                e.preventDefault();
-                showProtectionNotification('imageProtection');
-                return false;
-            };
-            
-            // منع القائمة السياقية
-            img.oncontextmenu = function(e) {
-                e.preventDefault();
-                showProtectionNotification('rightClick');
-                return false;
-            };
-        }
-    }
-    
-    // إزالة حماية الصور
-    function unprotectAllImages() {
-        const images = document.getElementsByTagName('img');
-        for (let img of images) {
-            img.style.pointerEvents = '';
-            img.style.userSelect = '';
-            img.style.WebkitUserSelect = '';
-            img.style.MozUserSelect = '';
-            img.style.msUserSelect = '';
-            img.ondragstart = null;
-            img.oncontextmenu = null;
-        }
-    }
-    
-    // 4. منع نسخ النصوص بشكل متقدم
-    function advancedPreventCopy(e) {
-        const tagName = e.target.tagName;
-        const isAdminArea = e.target.closest('#admin-panel');
-        
-        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA' && !isAdminArea) {
-            e.preventDefault();
-            e.stopPropagation();
-            showProtectionNotification('copy');
-            return false;
-        }
-    }
-    
-    function preventSelection(e) {
-        const tagName = e.target.tagName;
-        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
-            e.preventDefault();
-            return false;
-        }
-    }
-    
-    // 5. منع أدوات المطورين بشكل متقدم
-    function preventAdvancedDevTools() {
-        // طريقة متقدمة للكشف عن أدوات المطورين
-        const element = new Image();
-        Object.defineProperty(element, 'id', {
-            get: function() {
-                showProtectionNotification('devTools');
-                return '';
-            }
-        });
-        
-        console.log('%c ', element);
-        
-        // كشف تغيير حجم النافذة
-        let windowWidth = window.innerWidth;
-        setInterval(() => {
-            if (Math.abs(windowWidth - window.innerWidth) > 100) {
-                windowWidth = window.innerWidth;
-                showProtectionNotification('devTools');
-            }
-        }, 500);
-        
-        // تعطيل console.log
-        const noop = () => {};
-        const methods = ['log', 'debug', 'info', 'warn', 'error', 'assert', 'clear', 'dir', 'dirxml', 'table', 'trace', 'group', 'groupCollapsed', 'groupEnd', 'profile', 'profileEnd', 'count', 'time', 'timeEnd', 'timeStamp', 'timeline', 'timelineEnd'];
-        methods.forEach(method => {
-            console[method] = noop;
-        });
-    }
-    
-    // 6. إعداد حماية المعرض
-    function setupViewerProtection() {
-        const viewer = document.getElementById('viewer');
-        if (viewer) {
-            viewer.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                showProtectionNotification('rightClick');
-                return false;
-            });
-            
-            // منع اختصارات لوحة المفاتيح في المعرض
-            viewer.addEventListener('keydown', function(e) {
-                if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C'))) {
-                    e.preventDefault();
-                    showProtectionNotification('devTools');
-                    return false;
-                }
-            });
-        }
-    }
-    
-    // ========== دوال الحماية البسيطة للتوافق ==========
-    
-    function enableProtection() {
-        enableAdvancedProtection();
-    }
-    
-    function disableProtection() {
-        disableAdvancedProtection();
-    }
-    
-    function preventRightClick(e) {
-        advancedPreventRightClick(e);
-    }
-    
-    function preventKeyboardShortcuts(e) {
-        advancedPreventKeyboardShortcuts(e);
-    }
-    
-    function preventImageDrag(e) {
-        if (e.target.tagName === 'IMG') {
-            e.preventDefault();
-            showProtectionNotification('imageProtection');
-            return false;
-        }
-    }
-    
-    function preventImageDrop(e) {
-        e.preventDefault();
-        showProtectionNotification('imageProtection');
-        return false;
-    }
-    
-    function preventCopy(e) {
-        advancedPreventCopy(e);
-    }
-    
-    function preventDevTools() {
-        preventAdvancedDevTools();
-    }
-    
-    // حفظ إعدادات الحماية
-    function saveProtectionSettings() {
-        protectionSettings = {
-            rightClick: document.getElementById('enable-right-click-protection').checked,
-            keyboardShortcuts: document.getElementById('enable-keyboard-protection').checked,
-            imageProtection: document.getElementById('enable-image-protection').checked,
-            textSelection: document.getElementById('enable-selection-protection').checked,
-            devTools: document.getElementById('enable-dev-tools-protection').checked,
-            fullscreenProtection: document.getElementById('enable-fullscreen-protection').checked
-        };
-        
-        const message = document.getElementById('protection-message-text').value;
-        
-        db.ref(DB_PATH).update({
-            protection_settings: protectionSettings,
-            protection_message: message
-        }).then(() => {
-            showProtectionNotification('settingsSaved');
-            
-            // إعادة تفعيل الحماية بالإعدادات الجديدة
-            if (isProtectionEnabled) {
-                disableProtection();
-                enableProtection();
-            }
-        });
-    }
-    
-    // تحميل إعدادات الحماية من Firebase
-    function loadProtectionSettings() {
-        if (currentData.protection_settings) {
-            protectionSettings = currentData.protection_settings;
-            
-            // تحديث واجهة الإدارة
-            document.getElementById('enable-right-click-protection').checked = protectionSettings.rightClick || true;
-            document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts || true;
-            document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection || true;
-            document.getElementById('enable-selection-protection').checked = protectionSettings.textSelection || true;
-            document.getElementById('enable-dev-tools-protection').checked = protectionSettings.devTools || true;
-            document.getElementById('enable-fullscreen-protection').checked = protectionSettings.fullscreenProtection || true;
-        }
-        
-        if (currentData.protection_message) {
-            document.getElementById('protection-message-text').value = currentData.protection_message;
-        }
-        
-        // تفعيل الحماية تلقائياً
-        if (isProtectionEnabled) {
-            enableProtection();
-        }
-        
-        // إعداد طبقة الحماية
-        setupProtectionLayer();
-    }
-    
-    // ========== متغيرات المعرض (بدون تقليب صور) ==========
+    // ========== المعرض (بدون تقليب صور) ==========
     let currentZoom = 1;
     let isDragging = false;
     let startX = 0, startY = 0;
     let translateX = 0, translateY = 0;
     let maxZoom = 3;
     let minZoom = 0.5;
-
-    // ========== دوال المعرض المعدل ==========
     
-    // دالة فتح الصورة (بدون تقليب)
     function openImg(url) {
         const viewer = document.getElementById('viewer');
         const img = document.getElementById('viewer-img');
-        
-        // تفعيل حماية المعرض
-        enableViewerProtection();
         
         img.src = url;
         resetZoom();
         viewer.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         
-        // إعداد مستمعات الأحداث
         setupViewerListeners();
         showZoomNotice();
     }
     
-    // تكبير/تصغير الصورة
     function zoomImage(amount) {
         const img = document.getElementById('viewer-img');
         const viewer = document.getElementById('viewer');
@@ -2043,7 +1811,6 @@
         }
     }
     
-    // إعادة تعيين التكبير
     function resetZoom() {
         const img = document.getElementById('viewer-img');
         const viewer = document.getElementById('viewer');
@@ -2057,25 +1824,19 @@
         img.classList.add('zoomable');
     }
     
-    // إغلاق المعرض
     function closeViewer() {
         const viewer = document.getElementById('viewer');
         viewer.style.display = 'none';
         document.body.style.overflow = 'auto';
         removeViewerListeners();
-        
-        // تعطيل حماية المعرض
-        disableViewerProtection();
     }
     
-    // إغلاق عند الضغط خارج الصورة
     function closeViewerOnOverlay(event) {
         if (event.target.id === 'viewer') {
             closeViewer();
         }
     }
     
-    // إظهار إشعار التعليمات
     function showZoomNotice() {
         const notice = document.getElementById('zoom-notice');
         notice.style.display = 'block';
@@ -2089,7 +1850,6 @@
         }, 3000);
     }
     
-    // إعداد مستمعات الأحداث للمعرض
     function setupViewerListeners() {
         const img = document.getElementById('viewer-img');
         const viewer = document.getElementById('viewer');
@@ -2120,7 +1880,6 @@
         document.addEventListener('keydown', handleKeydown);
     }
     
-    // إزالة مستمعات الأحداث
     function removeViewerListeners() {
         const img = document.getElementById('viewer-img');
         img.removeEventListener('dblclick', null);
@@ -2130,7 +1889,6 @@
         document.removeEventListener('keydown', handleKeydown);
     }
     
-    // بدء السحب (ماوس)
     function startDrag(e) {
         if (currentZoom <= 1) return;
         
@@ -2146,7 +1904,6 @@
         viewer.style.cursor = 'grabbing';
     }
     
-    // بدء السحب (لمس)
     function startDragTouch(e) {
         if (currentZoom <= 1) return;
         
@@ -2160,7 +1917,6 @@
         document.addEventListener('touchend', stopDrag);
     }
     
-    // التنفيذ أثناء السحب (ماوس)
     function doDrag(e) {
         if (!isDragging) return;
         
@@ -2171,7 +1927,6 @@
         img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
     }
     
-    // التنفيذ أثناء السحب (لمس)
     function doDragTouch(e) {
         if (!isDragging) return;
         
@@ -2183,7 +1938,6 @@
         img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
     }
     
-    // إيقاف السحب
     function stopDrag() {
         isDragging = false;
         document.removeEventListener('mousemove', doDrag);
@@ -2195,7 +1949,6 @@
         viewer.style.cursor = 'grab';
     }
     
-    // التعامل مع ضغطات المفاتيح
     function handleKeydown(e) {
         const viewer = document.getElementById('viewer');
         if (viewer.style.display !== 'flex') return;
@@ -2217,7 +1970,7 @@
         }
     }
     
-    // تعديل دالة drawImgs لفتح صورة واحدة فقط
+    // ========== دوال العرض الأساسية ==========
     function drawImgs(imgs) { 
         if(!imgs) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
         
@@ -2234,20 +1987,44 @@
             </div>
         `).join(''); 
     }
-
-    // ========== دوال إدارة الحماية ==========
     
-    // إظهار زر الحماية للمشرف
-    function showProtectionToggle() {
-        const toggleBtn = document.getElementById('protection-toggle');
-        if (isAdmin) {
-            toggleBtn.style.display = 'flex';
+    // ========== تحميل البيانات من Firebase ==========
+    db.ref(DB_PATH).on('value', snap => {
+        currentData = snap.val() || {}; 
+        document.getElementById('splash').style.display = 'none';
+        
+        const mScreen = document.getElementById('maintenance-screen');
+        if (currentData.maintenance_mode && !isAdmin) {
+            showMaintenanceScreen();
         } else {
-            toggleBtn.style.display = 'none';
+            hideMaintenanceScreen();
         }
-    }
+        
+        initThemeAndFont();
+        renderAll(); 
+        renderAdminLists(); 
+        renderAdminReviews(); 
+        renderAdminPartners();
+        
+        if(currentData.news_bar) { 
+            document.getElementById('news-container').style.display='flex'; 
+            document.getElementById('news-text').innerText=currentData.news_bar; 
+        } else { 
+            document.getElementById('news-container').style.display='none'; 
+        }
+        
+        document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
+        document.getElementById('partners-title-text').innerText = currentData.partners_title || '';
+        
+        startPartnersSlider();
+        updateWorkStatus();
+        
+        // إظهار زر الحماية للمشرفين فقط
+        if (isAdmin) {
+            document.getElementById('protection-toggle').style.display = 'flex';
+        }
+    });
     
-    // الباقي من الكود الأصلي مع تعديلات طفيفة
     function initThemeAndFont() {
         if (currentData.current_theme) {
             setTheme(currentData.current_theme, false);
@@ -2260,12 +2037,8 @@
         } else {
             setFont('tajawal', false);
         }
-        
-        // تفعيل المستمعين للتحديث الفوري
-        setupThemeListener();
-        setupFontListener();
     }
-
+    
     function setTheme(theme, saveToFirebase = true) {
         currentTheme = theme;
         
@@ -2277,7 +2050,6 @@
         
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ current_theme: theme }).then(() => {
-                console.log("تم حفظ الثيم في Firebase");
                 showProtectionNotification('تم تغيير التصميم بنجاح');
             });
         }
@@ -2315,7 +2087,6 @@
         
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ header_font: fontName }).then(() => {
-                console.log("تم حفظ الخط في Firebase");
                 showProtectionNotification('تم تغيير الخط بنجاح');
             });
         }
@@ -2370,10 +2141,11 @@
             setFont(customFont, true);
             document.getElementById('custom-font-input').value = '';
         } else {
-            showProtectionNotification('fontError');
+            showProtectionNotification('يرجى إدخال اسم خط صحيح');
         }
     }
-
+    
+    // ========== شاشة الصيانة ==========
     function showMaintenanceScreen() {
         const maintenanceScreen = document.getElementById('maintenance-screen');
         const title = currentData.maintenance_title || 'الموقع في صيانة';
@@ -2393,7 +2165,7 @@
             maintenanceScreen.style.opacity = '1';
         }, 10);
     }
-
+    
     function hideMaintenanceScreen() {
         const maintenanceScreen = document.getElementById('maintenance-screen');
         maintenanceScreen.style.opacity = '0';
@@ -2402,39 +2174,13 @@
             document.body.style.overflow = 'auto';
         }, 500);
     }
-
-    db.ref(DB_PATH).on('value', snap => {
-        currentData = snap.val() || {}; 
-        document.getElementById('splash').style.display = 'none';
-        
-        const mScreen = document.getElementById('maintenance-screen');
-        if (currentData.maintenance_mode && !isAdmin) {
-            showMaintenanceScreen();
-        } else {
-            hideMaintenanceScreen();
-        }
-        
-        initThemeAndFont();
-        loadProtectionSettings(); // تحميل إعدادات الحماية
-        renderAll(); 
-        renderAdminLists(); 
-        renderAdminReviews(); 
-        renderAdminPartners();
-        
-        if(currentData.news_bar) { 
-            document.getElementById('news-container').style.display='flex'; 
-            document.getElementById('news-text').innerText=currentData.news_bar; 
-        } else { 
-            document.getElementById('news-container').style.display='none'; 
-        }
-        
-        document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
-        document.getElementById('partners-title-text').innerText = currentData.partners_title || '';
-        
-        startPartnersSlider();
-        showProtectionToggle(); // إظهار زر الحماية
-    });
-
+    
+    // ========== باقي الدوال الأساسية ==========
+    // (هنا تأتي باقي الدوال التي لم تتغير كثيراً)
+    // مثل: renderAll, updateWorkStatus, startPartnersSlider, 
+    // submitReview, savePartnersTitle, addPartner, toggleAbout, go, t12, etc.
+    
+    // لأغراض الاختصار، سأضع الروابط الأساسية فقط:
     function getSmartSchedule(d) {
         if(!d.work_schedule) return "...";
         let groups = []; 
@@ -2458,7 +2204,7 @@
         if(off.length) html += `<div style="color:var(--red);">إجازة: ${off.join('، ')}</div>`;
         return html;
     }
-
+    
     function updateWorkStatus() { 
         const d = currentData; 
         if(!d.work_schedule) return; 
@@ -2484,8 +2230,7 @@
             cont.innerHTML = statusHtml;
         }
     }
-    setInterval(updateWorkStatus, 1000);
-
+    
     function startPartnersSlider() {
         const container = document.getElementById('partners-display');
         if(!currentData.partners) { 
@@ -2508,7 +2253,7 @@
         if(window.partnerInterval) clearInterval(window.partnerInterval);
         window.partnerInterval = setInterval(cycle, 4000);
     }
-
+    
     function renderAll() {
         const d = currentData;
         document.getElementById('header-bg').style.backgroundImage = `url('${d.header_bg || ''}')`;
@@ -2531,7 +2276,7 @@
             }).join('');
             reviewsDisplay = `<div class="reviews-display-box">${revItems}</div>`;
         }
-
+    
         let workPath = `
             <div style="text-align:center; margin-top:30px;">
                 <p style="color:var(--gold); font-weight:900; margin-bottom:15px;">مسار رحلتك معنا</p>
@@ -2542,9 +2287,9 @@
                     <div class="path-step"><i class="fas fa-hammer"></i><h4>التنفيذ</h4><p>تطبيق التصميم بأعلى معايير الجودة وبصمة غير</p></div>
                 </div>
             </div>`;
-
+    
         let reviewForm = `<button class="about-toggle" onclick="toggleAbout('review-box')">أضف تقييم</button><div id="review-box" class="about-content"><div id="review-form-container"><input type="text" id="rev-name" placeholder="الاسم الكريم"><div class="rating-stars" id="star-row" style="display:flex; gap:5px; justify-content:center; margin-bottom:10px; direction:ltr;"><i class="fas fa-star" onclick="setStar(5)"></i><i class="fas fa-star" onclick="setStar(4)"></i><i class="fas fa-star" onclick="setStar(3)"></i><i class="fas fa-star" onclick="setStar(2)"></i><i class="fas fa-star" onclick="setStar(1)"></i></div><textarea id="rev-msg" placeholder="اكتب تجربتك هنا..."></textarea><button onclick="submitReview()" style="width:100%; background:var(--gold); border:none; padding:10px; border-radius:8px; font-weight:900; color:#000;">إرسال التقييم</button></div></div>`;
-
+    
         let contentHtml = `<section class="sec ${currentTab==='home'?'active':''}"><div style="text-align:center;">${aboutBox}${reviewForm}${reviewsDisplay}${workPath}<div style="background:var(--status-bg); padding:30px; border-radius:20px; max-width:550px; margin:20px auto; border: 1px solid var(--border);"><p style="color:var(--gold); font-weight:900; margin-bottom:15px;">🕒 أوقات العمل</p><div style="margin-bottom:20px; line-height:1.8;">${getSmartSchedule(d)}</div><div id="status-container"></div></div><button onclick="whatsappGlobal()" class="whatsapp-btn">تواصل معنا <i class="fab fa-whatsapp" style="color:#25D366;"></i></button><div class="social-icons">${d.insta_url ? `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url ? `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`:''}</div></div></section>`;
         
         contentHtml += `<section class="sec ${currentTab==='catalogs'?'active':''}"><div class="grid">${drawFolders(d.catalogs, 'cat')}</div></section>`;
@@ -2555,23 +2300,56 @@
         updateWorkStatus(); 
         startReviewSlider();
     }
-
-    function startReviewSlider() {
-        if(!currentData.reviews) return;
-        const total = Object.keys(currentData.reviews).length;
-        if(total === 0) return;
-        const cycle = () => {
-            const all = document.querySelectorAll('.review-item');
-            all.forEach(el => el.classList.remove('active'));
-            const current = document.getElementById(`rev-${reviewIdx}`);
-            if(current) current.classList.add('active');
-            reviewIdx = (reviewIdx + 1) % total;
-        };
-        cycle();
-        if(window.reviewInterval) clearInterval(window.reviewInterval);
-        window.reviewInterval = setInterval(cycle, 4000);
+    
+    function drawAlbums(albs) { 
+        if(!albs) return ''; 
+        return Object.keys(albs).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albs[id].name}</h3></div>`).join(''); 
     }
-
+    
+    function drawFolders(obj, type) { 
+        if(!obj) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
+        return Object.keys(obj).map(id => `<div class="card" onclick="openCat('${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${obj[id].name}</h3></div>`).join(''); 
+    }
+    
+    function t12(t) { 
+        if(!t) return ""; 
+        let [h, m] = t.split(':'); 
+        h = parseInt(h); 
+        return `${h%12||12}:${m}${h>=12?'م':'ص'}`; 
+    }
+    
+    function toggleCol(id) { 
+        document.querySelectorAll('.collapse-content').forEach(c=> { 
+            if(c.id!==id) c.style.display='none'; 
+        }); 
+        const el = document.getElementById(id); 
+        el.style.display = el.style.display==='block'?'none':'block'; 
+    }
+    
+    function toggleAbout(id) { 
+        document.getElementById(id).classList.toggle('open'); 
+    }
+    
+    function go(id) { 
+        currentTab=id; 
+        renderAll(); 
+        window.scrollTo(0,0); 
+    }
+    
+    function whatsappGlobal() { 
+        window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); 
+    }
+    
+    function whatsappOrder(url) { 
+        window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); 
+    }
+    
+    function openCat(id) { 
+        document.getElementById('cat-frame').innerHTML = currentData.catalogs[id].code; 
+        document.getElementById('cat-overlay').style.display='flex'; 
+    }
+    
+    // ========== دوال الإدارة ==========
     function setStar(n) { 
         userRating = n; 
         const stars = document.querySelectorAll('#star-row i'); 
@@ -2598,17 +2376,6 @@
         }); 
     }
     
-    function renderAdminReviews() { 
-        const list = document.getElementById('admin-reviews-list'); 
-        list.innerHTML = ''; 
-        if(currentData.reviews) { 
-            Object.keys(currentData.reviews).forEach(id => { 
-                const r = currentData.reviews[id]; 
-                list.innerHTML += `<div style="background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px; border-right:3px solid var(--gold);"><div style="display:flex; justify-content:space-between; color:var(--gold);"><b>${r.name}</b> <span>${r.rating} ⭐</span></div><p style="font-size:0.8rem; margin:5px 0; color:var(--text-primary);">${r.message}</p><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.7rem;">حذف</button></div>`; 
-            }); 
-        } 
-    }
-    
     function savePartnersTitle() { 
         const title = document.getElementById('admin-partners-title').value; 
         db.ref(DB_PATH).update({ partners_title: title }).then(() => showProtectionNotification('settingsSaved')); 
@@ -2622,65 +2389,6 @@
         }); 
     }
     
-    function renderAdminPartners() { 
-        const list = document.getElementById('admin-partners-list'); 
-        list.innerHTML = ''; 
-        document.getElementById('admin-partners-title').value = currentData.partners_title || ''; 
-        if(currentData.partners) { 
-            Object.keys(currentData.partners).forEach(id => { 
-                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px;"><img src="${currentData.partners[id].url}" style="height:40px; width:40px; object-fit:contain;"><span style="flex-grow:1; font-size:0.7rem; color:var(--text-secondary); overflow:hidden;">${currentData.partners[id].url}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button></div>`; 
-            }); 
-        } 
-    }
-    
-    function toggleAbout(id) { 
-        document.getElementById(id).classList.toggle('open'); 
-    }
-    
-    function go(id) { 
-        currentTab=id; 
-        renderAll(); 
-        window.scrollTo(0,0); 
-    }
-    
-    function t12(t) { 
-        if(!t) return ""; 
-        let [h, m] = t.split(':'); 
-        h = parseInt(h); 
-        return `${h%12||12}:${m}${h>=12?'م':'ص'}`; 
-    }
-    
-    function toggleCol(id) { 
-        document.querySelectorAll('.collapse-content').forEach(c=> { 
-            if(c.id!==id) c.style.display='none'; 
-        }); 
-        const el = document.getElementById(id); 
-        el.style.display = el.style.display==='block'?'none':'block'; 
-    }
-    
-    function whatsappGlobal() { 
-        window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); 
-    }
-    
-    function whatsappOrder(url) { 
-        window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); 
-    }
-    
-    function drawAlbums(albs) { 
-        if(!albs) return ''; 
-        return Object.keys(albs).map(id => `<div class="card" onclick="go('alb-${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${albs[id].name}</h3></div>`).join(''); 
-    }
-    
-    function drawFolders(obj, type) { 
-        if(!obj) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
-        return Object.keys(obj).map(id => `<div class="card" onclick="openCat('${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${obj[id].name}</h3></div>`).join(''); 
-    }
-    
-    function openCat(id) { 
-        document.getElementById('cat-frame').innerHTML = currentData.catalogs[id].code; 
-        document.getElementById('cat-overlay').style.display='flex'; 
-    }
-    
     function addCatalog() { 
         const name = document.getElementById('new-cat-name').value; 
         const code = document.getElementById('new-cat-code').value; 
@@ -2688,97 +2396,6 @@
             document.getElementById('new-cat-name').value=''; 
             document.getElementById('new-cat-code').value=''; 
             showProtectionNotification('catalogAdded');
-        }); 
-    }
-    
-    function checkAccess() { 
-        const pass = prompt("الرمز:"); 
-        db.ref(AUTH_PATH).once('value').then(snap => { 
-            if(pass === String(snap.val())) { 
-                isAdmin=true; 
-                document.getElementById('admin-panel').style.display='block'; 
-                document.getElementById('protection-toggle').style.display='flex'; // إظهار زر الحماية
-                hideMaintenanceScreen();
-                fillAdminFields(); 
-            } 
-        }); 
-    }
-    
-    function renderPhotoManager(path) { 
-        const grid = document.getElementById('photo-manager-grid'); 
-        grid.innerHTML = ''; 
-        if(!path) return; 
-        const [type, id] = path.split('/'); 
-        const folder = currentData[type] && currentData[type][id]; 
-        if(folder && folder.imgs) { 
-            Object.keys(folder.imgs).reverse().forEach(imgId => { 
-                grid.innerHTML += `<div style="background:var(--input-bg); padding:5px; border-radius:5px;"><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1/1; object-fit:cover;"><button onclick="deleteImg('${path}', '${imgId}')" style="width:100%; background:var(--red); border:none; color:#fff; margin-top:5px; padding:5px; border-radius:4px;">حذف</button></div>`; 
-            }); 
-        } 
-    }
-    
-    function deleteImg(path, imgId) { 
-        if(confirm("هل أنت متأكد من الحذف؟")) db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove(); 
-    }
-    
-    function renderAdminLists() { 
-        const d = currentData; 
-        let sL = '', aL = '', cL = '', upSel = '<option value="">-- اختر الوجهة --</option>'; 
-        if(d.pages) Object.keys(d.pages).forEach(id => { 
-            sL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; 
-            upSel += `<option value="pages/${id}">${d.pages[id].title}</option>`; 
-        }); 
-        if(d.albums) Object.keys(d.albums).forEach(id => { 
-            aL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; 
-            upSel += `<option value="albums/${id}">${d.albums[id].name}</option>`; 
-        }); 
-        if(d.catalogs) Object.keys(d.catalogs).forEach(id => { 
-            cL += `<div style="display:flex; margin-bottom:5px; background:var(--input-bg); padding:5px;"><span style="color:var(--text-primary); flex-grow:1;">${d.catalogs[id].name}</span><button onclick="db.ref(DB_PATH+'/catalogs/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:5px 10px;">حذف</button></div>`; 
-        });
-        document.getElementById('admin-sec-list').innerHTML = sL; 
-        document.getElementById('admin-alb-list').innerHTML = aL; 
-        document.getElementById('admin-cat-list').innerHTML = cL; 
-        document.getElementById('upload-target-sel').innerHTML = upSel; 
-        document.getElementById('manage-sec-sel').innerHTML = upSel; 
-    }
-    
-    function fillAdminFields() { 
-        const d = currentData; 
-        document.getElementById('in-name').value=d.site_name||''; 
-        document.getElementById('in-wa').value=d.whatsapp_num||''; 
-        document.getElementById('in-logo').value=d.site_logo||''; 
-        document.getElementById('in-hbg').value=d.header_bg||''; 
-        document.getElementById('in-wm').value=d.wm_text||''; 
-        document.getElementById('in-news').value=d.news_bar||''; 
-        document.getElementById('in-maintenance').checked=d.maintenance_mode||false; 
-        document.getElementById('in-insta').value=d.insta_url||''; 
-        document.getElementById('in-tiktok').value=d.tiktok_url||''; 
-        document.getElementById('in-snap').value=d.snap_url||''; 
-        document.getElementById('in-loc').value=d.location_url||''; 
-        document.getElementById('editor-about').innerHTML=d.about_text||''; 
-        document.getElementById('in-about-active').checked=d.about_active||false; 
-        document.getElementById('in-footer').value=d.footer_text||''; 
-        
-        document.getElementById('in-maintenance-title').value = d.maintenance_title || 'الموقع في صيانة';
-        document.getElementById('in-maintenance-message').value = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز';
-        document.getElementById('in-maintenance-footer').value = d.maintenance_footer || '© بصمة غير للديكور';
-        
-        if (d.header_font) {
-            selectedFont = d.header_font;
-            updateFontPreview();
-        }
-        
-        fillAdminSchedule(d); 
-    }
-    
-    function fillAdminSchedule(d) { 
-        const ed = document.getElementById('schedule-editor'); 
-        ed.innerHTML = ''; 
-        const customOrder = [6, 0, 1, 2, 3, 4, 5]; 
-        customOrder.forEach((jsDay) => { 
-            const dayName = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay]; 
-            const s = (d.work_schedule && d.work_schedule[jsDay]) ? d.work_schedule[jsDay] : {active:false, s1_s:"09:00", s1_e:"13:00"}; 
-            ed.innerHTML += `<div style="background:var(--input-bg); padding:10px; margin-bottom:5px; border-radius:8px;"><label style="color:var(--text-primary);"><input type="checkbox" id="check-${jsDay}" ${s.active?'checked':''}> ${dayName}</label><div style="display:flex; gap:5px;"><input type="time" id="s1s-${jsDay}" value="${s.s1_s}"><input type="time" id="s1e-${jsDay}" value="${s.s1_e}"></div><label style="font-size:0.8rem; color:var(--text-primary);"><input type="checkbox" id="s2a-${jsDay}" ${s.s2_a?'checked':''}> شفت مسائي</label><div style="display:flex; gap:5px;"><input type="time" id="s2s-${jsDay}" value="${s.s2_s||''}"><input type="time" id="s2e-${jsDay}" value="${s.s2_e||''}"></div></div>`; 
         }); 
     }
     
@@ -2840,6 +2457,26 @@
         });
     }
     
+    function saveProtectionSettings() {
+        protectionSettings = {
+            rightClick: document.getElementById('enable-right-click-protection').checked,
+            keyboardShortcuts: document.getElementById('enable-keyboard-protection').checked,
+            imageProtection: document.getElementById('enable-image-protection').checked,
+            textSelection: document.getElementById('enable-selection-protection').checked,
+            devTools: document.getElementById('enable-dev-tools-protection').checked,
+            fullscreenProtection: document.getElementById('enable-fullscreen-protection').checked
+        };
+        
+        const message = document.getElementById('protection-message-text').value;
+        
+        db.ref(DB_PATH).update({
+            protection_settings: protectionSettings,
+            protection_message: message
+        }).then(() => {
+            showProtectionNotification('settingsSaved');
+        });
+    }
+    
     function addSec() { 
         const n = document.getElementById('new-sec-in').value; 
         if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>document.getElementById('new-sec-in').value=''); 
@@ -2858,12 +2495,180 @@
         showProtectionNotification('photosPublished');
         document.getElementById('links-in').value = ''; 
     }
-
-    // تفعيل الحماية المتقدمة عند تحميل الصفحة
-    document.addEventListener('DOMContentLoaded', function() {
-        enableProtection();
-    });
+    
+    function deleteImg(path, imgId) { 
+        if(confirm("هل أنت متأكد من حذف هذه الصورة؟")) {
+            db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove()
+                .then(() => {
+                    showProtectionNotification('تم حذف الصورة بنجاح');
+                    renderPhotoManager(path);
+                })
+                .catch(error => {
+                    console.error("Delete error:", error);
+                    alert("خطأ في الحذف: " + error.message);
+                });
+        }
+    }
+    
+    function renderPhotoManager(path) { 
+        const grid = document.getElementById('photo-manager-grid'); 
+        grid.innerHTML = '<p style="text-align:center; padding:20px; color:var(--text-secondary);">جاري تحميل الصور...</p>'; 
+        
+        if(!path) return; 
+        const [type, id] = path.split('/'); 
+        const folder = currentData[type] && currentData[type][id]; 
+        
+        if(!folder || !folder.imgs) { 
+            grid.innerHTML = '<p style="text-align:center; padding:20px; color:var(--text-secondary);">لا توجد صور في هذا المجلد</p>'; 
+            return; 
+        } 
+        
+        const imgs = Object.keys(folder.imgs);
+        if (imgs.length === 0) {
+            grid.innerHTML = '<p style="text-align:center; padding:20px; color:var(--text-secondary);">لا توجد صور في هذا المجلد</p>';
+            return;
+        }
+        
+        let html = '';
+        imgs.reverse().forEach(imgId => { 
+            const imgUrl = folder.imgs[imgId].url;
+            html += `
+            <div style="background:var(--input-bg); padding:10px; border-radius:8px; border:1px solid var(--border);">
+                <img src="${imgUrl}" 
+                     style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:4px; margin-bottom:8px;">
+                <div style="display:flex; gap:5px;">
+                    <button onclick="openImg('${imgUrl}')" 
+                            style="flex:1; background:var(--gold); border:none; color:#000; padding:8px; border-radius:4px; font-weight:bold;">
+                        عرض
+                    </button>
+                    <button onclick="deleteImg('${path}', '${imgId}')" 
+                            style="flex:1; background:var(--red); border:none; color:#fff; padding:8px; border-radius:4px; font-weight:bold;">
+                        حذف
+                    </button>
+                </div>
+            </div>`; 
+        }); 
+        
+        grid.innerHTML = html;
+    }
+    
+    function renderAdminLists() { 
+        const d = currentData; 
+        let sL = '', aL = '', cL = '', upSel = '<option value="">-- اختر الوجهة --</option>'; 
+        if(d.pages) Object.keys(d.pages).forEach(id => { 
+            sL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; 
+            upSel += `<option value="pages/${id}">${d.pages[id].title}</option>`; 
+        }); 
+        if(d.albums) Object.keys(d.albums).forEach(id => { 
+            aL += `<div style="display:flex; margin-bottom:5px;"><input type="text" value="${d.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:0 10px;">حذف</button></div>`; 
+            upSel += `<option value="albums/${id}">${d.albums[id].name}</option>`; 
+        }); 
+        if(d.catalogs) Object.keys(d.catalogs).forEach(id => { 
+            cL += `<div style="display:flex; margin-bottom:5px; background:var(--input-bg); padding:5px;"><span style="color:var(--text-primary); flex-grow:1;">${d.catalogs[id].name}</span><button onclick="db.ref(DB_PATH+'/catalogs/${id}').remove()" style="background:var(--red); border:none; color:#fff; padding:5px 10px;">حذف</button></div>`; 
+        });
+        document.getElementById('admin-sec-list').innerHTML = sL; 
+        document.getElementById('admin-alb-list').innerHTML = aL; 
+        document.getElementById('admin-cat-list').innerHTML = cL; 
+        document.getElementById('upload-target-sel').innerHTML = upSel; 
+        document.getElementById('manage-sec-sel').innerHTML = upSel; 
+    }
+    
+    function renderAdminReviews() { 
+        const list = document.getElementById('admin-reviews-list'); 
+        list.innerHTML = ''; 
+        if(currentData.reviews) { 
+            Object.keys(currentData.reviews).forEach(id => { 
+                const r = currentData.reviews[id]; 
+                list.innerHTML += `<div style="background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px; border-right:3px solid var(--gold);"><div style="display:flex; justify-content:space-between; color:var(--gold);"><b>${r.name}</b> <span>${r.rating} ⭐</span></div><p style="font-size:0.8rem; margin:5px 0; color:var(--text-primary);">${r.message}</p><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:4px 10px; border-radius:4px; font-size:0.7rem;">حذف</button></div>`; 
+            }); 
+        } 
+    }
+    
+    function renderAdminPartners() { 
+        const list = document.getElementById('admin-partners-list'); 
+        list.innerHTML = ''; 
+        document.getElementById('admin-partners-title').value = currentData.partners_title || ''; 
+        if(currentData.partners) { 
+            Object.keys(currentData.partners).forEach(id => { 
+                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px;"><img src="${currentData.partners[id].url}" style="height:40px; width:40px; object-fit:contain;"><span style="flex-grow:1; font-size:0.7rem; color:var(--text-secondary); overflow:hidden;">${currentData.partners[id].url}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button></div>`; 
+            }); 
+        } 
+    }
+    
+    function fillAdminFields() { 
+        const d = currentData; 
+        document.getElementById('in-name').value=d.site_name||''; 
+        document.getElementById('in-wa').value=d.whatsapp_num||''; 
+        document.getElementById('in-logo').value=d.site_logo||''; 
+        document.getElementById('in-hbg').value=d.header_bg||''; 
+        document.getElementById('in-wm').value=d.wm_text||''; 
+        document.getElementById('in-news').value=d.news_bar||''; 
+        document.getElementById('in-maintenance').checked=d.maintenance_mode||false; 
+        document.getElementById('in-insta').value=d.insta_url||''; 
+        document.getElementById('in-tiktok').value=d.tiktok_url||''; 
+        document.getElementById('in-snap').value=d.snap_url||''; 
+        document.getElementById('in-loc').value=d.location_url||''; 
+        document.getElementById('editor-about').innerHTML=d.about_text||''; 
+        document.getElementById('in-about-active').checked=d.about_active||false; 
+        document.getElementById('in-footer').value=d.footer_text||''; 
+        
+        document.getElementById('in-maintenance-title').value = d.maintenance_title || 'الموقع في صيانة';
+        document.getElementById('in-maintenance-message').value = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز';
+        document.getElementById('in-maintenance-footer').value = d.maintenance_footer || '© بصمة غير للديكور';
+        
+        // إعدادات الحماية
+        if (d.protection_settings) {
+            protectionSettings = d.protection_settings;
+            document.getElementById('enable-right-click-protection').checked = protectionSettings.rightClick || true;
+            document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts || true;
+            document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection || true;
+            document.getElementById('enable-selection-protection').checked = protectionSettings.textSelection || true;
+            document.getElementById('enable-dev-tools-protection').checked = protectionSettings.devTools || true;
+            document.getElementById('enable-fullscreen-protection').checked = protectionSettings.fullscreenProtection || true;
+        }
+        
+        if (d.protection_message) {
+            document.getElementById('protection-message-text').value = d.protection_message;
+        }
+        
+        // الخط
+        if (d.header_font) {
+            selectedFont = d.header_font;
+            updateFontPreview();
+        }
+        
+        fillAdminSchedule(d); 
+    }
+    
+    function fillAdminSchedule(d) { 
+        const ed = document.getElementById('schedule-editor'); 
+        ed.innerHTML = ''; 
+        const customOrder = [6, 0, 1, 2, 3, 4, 5]; 
+        customOrder.forEach((jsDay) => { 
+            const dayName = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay]; 
+            const s = (d.work_schedule && d.work_schedule[jsDay]) ? d.work_schedule[jsDay] : {active:false, s1_s:"09:00", s1_e:"13:00"}; 
+            ed.innerHTML += `<div style="background:var(--input-bg); padding:10px; margin-bottom:5px; border-radius:8px;"><label style="color:var(--text-primary);"><input type="checkbox" id="check-${jsDay}" ${s.active?'checked':''}> ${dayName}</label><div style="display:flex; gap:5px;"><input type="time" id="s1s-${jsDay}" value="${s.s1_s}"><input type="time" id="s1e-${jsDay}" value="${s.s1_e}"></div><label style="font-size:0.8rem; color:var(--text-primary);"><input type="checkbox" id="s2a-${jsDay}" ${s.s2_a?'checked':''}> شفت مسائي</label><div style="display:flex; gap:5px;"><input type="time" id="s2s-${jsDay}" value="${s.s2_s||''}"><input type="time" id="s2e-${jsDay}" value="${s.s2_e||''}"></div></div>`; 
+        }); 
+    }
+    
+    function startReviewSlider() {
+        if(!currentData.reviews) return;
+        const total = Object.keys(currentData.reviews).length;
+        if(total === 0) return;
+        const cycle = () => {
+            const all = document.querySelectorAll('.review-item');
+            all.forEach(el => el.classList.remove('active'));
+            const current = document.getElementById(`rev-${reviewIdx}`);
+            if(current) current.classList.add('active');
+            reviewIdx = (reviewIdx + 1) % total;
+        };
+        cycle();
+        if(window.reviewInterval) clearInterval(window.reviewInterval);
+        window.reviewInterval = setInterval(cycle, 4000);
+    }
+    
+    // تحديث حالة العمل كل ثانية
+    setInterval(updateWorkStatus, 60000);
 </script>
 </body>
     </html>
-
