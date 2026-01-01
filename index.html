@@ -1407,12 +1407,63 @@
 <div id="hidden-trigger" onclick="checkAccess()"></div>
 
 <script>
-    const config = { databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
-    firebase.initializeApp(config); 
-    const db = firebase.database(); 
-    const DB_PATH = 'site_v28'; 
-    const AUTH_PATH = 'server_auth/lek'; 
     
+    const config = { databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app" };
+firebase.initializeApp(config); 
+const db = firebase.database(); 
+const DB_PATH = 'site_v28'; 
+const AUTH_PATH = 'server_auth/lek'; 
+
+// === إضافة المصادقة المجهولة + انتظارها قبل قراءة البيانات ===
+firebase.auth().onAuthStateChanged((user) => {
+  if (user) {
+    console.log('تم المصادقة بنجاح (مجهولة)', user.uid);
+
+    // هنا نضع كل الكود اللي كان يقرأ البيانات سابقًا
+    db.ref(DB_PATH).on('value', snap => {
+        currentData = snap.val() || {}; 
+        document.getElementById('splash').style.display = 'none';
+        
+        const mScreen = document.getElementById('maintenance-screen');
+        if (currentData.maintenance_mode && !isAdmin) {
+            showMaintenanceScreen();
+        } else {
+            hideMaintenanceScreen();
+        }
+        
+        initThemeAndFont();
+        loadProtectionSettings(); // تحميل إعدادات الحماية
+        renderAll(); 
+        renderAdminLists(); 
+        renderAdminReviews(); 
+        renderAdminPartners();
+        
+        if(currentData.news_bar) { 
+            document.getElementById('news-container').style.display='flex'; 
+            document.getElementById('news-text').innerText=currentData.news_bar; 
+        } else { 
+            document.getElementById('news-container').style.display='none'; 
+        }
+        
+        document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
+        document.getElementById('partners-title-text').innerText = currentData.partners_title || '';
+        
+        startPartnersSlider();
+        showProtectionToggle(); // إظهار زر الحماية
+    });
+
+  } else {
+    // إذا ما تمتش المصادقة، نحاول نعمل تسجيل دخول مجهول
+    firebase.auth().signInAnonymously()
+      .catch((error) => {
+        console.error('فشل في المصادقة المجهولة:', error);
+        document.getElementById('splash').innerHTML = '<h2 style="color:red;">خطأ في الاتصال</h2>';
+      });
+  }
+});
+
+// في حالة ما كان في مستخدم موجود مسبقًا (نادرًا)، نجرب المصادقة المجهولة مباشرة
+firebase.auth().signInAnonymously().catch(() => {});
     let currentData = {}; 
     let currentTab = 'home'; 
     let isAdmin = false; 
@@ -2866,3 +2917,4 @@
 </script>
 </body>
     </html>
+
