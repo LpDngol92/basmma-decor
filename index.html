@@ -1210,25 +1210,29 @@
     }
     
     function checkAccess() {
-        const pass = prompt("🔐 أدخل رمز الإدارة:");
-        const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
-        
-        if (pass === ADMIN_PASSWORD) {
+    const pass = prompt("🔐 أدخل رمز الإدارة:");
+    
+    if (!pass) return;
+    
+    // استخدام المسار الخاص للتحقق
+    db.ref(DB_PATH + '/_admin_write').set(pass)
+        .then(() => {
+            // إذا وصل هنا، الرقم صحيح
             isAdmin = true;
             document.getElementById('admin-panel').style.display = 'block';
             document.getElementById('protection-toggle').style.display = 'flex';
-            hideMaintenanceScreen();
-            fillAdminFields();
             showProtectionNotification("✅ تم الدخول للإدارة");
             
-            localStorage.setItem('admin_session', Date.now());
-            return true;
-        }
-        
-        alert("❌ الرمز خاطئ!");
-        return false;
-    }
-    
+            // مسح المسار المؤقت
+            setTimeout(() => {
+                db.ref(DB_PATH + '/_admin_write').remove();
+            }, 1000);
+        })
+        .catch(error => {
+            console.error("❌ الرمز خاطئ:", error);
+            alert("❌ الرمز خاطئ!");
+        });
+}
     function activateAdminPanel(user) {
         isAdmin = true;
         document.getElementById('admin-panel').style.display = 'block';
@@ -2101,3 +2105,4 @@
 </script>
 </body>
 </html>
+
