@@ -183,6 +183,39 @@
         }
         /* ========== نهاية تنبيه الحماية ========== */
         
+        /* ========== طبقة الحماية المتقدمة ========== */
+        #protection-shield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2147483647; /* أعلى قيمة z-index ممكنة */
+            pointer-events: none; /* لا تمنع التفاعلات العادية */
+        }
+        
+        .protection-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+        }
+        
+        /* مناطق خاصة للحماية عند التكبير */
+        #viewer.protected::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: 2147483646;
+        }
+        /* ========== نهاية طبقة الحماية ========== */
+        
         #splash { 
             position: fixed; 
             inset: 0; 
@@ -575,7 +608,6 @@
             aspect-ratio: 1/1; 
             cursor: pointer; 
             overflow: hidden; 
-            background: rgba(0,0,0,0.1);
         }
         
         .img-container img { 
@@ -583,23 +615,10 @@
             height: 100%; 
             object-fit: cover; 
             transition: transform 0.5s ease;
-            background: linear-gradient(45deg, var(--bg) 25%, transparent 25%, transparent 75%, var(--bg) 75%);
-            background-size: 20px 20px;
         }
         
         .img-container:hover img {
             transform: scale(1.05);
-        }
-        
-        .img-container.loading img {
-            opacity: 0.5;
-            filter: blur(5px);
-        }
-        
-        .img-container.loaded img {
-            opacity: 1;
-            filter: blur(0);
-            transition: opacity 0.3s ease, filter 0.3s ease;
         }
         
         .wm-tag { 
@@ -696,7 +715,7 @@
             transform: scale(1.2);
         }
         
-        /* ========== المعرض المعدل ========== */
+        /* ========== المعرض المعدل (بدون تقليب صور) ========== */
         #viewer { 
             position: fixed; 
             inset: 0; 
@@ -705,12 +724,20 @@
             display: none; 
             align-items: center; 
             justify-content: center; 
-            cursor: pointer;
+            cursor: zoom-out;
             transition: background-color 0.3s ease;
         }
         
         .theme-white #viewer {
             background: rgba(255,255,255,0.98);
+        }
+        
+        #viewer.zoomed {
+            cursor: grab;
+        }
+        
+        #viewer.zoomed:active {
+            cursor: grabbing;
         }
         
         #viewer-container {
@@ -724,24 +751,101 @@
         }
         
         #viewer-img { 
-            max-width: 100%; 
-            max-height: 100vh; 
-            width: auto;
-            height: auto;
+            max-width: 95%; 
+            max-height: 95vh; 
             object-fit: contain;
             cursor: pointer;
+            transition: transform 0.3s ease;
+            transform-origin: center center;
             user-select: none;
             -webkit-user-drag: none;
-            transition: transform 0.3s ease;
         }
         
-        /* إزالة جميع أزرار التحكم السابقة */
+        #viewer-img.zoomable {
+            cursor: zoom-in;
+        }
+        
+        /* أزرار التحكم */
         .viewer-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000002;
+        }
+        
+        .viewer-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-white .viewer-btn {
+            background: rgba(255,255,255,0.7);
+            color: #333;
+        }
+        
+        .viewer-btn:hover {
+            background: var(--gold);
+            color: #000;
+            transform: scale(1.1);
+        }
+        
+        .viewer-btn.close-btn {
+            background: rgba(231, 76, 60, 0.7);
+        }
+        
+        .viewer-btn.close-btn:hover {
+            background: #e74c3c;
+        }
+        
+        /* إزالة أزرار التنقل بين الصور */
+        .nav-btn-left, .nav-btn-right {
             display: none !important;
         }
         
-        .zoom-notice {
+        /* إزالة عداد الصور */
+        .image-counter {
             display: none !important;
+        }
+        
+        /* إزالة أزرار الزوم السفلية */
+        .zoom-controls {
+            display: none !important;
+        }
+        
+        /* إشعار الزوم */
+        .zoom-notice {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            z-index: 1000002;
+            display: none;
+            backdrop-filter: blur(10px);
+            text-align: center;
+            border: 1px solid var(--gold);
+        }
+        
+        .theme-white .zoom-notice {
+            background: rgba(255,255,255,0.9);
+            color: #333;
         }
         /* ========== نهاية المعرض المعدل ========== */
         
@@ -966,25 +1070,14 @@
         .logout-btn {
             margin-top: 20px !important;
         }
-        
-        /* مؤشر تحميل الصور */
-        .image-loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: var(--gold);
-            font-size: 2rem;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
-        }
     </style>
 </head>
 <body>
+<!-- طبقة الحماية المتقدمة (غير مرئية) -->
+<div id="protection-shield">
+    <div class="protection-overlay"></div>
+</div>
+
 <!-- تنبيه الحماية المتطور -->
 <div id="protection-notification">
     <div class="protection-icon-small">
@@ -1051,17 +1144,39 @@
     <i class="fas fa-shield-alt"></i>
 </button>
 
-<!-- ========== المعرض المعدل ========== -->
-<div id="viewer" onclick="closeViewer()">
+<!-- ========== المعرض المعدل (بدون تقليب صور) ========== -->
+<div id="viewer" onclick="closeViewerOnOverlay(event)">
     <div id="viewer-container">
-        <img id="viewer-img" src="" onclick="event.stopPropagation()">
+        <img id="viewer-img" src="" class="zoomable">
+        
+        <!-- أزرار التحكم العلوية -->
+        <div class="viewer-controls">
+            <button class="viewer-btn zoom-in-btn" onclick="zoomImage(0.2)" title="تكبير">
+                <i class="fas fa-search-plus"></i>
+            </button>
+            <button class="viewer-btn zoom-out-btn" onclick="zoomImage(-0.2)" title="تصغير">
+                <i class="fas fa-search-minus"></i>
+            </button>
+            <button class="viewer-btn reset-btn" onclick="resetZoom()" title="إعادة تعيين">
+                <i class="fas fa-expand-alt"></i>
+            </button>
+            <button class="viewer-btn close-btn" onclick="closeViewer()" title="إغلاق (ESC)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- إشعار التعليمات -->
+        <div class="zoom-notice" id="zoom-notice">
+            <div>🖱️ استخدم عجلة الماوس للتكبير</div>
+            <div style="font-size:0.8rem; margin-top:5px; opacity:0.8;">أو المس وشبك للتحريك</div>
+        </div>
     </div>
 </div>
 <!-- ========== نهاية المعرض المعدل ========== -->
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v165</h2>
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v164</h2>
         
         <!-- قسم إدارة الحماية -->
         <div class="collapse-section">
@@ -1081,8 +1196,8 @@
                             منع اختصارات لوحة المفاتيح (F12, Ctrl+U, etc.)
                         </label>
                         <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
-                            <input type="checkbox" id="enable-image-protection">
-                            منع سحب وحفظ الصور (غير مفعل - لإظهار الصور)
+                            <input type="checkbox" id="enable-image-protection" checked>
+                            منع سحب وحفظ الصور
                         </label>
                         <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
                             <input type="checkbox" id="enable-selection-protection" checked>
@@ -1106,7 +1221,7 @@
                     
                     <div style="margin-top:20px; padding:15px; background:rgba(46, 204, 113, 0.1); border-radius:10px;">
                         <p style="color:var(--green); font-weight:bold; margin-bottom:5px;">ملاحظة:</p>
-                        <p style="color:var(--text-secondary); font-size:0.9rem;">إعدادات الحماية لا تؤثر على عرض الصور. الصور ستعرض بشكل طبيعي.</p>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">يمكنك تفعيل/تعطيل الحماية مؤقتاً من الزر الأخضر في الزاوية</p>
                     </div>
                 </div>
             </div>
@@ -1332,7 +1447,7 @@
     let protectionSettings = {
         rightClick: true,
         keyboardShortcuts: true,
-        imageProtection: false, // معطلة لإظهار الصور
+        imageProtection: true,
         textSelection: true,
         devTools: true,
         fullscreenProtection: true
@@ -1343,55 +1458,7 @@
         console.log("✅ تم تحميل الصفحة");
         enableProtection();
         setupAuthListener();
-        
-        // حل مشكلة الصور الكبيرة
-        fixLargeImages();
     });
-    
-    // حل مشكلة الصور الكبيرة
-    function fixLargeImages() {
-        // إضافة معالج لتحميل الصور
-        document.addEventListener('DOMContentLoaded', function() {
-            const images = document.querySelectorAll('img:not(.partner-img):not(#viewer-img)');
-            
-            images.forEach(img => {
-                // إضافة مؤشر تحميل
-                if (img.parentElement.classList.contains('img-container')) {
-                    img.parentElement.classList.add('loading');
-                }
-                
-                img.onload = function() {
-                    console.log('✅ تم تحميل الصورة:', this.src);
-                    if (this.parentElement.classList.contains('img-container')) {
-                        this.parentElement.classList.remove('loading');
-                        this.parentElement.classList.add('loaded');
-                    }
-                    
-                    // تحسين حجم الصورة الكبيرة
-                    if (this.naturalWidth > 2000 || this.naturalHeight > 2000) {
-                        console.log('🖼️ صورة كبيرة تم اكتشافها:', this.naturalWidth, 'x', this.naturalHeight);
-                        this.style.width = '100%';
-                        this.style.height = '100%';
-                        this.style.objectFit = 'cover';
-                    }
-                };
-                
-                img.onerror = function() {
-                    console.log('❌ فشل تحميل الصورة:', this.src);
-                    if (this.parentElement.classList.contains('img-container')) {
-                        this.parentElement.classList.remove('loading');
-                        // عرض صورة بديلة
-                        this.style.display = 'none';
-                        const container = this.parentElement;
-                        const errorMsg = document.createElement('div');
-                        errorMsg.innerHTML = '<i class="fas fa-image image-loading"></i>';
-                        errorMsg.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:var(--gold); font-size:2rem;';
-                        container.appendChild(errorMsg);
-                    }
-                };
-            });
-        });
-    }
     
     // ========== نظام المصادقة ==========
     function setupAuthListener() {
@@ -1410,26 +1477,27 @@
     
     // ========== دالة الدخول الأساسية ==========
     function checkAccess() {
-        const pass = prompt("🔐 أدخل رمز الإدارة:");
+    const pass = prompt("🔐 أدخل رمز الإدارة:");
+    
+    // الرقم  تبي
+    
+const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
+    
+    if (pass === ADMIN_PASSWORD) {
+        isAdmin = true;
+        document.getElementById('admin-panel').style.display = 'block';
+        document.getElementById('protection-toggle').style.display = 'flex';
+        hideMaintenanceScreen();
+        fillAdminFields();
+        showProtectionNotification("✅ تم الدخول للإدارة");
         
-        // الرقم تبي
-        const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
-        
-        if (pass === ADMIN_PASSWORD) {
-            isAdmin = true;
-            document.getElementById('admin-panel').style.display = 'block';
-            document.getElementById('protection-toggle').style.display = 'flex';
-            hideMaintenanceScreen();
-            fillAdminFields();
-            showProtectionNotification("✅ تم الدخول للإدارة");
-            
-            // حفظ الجلسة ليوم واحد
-            localStorage.setItem('admin_session', Date.now());
-            return true;
-        }
-        
-        alert("❌ الرمز خاطئ!");
-        return false;
+        // حفظ الجلسة ليوم واحد
+        localStorage.setItem('admin_session', Date.now());
+        return true;
+    }
+    
+    alert("❌ الرمز خاطئ!");
+    return false;
     }
     
     // الدخول بالإيميل والباسوورد
@@ -1566,17 +1634,15 @@
         // منع اختصارات المفاتيح
         document.addEventListener('keydown', preventKeyboardShortcuts);
         
-        // حماية الصور (معطلة حالياً)
-        if (protectionSettings.imageProtection) {
-            document.addEventListener('dragstart', preventImageDrag);
-            document.addEventListener('drop', preventImageDrop);
-        }
+        // حماية الصور
+        document.addEventListener('dragstart', preventImageDrag);
+        document.addEventListener('drop', preventImageDrop);
         
         // منع النسخ
         document.addEventListener('copy', preventCopy);
         document.addEventListener('cut', preventCopy);
         
-        console.log("✅ تم تفعيل الحماية (حماية الصور معطلة)");
+        console.log("✅ تم تفعيل الحماية");
     }
     
     function disableProtection() {
@@ -1610,16 +1676,13 @@
     // دوال الحماية
     function preventRightClick(e) {
         if (!isProtectionEnabled) return;
-        if (protectionSettings.rightClick) {
-            e.preventDefault();
-            showProtectionNotification('rightClick');
-            return false;
-        }
+        e.preventDefault();
+        showProtectionNotification('rightClick');
+        return false;
     }
     
     function preventKeyboardShortcuts(e) {
         if (!isProtectionEnabled) return;
-        if (!protectionSettings.keyboardShortcuts) return;
         
         // منع F12, Ctrl+Shift+I, Ctrl+U, etc.
         if (e.keyCode === 123 || // F12
@@ -1632,7 +1695,7 @@
     }
     
     function preventImageDrag(e) {
-        if (!isProtectionEnabled || !protectionSettings.imageProtection) return;
+        if (!isProtectionEnabled) return;
         if (e.target.tagName === 'IMG') {
             e.preventDefault();
             showProtectionNotification('imageProtection');
@@ -1641,14 +1704,14 @@
     }
     
     function preventImageDrop(e) {
-        if (!isProtectionEnabled || !protectionSettings.imageProtection) return;
+        if (!isProtectionEnabled) return;
         e.preventDefault();
         showProtectionNotification('imageProtection');
         return false;
     }
     
     function preventCopy(e) {
-        if (!isProtectionEnabled || !protectionSettings.textSelection) return;
+        if (!isProtectionEnabled) return;
         const tagName = e.target.tagName;
         if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
             e.preventDefault();
@@ -1666,7 +1729,7 @@
         
         switch(actionType) {
             case 'rightClick':
-                message = '⛔ النقر الأيمن معطل لحماية المحتوى';
+                message = '⛔ ';
                 break;
             case 'devTools':
                 message = '⛔ أدوات المطورين معطلة لحماية المحتوى';
@@ -1719,54 +1782,204 @@
         document.getElementById('protection-notification').style.display = 'none';
     }
     
-    // ========== المعرض المعدل ==========
+    // ========== المعرض (بدون تقليب صور) ==========
+    let currentZoom = 1;
+    let isDragging = false;
+    let startX = 0, startY = 0;
+    let translateX = 0, translateY = 0;
+    let maxZoom = 3;
+    let minZoom = 0.5;
+    
     function openImg(url) {
         const viewer = document.getElementById('viewer');
         const img = document.getElementById('viewer-img');
         
-        // إضافة مؤشر تحميل
-        img.style.opacity = '0.5';
+        img.src = url;
+        resetZoom();
+        viewer.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
         
-        // تحميل الصورة أولاً لمعرفة أبعادها
-        const tempImg = new Image();
-        tempImg.onload = function() {
-            console.log('🖼️ أبعاد الصورة:', this.width, 'x', this.height);
-            
-            // تعيين الصورة للمعرض
-            img.src = url;
-            img.style.opacity = '1';
-            
-            // ضبط حجم الصورة الكبيرة
-            if (this.width > 2000 || this.height > 2000) {
-                img.style.maxWidth = '95%';
-                img.style.maxHeight = '95vh';
-                img.style.objectFit = 'contain';
-            } else {
-                img.style.maxWidth = '100%';
-                img.style.maxHeight = '100vh';
-            }
-            
-            viewer.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            
-            // إضافة حدث للنقر على الصورة لمنع الإغلاق عند النقر عليها
-            img.onclick = function(event) {
-                event.stopPropagation();
-            };
-        };
+        setupViewerListeners();
+        showZoomNotice();
+    }
+    
+    function zoomImage(amount) {
+        const img = document.getElementById('viewer-img');
+        const viewer = document.getElementById('viewer');
         
-        tempImg.onerror = function() {
-            console.log('❌ فشل تحميل الصورة للمعرض:', url);
-            alert('❌ تعذر تحميل الصورة');
-        };
+        currentZoom += amount;
         
-        tempImg.src = url;
+        if (currentZoom < minZoom) currentZoom = minZoom;
+        if (currentZoom > maxZoom) currentZoom = maxZoom;
+        
+        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+        
+        if (currentZoom > 1) {
+            viewer.classList.add('zoomed');
+            img.classList.remove('zoomable');
+        } else {
+            viewer.classList.remove('zoomed');
+            img.classList.add('zoomable');
+        }
+    }
+    
+    function resetZoom() {
+        const img = document.getElementById('viewer-img');
+        const viewer = document.getElementById('viewer');
+        
+        currentZoom = 1;
+        translateX = 0;
+        translateY = 0;
+        
+        img.style.transform = 'scale(1) translate(0px, 0px)';
+        viewer.classList.remove('zoomed');
+        img.classList.add('zoomable');
     }
     
     function closeViewer() {
         const viewer = document.getElementById('viewer');
         viewer.style.display = 'none';
         document.body.style.overflow = 'auto';
+        removeViewerListeners();
+    }
+    
+    function closeViewerOnOverlay(event) {
+        if (event.target.id === 'viewer') {
+            closeViewer();
+        }
+    }
+    
+    function showZoomNotice() {
+        const notice = document.getElementById('zoom-notice');
+        notice.style.display = 'block';
+        
+        setTimeout(() => {
+            notice.style.opacity = '0';
+            setTimeout(() => {
+                notice.style.display = 'none';
+                notice.style.opacity = '1';
+            }, 500);
+        }, 3000);
+    }
+    
+    function setupViewerListeners() {
+        const img = document.getElementById('viewer-img');
+        const viewer = document.getElementById('viewer');
+        
+        img.addEventListener('dblclick', function(e) {
+            e.stopPropagation();
+            if (currentZoom === 1) {
+                zoomImage(1);
+            } else {
+                resetZoom();
+            }
+        });
+        
+        img.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (e.deltaY < 0) {
+                zoomImage(0.2);
+            } else {
+                zoomImage(-0.2);
+            }
+        });
+        
+        img.addEventListener('mousedown', startDrag);
+        img.addEventListener('touchstart', startDragTouch);
+        
+        document.addEventListener('keydown', handleKeydown);
+    }
+    
+    function removeViewerListeners() {
+        const img = document.getElementById('viewer-img');
+        img.removeEventListener('dblclick', null);
+        img.removeEventListener('wheel', null);
+        img.removeEventListener('mousedown', startDrag);
+        img.removeEventListener('touchstart', startDragTouch);
+        document.removeEventListener('keydown', handleKeydown);
+    }
+    
+    function startDrag(e) {
+        if (currentZoom <= 1) return;
+        
+        e.preventDefault();
+        isDragging = true;
+        startX = e.clientX - translateX;
+        startY = e.clientY - translateY;
+        
+        document.addEventListener('mousemove', doDrag);
+        document.addEventListener('mouseup', stopDrag);
+        
+        const viewer = document.getElementById('viewer');
+        viewer.style.cursor = 'grabbing';
+    }
+    
+    function startDragTouch(e) {
+        if (currentZoom <= 1) return;
+        
+        e.preventDefault();
+        isDragging = true;
+        const touch = e.touches[0];
+        startX = touch.clientX - translateX;
+        startY = touch.clientY - translateY;
+        
+        document.addEventListener('touchmove', doDragTouch);
+        document.addEventListener('touchend', stopDrag);
+    }
+    
+    function doDrag(e) {
+        if (!isDragging) return;
+        
+        translateX = e.clientX - startX;
+        translateY = e.clientY - startY;
+        
+        const img = document.getElementById('viewer-img');
+        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+    }
+    
+    function doDragTouch(e) {
+        if (!isDragging) return;
+        
+        const touch = e.touches[0];
+        translateX = touch.clientX - startX;
+        translateY = touch.clientY - startY;
+        
+        const img = document.getElementById('viewer-img');
+        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
+    }
+    
+    function stopDrag() {
+        isDragging = false;
+        document.removeEventListener('mousemove', doDrag);
+        document.removeEventListener('touchmove', doDragTouch);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchend', stopDrag);
+        
+        const viewer = document.getElementById('viewer');
+        viewer.style.cursor = 'grab';
+    }
+    
+    function handleKeydown(e) {
+        const viewer = document.getElementById('viewer');
+        if (viewer.style.display !== 'flex') return;
+        
+        switch(e.key) {
+            case 'Escape':
+                closeViewer();
+                break;
+            case '+':
+            case '=':
+                zoomImage(0.2);
+                break;
+            case '-':
+                zoomImage(-0.2);
+                break;
+            case '0':
+                resetZoom();
+                break;
+        }
     }
     
     // ========== دوال العرض الأساسية ==========
@@ -1776,41 +1989,15 @@
         const wmTxt = currentData.wm_text || ''; 
         const imgsArray = Object.keys(imgs).reverse();
         
-        return imgsArray.map((id, index) => {
-            const imgData = imgs[id];
-            const imgUrl = imgData.url || '';
-            
-            // التحقق من أن الرابط موجود وصالح
-            if (!imgUrl || imgUrl.trim() === '') {
-                return '';
-            }
-            
-            // إصلاح روابط imgbb
-            let fixedUrl = imgUrl;
-            if (imgUrl.includes('ibb.co') && !imgUrl.includes('i.ibb.co')) {
-                fixedUrl = imgUrl.replace('ibb.co', 'i.ibb.co');
-            }
-            
-            // إنشاء ID فريد للصورة
-            const imgId = `img-${Date.now()}-${index}`;
-            
-            return `
+        return imgsArray.map((id, index) => `
             <div class="card">
-                <div class="img-container" onclick="openImg('${fixedUrl}')" id="container-${imgId}">
-                    <img 
-                        src="${fixedUrl}" 
-                        loading="lazy"
-                        alt="تصميم ديكور - بصمة غير"
-                        style="width:100%; height:100%; object-fit:cover;"
-                        onload="document.getElementById('container-${imgId}').classList.remove('loading'); document.getElementById('container-${imgId}').classList.add('loaded');"
-                        onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect width=\"200\" height=\"200\" fill=\"%231a1a1a\"/><text x=\"100\" y=\"100\" text-anchor=\"middle\" dy=\".3em\" fill=\"%23c5a059\" font-family=\"Tajawal\" font-size=\"14\">بصمة غير</text></svg>'; document.getElementById('container-${imgId}').classList.remove('loading');"
-                    >
+                <div class="img-container" onclick="openImg('${imgs[id].url}')">
+                    <img src="${imgs[id].url}" loading="lazy">
                     <div class="wm-tag">${wmTxt}</div>
                 </div>
-                <button onclick="whatsappOrder('${fixedUrl}')" class="btn-order">استفسار</button>
+                <button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button>
             </div>
-            `;
-        }).join(''); 
+        `).join(''); 
     }
     
     // ========== تحميل البيانات من Firebase ==========
@@ -1848,9 +2035,6 @@
         if (isAdmin) {
             document.getElementById('protection-toggle').style.display = 'flex';
         }
-        
-        // إصلاح الصور بعد التحميل
-        setTimeout(fixLargeImages, 500);
     });
     
     function initThemeAndFont() {
@@ -2004,6 +2188,11 @@
     }
     
     // ========== باقي الدوال الأساسية ==========
+    // (هنا تأتي باقي الدوال التي لم تتغير كثيراً)
+    // مثل: renderAll, updateWorkStatus, startPartnersSlider, 
+    // submitReview, savePartnersTitle, addPartner, toggleAbout, go, t12, etc.
+    
+    // لأغراض الاختصار، سأضع الروابط الأساسية فقط:
     function getSmartSchedule(d) {
         if(!d.work_schedule) return "...";
         let groups = []; 
@@ -2062,15 +2251,7 @@
         }
         const ids = Object.keys(currentData.partners);
         if(ids.length === 0) return;
-        let html = ids.map((id, idx) => {
-            const partner = currentData.partners[id];
-            let url = partner.url || '';
-            // إصلاح روابط imgbb
-            if (url.includes('ibb.co') && !url.includes('i.ibb.co')) {
-                url = url.replace('ibb.co', 'i.ibb.co');
-            }
-            return `<div class="partner-slide" id="partner-${idx}"><img src="${url}" class="partner-img" oncontextmenu="return false;" onerror="this.style.display='none'"></div>`;
-        }).join('');
+        let html = ids.map((id, idx) => `<div class="partner-slide" id="partner-${idx}"><img src="${currentData.partners[id].url}" class="partner-img" oncontextmenu="return false;"></div>`).join('');
         container.innerHTML = html;
         const cycle = () => {
             const all = document.querySelectorAll('.partner-slide');
@@ -2214,17 +2395,10 @@
     
     function addPartner() { 
         const url = document.getElementById('new-partner-url').value; 
-        if(url) {
-            let fixedUrl = url.trim();
-            // إصلاح روابط imgbb
-            if (fixedUrl.includes('ibb.co') && !fixedUrl.includes('i.ibb.co')) {
-                fixedUrl = fixedUrl.replace('ibb.co', 'i.ibb.co');
-            }
-            db.ref(DB_PATH + '/partners').push({ url: fixedUrl }).then(() => { 
-                document.getElementById('new-partner-url').value = ''; 
-                showProtectionNotification('partnerAdded');
-            });
-        }
+        if(url) db.ref(DB_PATH + '/partners').push({ url: url.trim() }).then(() => { 
+            document.getElementById('new-partner-url').value = ''; 
+            showProtectionNotification('partnerAdded');
+        }); 
     }
     
     function addCatalog() { 
@@ -2312,7 +2486,6 @@
             protection_message: message
         }).then(() => {
             showProtectionNotification('settingsSaved');
-            enableProtection();
         });
     }
     
@@ -2330,20 +2503,7 @@
         const path = document.getElementById('upload-target-sel').value; 
         const urls = document.getElementById('links-in').value.split('\n').filter(u=>u.trim()); 
         if(!path || !urls.length) return showProtectionNotification('uploadError'); 
-        
-        urls.forEach(u => {
-            let fixedUrl = u.trim();
-            // إصلاح روابط imgbb تلقائياً
-            if (fixedUrl.includes('ibb.co') && !fixedUrl.includes('i.ibb.co')) {
-                fixedUrl = fixedUrl.replace('ibb.co', 'i.ibb.co');
-            }
-            // إصلاح روابط HTTP إلى HTTPS
-            if (fixedUrl.startsWith('http://')) {
-                fixedUrl = fixedUrl.replace('http://', 'https://');
-            }
-            db.ref(DB_PATH+'/'+path+'/imgs').push({url: fixedUrl});
-        }); 
-        
+        urls.forEach(u => db.ref(DB_PATH+'/'+path+'/imgs').push({url: u.trim()})); 
         showProtectionNotification('photosPublished');
         document.getElementById('links-in').value = ''; 
     }
@@ -2383,17 +2543,11 @@
         
         let html = '';
         imgs.reverse().forEach(imgId => { 
-            let imgUrl = folder.imgs[imgId].url;
-            // إصلاح الروابط
-            if (imgUrl.includes('ibb.co') && !imgUrl.includes('i.ibb.co')) {
-                imgUrl = imgUrl.replace('ibb.co', 'i.ibb.co');
-            }
-            
+            const imgUrl = folder.imgs[imgId].url;
             html += `
             <div style="background:var(--input-bg); padding:10px; border-radius:8px; border:1px solid var(--border);">
                 <img src="${imgUrl}" 
-                     style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:4px; margin-bottom:8px;"
-                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect width=\"200\" height=\"200\" fill=\"%231a1a1a\"/><text x=\"100\" y=\"100\" text-anchor=\"middle\" dy=\".3em\" fill=\"%23c5a059\" font-family=\"Tajawal\" font-size=\"14\">بصمة غير</text></svg>';">
+                     style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:4px; margin-bottom:8px;">
                 <div style="display:flex; gap:5px;">
                     <button onclick="openImg('${imgUrl}')" 
                             style="flex:1; background:var(--gold); border:none; color:#000; padding:8px; border-radius:4px; font-weight:bold;">
@@ -2448,13 +2602,7 @@
         document.getElementById('admin-partners-title').value = currentData.partners_title || ''; 
         if(currentData.partners) { 
             Object.keys(currentData.partners).forEach(id => { 
-                const partner = currentData.partners[id];
-                let imgUrl = partner.url || '';
-                // إصلاح الروابط للعرض
-                if (imgUrl.includes('ibb.co') && !imgUrl.includes('i.ibb.co')) {
-                    imgUrl = imgUrl.replace('ibb.co', 'i.ibb.co');
-                }
-                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px;"><img src="${imgUrl}" style="height:40px; width:40px; object-fit:contain;" onerror="this.style.display='none'"><span style="flex-grow:1; font-size:0.7rem; color:var(--text-secondary); overflow:hidden;">${partner.url}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button></div>`; 
+                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px;"><img src="${currentData.partners[id].url}" style="height:40px; width:40px; object-fit:contain;"><span style="flex-grow:1; font-size:0.7rem; color:var(--text-secondary); overflow:hidden;">${currentData.partners[id].url}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button></div>`; 
             }); 
         } 
     }
@@ -2485,7 +2633,7 @@
             protectionSettings = d.protection_settings;
             document.getElementById('enable-right-click-protection').checked = protectionSettings.rightClick || true;
             document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts || true;
-            document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection || false;
+            document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection || true;
             document.getElementById('enable-selection-protection').checked = protectionSettings.textSelection || true;
             document.getElementById('enable-dev-tools-protection').checked = protectionSettings.devTools || true;
             document.getElementById('enable-fullscreen-protection').checked = protectionSettings.fullscreenProtection || true;
@@ -2531,8 +2679,9 @@
         window.reviewInterval = setInterval(cycle, 4000);
     }
     
-    // تحديث حالة العمل كل دقيقة
+    // تحديث حالة العمل كل ثانية
     setInterval(updateWorkStatus, 60000);
 </script>
 </body>
-                    </html>
+    </html>
+  
