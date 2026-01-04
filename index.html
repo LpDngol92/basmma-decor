@@ -183,39 +183,6 @@
         }
         /* ========== نهاية تنبيه الحماية ========== */
         
-        /* ========== طبقة الحماية المتقدمة ========== */
-        #protection-shield {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2147483647; /* أعلى قيمة z-index ممكنة */
-            pointer-events: none; /* لا تمنع التفاعلات العادية */
-        }
-        
-        .protection-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-        }
-        
-        /* مناطق خاصة للحماية عند التكبير */
-        #viewer.protected::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: transparent;
-            z-index: 2147483646;
-        }
-        /* ========== نهاية طبقة الحماية ========== */
-        
         #splash { 
             position: fixed; 
             inset: 0; 
@@ -608,6 +575,7 @@
             aspect-ratio: 1/1; 
             cursor: pointer; 
             overflow: hidden; 
+            background: rgba(0,0,0,0.1);
         }
         
         .img-container img { 
@@ -615,10 +583,23 @@
             height: 100%; 
             object-fit: cover; 
             transition: transform 0.5s ease;
+            background: linear-gradient(45deg, var(--bg) 25%, transparent 25%, transparent 75%, var(--bg) 75%);
+            background-size: 20px 20px;
         }
         
         .img-container:hover img {
             transform: scale(1.05);
+        }
+        
+        .img-container.loading img {
+            opacity: 0.5;
+            filter: blur(5px);
+        }
+        
+        .img-container.loaded img {
+            opacity: 1;
+            filter: blur(0);
+            transition: opacity 0.3s ease, filter 0.3s ease;
         }
         
         .wm-tag { 
@@ -715,7 +696,7 @@
             transform: scale(1.2);
         }
         
-        /* ========== المعرض المعدل (بدون أزرار) ========== */
+        /* ========== المعرض المعدل ========== */
         #viewer { 
             position: fixed; 
             inset: 0; 
@@ -743,14 +724,15 @@
         }
         
         #viewer-img { 
-            max-width: 95%; 
-            max-height: 95vh; 
+            max-width: 100%; 
+            max-height: 100vh; 
+            width: auto;
+            height: auto;
             object-fit: contain;
             cursor: pointer;
-            transition: transform 0.3s ease;
-            transform-origin: center center;
             user-select: none;
             -webkit-user-drag: none;
+            transition: transform 0.3s ease;
         }
         
         /* إزالة جميع أزرار التحكم السابقة */
@@ -984,14 +966,25 @@
         .logout-btn {
             margin-top: 20px !important;
         }
+        
+        /* مؤشر تحميل الصور */
+        .image-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--gold);
+            font-size: 2rem;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
     </style>
 </head>
 <body>
-<!-- طبقة الحماية المتقدمة (غير مرئية) -->
-<div id="protection-shield">
-    <div class="protection-overlay"></div>
-</div>
-
 <!-- تنبيه الحماية المتطور -->
 <div id="protection-notification">
     <div class="protection-icon-small">
@@ -1058,7 +1051,7 @@
     <i class="fas fa-shield-alt"></i>
 </button>
 
-<!-- ========== المعرض المعدل (بدون أزرار) ========== -->
+<!-- ========== المعرض المعدل ========== -->
 <div id="viewer" onclick="closeViewer()">
     <div id="viewer-container">
         <img id="viewer-img" src="" onclick="event.stopPropagation()">
@@ -1068,7 +1061,7 @@
 
 <div id="admin-panel">
     <div class="admin-box">
-        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v164</h2>
+        <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة v165</h2>
         
         <!-- قسم إدارة الحماية -->
         <div class="collapse-section">
@@ -1088,8 +1081,8 @@
                             منع اختصارات لوحة المفاتيح (F12, Ctrl+U, etc.)
                         </label>
                         <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
-                            <input type="checkbox" id="enable-image-protection" checked>
-                            منع سحب وحفظ الصور
+                            <input type="checkbox" id="enable-image-protection">
+                            منع سحب وحفظ الصور (غير مفعل - لإظهار الصور)
                         </label>
                         <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
                             <input type="checkbox" id="enable-selection-protection" checked>
@@ -1113,7 +1106,7 @@
                     
                     <div style="margin-top:20px; padding:15px; background:rgba(46, 204, 113, 0.1); border-radius:10px;">
                         <p style="color:var(--green); font-weight:bold; margin-bottom:5px;">ملاحظة:</p>
-                        <p style="color:var(--text-secondary); font-size:0.9rem;">يمكنك تفعيل/تعطيل الحماية مؤقتاً من الزر الأخضر في الزاوية</p>
+                        <p style="color:var(--text-secondary); font-size:0.9rem;">إعدادات الحماية لا تؤثر على عرض الصور. الصور ستعرض بشكل طبيعي.</p>
                     </div>
                 </div>
             </div>
@@ -1339,7 +1332,7 @@
     let protectionSettings = {
         rightClick: true,
         keyboardShortcuts: true,
-        imageProtection: true,
+        imageProtection: false, // معطلة لإظهار الصور
         textSelection: true,
         devTools: true,
         fullscreenProtection: true
@@ -1350,7 +1343,55 @@
         console.log("✅ تم تحميل الصفحة");
         enableProtection();
         setupAuthListener();
+        
+        // حل مشكلة الصور الكبيرة
+        fixLargeImages();
     });
+    
+    // حل مشكلة الصور الكبيرة
+    function fixLargeImages() {
+        // إضافة معالج لتحميل الصور
+        document.addEventListener('DOMContentLoaded', function() {
+            const images = document.querySelectorAll('img:not(.partner-img):not(#viewer-img)');
+            
+            images.forEach(img => {
+                // إضافة مؤشر تحميل
+                if (img.parentElement.classList.contains('img-container')) {
+                    img.parentElement.classList.add('loading');
+                }
+                
+                img.onload = function() {
+                    console.log('✅ تم تحميل الصورة:', this.src);
+                    if (this.parentElement.classList.contains('img-container')) {
+                        this.parentElement.classList.remove('loading');
+                        this.parentElement.classList.add('loaded');
+                    }
+                    
+                    // تحسين حجم الصورة الكبيرة
+                    if (this.naturalWidth > 2000 || this.naturalHeight > 2000) {
+                        console.log('🖼️ صورة كبيرة تم اكتشافها:', this.naturalWidth, 'x', this.naturalHeight);
+                        this.style.width = '100%';
+                        this.style.height = '100%';
+                        this.style.objectFit = 'cover';
+                    }
+                };
+                
+                img.onerror = function() {
+                    console.log('❌ فشل تحميل الصورة:', this.src);
+                    if (this.parentElement.classList.contains('img-container')) {
+                        this.parentElement.classList.remove('loading');
+                        // عرض صورة بديلة
+                        this.style.display = 'none';
+                        const container = this.parentElement;
+                        const errorMsg = document.createElement('div');
+                        errorMsg.innerHTML = '<i class="fas fa-image image-loading"></i>';
+                        errorMsg.style.cssText = 'position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); color:var(--gold); font-size:2rem;';
+                        container.appendChild(errorMsg);
+                    }
+                };
+            });
+        });
+    }
     
     // ========== نظام المصادقة ==========
     function setupAuthListener() {
@@ -1525,15 +1566,17 @@
         // منع اختصارات المفاتيح
         document.addEventListener('keydown', preventKeyboardShortcuts);
         
-        // حماية الصور
-        document.addEventListener('dragstart', preventImageDrag);
-        document.addEventListener('drop', preventImageDrop);
+        // حماية الصور (معطلة حالياً)
+        if (protectionSettings.imageProtection) {
+            document.addEventListener('dragstart', preventImageDrag);
+            document.addEventListener('drop', preventImageDrop);
+        }
         
         // منع النسخ
         document.addEventListener('copy', preventCopy);
         document.addEventListener('cut', preventCopy);
         
-        console.log("✅ تم تفعيل الحماية");
+        console.log("✅ تم تفعيل الحماية (حماية الصور معطلة)");
     }
     
     function disableProtection() {
@@ -1567,13 +1610,16 @@
     // دوال الحماية
     function preventRightClick(e) {
         if (!isProtectionEnabled) return;
-        e.preventDefault();
-        showProtectionNotification('rightClick');
-        return false;
+        if (protectionSettings.rightClick) {
+            e.preventDefault();
+            showProtectionNotification('rightClick');
+            return false;
+        }
     }
     
     function preventKeyboardShortcuts(e) {
         if (!isProtectionEnabled) return;
+        if (!protectionSettings.keyboardShortcuts) return;
         
         // منع F12, Ctrl+Shift+I, Ctrl+U, etc.
         if (e.keyCode === 123 || // F12
@@ -1586,7 +1632,7 @@
     }
     
     function preventImageDrag(e) {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled || !protectionSettings.imageProtection) return;
         if (e.target.tagName === 'IMG') {
             e.preventDefault();
             showProtectionNotification('imageProtection');
@@ -1595,14 +1641,14 @@
     }
     
     function preventImageDrop(e) {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled || !protectionSettings.imageProtection) return;
         e.preventDefault();
         showProtectionNotification('imageProtection');
         return false;
     }
     
     function preventCopy(e) {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled || !protectionSettings.textSelection) return;
         const tagName = e.target.tagName;
         if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
             e.preventDefault();
@@ -1673,19 +1719,48 @@
         document.getElementById('protection-notification').style.display = 'none';
     }
     
-    // ========== المعرض المعدل (بدون أزرار) ==========
+    // ========== المعرض المعدل ==========
     function openImg(url) {
         const viewer = document.getElementById('viewer');
         const img = document.getElementById('viewer-img');
         
-        img.src = url;
-        viewer.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
+        // إضافة مؤشر تحميل
+        img.style.opacity = '0.5';
         
-        // إضافة حدث للنقر على الصورة لمنع الإغلاق عند النقر عليها
-        img.onclick = function(event) {
-            event.stopPropagation();
+        // تحميل الصورة أولاً لمعرفة أبعادها
+        const tempImg = new Image();
+        tempImg.onload = function() {
+            console.log('🖼️ أبعاد الصورة:', this.width, 'x', this.height);
+            
+            // تعيين الصورة للمعرض
+            img.src = url;
+            img.style.opacity = '1';
+            
+            // ضبط حجم الصورة الكبيرة
+            if (this.width > 2000 || this.height > 2000) {
+                img.style.maxWidth = '95%';
+                img.style.maxHeight = '95vh';
+                img.style.objectFit = 'contain';
+            } else {
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100vh';
+            }
+            
+            viewer.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // إضافة حدث للنقر على الصورة لمنع الإغلاق عند النقر عليها
+            img.onclick = function(event) {
+                event.stopPropagation();
+            };
         };
+        
+        tempImg.onerror = function() {
+            console.log('❌ فشل تحميل الصورة للمعرض:', url);
+            alert('❌ تعذر تحميل الصورة');
+        };
+        
+        tempImg.src = url;
     }
     
     function closeViewer() {
@@ -1710,13 +1785,29 @@
                 return '';
             }
             
+            // إصلاح روابط imgbb
+            let fixedUrl = imgUrl;
+            if (imgUrl.includes('ibb.co') && !imgUrl.includes('i.ibb.co')) {
+                fixedUrl = imgUrl.replace('ibb.co', 'i.ibb.co');
+            }
+            
+            // إنشاء ID فريد للصورة
+            const imgId = `img-${Date.now()}-${index}`;
+            
             return `
             <div class="card">
-                <div class="img-container" onclick="openImg('${imgUrl}')">
-                    <img src="${imgUrl}" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);\'>صورة غير متاحة</div>';">
+                <div class="img-container" onclick="openImg('${fixedUrl}')" id="container-${imgId}">
+                    <img 
+                        src="${fixedUrl}" 
+                        loading="lazy"
+                        alt="تصميم ديكور - بصمة غير"
+                        style="width:100%; height:100%; object-fit:cover;"
+                        onload="document.getElementById('container-${imgId}').classList.remove('loading'); document.getElementById('container-${imgId}').classList.add('loaded');"
+                        onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect width=\"200\" height=\"200\" fill=\"%231a1a1a\"/><text x=\"100\" y=\"100\" text-anchor=\"middle\" dy=\".3em\" fill=\"%23c5a059\" font-family=\"Tajawal\" font-size=\"14\">بصمة غير</text></svg>'; document.getElementById('container-${imgId}').classList.remove('loading');"
+                    >
                     <div class="wm-tag">${wmTxt}</div>
                 </div>
-                <button onclick="whatsappOrder('${imgUrl}')" class="btn-order">استفسار</button>
+                <button onclick="whatsappOrder('${fixedUrl}')" class="btn-order">استفسار</button>
             </div>
             `;
         }).join(''); 
@@ -1757,6 +1848,9 @@
         if (isAdmin) {
             document.getElementById('protection-toggle').style.display = 'flex';
         }
+        
+        // إصلاح الصور بعد التحميل
+        setTimeout(fixLargeImages, 500);
     });
     
     function initThemeAndFont() {
@@ -1970,7 +2064,11 @@
         if(ids.length === 0) return;
         let html = ids.map((id, idx) => {
             const partner = currentData.partners[id];
-            const url = partner.url || '';
+            let url = partner.url || '';
+            // إصلاح روابط imgbb
+            if (url.includes('ibb.co') && !url.includes('i.ibb.co')) {
+                url = url.replace('ibb.co', 'i.ibb.co');
+            }
             return `<div class="partner-slide" id="partner-${idx}"><img src="${url}" class="partner-img" oncontextmenu="return false;" onerror="this.style.display='none'"></div>`;
         }).join('');
         container.innerHTML = html;
@@ -2116,10 +2214,17 @@
     
     function addPartner() { 
         const url = document.getElementById('new-partner-url').value; 
-        if(url) db.ref(DB_PATH + '/partners').push({ url: url.trim() }).then(() => { 
-            document.getElementById('new-partner-url').value = ''; 
-            showProtectionNotification('partnerAdded');
-        }); 
+        if(url) {
+            let fixedUrl = url.trim();
+            // إصلاح روابط imgbb
+            if (fixedUrl.includes('ibb.co') && !fixedUrl.includes('i.ibb.co')) {
+                fixedUrl = fixedUrl.replace('ibb.co', 'i.ibb.co');
+            }
+            db.ref(DB_PATH + '/partners').push({ url: fixedUrl }).then(() => { 
+                document.getElementById('new-partner-url').value = ''; 
+                showProtectionNotification('partnerAdded');
+            });
+        }
     }
     
     function addCatalog() { 
@@ -2207,6 +2312,7 @@
             protection_message: message
         }).then(() => {
             showProtectionNotification('settingsSaved');
+            enableProtection();
         });
     }
     
@@ -2224,7 +2330,20 @@
         const path = document.getElementById('upload-target-sel').value; 
         const urls = document.getElementById('links-in').value.split('\n').filter(u=>u.trim()); 
         if(!path || !urls.length) return showProtectionNotification('uploadError'); 
-        urls.forEach(u => db.ref(DB_PATH+'/'+path+'/imgs').push({url: u.trim()})); 
+        
+        urls.forEach(u => {
+            let fixedUrl = u.trim();
+            // إصلاح روابط imgbb تلقائياً
+            if (fixedUrl.includes('ibb.co') && !fixedUrl.includes('i.ibb.co')) {
+                fixedUrl = fixedUrl.replace('ibb.co', 'i.ibb.co');
+            }
+            // إصلاح روابط HTTP إلى HTTPS
+            if (fixedUrl.startsWith('http://')) {
+                fixedUrl = fixedUrl.replace('http://', 'https://');
+            }
+            db.ref(DB_PATH+'/'+path+'/imgs').push({url: fixedUrl});
+        }); 
+        
         showProtectionNotification('photosPublished');
         document.getElementById('links-in').value = ''; 
     }
@@ -2264,12 +2383,17 @@
         
         let html = '';
         imgs.reverse().forEach(imgId => { 
-            const imgUrl = folder.imgs[imgId].url;
+            let imgUrl = folder.imgs[imgId].url;
+            // إصلاح الروابط
+            if (imgUrl.includes('ibb.co') && !imgUrl.includes('i.ibb.co')) {
+                imgUrl = imgUrl.replace('ibb.co', 'i.ibb.co');
+            }
+            
             html += `
             <div style="background:var(--input-bg); padding:10px; border-radius:8px; border:1px solid var(--border);">
                 <img src="${imgUrl}" 
                      style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:4px; margin-bottom:8px;"
-                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); background:var(--input-bg); border-radius:4px;\'>صورة غير متاحة</div>' + this.parentElement.innerHTML;">
+                     onerror="this.onerror=null; this.src='data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"200\" height=\"200\" viewBox=\"0 0 200 200\"><rect width=\"200\" height=\"200\" fill=\"%231a1a1a\"/><text x=\"100\" y=\"100\" text-anchor=\"middle\" dy=\".3em\" fill=\"%23c5a059\" font-family=\"Tajawal\" font-size=\"14\">بصمة غير</text></svg>';">
                 <div style="display:flex; gap:5px;">
                     <button onclick="openImg('${imgUrl}')" 
                             style="flex:1; background:var(--gold); border:none; color:#000; padding:8px; border-radius:4px; font-weight:bold;">
@@ -2325,7 +2449,12 @@
         if(currentData.partners) { 
             Object.keys(currentData.partners).forEach(id => { 
                 const partner = currentData.partners[id];
-                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px;"><img src="${partner.url}" style="height:40px; width:40px; object-fit:contain;" onerror="this.style.display='none'"><span style="flex-grow:1; font-size:0.7rem; color:var(--text-secondary); overflow:hidden;">${partner.url}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button></div>`; 
+                let imgUrl = partner.url || '';
+                // إصلاح الروابط للعرض
+                if (imgUrl.includes('ibb.co') && !imgUrl.includes('i.ibb.co')) {
+                    imgUrl = imgUrl.replace('ibb.co', 'i.ibb.co');
+                }
+                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px;"><img src="${imgUrl}" style="height:40px; width:40px; object-fit:contain;" onerror="this.style.display='none'"><span style="flex-grow:1; font-size:0.7rem; color:var(--text-secondary); overflow:hidden;">${partner.url}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button></div>`; 
             }); 
         } 
     }
@@ -2356,7 +2485,7 @@
             protectionSettings = d.protection_settings;
             document.getElementById('enable-right-click-protection').checked = protectionSettings.rightClick || true;
             document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts || true;
-            document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection || true;
+            document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection || false;
             document.getElementById('enable-selection-protection').checked = protectionSettings.textSelection || true;
             document.getElementById('enable-dev-tools-protection').checked = protectionSettings.devTools || true;
             document.getElementById('enable-fullscreen-protection').checked = protectionSettings.fullscreenProtection || true;
@@ -2406,4 +2535,4 @@
     setInterval(updateWorkStatus, 60000);
 </script>
 </body>
-    </html>
+                    </html>
