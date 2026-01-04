@@ -1413,6 +1413,38 @@
 <div id="hidden-trigger" onclick="checkAccess()"></div>
 
 <script>
+    // ========== حماية مطلقة ضد فتح السورس وملفات JSON ==========
+(function() {
+    // 1. حماية ضد Ctrl+U (عرض السورس)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey && e.key === 'u') || 
+            (e.ctrlKey && e.keyCode === 85) ||
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.keyCode === 73)) ||
+            e.keyCode === 123) {
+            e.preventDefault();
+            window.location.href = "https://www.google.com";
+            return false;
+        }
+    });
+    
+    // 2. حماية ضد الوصول لملفات JSON
+    if (window.location.href.includes('.json') || 
+        window.location.href.includes('firebaseio.com')) {
+        window.location.href = "https://www.google.com";
+    }
+    
+    // 3. حماية ضد فحص الشبكة (لجلب JSON)
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        if (typeof args[0] === 'string' && 
+            (args[0].includes('.json') || args[0].includes('firebaseio.com'))) {
+            window.location.href = "https://www.google.com";
+            return Promise.reject();
+        }
+        return originalFetch.apply(this, args);
+    };
+})();
+// ========== نهاية الحماية ==========
     // ========== تهيئة Firebase الكاملة ==========
     const firebaseConfig = {
         apiKey: window.FIREBASE_API_KEY || "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
