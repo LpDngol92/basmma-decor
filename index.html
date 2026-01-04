@@ -715,7 +715,7 @@
             transform: scale(1.2);
         }
         
-        /* ========== المعرض المعدل (بدون تقليب صور) ========== */
+        /* ========== المعرض المعدل (بدون أزرار) ========== */
         #viewer { 
             position: fixed; 
             inset: 0; 
@@ -724,20 +724,12 @@
             display: none; 
             align-items: center; 
             justify-content: center; 
-            cursor: zoom-out;
+            cursor: pointer;
             transition: background-color 0.3s ease;
         }
         
         .theme-white #viewer {
             background: rgba(255,255,255,0.98);
-        }
-        
-        #viewer.zoomed {
-            cursor: grab;
-        }
-        
-        #viewer.zoomed:active {
-            cursor: grabbing;
         }
         
         #viewer-container {
@@ -761,91 +753,13 @@
             -webkit-user-drag: none;
         }
         
-        #viewer-img.zoomable {
-            cursor: zoom-in;
-        }
-        
-        /* أزرار التحكم */
+        /* إزالة جميع أزرار التحكم السابقة */
         .viewer-controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 15px;
-            z-index: 1000002;
-        }
-        
-        .viewer-btn {
-            width: 50px;
-            height: 50px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(10px);
-        }
-        
-        .theme-white .viewer-btn {
-            background: rgba(255,255,255,0.7);
-            color: #333;
-        }
-        
-        .viewer-btn:hover {
-            background: var(--gold);
-            color: #000;
-            transform: scale(1.1);
-        }
-        
-        .viewer-btn.close-btn {
-            background: rgba(231, 76, 60, 0.7);
-        }
-        
-        .viewer-btn.close-btn:hover {
-            background: #e74c3c;
-        }
-        
-        /* إزالة أزرار التنقل بين الصور */
-        .nav-btn-left, .nav-btn-right {
             display: none !important;
         }
         
-        /* إزالة عداد الصور */
-        .image-counter {
-            display: none !important;
-        }
-        
-        /* إزالة أزرار الزوم السفلية */
-        .zoom-controls {
-            display: none !important;
-        }
-        
-        /* إشعار الزوم */
         .zoom-notice {
-            position: fixed;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            z-index: 1000002;
-            display: none;
-            backdrop-filter: blur(10px);
-            text-align: center;
-            border: 1px solid var(--gold);
-        }
-        
-        .theme-white .zoom-notice {
-            background: rgba(255,255,255,0.9);
-            color: #333;
+            display: none !important;
         }
         /* ========== نهاية المعرض المعدل ========== */
         
@@ -1144,32 +1058,10 @@
     <i class="fas fa-shield-alt"></i>
 </button>
 
-<!-- ========== المعرض المعدل (بدون تقليب صور) ========== -->
-<div id="viewer" onclick="closeViewerOnOverlay(event)">
+<!-- ========== المعرض المعدل (بدون أزرار) ========== -->
+<div id="viewer" onclick="closeViewer()">
     <div id="viewer-container">
-        <img id="viewer-img" src="" class="zoomable">
-        
-        <!-- أزرار التحكم العلوية -->
-        <div class="viewer-controls">
-            <button class="viewer-btn zoom-in-btn" onclick="zoomImage(0.2)" title="تكبير">
-                <i class="fas fa-search-plus"></i>
-            </button>
-            <button class="viewer-btn zoom-out-btn" onclick="zoomImage(-0.2)" title="تصغير">
-                <i class="fas fa-search-minus"></i>
-            </button>
-            <button class="viewer-btn reset-btn" onclick="resetZoom()" title="إعادة تعيين">
-                <i class="fas fa-expand-alt"></i>
-            </button>
-            <button class="viewer-btn close-btn" onclick="closeViewer()" title="إغلاق (ESC)">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        
-        <!-- إشعار التعليمات -->
-        <div class="zoom-notice" id="zoom-notice">
-            <div>🖱️ استخدم عجلة الماوس للتكبير</div>
-            <div style="font-size:0.8rem; margin-top:5px; opacity:0.8;">أو المس وشبك للتحريك</div>
-        </div>
+        <img id="viewer-img" src="" onclick="event.stopPropagation()">
     </div>
 </div>
 <!-- ========== نهاية المعرض المعدل ========== -->
@@ -1477,27 +1369,26 @@
     
     // ========== دالة الدخول الأساسية ==========
     function checkAccess() {
-    const pass = prompt("🔐 أدخل رمز الإدارة:");
-    
-    // الرقم  تبي
-    
-const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
-    
-    if (pass === ADMIN_PASSWORD) {
-        isAdmin = true;
-        document.getElementById('admin-panel').style.display = 'block';
-        document.getElementById('protection-toggle').style.display = 'flex';
-        hideMaintenanceScreen();
-        fillAdminFields();
-        showProtectionNotification("✅ تم الدخول للإدارة");
+        const pass = prompt("🔐 أدخل رمز الإدارة:");
         
-        // حفظ الجلسة ليوم واحد
-        localStorage.setItem('admin_session', Date.now());
-        return true;
-    }
-    
-    alert("❌ الرمز خاطئ!");
-    return false;
+        // الرقم تبي
+        const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
+        
+        if (pass === ADMIN_PASSWORD) {
+            isAdmin = true;
+            document.getElementById('admin-panel').style.display = 'block';
+            document.getElementById('protection-toggle').style.display = 'flex';
+            hideMaintenanceScreen();
+            fillAdminFields();
+            showProtectionNotification("✅ تم الدخول للإدارة");
+            
+            // حفظ الجلسة ليوم واحد
+            localStorage.setItem('admin_session', Date.now());
+            return true;
+        }
+        
+        alert("❌ الرمز خاطئ!");
+        return false;
     }
     
     // الدخول بالإيميل والباسوورد
@@ -1729,7 +1620,7 @@ const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
         
         switch(actionType) {
             case 'rightClick':
-                message = '⛔ ';
+                message = '⛔ النقر الأيمن معطل لحماية المحتوى';
                 break;
             case 'devTools':
                 message = '⛔ أدوات المطورين معطلة لحماية المحتوى';
@@ -1782,204 +1673,25 @@ const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
         document.getElementById('protection-notification').style.display = 'none';
     }
     
-    // ========== المعرض (بدون تقليب صور) ==========
-    let currentZoom = 1;
-    let isDragging = false;
-    let startX = 0, startY = 0;
-    let translateX = 0, translateY = 0;
-    let maxZoom = 3;
-    let minZoom = 0.5;
-    
+    // ========== المعرض المعدل (بدون أزرار) ==========
     function openImg(url) {
         const viewer = document.getElementById('viewer');
         const img = document.getElementById('viewer-img');
         
         img.src = url;
-        resetZoom();
         viewer.style.display = 'flex';
         document.body.style.overflow = 'hidden';
         
-        setupViewerListeners();
-        showZoomNotice();
-    }
-    
-    function zoomImage(amount) {
-        const img = document.getElementById('viewer-img');
-        const viewer = document.getElementById('viewer');
-        
-        currentZoom += amount;
-        
-        if (currentZoom < minZoom) currentZoom = minZoom;
-        if (currentZoom > maxZoom) currentZoom = maxZoom;
-        
-        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
-        
-        if (currentZoom > 1) {
-            viewer.classList.add('zoomed');
-            img.classList.remove('zoomable');
-        } else {
-            viewer.classList.remove('zoomed');
-            img.classList.add('zoomable');
-        }
-    }
-    
-    function resetZoom() {
-        const img = document.getElementById('viewer-img');
-        const viewer = document.getElementById('viewer');
-        
-        currentZoom = 1;
-        translateX = 0;
-        translateY = 0;
-        
-        img.style.transform = 'scale(1) translate(0px, 0px)';
-        viewer.classList.remove('zoomed');
-        img.classList.add('zoomable');
+        // إضافة حدث للنقر على الصورة لمنع الإغلاق عند النقر عليها
+        img.onclick = function(event) {
+            event.stopPropagation();
+        };
     }
     
     function closeViewer() {
         const viewer = document.getElementById('viewer');
         viewer.style.display = 'none';
         document.body.style.overflow = 'auto';
-        removeViewerListeners();
-    }
-    
-    function closeViewerOnOverlay(event) {
-        if (event.target.id === 'viewer') {
-            closeViewer();
-        }
-    }
-    
-    function showZoomNotice() {
-        const notice = document.getElementById('zoom-notice');
-        notice.style.display = 'block';
-        
-        setTimeout(() => {
-            notice.style.opacity = '0';
-            setTimeout(() => {
-                notice.style.display = 'none';
-                notice.style.opacity = '1';
-            }, 500);
-        }, 3000);
-    }
-    
-    function setupViewerListeners() {
-        const img = document.getElementById('viewer-img');
-        const viewer = document.getElementById('viewer');
-        
-        img.addEventListener('dblclick', function(e) {
-            e.stopPropagation();
-            if (currentZoom === 1) {
-                zoomImage(1);
-            } else {
-                resetZoom();
-            }
-        });
-        
-        img.addEventListener('wheel', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            if (e.deltaY < 0) {
-                zoomImage(0.2);
-            } else {
-                zoomImage(-0.2);
-            }
-        });
-        
-        img.addEventListener('mousedown', startDrag);
-        img.addEventListener('touchstart', startDragTouch);
-        
-        document.addEventListener('keydown', handleKeydown);
-    }
-    
-    function removeViewerListeners() {
-        const img = document.getElementById('viewer-img');
-        img.removeEventListener('dblclick', null);
-        img.removeEventListener('wheel', null);
-        img.removeEventListener('mousedown', startDrag);
-        img.removeEventListener('touchstart', startDragTouch);
-        document.removeEventListener('keydown', handleKeydown);
-    }
-    
-    function startDrag(e) {
-        if (currentZoom <= 1) return;
-        
-        e.preventDefault();
-        isDragging = true;
-        startX = e.clientX - translateX;
-        startY = e.clientY - translateY;
-        
-        document.addEventListener('mousemove', doDrag);
-        document.addEventListener('mouseup', stopDrag);
-        
-        const viewer = document.getElementById('viewer');
-        viewer.style.cursor = 'grabbing';
-    }
-    
-    function startDragTouch(e) {
-        if (currentZoom <= 1) return;
-        
-        e.preventDefault();
-        isDragging = true;
-        const touch = e.touches[0];
-        startX = touch.clientX - translateX;
-        startY = touch.clientY - translateY;
-        
-        document.addEventListener('touchmove', doDragTouch);
-        document.addEventListener('touchend', stopDrag);
-    }
-    
-    function doDrag(e) {
-        if (!isDragging) return;
-        
-        translateX = e.clientX - startX;
-        translateY = e.clientY - startY;
-        
-        const img = document.getElementById('viewer-img');
-        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
-    }
-    
-    function doDragTouch(e) {
-        if (!isDragging) return;
-        
-        const touch = e.touches[0];
-        translateX = touch.clientX - startX;
-        translateY = touch.clientY - startY;
-        
-        const img = document.getElementById('viewer-img');
-        img.style.transform = `scale(${currentZoom}) translate(${translateX}px, ${translateY}px)`;
-    }
-    
-    function stopDrag() {
-        isDragging = false;
-        document.removeEventListener('mousemove', doDrag);
-        document.removeEventListener('touchmove', doDragTouch);
-        document.removeEventListener('mouseup', stopDrag);
-        document.removeEventListener('touchend', stopDrag);
-        
-        const viewer = document.getElementById('viewer');
-        viewer.style.cursor = 'grab';
-    }
-    
-    function handleKeydown(e) {
-        const viewer = document.getElementById('viewer');
-        if (viewer.style.display !== 'flex') return;
-        
-        switch(e.key) {
-            case 'Escape':
-                closeViewer();
-                break;
-            case '+':
-            case '=':
-                zoomImage(0.2);
-                break;
-            case '-':
-                zoomImage(-0.2);
-                break;
-            case '0':
-                resetZoom();
-                break;
-        }
     }
     
     // ========== دوال العرض الأساسية ==========
@@ -1989,15 +1701,25 @@ const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
         const wmTxt = currentData.wm_text || ''; 
         const imgsArray = Object.keys(imgs).reverse();
         
-        return imgsArray.map((id, index) => `
+        return imgsArray.map((id, index) => {
+            const imgData = imgs[id];
+            const imgUrl = imgData.url || '';
+            
+            // التحقق من أن الرابط موجود وصالح
+            if (!imgUrl || imgUrl.trim() === '') {
+                return '';
+            }
+            
+            return `
             <div class="card">
-                <div class="img-container" onclick="openImg('${imgs[id].url}')">
-                    <img src="${imgs[id].url}" loading="lazy">
+                <div class="img-container" onclick="openImg('${imgUrl}')">
+                    <img src="${imgUrl}" loading="lazy" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-secondary);\'>صورة غير متاحة</div>';">
                     <div class="wm-tag">${wmTxt}</div>
                 </div>
-                <button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button>
+                <button onclick="whatsappOrder('${imgUrl}')" class="btn-order">استفسار</button>
             </div>
-        `).join(''); 
+            `;
+        }).join(''); 
     }
     
     // ========== تحميل البيانات من Firebase ==========
@@ -2188,11 +1910,6 @@ const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
     }
     
     // ========== باقي الدوال الأساسية ==========
-    // (هنا تأتي باقي الدوال التي لم تتغير كثيراً)
-    // مثل: renderAll, updateWorkStatus, startPartnersSlider, 
-    // submitReview, savePartnersTitle, addPartner, toggleAbout, go, t12, etc.
-    
-    // لأغراض الاختصار، سأضع الروابط الأساسية فقط:
     function getSmartSchedule(d) {
         if(!d.work_schedule) return "...";
         let groups = []; 
@@ -2251,7 +1968,11 @@ const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
         }
         const ids = Object.keys(currentData.partners);
         if(ids.length === 0) return;
-        let html = ids.map((id, idx) => `<div class="partner-slide" id="partner-${idx}"><img src="${currentData.partners[id].url}" class="partner-img" oncontextmenu="return false;"></div>`).join('');
+        let html = ids.map((id, idx) => {
+            const partner = currentData.partners[id];
+            const url = partner.url || '';
+            return `<div class="partner-slide" id="partner-${idx}"><img src="${url}" class="partner-img" oncontextmenu="return false;" onerror="this.style.display='none'"></div>`;
+        }).join('');
         container.innerHTML = html;
         const cycle = () => {
             const all = document.querySelectorAll('.partner-slide');
@@ -2547,7 +2268,8 @@ const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
             html += `
             <div style="background:var(--input-bg); padding:10px; border-radius:8px; border:1px solid var(--border);">
                 <img src="${imgUrl}" 
-                     style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:4px; margin-bottom:8px;">
+                     style="width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:4px; margin-bottom:8px;"
+                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width:100%; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; color:var(--text-secondary); background:var(--input-bg); border-radius:4px;\'>صورة غير متاحة</div>' + this.parentElement.innerHTML;">
                 <div style="display:flex; gap:5px;">
                     <button onclick="openImg('${imgUrl}')" 
                             style="flex:1; background:var(--gold); border:none; color:#000; padding:8px; border-radius:4px; font-weight:bold;">
@@ -2602,7 +2324,8 @@ const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
         document.getElementById('admin-partners-title').value = currentData.partners_title || ''; 
         if(currentData.partners) { 
             Object.keys(currentData.partners).forEach(id => { 
-                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px;"><img src="${currentData.partners[id].url}" style="height:40px; width:40px; object-fit:contain;"><span style="flex-grow:1; font-size:0.7rem; color:var(--text-secondary); overflow:hidden;">${currentData.partners[id].url}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button></div>`; 
+                const partner = currentData.partners[id];
+                list.innerHTML += `<div style="display:flex; align-items:center; gap:10px; background:var(--input-bg); padding:10px; margin-bottom:10px; border-radius:8px;"><img src="${partner.url}" style="height:40px; width:40px; object-fit:contain;" onerror="this.style.display='none'"><span style="flex-grow:1; font-size:0.7rem; color:var(--text-secondary); overflow:hidden;">${partner.url}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" style="background:var(--red); color:#fff; border:none; padding:5px 10px; border-radius:4px;">حذف</button></div>`; 
             }); 
         } 
     }
@@ -2679,7 +2402,7 @@ const ADMIN_PASSWORD = String.fromCharCode(56,48,56,48,57,48);
         window.reviewInterval = setInterval(cycle, 4000);
     }
     
-    // تحديث حالة العمل كل ثانية
+    // تحديث حالة العمل كل دقيقة
     setInterval(updateWorkStatus, 60000);
 </script>
 </body>
