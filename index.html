@@ -1213,58 +1213,60 @@
     const userInput = prompt("🔐 أدخل رمز الإدارة:");
     if (!userInput) return;
     
-    console.log("🔍 جاري البحث عن الرقم:", userInput);
+    // إخفاء أي إشعارات موجودة
+    const notification = document.getElementById('protection-notification');
+    if (notification) {
+        notification.style.display = 'none';
+    }
     
-    // قراءة مباشرة من المسار الصحيح
-    db.ref('site_v28').once('value')
+    db.ref('site_v28/in').once('value')
         .then(snapshot => {
-            const data = snapshot.val();
-            console.log("📊 البيانات المستلمة من site_v28:", data);
+            const storedPassword = snapshot.val();
+            console.log("كلمة السر المخزنة:", storedPassword);
+            console.log("المدخل:", userInput);
             
-            if (!data) {
-                showProtectionNotification("❌ لا توجد بيانات في قاعدة البيانات");
-                return;
-            }
-            
-            // الحالة 1: كلمة السر في data.in (كقيمة مباشرة)
-            if (data.in && data.in.toString() === userInput.toString()) {
-                console.log("✅ تم العثور على الرقم في data.in");
-                enterAdminPanel();
-                return;
-            }
-            
-            // الحالة 2: كلمة السر مخزنة كنص في data.in
-            if (data.in && typeof data.in === 'string' && data.in.trim() === userInput.trim()) {
-                console.log("✅ تم العثور على الرقم في data.in (كنص)");
-                enterAdminPanel();
-                return;
-            }
-            
-            // الحالة 3: البحث في جميع المفاتيح
-            let found = false;
-            for (const key in data) {
-                if (data[key] && data[key].toString() === userInput.toString()) {
-                    console.log(`✅ تم العثور على الرقم في data.${key}`);
-                    found = true;
-                    break;
+            if (storedPassword == userInput) {
+                // النجاح - فتح لوحة الإدارة مباشرة
+                isAdmin = true;
+                const adminPanel = document.getElementById('admin-panel');
+                if (adminPanel) {
+                    adminPanel.style.display = 'block';
                 }
-            }
-            
-            if (found) {
-                enterAdminPanel();
+                
+                // عرض رسالة نجاح
+                setTimeout(() => {
+                    const successMsg = "✅ تم الدخول بنجاح!";
+                    // حاول استخدام showProtectionNotification أولاً
+                    if (typeof showProtectionNotification === 'function') {
+                        showProtectionNotification(successMsg);
+                    } else {
+                        // إذا لم تكن موجودة، استخدم alert
+                        alert(successMsg);
+                    }
+                }, 100);
+                
+                return true;
             } else {
-                console.log("❌ الرقم غير موجود. قيم المفاتيح:", {
-                    'data.in': data.in,
-                    'نوع data.in': typeof data.in,
-                    'طول data.in': data.in ? data.in.length : 0
-                });
-                showProtectionNotification("❌ الرمز غير صحيح! تأكد من الرقم.");
+                // الفشل
+                const errorMsg = "❌ الرمز غير صحيح!";
+                if (typeof showProtectionNotification === 'function') {
+                    showProtectionNotification(errorMsg);
+                } else {
+                    alert(errorMsg);
+                }
+                return false;
             }
         })
         .catch(error => {
-            console.error("🚨 خطأ في الاتصال:", error);
-            showProtectionNotification("❌ خطأ في الاتصال بالخادم");
+            console.error("خطأ:", error);
+            const errorMsg = "❌ خطأ في الاتصال";
+            if (typeof showProtectionNotification === 'function') {
+                showProtectionNotification(errorMsg);
+            } else {
+                alert(errorMsg);
+            }
         });
+}
     
     function enterAdminPanel() {
         isAdmin = true;
