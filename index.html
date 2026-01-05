@@ -1054,34 +1054,78 @@
             font-weight: bold;
         }
         
-        /* عرض مواعيد العمل في الصفحة الرئيسية */
+        /* ========== التعديل المطلوب: عرض مواعيد العمل في الصفحة الرئيسية ========== */
         .schedule-display {
-            text-align: right;
+            text-align: center;
             line-height: 1.8;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
         }
         
         .schedule-group {
             margin-bottom: 10px;
+            width: 100%;
+            max-width: 400px;
         }
         
         .schedule-days {
             color: var(--gold);
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            text-align: center;
         }
         
         .schedule-times {
             color: var(--text-primary);
             margin-bottom: 8px;
+            text-align: center;
+            direction: ltr;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+        }
+        
+        .time-period {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            width: 100%;
+        }
+        
+        .period-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-left: 10px;
+            min-width: 80px;
+            text-align: right;
+        }
+        
+        .time-text {
+            font-weight: bold;
+            color: var(--text-primary);
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .time-separator {
+            margin: 0 5px;
+            color: var(--gold);
         }
         
         .holiday-text {
             color: var(--red);
             font-weight: bold;
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
             border-top: 1px solid var(--border);
+            text-align: center;
+            width: 100%;
         }
+        /* ========== نهاية التعديل المطلوب ========== */
     </style>
 </head>
 <body>
@@ -1889,20 +1933,18 @@
     // ========== الدوال الذكية لعرض المواعيد ==========
     
     function getSmartSchedule(d) {
-        if(!d.work_schedule) return "<p style='color:var(--text-secondary);'>لم يتم تحديد مواعيد العمل بعد</p>";
+        if(!d.work_schedule) return "<p style='color:var(--text-secondary); text-align:center;'>لم يتم تحديد مواعيد العمل بعد</p>";
         
         let groups = []; 
         let offDays = [];
-        const daysOrder = [6, 0, 1, 2, 3, 4, 5]; // السبت إلى الجمعة
+        const daysOrder = [6, 0, 1, 2, 3, 4, 5];
         const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
         
-        // تجميع الأيام المتشابهة في الجدول
         daysOrder.forEach((jsDay) => {
             const s = d.work_schedule[jsDay];
             const dayName = dayNames[jsDay];
             
             if(s && s.active) {
-                // إنشاء مفتاذ فريد للمجموعة
                 const key = `${s.s1_s || ''}-${s.s1_e || ''}-${s.s2_a || false}-${s.s2_s || ''}-${s.s2_e || ''}`;
                 let foundGroup = groups.find(g => g.key === key);
                 
@@ -1922,7 +1964,6 @@
         
         let html = "<div class='schedule-display'>";
         
-        // عرض المجموعات الذكية
         groups.forEach(group => {
             let daysText = '';
             if (group.days.length === 1) {
@@ -1933,17 +1974,31 @@
                 daysText = `من ${group.days[0]} إلى ${group.days[group.days.length-1]}`;
             }
             
+            // ========== التعديل المطلوب ==========
             html += `
             <div class="schedule-group">
-                <div class="schedule-days">${daysText}:</div>
+                <div class="schedule-days">${daysText}</div>
                 <div class="schedule-times">
-                    ${t12(group.data.s1_s || '09:00')} - ${t12(group.data.s1_e || '17:00')}
-                    ${group.data.s2_a ? `<br>فترة مسائية: ${t12(group.data.s2_s)} - ${t12(group.data.s2_e)}` : ''}
-                </div>
-            </div>`;
+                    <div class="time-period">
+                        <span class="period-label">الفترة الصباحية:</span>
+                        <span class="time-text">${t12(group.data.s1_s || '09:00')}</span>
+                        <span class="time-separator">إلى</span>
+                        <span class="time-text">${t12(group.data.s1_e || '17:00')}</span>
+                    </div>`;
+            
+            if (group.data.s2_a && group.data.s2_s && group.data.s2_e) {
+                html += `
+                    <div class="time-period">
+                        <span class="period-label">الفترة المسائية:</span>
+                        <span class="time-text">${t12(group.data.s2_s)}</span>
+                        <span class="time-separator">إلى</span>
+                        <span class="time-text">${t12(group.data.s2_e)}</span>
+                    </div>`;
+            }
+            
+            html += `</div></div>`;
         });
         
-        // عرض أيام الإجازة
         if (offDays.length > 0) {
             let offText = '';
             if (offDays.length === 1) {
@@ -1973,7 +2028,7 @@
         if(!d.work_schedule) return; 
         
         const now = new Date();
-        const dayJS = now.getDay(); // 0 لأحد، 1 لاثنين، إلخ
+        const dayJS = now.getDay();
         const schedule = d.work_schedule[dayJS];
         
         let statusHtml = '';
@@ -1988,7 +2043,6 @@
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
             let isOpen = false;
             
-            // فحص الفترة الصباحية
             const morningStart = toMins(schedule.s1_s || '09:00');
             const morningEnd = toMins(schedule.s1_e || '17:00');
             
@@ -1996,7 +2050,6 @@
                 isOpen = true;
             }
             
-            // فحص الفترة المسائية إذا كانت مفعلة
             if (!isOpen && schedule.s2_a) {
                 const eveningStart = toMins(schedule.s2_s);
                 const eveningEnd = toMins(schedule.s2_e);
@@ -2540,7 +2593,7 @@
     function fillAdminSchedule(d) { 
         const ed = document.getElementById('schedule-editor'); 
         ed.innerHTML = ''; 
-        const customOrder = [6, 0, 1, 2, 3, 4, 5]; // السبت إلى الجمعة
+        const customOrder = [6, 0, 1, 2, 3, 4, 5];
         customOrder.forEach((jsDay) => { 
             const dayName = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay]; 
             const s = (d.work_schedule && d.work_schedule[jsDay]) ? d.work_schedule[jsDay] : {active:false, s1_s:"09:00", s1_e:"17:00", s2_a:false};
@@ -2618,4 +2671,4 @@
     });
 </script>
 </body>
-</html>
+    </html>
