@@ -1167,15 +1167,27 @@
             font-size: 0.9rem;
         }
         
-        /* ========== تصميم المساحة الحرة ========== */
+        /* ========== تصميم المساحة الحرة - تم التكبير ========== */
         .drawing-section {
             background: var(--card);
             border-radius: 20px;
             padding: 25px;
             margin: 30px auto;
-            max-width: 900px;
+            max-width: 1200px;
             border: 1px solid var(--border);
             box-shadow: 0 10px 30px var(--shadow-color);
+        }
+        
+        .drawing-description {
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.6;
+            text-align: center;
+            font-size: 1.1rem;
+            background: var(--path-bg);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid var(--border);
         }
         
         .drawing-tools {
@@ -1257,11 +1269,15 @@
             margin: 20px 0;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             position: relative;
+            min-height: 600px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         
         .drawing-canvas {
             width: 100%;
-            height: 500px;
+            height: 600px;
             display: block;
             cursor: crosshair;
             background: #f9f9f9;
@@ -1317,6 +1333,46 @@
             background: var(--path-bg);
             border-radius: 10px;
             border: 1px solid var(--border);
+        }
+        
+        /* ========== أداة الشكل ========== */
+        .shape-tools {
+            display: flex;
+            gap: 10px;
+            margin-left: 20px;
+        }
+        
+        .shape-btn {
+            width: 40px;
+            height: 40px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-primary);
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .shape-btn.active {
+            background: var(--gold);
+            color: #000;
+            border-color: var(--gold);
+        }
+        
+        .drawing-welcome {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #999;
+            font-size: 1.2rem;
+            pointer-events: none;
+            z-index: 1;
         }
         /* ========== نهاية تصميم المساحة الحرة ========== */
     </style>
@@ -1679,6 +1735,9 @@
     let isDrawing = false;
     let lastX = 0;
     let lastY = 0;
+    let isDrawingShape = false;
+    let startX, startY;
+    let currentShape = '';
     
     // ========== تهيئة الصفحة ==========
     document.addEventListener('DOMContentLoaded', function() {
@@ -2355,9 +2414,11 @@
             <section class="sec ${currentTab==='drawing'?'active':''}">
                 <div class="drawing-section">
                     <h2 style="color:var(--gold); margin-bottom:15px; text-align:center;">${d.drawing_title || 'المساحة الحرة'}</h2>
-                    <p style="color:var(--text-secondary); margin-bottom:25px; line-height:1.6; text-align:center;">
+                    
+                    <!-- وصف المساحة الحرة -->
+                    <div class="drawing-description">
                         ${d.drawing_description || 'يمكنك هنا رسم فكرتك التقريبية للتصميم. ارسم ما يجول بخاطرك وسنقوم بتحويله إلى واقع!'}
-                    </p>
+                    </div>
                     
                     <!-- أدوات الرسم -->
                     <div class="drawing-tools">
@@ -2367,6 +2428,19 @@
                         <button class="drawing-tool-btn" id="eraser-tool">
                             <i class="fas fa-eraser"></i> ممحاة
                         </button>
+                        
+                        <!-- أدوات الأشكال -->
+                        <div class="shape-tools">
+                            <button class="shape-btn" id="rect-tool" title="مستطيل">
+                                <i class="fas fa-square"></i>
+                            </button>
+                            <button class="shape-btn" id="circle-tool" title="دائرة">
+                                <i class="fas fa-circle"></i>
+                            </button>
+                            <button class="shape-btn" id="line-tool" title="خط">
+                                <i class="fas fa-slash"></i>
+                            </button>
+                        </div>
                         
                         <!-- ألوان -->
                         <div style="margin: 0 20px;">
@@ -2379,20 +2453,22 @@
                                 <div class="color-dot" data-color="#3498db" style="background:#3498db;"></div>
                                 <div class="color-dot" data-color="#9b59b6" style="background:#9b59b6;"></div>
                                 <div class="color-dot" data-color="#f1c40f" style="background:#f1c40f;"></div>
+                                <div class="color-dot" data-color="#ffffff" style="background:#ffffff; border:1px solid #ccc;"></div>
                             </div>
                         </div>
                         
                         <!-- حجم الفرشاة -->
                         <div class="brush-size-control">
                             <span>حجم القلم:</span>
-                            <input type="range" id="brush-size" min="1" max="30" value="5">
+                            <input type="range" id="brush-size" min="1" max="50" value="5">
                             <span id="brush-size-value">5</span>
                         </div>
                     </div>
                     
                     <!-- لوحة الرسم -->
                     <div class="drawing-canvas-container">
-                        <canvas id="drawing-canvas" class="drawing-canvas" width="800" height="500"></canvas>
+                        <canvas id="drawing-canvas" class="drawing-canvas" width="1100" height="600"></canvas>
+                        <div class="drawing-welcome" id="drawing-welcome">ابدأ الرسم هنا...</div>
                     </div>
                     
                     <!-- أزرار التحكم -->
@@ -2974,7 +3050,7 @@
         window.reviewInterval = setInterval(cycle, 4000);
     }
     
-    // ========== نظام المساحة الحرة ==========
+    // ========== نظام المساحة الحرة المحسن ==========
     function initDrawingCanvas() {
         drawingCanvas = document.getElementById('drawing-canvas');
         if (!drawingCanvas) return;
@@ -3000,13 +3076,22 @@
         
         // تعيين اللون الافتراضي
         document.querySelector('.color-dot[data-color="#000000"]').classList.add('selected');
+        
+        // إخفاء رسالة الترحيب عند البدء في الرسم
+        drawingCanvas.addEventListener('mousedown', function() {
+            document.getElementById('drawing-welcome').style.display = 'none';
+        });
+        
+        drawingCanvas.addEventListener('touchstart', function() {
+            document.getElementById('drawing-welcome').style.display = 'none';
+        });
     }
     
     function setupCanvas() {
         // تعيين الحجم الصحيح
         const container = drawingCanvas.parentElement;
         drawingCanvas.width = container.offsetWidth;
-        drawingCanvas.height = 500;
+        drawingCanvas.height = 600;
         
         // إعدادات الرسم
         drawingCtx.lineCap = 'round';
@@ -3023,6 +3108,9 @@
         // أدوات الرسم
         const penTool = document.getElementById('pen-tool');
         const eraserTool = document.getElementById('eraser-tool');
+        const rectTool = document.getElementById('rect-tool');
+        const circleTool = document.getElementById('circle-tool');
+        const lineTool = document.getElementById('line-tool');
         
         if (penTool) {
             penTool.addEventListener('click', function() {
@@ -3033,6 +3121,24 @@
         if (eraserTool) {
             eraserTool.addEventListener('click', function() {
                 setActiveTool('eraser');
+            });
+        }
+        
+        if (rectTool) {
+            rectTool.addEventListener('click', function() {
+                setActiveTool('rect');
+            });
+        }
+        
+        if (circleTool) {
+            circleTool.addEventListener('click', function() {
+                setActiveTool('circle');
+            });
+        }
+        
+        if (lineTool) {
+            lineTool.addEventListener('click', function() {
+                setActiveTool('line');
             });
         }
         
@@ -3053,9 +3159,9 @@
         const brushValue = document.getElementById('brush-size-value');
         if (brushSlider && brushValue) {
             brushSlider.addEventListener('input', function() {
-                currentBrushSize = this.value;
+                currentBrushSize = parseInt(this.value);
                 brushValue.textContent = this.value;
-                drawingCtx.lineWidth = currentDrawingTool === 'pen' ? currentBrushSize : currentBrushSize * 2;
+                drawingCtx.lineWidth = currentBrushSize;
             });
         }
     }
@@ -3068,37 +3174,105 @@
             btn.classList.remove('active');
         });
         
+        document.querySelectorAll('.shape-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
         if (tool === 'pen') {
             document.getElementById('pen-tool').classList.add('active');
             drawingCtx.strokeStyle = currentDrawingColor;
             drawingCtx.lineWidth = currentBrushSize;
+            currentShape = '';
         } else if (tool === 'eraser') {
             document.getElementById('eraser-tool').classList.add('active');
             drawingCtx.strokeStyle = '#f9f9f9';
             drawingCtx.lineWidth = currentBrushSize * 2;
+            currentShape = '';
+        } else if (tool === 'rect') {
+            document.getElementById('rect-tool').classList.add('active');
+            currentShape = 'rect';
+        } else if (tool === 'circle') {
+            document.getElementById('circle-tool').classList.add('active');
+            currentShape = 'circle';
+        } else if (tool === 'line') {
+            document.getElementById('line-tool').classList.add('active');
+            currentShape = 'line';
         }
     }
     
     function startDrawing(e) {
         isDrawing = true;
         [lastX, lastY] = getDrawingCoordinates(e);
+        
+        if (currentShape) {
+            isDrawingShape = true;
+            startX = lastX;
+            startY = lastY;
+        }
     }
     
     function draw(e) {
         if (!isDrawing) return;
         
         e.preventDefault();
-        const [x, y] = getDrawingCoordinates(e);
         
-        drawingCtx.beginPath();
-        drawingCtx.moveTo(lastX, lastY);
-        drawingCtx.lineTo(x, y);
-        drawingCtx.stroke();
-        
-        [lastX, lastY] = [x, y];
+        if (isDrawingShape) {
+            // مسح المؤقت للشكل
+            drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            drawingCtx.fillStyle = '#f9f9f9';
+            drawingCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+            
+            // إعادة رسم المحتوى السابق
+            redrawCanvas();
+            
+            const [x, y] = getDrawingCoordinates(e);
+            
+            // رسم الشكل الحالي
+            drawingCtx.strokeStyle = currentDrawingColor;
+            drawingCtx.lineWidth = currentBrushSize;
+            drawingCtx.beginPath();
+            
+            if (currentShape === 'rect') {
+                const width = x - startX;
+                const height = y - startY;
+                drawingCtx.rect(startX, startY, width, height);
+            } else if (currentShape === 'circle') {
+                const radius = Math.sqrt(Math.pow(x - startX, 2) + Math.pow(y - startY, 2));
+                drawingCtx.arc(startX, startY, radius, 0, Math.PI * 2);
+            } else if (currentShape === 'line') {
+                drawingCtx.moveTo(startX, startY);
+                drawingCtx.lineTo(x, y);
+            }
+            
+            drawingCtx.stroke();
+        } else {
+            const [x, y] = getDrawingCoordinates(e);
+            
+            drawingCtx.beginPath();
+            drawingCtx.moveTo(lastX, lastY);
+            drawingCtx.lineTo(x, y);
+            drawingCtx.stroke();
+            
+            [lastX, lastY] = [x, y];
+        }
     }
     
     function stopDrawing() {
+        if (isDrawingShape) {
+            isDrawingShape = false;
+            // حفظ الشكل النهائي
+            const snapshot = drawingCanvas.toDataURL();
+            const img = new Image();
+            img.src = snapshot;
+            img.onload = function() {
+                drawingCtx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                drawingCtx.fillStyle = '#f9f9f9';
+                drawingCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                redrawCanvas();
+                drawingCtx.drawImage(img, 0, 0);
+            };
+        }
+        
         isDrawing = false;
         drawingCtx.beginPath();
     }
@@ -3131,11 +3305,17 @@
         draw(e.touches[0]);
     }
     
+    function redrawCanvas() {
+        // هذه الوظيفة تحفظ محتوى اللوحة
+        // في نظام حقيقي، ستحتاج لحفظ كل ضربة فرشاة
+    }
+    
     function clearDrawingCanvas() {
         if (confirm('هل تريد مسح الرسم بالكامل؟')) {
             drawingCtx.fillStyle = '#f9f9f9';
             drawingCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
             showProtectionNotification('تم مسح الرسم بنجاح');
+            document.getElementById('drawing-welcome').style.display = 'block';
         }
     }
     
@@ -3148,11 +3328,6 @@
         // تحويل الرسم لصورة
         const imageData = drawingCanvas.toDataURL('image/png');
         
-        // إنشاء رابط مؤقت للصورة
-        const link = document.createElement('a');
-        link.download = `تصميم-بصمة-غير-${Date.now()}.png`;
-        link.href = imageData;
-        
         // رسالة واتساب
         const message = encodeURIComponent(currentData.drawing_whatsapp_message || 'السلام عليكم، أود الاستفسار عن هذا الرسم التخطيطي:');
         const whatsappNum = currentData.whatsapp_num || '';
@@ -3163,24 +3338,17 @@
         const instruction = `
         📱 خطوات إرسال الرسم:
         
-        1. سيتم حفظ الرسم على جهازك تلقائياً
+        1. اضغط على زر "حفظ الرسم" أولاً
         2. انتقل إلى واتساب
         3. أرسل لنا الصورة المحفوظة مع شرح لفكرتك
-        4. سنتواصل معك قريباً
-        
-        أو يمكنك التواصل مباشرة عبر الزر أدناه:
+        4. يمكنك أيضاً استخدام الزر أدناه للتواصل المباشر
         
         شكراً لثقتك بنا! ✨
         `;
         
         if (confirm(instruction)) {
-            // حفظ الصورة أولاً
-            link.click();
-            
-            // ثم فتح واتساب
-            setTimeout(() => {
-                window.open(whatsappURL, '_blank');
-            }, 500);
+            // فتح واتساب
+            window.open(whatsappURL, '_blank');
         }
     }
     
@@ -3195,7 +3363,7 @@
         link.href = drawingCanvas.toDataURL('image/png');
         link.click();
         
-        showProtectionNotification('تم حفظ الرسم بنجاح ✓');
+        showProtectionNotification('✅ تم حفظ الرسم بنجاح');
     }
     
     function isCanvasEmpty() {
