@@ -1167,7 +1167,7 @@
             font-size: 0.9rem;
         }
         
-        /* ========== تصميم المساحة الحرة - تم التكبير ========== */
+        /* ========== تصميم المساحة الحرة - تم التكبير والإعفاء من الحماية ========== */
         .drawing-section {
             background: var(--card);
             border-radius: 20px;
@@ -1273,6 +1273,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            /* مساحة محمية من الحماية */
+            user-select: auto !important;
+            -webkit-user-select: auto !important;
+            -moz-user-select: auto !important;
+            -ms-user-select: auto !important;
         }
         
         .drawing-canvas {
@@ -1281,6 +1286,11 @@
             display: block;
             cursor: crosshair;
             background: #f9f9f9;
+            /* إعفاء اللوحة من الحماية */
+            user-select: auto !important;
+            -webkit-user-select: auto !important;
+            -moz-user-select: auto !important;
+            -ms-user-select: auto !important;
         }
         
         .canvas-controls {
@@ -1472,6 +1482,10 @@
                         <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
                             <input type="checkbox" id="enable-selection-protection" checked>
                             منع نسخ النصوص
+                        </label>
+                        <label style="display:block; margin-bottom:10px; color:var(--text-primary);">
+                            <input type="checkbox" id="enable-drawing-exemption" checked>
+                            إعفاء المساحة الحرة من الحماية
                         </label>
                     </div>
                     
@@ -1720,11 +1734,13 @@
     
     // ========== متغيرات الحماية ==========
     let isProtectionEnabled = true;
+    let isDrawingExempted = true; // المساحة الحرة معفاة من الحماية
     let protectionSettings = {
         rightClick: true,
         keyboardShortcuts: true,
         imageProtection: true,
-        textSelection: true
+        textSelection: true,
+        drawingExemption: true
     };
     
     // ========== متغيرات المساحة الحرة ==========
@@ -1834,7 +1850,7 @@
         fillAdminFields();
     }
     
-    // ========== نظام الحماية ==========
+    // ========== نظام الحماية المعدل ==========
     function enableProtection() {
         if (!isProtectionEnabled) return;
         
@@ -1844,6 +1860,7 @@
         document.addEventListener('drop', preventImageDrop);
         document.addEventListener('copy', preventCopy);
         document.addEventListener('cut', preventCopy);
+        document.addEventListener('selectstart', preventSelection);
     }
     
     function disableProtection() {
@@ -1853,6 +1870,7 @@
         document.removeEventListener('drop', preventImageDrop);
         document.removeEventListener('copy', preventCopy);
         document.removeEventListener('cut', preventCopy);
+        document.removeEventListener('selectstart', preventSelection);
     }
     
     function toggleProtection() {
@@ -1872,19 +1890,26 @@
         }
     }
     
+    // ========== دوال الحماية الذكية ==========
     function preventRightClick(e) {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+            return;
+        }
         e.preventDefault();
         showProtectionNotification('rightClick');
         return false;
     }
     
     function preventKeyboardShortcuts(e) {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+            return;
+        }
         
         if (e.keyCode === 123 || 
             (e.ctrlKey && e.shiftKey && e.keyCode === 73) || 
-            (e.ctrlKey && e.keyCode === 85)) {
+            (e.ctrlKey && e.keyCode === 85) ||
+            (e.ctrlKey && e.keyCode === 83) ||
+            (e.ctrlKey && e.keyCode === 80)) {
             e.preventDefault();
             showProtectionNotification('devTools');
             return false;
@@ -1892,7 +1917,9 @@
     }
     
     function preventImageDrag(e) {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+            return;
+        }
         if (e.target.tagName === 'IMG' && !e.target.id.includes('drawing')) {
             e.preventDefault();
             showProtectionNotification('imageProtection');
@@ -1901,20 +1928,52 @@
     }
     
     function preventImageDrop(e) {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+            return;
+        }
         e.preventDefault();
         showProtectionNotification('imageProtection');
         return false;
     }
     
     function preventCopy(e) {
-        if (!isProtectionEnabled) return;
+        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+            return;
+        }
         const tagName = e.target.tagName;
-        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA') {
+        if (tagName !== 'INPUT' && tagName !== 'TEXTAREA' && !isInDrawingArea(e.target)) {
             e.preventDefault();
             showProtectionNotification('copy');
             return false;
         }
+    }
+    
+    function preventSelection(e) {
+        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+            return;
+        }
+        if (!isInDrawingArea(e.target)) {
+            e.preventDefault();
+        }
+    }
+    
+    // التحقق مما إذا كان العنصر داخل منطقة الرسم
+    function isInDrawingArea(element) {
+        if (!element) return false;
+        
+        // التحقق من العنصر الحالي أو أي عنصر أب
+        while (element) {
+            if (element.classList && (
+                element.classList.contains('drawing-canvas-container') ||
+                element.classList.contains('drawing-canvas') ||
+                element.classList.contains('drawing-section') ||
+                element.id === 'drawing-canvas'
+            )) {
+                return true;
+            }
+            element = element.parentElement;
+        }
+        return false;
     }
     
     // إشعارات الحماية
@@ -2765,8 +2824,11 @@
             rightClick: document.getElementById('enable-right-click-protection').checked,
             keyboardShortcuts: document.getElementById('enable-keyboard-protection').checked,
             imageProtection: document.getElementById('enable-image-protection').checked,
-            textSelection: document.getElementById('enable-selection-protection').checked
+            textSelection: document.getElementById('enable-selection-protection').checked,
+            drawingExemption: document.getElementById('enable-drawing-exemption').checked
         };
+        
+        isDrawingExempted = protectionSettings.drawingExemption;
         
         const message = document.getElementById('protection-message-text').value;
         
@@ -2967,6 +3029,8 @@
             document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts !== false;
             document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection !== false;
             document.getElementById('enable-selection-protection').checked = protectionSettings.textSelection !== false;
+            document.getElementById('enable-drawing-exemption').checked = protectionSettings.drawingExemption !== false;
+            isDrawingExempted = protectionSettings.drawingExemption !== false;
         }
         
         if (d.protection_message) {
@@ -3393,4 +3457,4 @@
     });
 </script>
 </body>
-    </html>
+                    </html>
