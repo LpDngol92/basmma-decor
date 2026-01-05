@@ -1023,29 +1023,25 @@
             font-size: 1.1rem;
         }
         
-        .schedule-shift {
+        .shift-section {
             margin: 10px 0;
             padding: 10px;
             background: rgba(197, 160, 89, 0.05);
             border-radius: 5px;
         }
         
-        .shift-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-        
         .shift-label {
             color: var(--text-primary);
             font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
         }
         
         .time-inputs {
             display: flex;
             gap: 10px;
             align-items: center;
+            margin-bottom: 5px;
         }
         
         .time-inputs input {
@@ -1058,25 +1054,33 @@
             font-weight: bold;
         }
         
-        .add-shift-btn {
-            background: var(--green);
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 5px;
-            font-size: 0.9rem;
+        /* عرض مواعيد العمل في الصفحة الرئيسية */
+        .schedule-display {
+            text-align: right;
+            line-height: 1.8;
         }
         
-        .remove-shift-btn {
-            background: var(--red);
-            color: white;
-            border: none;
-            padding: 2px 8px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 0.8rem;
+        .schedule-group {
+            margin-bottom: 10px;
+        }
+        
+        .schedule-days {
+            color: var(--gold);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .schedule-times {
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .holiday-text {
+            color: var(--red);
+            font-weight: bold;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
         }
     </style>
 </head>
@@ -1882,53 +1886,135 @@
         }, 500);
     }
     
-    // ========== باقي الدوال الأساسية ==========
+    // ========== الدوال الذكية لعرض المواعيد ==========
+    
     function getSmartSchedule(d) {
-        if(!d.work_schedule) return "...";
+        if(!d.work_schedule) return "<p style='color:var(--text-secondary);'>لم يتم تحديد مواعيد العمل بعد</p>";
+        
         let groups = []; 
-        let off = [];
-        const customOrder = [6, 0, 1, 2, 3, 4, 5];
-        customOrder.forEach((jsDay) => {
+        let offDays = [];
+        const daysOrder = [6, 0, 1, 2, 3, 4, 5]; // السبت إلى الجمعة
+        const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        
+        // تجميع الأيام المتشابهة في الجدول
+        daysOrder.forEach((jsDay) => {
             const s = d.work_schedule[jsDay];
-            const n = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay];
+            const dayName = dayNames[jsDay];
+            
             if(s && s.active) {
-                const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}-${s.s2_s}-${s.s2_e}`;
-                let found = groups.find(g => g.key === key);
-                if(found) found.days.push(n); 
-                else groups.push({ days:[n], key:key, data:s });
-            } else off.push(n);
+                // إنشاء مفتاذ فريد للمجموعة
+                const key = `${s.s1_s || ''}-${s.s1_e || ''}-${s.s2_a || false}-${s.s2_s || ''}-${s.s2_e || ''}`;
+                let foundGroup = groups.find(g => g.key === key);
+                
+                if(foundGroup) {
+                    foundGroup.days.push(dayName);
+                } else {
+                    groups.push({
+                        key: key,
+                        days: [dayName],
+                        data: s
+                    });
+                }
+            } else {
+                offDays.push(dayName);
+            }
         });
-        let html = "";
-        groups.forEach(g => {
-            let dayT = g.days.length > 1 ? `من ${g.days[0]} إلى ${g.days[g.days.length-1]}` : g.days[0];
-            html += `<div style="margin-bottom:10px;"><b>${dayT}:</b><br>${t12(g.data.s1_s)} - ${t12(g.data.s1_e)} ${g.data.s2_a ? ' / '+t12(g.data.s2_s)+' - '+t12(g.data.s2_e) : ''}</div>`;
+        
+        let html = "<div class='schedule-display'>";
+        
+        // عرض المجموعات الذكية
+        groups.forEach(group => {
+            let daysText = '';
+            if (group.days.length === 1) {
+                daysText = group.days[0];
+            } else if (group.days.length === 2) {
+                daysText = `${group.days[0]} و ${group.days[1]}`;
+            } else {
+                daysText = `من ${group.days[0]} إلى ${group.days[group.days.length-1]}`;
+            }
+            
+            html += `
+            <div class="schedule-group">
+                <div class="schedule-days">${daysText}:</div>
+                <div class="schedule-times">
+                    ${t12(group.data.s1_s || '09:00')} - ${t12(group.data.s1_e || '17:00')}
+                    ${group.data.s2_a ? `<br>فترة مسائية: ${t12(group.data.s2_s)} - ${t12(group.data.s2_e)}` : ''}
+                </div>
+            </div>`;
         });
-        if(off.length) html += `<div style="color:var(--red);">إجازة: ${off.join('، ')}</div>`;
+        
+        // عرض أيام الإجازة
+        if (offDays.length > 0) {
+            let offText = '';
+            if (offDays.length === 1) {
+                offText = offDays[0];
+            } else if (offDays.length === 2) {
+                offText = `${offDays[0]} و ${offDays[1]}`;
+            } else {
+                offText = offDays.join('، ');
+            }
+            
+            html += `<div class="holiday-text">إجازة: ${offText}</div>`;
+        }
+        
+        html += "</div>";
         return html;
+    }
+    
+    function t12(t) { 
+        if(!t) return ""; 
+        let [h, m] = t.split(':'); 
+        h = parseInt(h); 
+        return `${h%12||12}:${m}${h>=12?'م':'ص'}`; 
     }
     
     function updateWorkStatus() { 
         const d = currentData; 
         if(!d.work_schedule) return; 
-        const now = new Date(), dayJS = now.getDay(); 
-        const conf = d.work_schedule[dayJS]; 
-        let isOpen = false; 
-        if(conf && conf.active) { 
-            const toMins = (t) => { if(!t) return -1; const [h, m] = t.split(':').map(Number); return (h * 60) + m; };
-            const curMin = now.getHours() * 60 + now.getMinutes();
-            if (curMin >= toMins(conf.s1_s) && curMin < toMins(conf.s1_e)) isOpen = true;
-            if (!isOpen && conf.s2_a) { const s2S = toMins(conf.s2_s), s2E = toMins(conf.s2_e); if (curMin >= s2S && curMin < s2E) isOpen = true; }
-        } 
+        
+        const now = new Date();
+        const dayJS = now.getDay(); // 0 لأحد، 1 لاثنين، إلخ
+        const schedule = d.work_schedule[dayJS];
+        
+        let statusHtml = '';
+        
+        if(schedule && schedule.active) {
+            const toMins = (t) => {
+                if(!t) return -1;
+                const [h, m] = t.split(':').map(Number);
+                return (h * 60) + m;
+            };
+            
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            let isOpen = false;
+            
+            // فحص الفترة الصباحية
+            const morningStart = toMins(schedule.s1_s || '09:00');
+            const morningEnd = toMins(schedule.s1_e || '17:00');
+            
+            if (currentMinutes >= morningStart && currentMinutes < morningEnd) {
+                isOpen = true;
+            }
+            
+            // فحص الفترة المسائية إذا كانت مفعلة
+            if (!isOpen && schedule.s2_a) {
+                const eveningStart = toMins(schedule.s2_s);
+                const eveningEnd = toMins(schedule.s2_e);
+                
+                if (currentMinutes >= eveningStart && currentMinutes < eveningEnd) {
+                    isOpen = true;
+                }
+            }
+            
+            statusHtml = isOpen 
+                ? `<div class="status-badge open-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مفتوح الآن</div>`
+                : `<div class="status-badge closed-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مغلق الآن</div>`;
+        } else {
+            statusHtml = `<div class="status-badge closed-glow" style="background:rgba(231, 76, 60, 0.2); color:var(--red);"><i class="fas fa-circle" style="font-size:0.6rem;"></i> إجازة اليوم</div>`;
+        }
+        
         const cont = document.getElementById('status-container');
         if(cont) {
-            let statusHtml = isOpen ? `<div class="status-badge open-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مفتوح الآن</div>` : `<div class="status-badge closed-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مغلق الآن</div>`;
-            if(d.location_url) {
-                statusHtml += `
-                <div style="margin-top:20px; border-top:1px solid var(--border); padding-top:15px;">
-                    <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:10px;">موقعنا على الخريطة</p>
-                    <a href="${d.location_url}" target="_blank" style="color:var(--gold); font-size:2rem; transition:0.3s; display:inline-block;"><i class="fas fa-location-dot"></i></a>
-                </div>`;
-            }
             cont.innerHTML = statusHtml;
         }
     }
@@ -2008,13 +2094,6 @@
     function drawFolders(obj, type) { 
         if(!obj) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
         return Object.keys(obj).map(id => `<div class="card" onclick="openCat('${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${obj[id].name}</h3></div>`).join(''); 
-    }
-    
-    function t12(t) { 
-        if(!t) return ""; 
-        let [h, m] = t.split(':'); 
-        h = parseInt(h); 
-        return `${h%12||12}:${m}${h>=12?'م':'ص'}`; 
     }
     
     function toggleCol(id) { 
@@ -2188,30 +2267,25 @@
             const dayEl = document.getElementById(`day-${jsDay}`);
             if (dayEl) {
                 const active = dayEl.querySelector(`input[type="checkbox"]`).checked;
-                const shifts = [];
-                
-                // جمع جميع الشفتات
-                dayEl.querySelectorAll('.schedule-shift').forEach((shiftEl, index) => {
-                    const startInput = shiftEl.querySelector(`input[type="time"][id^="start-"]`);
-                    const endInput = shiftEl.querySelector(`input[type="time"][id^="end-"]`);
-                    
-                    if (startInput && endInput && startInput.value && endInput.value) {
-                        shifts.push({
-                            start: startInput.value,
-                            end: endInput.value
-                        });
-                    }
-                });
+                const s1_s = dayEl.querySelector(`#s1s-${jsDay}`).value || '09:00';
+                const s1_e = dayEl.querySelector(`#s1e-${jsDay}`).value || '17:00';
+                const s2_a = dayEl.querySelector(`#s2a-${jsDay}`).checked;
+                const s2_s = dayEl.querySelector(`#s2s-${jsDay}`).value;
+                const s2_e = dayEl.querySelector(`#s2e-${jsDay}`).value;
                 
                 sc[jsDay] = { 
                     active: active,
-                    shifts: shifts
+                    s1_s: s1_s,
+                    s1_e: s1_e,
+                    s2_a: s2_a,
+                    s2_s: s2_s,
+                    s2_e: s2_e
                 };
             }
         }); 
         
         db.ref(DB_PATH + '/work_schedule').set(sc).then(() => {
-            showProtectionNotification('settingsSaved');
+            showProtectionNotification('تم حفظ المواعيد بنجاح');
         }).catch(error => {
             console.error("خطأ في حفظ المواعيد:", error);
             showProtectionNotification('خطأ في الحفظ');
@@ -2466,86 +2540,52 @@
     function fillAdminSchedule(d) { 
         const ed = document.getElementById('schedule-editor'); 
         ed.innerHTML = ''; 
-        const customOrder = [6, 0, 1, 2, 3, 4, 5]; 
+        const customOrder = [6, 0, 1, 2, 3, 4, 5]; // السبت إلى الجمعة
         customOrder.forEach((jsDay) => { 
             const dayName = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"][jsDay]; 
-            const s = (d.work_schedule && d.work_schedule[jsDay]) ? d.work_schedule[jsDay] : {active:false, shifts:[]}; 
+            const s = (d.work_schedule && d.work_schedule[jsDay]) ? d.work_schedule[jsDay] : {active:false, s1_s:"09:00", s1_e:"17:00", s2_a:false};
             
-            let dayHtml = `
+            ed.innerHTML += `
             <div class="schedule-day" id="day-${jsDay}">
                 <div class="schedule-day-header">
                     <span class="schedule-day-name">${dayName}</span>
                     <label style="color:var(--text-primary);">
-                        <input type="checkbox" ${s.active?'checked':''}> تفعيل
+                        <input type="checkbox" id="check-${jsDay}" ${s.active?'checked':''}> تفعيل
                     </label>
                 </div>
-                <div id="shifts-${jsDay}">`;
-            
-            // عرض الشفتات الحالية
-            if (s.shifts && s.shifts.length > 0) {
-                s.shifts.forEach((shift, index) => {
-                    dayHtml += `
-                    <div class="schedule-shift">
-                        <div class="shift-header">
-                            <span class="shift-label">شفت ${index + 1}</span>
-                            <button class="remove-shift-btn" onclick="removeShift(${jsDay}, ${index})">حذف</button>
-                        </div>
-                        <div class="time-inputs">
-                            <input type="time" id="start-${jsDay}-${index}" value="${shift.start || ''}">
-                            <span class="time-separator">إلى</span>
-                            <input type="time" id="end-${jsDay}-${index}" value="${shift.end || ''}">
-                        </div>
-                    </div>`;
-                });
-            } else {
-                // شفت افتراضي إذا لم يكن هناك شفتات
-                dayHtml += `
-                <div class="schedule-shift">
-                    <div class="shift-header">
-                        <span class="shift-label">شفت 1</span>
-                    </div>
+                
+                <div class="shift-section">
+                    <label class="shift-label">الفترة الصباحية:</label>
                     <div class="time-inputs">
-                        <input type="time" id="start-${jsDay}-0" value="09:00">
+                        <input type="time" id="s1s-${jsDay}" value="${s.s1_s || '09:00'}">
                         <span class="time-separator">إلى</span>
-                        <input type="time" id="end-${jsDay}-0" value="17:00">
+                        <input type="time" id="s1e-${jsDay}" value="${s.s1_e || '17:00'}">
                     </div>
-                </div>`;
-            }
-            
-            dayHtml += `
                 </div>
-                <button class="add-shift-btn" onclick="addShift(${jsDay})">+ إضافة شفت</button>
+                
+                <div class="shift-section">
+                    <label style="color:var(--text-primary);">
+                        <input type="checkbox" id="s2a-${jsDay}" ${s.s2_a?'checked':''}> إضافة فترة مسائية
+                    </label>
+                    <div class="time-inputs" style="${s.s2_a?'':'display:none;'}" id="evening-section-${jsDay}">
+                        <input type="time" id="s2s-${jsDay}" value="${s.s2_s || ''}">
+                        <span class="time-separator">إلى</span>
+                        <input type="time" id="s2e-${jsDay}" value="${s.s2_e || ''}">
+                    </div>
+                </div>
             </div>`;
             
-            ed.innerHTML += dayHtml;
+            // إضافة مستمع لتغيير حالة الفترة المسائية
+            setTimeout(() => {
+                const eveningCheckbox = document.getElementById(`s2a-${jsDay}`);
+                const eveningSection = document.getElementById(`evening-section-${jsDay}`);
+                if (eveningCheckbox && eveningSection) {
+                    eveningCheckbox.addEventListener('change', function() {
+                        eveningSection.style.display = this.checked ? 'flex' : 'none';
+                    });
+                }
+            }, 100);
         }); 
-    }
-    
-    function addShift(day) {
-        const shiftsContainer = document.getElementById(`shifts-${day}`);
-        const shiftCount = shiftsContainer.querySelectorAll('.schedule-shift').length;
-        
-        const shiftHtml = `
-        <div class="schedule-shift">
-            <div class="shift-header">
-                <span class="shift-label">شفت ${shiftCount + 1}</span>
-                <button class="remove-shift-btn" onclick="this.parentElement.parentElement.remove()">حذف</button>
-            </div>
-            <div class="time-inputs">
-                <input type="time" id="start-${day}-${shiftCount}" value="09:00">
-                <span class="time-separator">إلى</span>
-                <input type="time" id="end-${day}-${shiftCount}" value="17:00">
-            </div>
-        </div>`;
-        
-        shiftsContainer.insertAdjacentHTML('beforeend', shiftHtml);
-    }
-    
-    function removeShift(day, index) {
-        const shiftElement = document.querySelector(`#day-${day} .schedule-shift:nth-child(${index + 1})`);
-        if (shiftElement) {
-            shiftElement.remove();
-        }
     }
     
     function startReviewSlider() {
@@ -2578,4 +2618,4 @@
     });
 </script>
 </body>
-        </html>
+</html>
