@@ -1197,43 +1197,47 @@
         setupAuthListener();
     });
     
-    // ========== نظام المصادقة ==========
-    function setupAuthListener() {
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                isAdmin = true;
-                activateAdminPanel(user);
-            } else {
-                isAdmin = false;
-            }
-        });
-    }
-    
+// ========== نظام المصادقة ==========
+function setupAuthListener() {
+    auth.onAuthStateChanged((user) => {
+        if (user) {
+            isAdmin = true;
+            activateAdminPanel(user);
+        } else {
+            isAdmin = false;
+        }
+    });
+}
     function checkAccess() {
-        const userInput = prompt("🔐 أدخل رمز الإدارة:");
-        
-        if (!userInput) return;
-        
-        // التحقق من كلمة السر المخزنة في Firebase تحت مفتاح "in"
-        db.ref(DB_PATH + '/in').once('value')
-            .then(snapshot => {
-                const storedPassword = snapshot.val();
-                
-                if (userInput === storedPassword) {
-                    isAdmin = true;
-                    document.getElementById('admin-panel').style.display = 'block';
-                    document.getElementById('protection-toggle').style.display = 'flex';
-                    showProtectionNotification("✅ تم الدخول للإدارة");
-                } else {
-                    showProtectionNotification("❌ الرمز غير صحيح!");
-                }
-            })
-            .catch(error => {
-                console.error("خطأ في التحقق:", error);
-                showProtectionNotification("❌ خطأ في النظام!");
-            });
-    }
+    const userInput = prompt("🔐 أدخل رمز الإدارة:");
     
+    if (!userInput) return;
+    
+    // تحميل البيانات أولاً
+    db.ref(DB_PATH).once('value')
+        .then(snapshot => {
+            const data = snapshot.val();
+            
+            // التحقق من كلمة السر في مفتاح "in"
+            const storedPassword = data?.in;
+            
+            console.log("كلمة السر المخزنة:", storedPassword);
+            console.log("المدخل:", userInput);
+            
+            if (userInput === storedPassword) {
+                isAdmin = true;
+                document.getElementById('admin-panel').style.display = 'block';
+                document.getElementById('protection-toggle').style.display = 'flex';
+                showProtectionNotification("✅ تم الدخول للإدارة");
+            } else {
+                showProtectionNotification("❌ الرمز غير صحيح!");
+            }
+        })
+        .catch(error => {
+            console.error("خطأ في التحقق:", error);
+            showProtectionNotification("❌ خطأ في النظام!");
+        });
+}
     function activateAdminPanel(user) {
         isAdmin = true;
         document.getElementById('admin-panel').style.display = 'block';
@@ -2105,3 +2109,4 @@
 </script>
 </body>
     </html>
+
