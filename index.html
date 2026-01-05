@@ -1213,59 +1213,70 @@
     const userInput = prompt("🔐 أدخل رمز الإدارة:");
     if (!userInput) return;
     
-    console.log("البحث عن كلمة السر...");
+    console.log("🔍 جاري البحث عن الرقم:", userInput);
     
-    db.ref(DB_PATH).once('value')
+    // قراءة مباشرة من المسار الصحيح
+    db.ref('site_v28').once('value')
         .then(snapshot => {
             const data = snapshot.val();
-            console.log("بيانات Firebase:", data);
+            console.log("📊 البيانات المستلمة من site_v28:", data);
             
-            // البحث في جميع المواقع المحتملة
-            let found = false;
-            
-            // الموقع الأساسي: data.in
-            if (data && data.in === userInput) {
-                console.log("✅ وجدت في data.in");
-                found = true;
+            if (!data) {
+                showProtectionNotification("❌ لا توجد بيانات في قاعدة البيانات");
+                return;
             }
-            // بحث شامل في جميع المفاتيح
-            else if (data) {
-                function search(obj, value) {
-                    for (const key in obj) {
-                        if (obj[key] === value) {
-                            console.log(`✅ وجدت في data.${key}`);
-                            return true;
-                        }
-                        if (typeof obj[key] === 'object') {
-                            if (search(obj[key], value)) return true;
-                        }
-                    }
-                    return false;
+            
+            // الحالة 1: كلمة السر في data.in (كقيمة مباشرة)
+            if (data.in && data.in.toString() === userInput.toString()) {
+                console.log("✅ تم العثور على الرقم في data.in");
+                enterAdminPanel();
+                return;
+            }
+            
+            // الحالة 2: كلمة السر مخزنة كنص في data.in
+            if (data.in && typeof data.in === 'string' && data.in.trim() === userInput.trim()) {
+                console.log("✅ تم العثور على الرقم في data.in (كنص)");
+                enterAdminPanel();
+                return;
+            }
+            
+            // الحالة 3: البحث في جميع المفاتيح
+            let found = false;
+            for (const key in data) {
+                if (data[key] && data[key].toString() === userInput.toString()) {
+                    console.log(`✅ تم العثور على الرقم في data.${key}`);
+                    found = true;
+                    break;
                 }
-                found = search(data, userInput);
             }
             
             if (found) {
-                isAdmin = true;
-                document.getElementById('admin-panel').style.display = 'block';
-                if(document.getElementById('protection-toggle')) 
-                    document.getElementById('protection-toggle').style.display = 'flex';
-                showProtectionNotification("✅ تم الدخول للإدارة");
-                fillAdminFields();
+                enterAdminPanel();
             } else {
-                showProtectionNotification("❌ الرمز غير صحيح!");
-                console.log("قيم المفاتيح المحتملة:", {
-                    in: data?.in,
-                    admin: data?.admin,
-                    password: data?.password,
-                    pass: data?.pass
+                console.log("❌ الرقم غير موجود. قيم المفاتيح:", {
+                    'data.in': data.in,
+                    'نوع data.in': typeof data.in,
+                    'طول data.in': data.in ? data.in.length : 0
                 });
+                showProtectionNotification("❌ الرمز غير صحيح! تأكد من الرقم.");
             }
         })
         .catch(error => {
-            console.error("خطأ:", error);
-            showProtectionNotification("❌ خطأ في النظام!");
+            console.error("🚨 خطأ في الاتصال:", error);
+            showProtectionNotification("❌ خطأ في الاتصال بالخادم");
         });
+    
+    function enterAdminPanel() {
+        isAdmin = true;
+        document.getElementById('admin-panel').style.display = 'block';
+        document.getElementById('protection-toggle').style.display = 'flex';
+        document.querySelector('.logout-btn').style.display = 'flex';
+        showProtectionNotification("✅ تم الدخول للإدارة بنجاح");
+        fillAdminFields();
+        
+        // حفظ حالة الدخول
+        localStorage.setItem('admin_session', 'active');
+    }
 }
     function activateAdminPanel(user) {
         isAdmin = true;
