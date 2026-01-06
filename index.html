@@ -147,6 +147,33 @@
             transition: opacity 0.5s ease; 
         }
         
+        /* شاشة منع أدوات المطورين */
+        #devtools-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 2147483647;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.5rem;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .devtools-message {
+            max-width: 500px;
+            background: rgba(231, 76, 60, 0.9);
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 50px rgba(231, 76, 60, 0.5);
+        }
+        
         /* شاشة الصيانة */
         #maintenance-screen { 
             position: fixed; 
@@ -1461,6 +1488,27 @@
     </button>
 </div>
 
+<!-- شاشة منع أدوات المطورين -->
+<div id="devtools-overlay">
+    <div class="devtools-message">
+        <h1 style="color: #fff; margin-bottom: 20px;">
+            <i class="fas fa-shield-alt"></i> أدوات المطورين معطلة
+        </h1>
+        <p style="font-size: 1.2rem; margin-bottom: 20px;">
+            هذا الموقع محمي ضد التعديل والنسخ غير المصرح به.
+        </p>
+        <p style="margin-bottom: 30px;">
+            يرجى إغلاق أدوات المطورين (F12، Ctrl+Shift+I) للمتابعة.
+        </p>
+        <button onclick="document.getElementById('devtools-overlay').style.display = 'none'; 
+                        document.body.style.overflow = 'auto';" 
+                style="padding: 12px 30px; background: #fff; color: #e74c3c; border: none; 
+                       border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;">
+            موافق، سأغلق أدوات المطورين
+        </button>
+    </div>
+</div>
+
 <div id="splash"> 
     <h2 style="color:var(--gold); font-size:2rem;">بصمة غير...</h2> 
 </div>
@@ -1795,15 +1843,22 @@
     let partnerIdx = 0;
     let selectedFont = 'tajawal';
     
-    // ========== متغيرات الحماية ==========
+    // ========== متغيرات الحماية المتقدمة ==========
     let isProtectionEnabled = true;
     let isDrawingExempted = true;
-    let protectionSettings = {
+    let devToolsOpen = false;
+    let lastDetectTime = 0;
+    let blockOpenAttempts = 0;
+    
+    const protectionSettings = {
         rightClick: true,
         keyboardShortcuts: true,
         imageProtection: true,
         textSelection: true,
-        drawingExemption: true
+        drawingExemption: true,
+        devToolsDetection: true,
+        contextMenuPrevention: true,
+        sourceViewPrevention: true
     };
     
     // ========== متغيرات المساحة الحرة ==========
@@ -1818,8 +1873,9 @@
     
     // ========== تهيئة الصفحة ==========
     document.addEventListener('DOMContentLoaded', function() {
-        enableProtection();
+        enableAdvancedProtection();
         setupAuthListener();
+        startDevToolsDetection();
     });
     
     // ========== نظام المصادقة ==========
@@ -1894,22 +1950,47 @@
         fillAdminFields();
     }
     
-    // ========== نظام الحماية ==========
-    function enableProtection() {
+    // ========== نظام الحماية المتقدمة ==========
+    function enableAdvancedProtection() {
         if (!isProtectionEnabled) return;
         
-        document.addEventListener('contextmenu', preventRightClick);
-        document.addEventListener('keydown', preventKeyboardShortcuts);
-        document.addEventListener('dragstart', preventImageDrag);
-        document.addEventListener('drop', preventImageDrop);
-        document.addEventListener('copy', preventCopy);
-        document.addEventListener('cut', preventCopy);
-        document.addEventListener('selectstart', preventSelection);
+        // منع النقر الأيمن
+        if (protectionSettings.rightClick) {
+            document.addEventListener('contextmenu', preventRightClickAdvanced);
+        }
+        
+        // منع اختصارات لوحة المفاتيح
+        if (protectionSettings.keyboardShortcuts) {
+            document.addEventListener('keydown', preventKeyboardShortcutsAdvanced);
+        }
+        
+        // منع سحب الصور
+        if (protectionSettings.imageProtection) {
+            document.addEventListener('dragstart', preventImageDrag);
+            document.addEventListener('drop', preventImageDrop);
+        }
+        
+        // منع النسخ
+        if (protectionSettings.textSelection) {
+            document.addEventListener('copy', preventCopy);
+            document.addEventListener('cut', preventCopy);
+            document.addEventListener('selectstart', preventSelection);
+        }
+        
+        // إخفاء الشيفرة المصدرية
+        if (protectionSettings.sourceViewPrevention) {
+            disableViewSource();
+        }
+        
+        // كشف أدوات المطورين
+        if (protectionSettings.devToolsDetection) {
+            detectDevToolsOpening();
+        }
     }
     
-    function disableProtection() {
-        document.removeEventListener('contextmenu', preventRightClick);
-        document.removeEventListener('keydown', preventKeyboardShortcuts);
+    function disableAdvancedProtection() {
+        document.removeEventListener('contextmenu', preventRightClickAdvanced);
+        document.removeEventListener('keydown', preventKeyboardShortcutsAdvanced);
         document.removeEventListener('dragstart', preventImageDrag);
         document.removeEventListener('drop', preventImageDrop);
         document.removeEventListener('copy', preventCopy);
@@ -1922,20 +2003,21 @@
         const toggleBtn = document.getElementById('protection-toggle');
         
         if (isProtectionEnabled) {
-            enableProtection();
+            enableAdvancedProtection();
             toggleBtn.classList.remove('active');
             toggleBtn.innerHTML = '<i class="fas fa-shield-alt"></i>';
-            showProtectionNotification('تم تفعيل الحماية');
+            showProtectionNotification('تم تفعيل الحماية المتقدمة');
         } else {
-            disableProtection();
+            disableAdvancedProtection();
             toggleBtn.classList.add('active');
             toggleBtn.innerHTML = '<i class="fas fa-shield-slash"></i>';
             showProtectionNotification('تم تعطيل الحماية مؤقتاً');
         }
     }
     
-    function preventRightClick(e) {
-        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+    // ========== دوال الحماية المتقدمة ==========
+    function preventRightClickAdvanced(e) {
+        if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) {
             return;
         }
         e.preventDefault();
@@ -1943,24 +2025,65 @@
         return false;
     }
     
-    function preventKeyboardShortcuts(e) {
-        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+    function preventKeyboardShortcutsAdvanced(e) {
+        if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) {
             return;
         }
         
-        if (e.keyCode === 123 || 
-            (e.ctrlKey && e.shiftKey && e.keyCode === 73) || 
-            (e.ctrlKey && e.keyCode === 85) ||
-            (e.ctrlKey && e.keyCode === 83) ||
-            (e.ctrlKey && e.keyCode === 80)) {
+        // قائمة شاملة لجميع طرق فتح أدوات المطورين
+        const devToolsShortcuts = [
+            // F12 و Fn+F12
+            e.key === 'F12',
+            e.keyCode === 123, // F12
+            
+            // Ctrl+Shift+ combinations
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)), // Ctrl+Shift+I
+            (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)), // Ctrl+Shift+C
+            (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)), // Ctrl+Shift+J
+            (e.ctrlKey && e.shiftKey && (e.key === 'K' || e.key === 'k' || e.keyCode === 75)), // Ctrl+Shift+K (Firefox)
+            
+            // Ctrl+Alt+ combinations
+            (e.ctrlKey && e.altKey && (e.key === 'I' || e.key === 'i')), // Ctrl+Alt+I
+            (e.ctrlKey && e.altKey && (e.key === 'U' || e.key === 'u')), // Ctrl+Alt+U
+            (e.ctrlKey && e.altKey && (e.key === 'S' || e.key === 's')), // Ctrl+Alt+S
+            
+            // Ctrl+ combinations
+            (e.ctrlKey && e.key === 'U' || e.key === 'u' || e.keyCode === 85), // Ctrl+U
+            (e.ctrlKey && e.key === 'S' || e.key === 's' || e.keyCode === 83), // Ctrl+S
+            (e.ctrlKey && e.key === 'P' || e.key === 'p' || e.keyCode === 80), // Ctrl+P
+            
+            // Alt+ combinations
+            (e.altKey && e.key === 'F12'), // Alt+F12
+            
+            // Meta/Command+ combinations (for Mac)
+            (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i')), // Command+Option+I
+            (e.metaKey && e.altKey && (e.key === 'C' || e.key === 'c')), // Command+Option+C
+            (e.metaKey && e.altKey && (e.key === 'J' || e.key === 'j')), // Command+Option+J
+            
+            // Shift+F12
+            (e.shiftKey && e.key === 'F12'),
+            
+            // Function key combinations
+            (e.ctrlKey && e.shiftKey && e.key === 'F12'),
+            (e.altKey && e.shiftKey && e.key === 'F12'),
+        ];
+        
+        if (devToolsShortcuts.some(shortcut => shortcut)) {
             e.preventDefault();
-            showProtectionNotification('devTools');
+            e.stopPropagation();
+            blockOpenAttempts++;
+            
+            if (blockOpenAttempts > 2) {
+                showDevToolsBlockScreen();
+            } else {
+                showProtectionNotification('devTools');
+            }
             return false;
         }
     }
     
     function preventImageDrag(e) {
-        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+        if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) {
             return;
         }
         if (e.target.tagName === 'IMG' && !e.target.id.includes('drawing')) {
@@ -1971,7 +2094,7 @@
     }
     
     function preventImageDrop(e) {
-        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+        if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) {
             return;
         }
         e.preventDefault();
@@ -1980,7 +2103,7 @@
     }
     
     function preventCopy(e) {
-        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+        if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) {
             return;
         }
         const tagName = e.target.tagName;
@@ -1992,12 +2115,169 @@
     }
     
     function preventSelection(e) {
-        if (!isProtectionEnabled || isDrawingExempted && isInDrawingArea(e.target)) {
+        if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) {
             return;
         }
         if (!isInDrawingArea(e.target)) {
             e.preventDefault();
         }
+    }
+    
+    function disableViewSource() {
+        // منع عرض الشيفرة المصدرية
+        document.onkeydown = function(e) {
+            if (e.ctrlKey && e.key === 'u') {
+                return false;
+            }
+        };
+        
+        // منع فتح صفحة المصدر
+        window.addEventListener('beforeunload', function(e) {
+            if (window.location.href.includes('view-source:')) {
+                window.location.href = '/';
+                return false;
+            }
+        });
+    }
+    
+    // ========== كشف أدوات المطورين المتقدم ==========
+    function detectDevToolsOpening() {
+        // طريقة 1: استخدام الـ debugger statement
+        const debuggerDetection = function() {
+            const startTime = performance.now();
+            debugger;
+            const endTime = performance.now();
+            
+            if (endTime - startTime > 100) {
+                devToolsOpen = true;
+                handleDevToolsDetected();
+            } else {
+                devToolsOpen = false;
+            }
+        };
+        
+        // طريقة 2: كشف الفرق في عرض النافذة
+        function detectBySize() {
+            const threshold = 160;
+            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+            
+            if (widthThreshold || heightThreshold) {
+                devToolsOpen = true;
+                handleDevToolsDetected();
+            }
+        }
+        
+        // طريقة 3: استخدام console.log
+        function detectByConsole() {
+            const start = performance.now();
+            console.log('devtools-detection');
+            console.clear();
+            const end = performance.now();
+            
+            if (end - start > 100) {
+                devToolsOpen = true;
+                handleDevToolsDetected();
+            }
+        }
+        
+        // طريقة 4: كشف focus على أدوات المطورين
+        let lastFocusTime = Date.now();
+        window.addEventListener('blur', function() {
+            lastFocusTime = Date.now();
+        });
+        
+        window.addEventListener('focus', function() {
+            const timeDiff = Date.now() - lastFocusTime;
+            if (timeDiff > 1000) {
+                // تم فتح نافذة أخرى لفترة طويلة (ربما أدوات المطورين)
+                detectByConsole();
+            }
+        });
+        
+        // تشغيل الكشف بشكل دوري
+        setInterval(function() {
+            if (!isProtectionEnabled || isAdmin) return;
+            
+            try {
+                debuggerDetection();
+                detectBySize();
+                detectByConsole();
+                
+                // إذا تم الكشف عن أدوات المطورين 3 مرات متتالية
+                if (devToolsOpen) {
+                    blockOpenAttempts++;
+                    if (blockOpenAttempts >= 3) {
+                        showDevToolsBlockScreen();
+                    }
+                } else {
+                    blockOpenAttempts = Math.max(0, blockOpenAttempts - 1);
+                }
+            } catch (e) {
+                // تجاهل الأخطاء
+            }
+        }, 1000);
+    }
+    
+    function handleDevToolsDetected() {
+        if (!isProtectionEnabled || isAdmin) return;
+        
+        showProtectionNotification('devTools');
+        
+        // إضافة عنصر يمنع التفاعل
+        const overlay = document.getElementById('devtools-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // محاولة إعادة تحميل الصفحة بعد فترة
+        setTimeout(() => {
+            if (devToolsOpen && !isAdmin) {
+                window.location.reload();
+            }
+        }, 5000);
+    }
+    
+    function showDevToolsBlockScreen() {
+        const overlay = document.getElementById('devtools-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            
+            // منع إغلاق الشاشة
+            overlay.onclick = function(e) {
+                e.stopPropagation();
+            };
+            
+            // إعادة توجيه بعد 10 ثواني إذا لم تغلق أدوات المطورين
+            setTimeout(() => {
+                if (!isAdmin) {
+                    window.location.href = 'about:blank';
+                }
+            }, 10000);
+        }
+    }
+    
+    function startDevToolsDetection() {
+        setInterval(() => {
+            if (!isProtectionEnabled || isAdmin) return;
+            
+            try {
+                // طريقة إضافية للكشف
+                const element = new Image();
+                Object.defineProperty(element, 'id', {
+                    get: function() {
+                        devToolsOpen = true;
+                        handleDevToolsDetected();
+                    }
+                });
+                console.log(element);
+                console.clear();
+            } catch (e) {
+                // تجاهل الأخطاء
+            }
+        }, 2000);
     }
     
     function isInDrawingArea(element) {
@@ -2017,6 +2297,7 @@
         return false;
     }
     
+    // ========== عرض التنبيهات ==========
     function showProtectionNotification(actionType = '') {
         const notification = document.getElementById('protection-notification');
         const messageContent = document.getElementById('protection-message-content');
@@ -3174,13 +3455,11 @@
     }
     
     function saveProtectionSettings() {
-        protectionSettings = {
-            rightClick: document.getElementById('enable-right-click-protection').checked,
-            keyboardShortcuts: document.getElementById('enable-keyboard-protection').checked,
-            imageProtection: document.getElementById('enable-image-protection').checked,
-            textSelection: document.getElementById('enable-selection-protection').checked,
-            drawingExemption: document.getElementById('enable-drawing-exemption').checked
-        };
+        protectionSettings.rightClick = document.getElementById('enable-right-click-protection').checked;
+        protectionSettings.keyboardShortcuts = document.getElementById('enable-keyboard-protection').checked;
+        protectionSettings.imageProtection = document.getElementById('enable-image-protection').checked;
+        protectionSettings.textSelection = document.getElementById('enable-selection-protection').checked;
+        protectionSettings.drawingExemption = document.getElementById('enable-drawing-exemption').checked;
         
         isDrawingExempted = protectionSettings.drawingExemption;
         
@@ -3190,11 +3469,11 @@
             protection_settings: protectionSettings,
             protection_message: message
         }).then(() => {
-            showProtectionNotification('✅ تم حفظ إعدادات الحماية');
+            showProtectionNotification('✅ تم حفظ إعدادات الحماية المتقدمة');
             
             if (isProtectionEnabled) {
-                disableProtection();
-                enableProtection();
+                disableAdvancedProtection();
+                enableAdvancedProtection();
             }
         }).catch(error => {
             console.error("خطأ في حفظ إعدادات الحماية:", error);
@@ -3375,7 +3654,7 @@
         document.getElementById('in-maintenance-footer').value = d.maintenance_footer || '© بصمة غير للديكور';
         
         if (d.protection_settings) {
-            protectionSettings = d.protection_settings;
+            Object.assign(protectionSettings, d.protection_settings);
             document.getElementById('enable-right-click-protection').checked = protectionSettings.rightClick !== false;
             document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts !== false;
             document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection !== false;
@@ -3466,4 +3745,4 @@
     setInterval(updateWorkStatus, 60000);
 </script>
 </body>
-</html>
+    </html>
