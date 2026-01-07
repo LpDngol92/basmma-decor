@@ -89,53 +89,6 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
         
-        /* تنبيه الحماية */
-        #protection-notification {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            z-index: 999999999;
-            display: none;
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 5px 20px rgba(231, 76, 60, 0.4);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: protection-notification-slide 0.3s ease-out;
-            max-width: 350px;
-        }
-        
-        @keyframes protection-notification-slide {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        .protection-text-small {
-            flex-grow: 1;
-            line-height: 1.4;
-            font-weight: bold;
-        }
-        
-        .protection-close {
-            background: rgba(255, 255, 255, 0.2);
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 1rem;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.3s;
-        }
-        
         #splash { 
             position: fixed; 
             inset: 0; 
@@ -981,6 +934,7 @@
             align-items: center;
             justify-content: center;
             box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
         }
         
         #protection-toggle.active {
@@ -1478,16 +1432,6 @@
     </style>
 </head>
 <body>
-<!-- تنبيه الحماية -->
-<div id="protection-notification">
-    <div class="protection-text-small" id="protection-message-content">
-        تم تعطيل الخاصية من قبل الحماية
-    </div>
-    <button class="protection-close" onclick="closeProtectionNotification()">
-        <i class="fas fa-times"></i>
-    </button>
-</div>
-
 <!-- شاشة منع أدوات المطورين -->
 <div id="devtools-overlay">
     <div class="devtools-message">
@@ -1601,8 +1545,10 @@
                     </div>
                     
                     <div style="margin-top:20px; padding:15px; background:rgba(197, 160, 89, 0.1); border-radius:10px;">
-                        <p style="color:var(--gold); font-weight:bold; margin-bottom:5px;">رسالة الحماية:</p>
-                        <textarea id="protection-message-text" rows="3" style="width:100%; background:var(--input-bg); color:var(--text-primary); border:1px solid var(--border); padding:10px; border-radius:5px;">⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر</textarea>
+                        <p style="color:var(--gold); font-weight:bold; margin-bottom:5px;">حالة الحماية:</p>
+                        <div style="background:var(--input-bg); padding:10px; border-radius:5px; color:var(--text-primary);">
+                            الحماية تعمل في الخلفية دون إظهار رسائل للمستخدم
+                        </div>
                         <button onclick="saveProtectionSettings()" style="width:100%; background:var(--gold); color:#000; padding:10px; border:none; border-radius:8px; margin-top:10px; font-weight:bold;">حفظ إعدادات الحماية</button>
                     </div>
                 </div>
@@ -1856,9 +1802,9 @@
         imageProtection: true,
         textSelection: true,
         drawingExemption: true,
-        devToolsDetection: true,
+        devToolsDetection: false, // تعطيل كشف أدوات المطورين للمستخدم العادي
         contextMenuPrevention: true,
-        sourceViewPrevention: true
+        sourceViewPrevention: false
     };
     
     // ========== متغيرات المساحة الحرة ==========
@@ -1875,7 +1821,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         enableAdvancedProtection();
         setupAuthListener();
-        startDevToolsDetection();
+        loadProtectionSettings();
     });
     
     // ========== نظام المصادقة ==========
@@ -1899,7 +1845,7 @@
                 const data = snapshot.val();
                 
                 if (!data) {
-                    showProtectionNotification("❌ لا توجد بيانات في قاعدة البيانات");
+                    alert("❌ لا توجد بيانات في قاعدة البيانات");
                     return;
                 }
                 
@@ -1924,11 +1870,11 @@
                 if (found) {
                     enterAdminPanel();
                 } else {
-                    showProtectionNotification("❌ الرمز غير صحيح! تأكد من الرقم.");
+                    alert("❌ الرمز غير صحيح! تأكد من الرقم.");
                 }
             })
             .catch(error => {
-                showProtectionNotification("❌ خطأ في الاتصال بالخادم: " + error.message);
+                alert("❌ خطأ في الاتصال بالخادم: " + error.message);
             });
     }
     
@@ -1936,7 +1882,6 @@
         isAdmin = true;
         document.getElementById('admin-panel').style.display = 'block';
         document.getElementById('protection-toggle').style.display = 'flex';
-        showProtectionNotification("✅ تم الدخول للإدارة بنجاح");
         fillAdminFields();
         
         localStorage.setItem('admin_session', 'active');
@@ -1951,6 +1896,17 @@
     }
     
     // ========== نظام الحماية المتقدمة ==========
+    function loadProtectionSettings() {
+        db.ref(DB_PATH + '/protection_settings').once('value').then(snapshot => {
+            const settings = snapshot.val();
+            if (settings) {
+                Object.assign(protectionSettings, settings);
+                isDrawingExempted = protectionSettings.drawingExemption !== false;
+            }
+            enableAdvancedProtection();
+        });
+    }
+    
     function enableAdvancedProtection() {
         if (!isProtectionEnabled) return;
         
@@ -1960,7 +1916,7 @@
         }
         
         // منع اختصارات لوحة المفاتيح
-        if (protectionSettings.keyboardShortcuts) {
+        if (protectionSettings.keyboardShortcuts && isAdmin) {
             document.addEventListener('keydown', preventKeyboardShortcutsAdvanced);
         }
         
@@ -1978,12 +1934,12 @@
         }
         
         // إخفاء الشيفرة المصدرية
-        if (protectionSettings.sourceViewPrevention) {
+        if (protectionSettings.sourceViewPrevention && isAdmin) {
             disableViewSource();
         }
         
-        // كشف أدوات المطورين
-        if (protectionSettings.devToolsDetection) {
+        // كشف أدوات المطورين فقط للمشرف
+        if (protectionSettings.devToolsDetection && isAdmin) {
             detectDevToolsOpening();
         }
     }
@@ -2006,12 +1962,12 @@
             enableAdvancedProtection();
             toggleBtn.classList.remove('active');
             toggleBtn.innerHTML = '<i class="fas fa-shield-alt"></i>';
-            showProtectionNotification('تم تفعيل الحماية المتقدمة');
+            alert('تم تفعيل الحماية المتقدمة');
         } else {
             disableAdvancedProtection();
             toggleBtn.classList.add('active');
             toggleBtn.innerHTML = '<i class="fas fa-shield-slash"></i>';
-            showProtectionNotification('تم تعطيل الحماية مؤقتاً');
+            alert('تم تعطيل الحماية مؤقتاً');
         }
     }
     
@@ -2021,63 +1977,27 @@
             return;
         }
         e.preventDefault();
-        showProtectionNotification('rightClick');
         return false;
     }
     
     function preventKeyboardShortcutsAdvanced(e) {
-        if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) {
+        if (!isProtectionEnabled || !isAdmin || (isDrawingExempted && isInDrawingArea(e.target))) {
             return;
         }
         
-        // قائمة شاملة لجميع طرق فتح أدوات المطورين
+        // فقط لمنع اختصارات أدوات المطورين للمشرف
         const devToolsShortcuts = [
-            // F12 و Fn+F12
             e.key === 'F12',
-            e.keyCode === 123, // F12
-            
-            // Ctrl+Shift+ combinations
-            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)), // Ctrl+Shift+I
-            (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)), // Ctrl+Shift+C
-            (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)), // Ctrl+Shift+J
-            (e.ctrlKey && e.shiftKey && (e.key === 'K' || e.key === 'k' || e.keyCode === 75)), // Ctrl+Shift+K (Firefox)
-            
-            // Ctrl+Alt+ combinations
-            (e.ctrlKey && e.altKey && (e.key === 'I' || e.key === 'i')), // Ctrl+Alt+I
-            (e.ctrlKey && e.altKey && (e.key === 'U' || e.key === 'u')), // Ctrl+Alt+U
-            (e.ctrlKey && e.altKey && (e.key === 'S' || e.key === 's')), // Ctrl+Alt+S
-            
-            // Ctrl+ combinations
-            (e.ctrlKey && e.key === 'U' || e.key === 'u' || e.keyCode === 85), // Ctrl+U
-            (e.ctrlKey && e.key === 'S' || e.key === 's' || e.keyCode === 83), // Ctrl+S
-            (e.ctrlKey && e.key === 'P' || e.key === 'p' || e.keyCode === 80), // Ctrl+P
-            
-            // Alt+ combinations
-            (e.altKey && e.key === 'F12'), // Alt+F12
-            
-            // Meta/Command+ combinations (for Mac)
-            (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i')), // Command+Option+I
-            (e.metaKey && e.altKey && (e.key === 'C' || e.key === 'c')), // Command+Option+C
-            (e.metaKey && e.altKey && (e.key === 'J' || e.key === 'j')), // Command+Option+J
-            
-            // Shift+F12
-            (e.shiftKey && e.key === 'F12'),
-            
-            // Function key combinations
-            (e.ctrlKey && e.shiftKey && e.key === 'F12'),
-            (e.altKey && e.shiftKey && e.key === 'F12'),
+            e.keyCode === 123,
+            (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)),
+            (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)),
+            (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)),
+            (e.ctrlKey && e.key === 'U' || e.key === 'u' || e.keyCode === 85)
         ];
         
         if (devToolsShortcuts.some(shortcut => shortcut)) {
             e.preventDefault();
             e.stopPropagation();
-            blockOpenAttempts++;
-            
-            if (blockOpenAttempts > 2) {
-                showDevToolsBlockScreen();
-            } else {
-                showProtectionNotification('devTools');
-            }
             return false;
         }
     }
@@ -2088,7 +2008,6 @@
         }
         if (e.target.tagName === 'IMG' && !e.target.id.includes('drawing')) {
             e.preventDefault();
-            showProtectionNotification('imageProtection');
             return false;
         }
     }
@@ -2098,7 +2017,6 @@
             return;
         }
         e.preventDefault();
-        showProtectionNotification('imageProtection');
         return false;
     }
     
@@ -2109,7 +2027,6 @@
         const tagName = e.target.tagName;
         if (tagName !== 'INPUT' && tagName !== 'TEXTAREA' && !isInDrawingArea(e.target)) {
             e.preventDefault();
-            showProtectionNotification('copy');
             return false;
         }
     }
@@ -2124,160 +2041,47 @@
     }
     
     function disableViewSource() {
-        // منع عرض الشيفرة المصدرية
         document.onkeydown = function(e) {
             if (e.ctrlKey && e.key === 'u') {
                 return false;
             }
         };
-        
-        // منع فتح صفحة المصدر
-        window.addEventListener('beforeunload', function(e) {
-            if (window.location.href.includes('view-source:')) {
-                window.location.href = '/';
-                return false;
-            }
-        });
     }
     
-    // ========== كشف أدوات المطورين المتقدم ==========
+    // ========== كشف أدوات المطورين (للمشرف فقط) ==========
     function detectDevToolsOpening() {
-        // طريقة 1: استخدام الـ debugger statement
-        const debuggerDetection = function() {
-            const startTime = performance.now();
-            debugger;
-            const endTime = performance.now();
+        if (!isAdmin) return;
+        
+        let lastWidth = window.outerWidth;
+        let lastHeight = window.outerHeight;
+        
+        setInterval(() => {
+            if (!isProtectionEnabled || !isAdmin) return;
             
-            if (endTime - startTime > 100) {
+            if (window.outerWidth - window.innerWidth > 100 || 
+                window.outerHeight - window.innerHeight > 100) {
                 devToolsOpen = true;
-                handleDevToolsDetected();
+                if (isAdmin) {
+                    alert('⚠️ تم فتح أدوات المطورين');
+                }
             } else {
                 devToolsOpen = false;
-            }
-        };
-        
-        // طريقة 2: كشف الفرق في عرض النافذة
-        function detectBySize() {
-            const threshold = 160;
-            const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-            const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-            
-            if (widthThreshold || heightThreshold) {
-                devToolsOpen = true;
-                handleDevToolsDetected();
-            }
-        }
-        
-        // طريقة 3: استخدام console.log
-        function detectByConsole() {
-            const start = performance.now();
-            console.log('devtools-detection');
-            console.clear();
-            const end = performance.now();
-            
-            if (end - start > 100) {
-                devToolsOpen = true;
-                handleDevToolsDetected();
-            }
-        }
-        
-        // طريقة 4: كشف focus على أدوات المطورين
-        let lastFocusTime = Date.now();
-        window.addEventListener('blur', function() {
-            lastFocusTime = Date.now();
-        });
-        
-        window.addEventListener('focus', function() {
-            const timeDiff = Date.now() - lastFocusTime;
-            if (timeDiff > 1000) {
-                // تم فتح نافذة أخرى لفترة طويلة (ربما أدوات المطورين)
-                detectByConsole();
-            }
-        });
-        
-        // تشغيل الكشف بشكل دوري
-        setInterval(function() {
-            if (!isProtectionEnabled || isAdmin) return;
-            
-            try {
-                debuggerDetection();
-                detectBySize();
-                detectByConsole();
-                
-                // إذا تم الكشف عن أدوات المطورين 3 مرات متتالية
-                if (devToolsOpen) {
-                    blockOpenAttempts++;
-                    if (blockOpenAttempts >= 3) {
-                        showDevToolsBlockScreen();
-                    }
-                } else {
-                    blockOpenAttempts = Math.max(0, blockOpenAttempts - 1);
-                }
-            } catch (e) {
-                // تجاهل الأخطاء
             }
         }, 1000);
     }
     
-    function handleDevToolsDetected() {
-        if (!isProtectionEnabled || isAdmin) return;
-        
-        showProtectionNotification('devTools');
-        
-        // إضافة عنصر يمنع التفاعل
-        const overlay = document.getElementById('devtools-overlay');
-        if (overlay) {
-            overlay.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-        }
-        
-        // محاولة إعادة تحميل الصفحة بعد فترة
-        setTimeout(() => {
-            if (devToolsOpen && !isAdmin) {
-                window.location.reload();
-            }
-        }, 5000);
-    }
-    
     function showDevToolsBlockScreen() {
+        if (!isAdmin) return;
+        
         const overlay = document.getElementById('devtools-overlay');
         if (overlay) {
             overlay.style.display = 'flex';
             document.body.style.overflow = 'hidden';
             
-            // منع إغلاق الشاشة
             overlay.onclick = function(e) {
                 e.stopPropagation();
             };
-            
-            // إعادة توجيه بعد 10 ثواني إذا لم تغلق أدوات المطورين
-            setTimeout(() => {
-                if (!isAdmin) {
-                    window.location.href = 'about:blank';
-                }
-            }, 10000);
         }
-    }
-    
-    function startDevToolsDetection() {
-        setInterval(() => {
-            if (!isProtectionEnabled || isAdmin) return;
-            
-            try {
-                // طريقة إضافية للكشف
-                const element = new Image();
-                Object.defineProperty(element, 'id', {
-                    get: function() {
-                        devToolsOpen = true;
-                        handleDevToolsDetected();
-                    }
-                });
-                console.log(element);
-                console.clear();
-            } catch (e) {
-                // تجاهل الأخطاء
-            }
-        }, 2000);
     }
     
     function isInDrawingArea(element) {
@@ -2295,68 +2099,6 @@
             element = element.parentElement;
         }
         return false;
-    }
-    
-    // ========== عرض التنبيهات ==========
-    function showProtectionNotification(actionType = '') {
-        const notification = document.getElementById('protection-notification');
-        const messageContent = document.getElementById('protection-message-content');
-        
-        let message = '⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر';
-        
-        switch(actionType) {
-            case 'rightClick':
-                message = '⛔ النقر الأيمن معطل لحماية المحتوى';
-                break;
-            case 'devTools':
-                message = '⛔ أدوات المطورين معطلة لحماية المحتوى';
-                break;
-            case 'copy':
-                message = '⛔ النسخ معطل لحماية المحتوى';
-                break;
-            case 'imageProtection':
-                message = '⛔ حفظ الصور معطل لحماية المحتوى';
-                break;
-            case 'settingsSaved':
-                message = '✅ تم حفظ الإعدادات بنجاح';
-                break;
-            case 'alreadyVoted':
-                message = '⚠️ لقد قمت بالتقييم مسبقاً';
-                break;
-            case 'incompleteReview':
-                message = '⚠️ يرجى إكمال جميع حقول التقييم';
-                break;
-            case 'reviewSubmitted':
-                message = '⭐ شكراً لتقييمك!';
-                break;
-            case 'partnerAdded':
-                message = '🤝 تم إضافة شعار الشريك';
-                break;
-            case 'catalogAdded':
-                message = '📚 تم إضافة الكتالوج';
-                break;
-            case 'uploadError':
-                message = '⚠️ يرجى تحديد وجهة وروابط الصور';
-                break;
-            case 'photosPublished':
-                message = '📸 تم نشر الصور بنجاح';
-                break;
-            default:
-                message = actionType || '⛔ هذه الخاصية معطلة - المحتوى محمي بحقوق النشر';
-        }
-        
-        messageContent.textContent = message;
-        notification.style.display = 'flex';
-        
-        setTimeout(() => {
-            if (notification.style.display === 'flex') {
-                notification.style.display = 'none';
-            }
-        }, 3000);
-    }
-    
-    function closeProtectionNotification() {
-        document.getElementById('protection-notification').style.display = 'none';
     }
     
     // ========== المعرض المعدل ==========
@@ -2494,10 +2236,10 @@
         
         if (saveToFirebase) {
             db.ref(DB_PATH).update({ header_font: fontName }).then(() => {
-                showProtectionNotification('تم تغيير الخط بنجاح');
+                alert('تم تغيير الخط بنجاح');
             }).catch(error => {
                 console.error("خطأ في حفظ الخط:", error);
-                showProtectionNotification('خطأ في حفظ الخط');
+                alert('خطأ في حفظ الخط');
             });
         }
     }
@@ -2512,7 +2254,7 @@
             setFont(customFont, true);
             document.getElementById('custom-font-input').value = '';
         } else {
-            showProtectionNotification('يرجى إدخال اسم خط صحيح');
+            alert('يرجى إدخال اسم خط صحيح');
         }
     }
     
@@ -2968,7 +2710,7 @@
         link.href = drawingCanvas.toDataURL('image/png');
         link.click();
         
-        showProtectionNotification('✅ تم حفظ الرسم بنجاح');
+        alert('✅ تم حفظ الرسم بنجاح');
     }
     
     function sendDrawingToWhatsApp() {
@@ -3218,7 +2960,7 @@
         return Object.keys(obj).map(id => `<div class="card" onclick="openCat('${id}')" style="padding:40px; text-align:center; cursor:pointer;"><h3 style="color:var(--gold);">${obj[id].name}</h3></div>`).join(''); 
     }
     
-    // ========== باقي الدوال (نفس الكود السابق) ==========
+    // ========== باقي الدوال ==========
     function toggleCol(id) { 
         document.querySelectorAll('.collapse-content').forEach(c=> { 
             if(c.id!==id) c.style.display='none'; 
@@ -3260,10 +3002,10 @@
     }
     
     function submitReview() { 
-        if(localStorage.getItem('v28_voted')) return showProtectionNotification('alreadyVoted'); 
+        if(localStorage.getItem('v28_voted')) return alert('⚠️ لقد قمت بالتقييم مسبقاً'); 
         const name = document.getElementById('rev-name').value; 
         const msg = document.getElementById('rev-msg').value; 
-        if(!name || !msg || userRating === 0) return showProtectionNotification('incompleteReview'); 
+        if(!name || !msg || userRating === 0) return alert('⚠️ يرجى إكمال جميع حقول التقييم'); 
         db.ref(DB_PATH + '/reviews').push({ 
             name: name, 
             message: msg, 
@@ -3271,20 +3013,20 @@
             date: new Date().toLocaleDateString('ar-SA') 
         }).then(() => { 
             localStorage.setItem('v28_voted', 'true'); 
-            showProtectionNotification('reviewSubmitted');
+            alert('⭐ شكراً لتقييمك!');
             renderAll(); 
         }).catch(error => {
             console.error("خطأ في إرسال التقييم:", error);
-            showProtectionNotification('خطأ في إرسال التقييم');
+            alert('خطأ في إرسال التقييم');
         }); 
     }
     
     function savePartnersTitle() { 
         const title = document.getElementById('admin-partners-title').value; 
-        db.ref(DB_PATH).update({ partners_title: title }).then(() => showProtectionNotification('settingsSaved'))
+        db.ref(DB_PATH).update({ partners_title: title }).then(() => alert('تم حفظ الإعدادات'))
             .catch(error => {
                 console.error("خطأ في حفظ عنوان الشركاء:", error);
-                showProtectionNotification('خطأ في الحفظ');
+                alert('خطأ في الحفظ');
             }); 
     }
     
@@ -3292,10 +3034,10 @@
         const url = document.getElementById('new-partner-url').value; 
         if(url) db.ref(DB_PATH + '/partners').push({ url: url.trim() }).then(() => { 
             document.getElementById('new-partner-url').value = ''; 
-            showProtectionNotification('partnerAdded');
+            alert('تم إضافة شعار الشريك');
         }).catch(error => {
             console.error("خطأ في إضافة الشريك:", error);
-            showProtectionNotification('خطأ في الإضافة');
+            alert('خطأ في الإضافة');
         }); 
     }
     
@@ -3305,10 +3047,10 @@
         if(name && code) db.ref(DB_PATH+'/catalogs').push({name, code}).then(()=>{ 
             document.getElementById('new-cat-name').value=''; 
             document.getElementById('new-cat-code').value=''; 
-            showProtectionNotification('catalogAdded');
+            alert('تم إضافة الكتالوج');
         }).catch(error => {
             console.error("خطأ في إضافة الكتالوج:", error);
-            showProtectionNotification('خطأ في الإضافة');
+            alert('خطأ في الإضافة');
         }); 
     }
     
@@ -3370,10 +3112,10 @@
             about_text: aboutText, 
             about_active: aboutActive 
         }).then(() => {
-            showProtectionNotification('settingsSaved');
+            alert('تم حفظ الإعدادات');
         }).catch(error => {
             console.error("خطأ في حفظ 'من نحن':", error);
-            showProtectionNotification('خطأ في الحفظ');
+            alert('خطأ في الحفظ');
         }); 
     }
     
@@ -3401,10 +3143,10 @@
         }); 
         
         db.ref(DB_PATH + '/work_schedule').set(sc).then(() => {
-            showProtectionNotification('تم حفظ المواعيد بنجاح');
+            alert('تم حفظ المواعيد بنجاح');
         }).catch(error => {
             console.error("خطأ في حفظ المواعيد:", error);
-            showProtectionNotification('خطأ في الحفظ');
+            alert('خطأ في الحفظ');
         }); 
     }
     
@@ -3415,10 +3157,10 @@
             snap_url: document.getElementById('in-snap').value, 
             location_url: document.getElementById('in-loc').value 
         }).then(() => {
-            showProtectionNotification('settingsSaved');
+            alert('تم حفظ الإعدادات');
         }).catch(error => {
             console.error("خطأ في حفظ وسائل التواصل:", error);
-            showProtectionNotification('خطأ في الحفظ');
+            alert('خطأ في الحفظ');
         }); 
     }
     
@@ -3430,10 +3172,10 @@
             news_bar: document.getElementById('in-news').value, 
             footer_text: document.getElementById('in-footer').value 
         }).then(() => {
-            showProtectionNotification('settingsSaved');
+            alert('تم حفظ الإعدادات');
         }).catch(error => {
             console.error("خطأ في حفظ الإعدادات:", error);
-            showProtectionNotification('خطأ في الحفظ');
+            alert('خطأ في الحفظ');
         }); 
     }
     
@@ -3444,13 +3186,13 @@
             maintenance_message: document.getElementById('in-maintenance-message').value,
             maintenance_footer: document.getElementById('in-maintenance-footer').value
         }).then(() => {
-            showProtectionNotification('settingsSaved');
+            alert('تم حفظ إعدادات الصيانة');
             if (currentData.maintenance_mode && !isAdmin) {
                 showMaintenanceScreen();
             }
         }).catch(error => {
             console.error("خطأ في حفظ إعدادات الصيانة:", error);
-            showProtectionNotification('خطأ في الحفظ');
+            alert('خطأ في الحفظ');
         });
     }
     
@@ -3460,16 +3202,14 @@
         protectionSettings.imageProtection = document.getElementById('enable-image-protection').checked;
         protectionSettings.textSelection = document.getElementById('enable-selection-protection').checked;
         protectionSettings.drawingExemption = document.getElementById('enable-drawing-exemption').checked;
+        protectionSettings.devToolsDetection = document.getElementById('enable-devtools-detection').checked;
         
         isDrawingExempted = protectionSettings.drawingExemption;
         
-        const message = document.getElementById('protection-message-text').value;
-        
         db.ref(DB_PATH).update({
-            protection_settings: protectionSettings,
-            protection_message: message
+            protection_settings: protectionSettings
         }).then(() => {
-            showProtectionNotification('✅ تم حفظ إعدادات الحماية المتقدمة');
+            alert('✅ تم حفظ إعدادات الحماية المتقدمة');
             
             if (isProtectionEnabled) {
                 disableAdvancedProtection();
@@ -3477,7 +3217,7 @@
             }
         }).catch(error => {
             console.error("خطأ في حفظ إعدادات الحماية:", error);
-            showProtectionNotification('خطأ في الحفظ');
+            alert('خطأ في الحفظ');
         });
     }
     
@@ -3489,11 +3229,11 @@
             drawing_button_text: document.getElementById('drawing-button-text').value,
             drawing_whatsapp_message: document.getElementById('drawing-whatsapp-message').value
         }).then(() => {
-            showProtectionNotification('✅ تم حفظ إعدادات المساحة الحرة');
+            alert('✅ تم حفظ إعدادات المساحة الحرة');
             renderAll();
         }).catch(error => {
             console.error("خطأ في حفظ إعدادات المساحة الحرة:", error);
-            showProtectionNotification('خطأ في الحفظ');
+            alert('خطأ في الحفظ');
         });
     }
     
@@ -3501,9 +3241,10 @@
         const n = document.getElementById('new-sec-in').value; 
         if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(() => {
             document.getElementById('new-sec-in').value='';
+            alert('تم إضافة القسم');
         }).catch(error => {
             console.error("خطأ في إضافة القسم:", error);
-            showProtectionNotification('خطأ في الإضافة');
+            alert('خطأ في الإضافة');
         }); 
     }
     
@@ -3511,27 +3252,28 @@
         const n = document.getElementById('new-alb-in').value; 
         if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(() => {
             document.getElementById('new-alb-in').value='';
+            alert('تم إضافة المجلد');
         }).catch(error => {
             console.error("خطأ في إضافة المجلد:", error);
-            showProtectionNotification('خطأ في الإضافة');
+            alert('خطأ في الإضافة');
         }); 
     }
     
     function publishPhotos() { 
         const path = document.getElementById('upload-target-sel').value; 
         const urls = document.getElementById('links-in').value.split('\n').filter(u=>u.trim()); 
-        if(!path || !urls.length) return showProtectionNotification('uploadError'); 
+        if(!path || !urls.length) return alert('يرجى تحديد وجهة وروابط الصور'); 
         
         const promises = urls.map(u => 
             db.ref(DB_PATH+'/'+path+'/imgs').push({url: u.trim()})
         );
         
         Promise.all(promises).then(() => {
-            showProtectionNotification('photosPublished');
+            alert('تم نشر الصور بنجاح');
             document.getElementById('links-in').value = '';
         }).catch(error => {
             console.error("خطأ في نشر الصور:", error);
-            showProtectionNotification('خطأ في النشر');
+            alert('خطأ في النشر');
         });
     }
     
@@ -3539,12 +3281,12 @@
         if(confirm("هل أنت متأكد من حذف هذه الصورة؟")) {
             db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove()
                 .then(() => {
-                    showProtectionNotification('تم حذف الصورة بنجاح');
+                    alert('تم حذف الصورة بنجاح');
                     renderPhotoManager(path);
                 })
                 .catch(error => {
                     console.error("Delete error:", error);
-                    showProtectionNotification('خطأ في الحذف');
+                    alert('خطأ في الحذف');
                 });
         }
     }
@@ -3663,10 +3405,6 @@
             isDrawingExempted = protectionSettings.drawingExemption !== false;
         }
         
-        if (d.protection_message) {
-            document.getElementById('protection-message-text').value = d.protection_message;
-        }
-        
         document.getElementById('drawing-title-input').value = d.drawing_title || 'المساحة الحرة';
         document.getElementById('drawing-description-input').value = d.drawing_description || 'يمكنك هنا رسم فكرتك التقريبية للتصميم. ارسم ما يجول بخاطرك وسنقوم بتحويله إلى واقع!';
         document.getElementById('drawing-button-text').value = d.drawing_button_text || 'المساحة الحرة';
@@ -3745,4 +3483,4 @@
     setInterval(updateWorkStatus, 60000);
 </script>
 </body>
-    </html>
+</html>
