@@ -2753,9 +2753,13 @@
         return `${h%12||12}:${m}${h>=12?'م':'ص'}`; 
     }
     
+    // ========== الدالة المعدلة لتحديث حالة العمل ==========
     function updateWorkStatus() { 
         const d = currentData; 
-        if(!d.work_schedule) return; 
+        if(!d.work_schedule) {
+            document.getElementById('status-container').innerHTML = '';
+            return; 
+        }
         
         const now = new Date();
         const dayJS = now.getDay();
@@ -2765,7 +2769,7 @@
         
         if(schedule && schedule.active) {
             const toMins = (t) => {
-                if(!t) return -1;
+                if(!t || t === '') return -1;
                 const [h, m] = t.split(':').map(Number);
                 return (h * 60) + m;
             };
@@ -2773,19 +2777,30 @@
             const currentMinutes = now.getHours() * 60 + now.getMinutes();
             let isOpen = false;
             
-            const morningStart = toMins(schedule.s1_s || '09:00');
-            const morningEnd = toMins(schedule.s1_e || '17:00');
-            
-            if (currentMinutes >= morningStart && currentMinutes < morningEnd) {
-                isOpen = true;
+            // التحقق من الفترة الصباحية
+            if (schedule.s1_s && schedule.s1_e && schedule.s1_s !== '' && schedule.s1_e !== '') {
+                const morningStart = toMins(schedule.s1_s);
+                const morningEnd = toMins(schedule.s1_e);
+                
+                if (currentMinutes >= morningStart && currentMinutes < morningEnd) {
+                    isOpen = true;
+                }
             }
             
-            if (!isOpen && schedule.s2_a) {
+            // التحقق من الفترة المسائية إذا كانت مفعلة
+            if (!isOpen && schedule.s2_a && schedule.s2_s && schedule.s2_e && schedule.s2_s !== '' && schedule.s2_e !== '') {
                 const eveningStart = toMins(schedule.s2_s);
                 const eveningEnd = toMins(schedule.s2_e);
                 
-                if (currentMinutes >= eveningStart && currentMinutes < eveningEnd) {
-                    isOpen = true;
+                // معالجة الفترات التي تمتد بعد منتصف الليل
+                if (eveningEnd < eveningStart) {
+                    if (currentMinutes >= eveningStart || currentMinutes < eveningEnd) {
+                        isOpen = true;
+                    }
+                } else {
+                    if (currentMinutes >= eveningStart && currentMinutes < eveningEnd) {
+                        isOpen = true;
+                    }
                 }
             }
             
@@ -3870,9 +3885,4 @@
     setInterval(updateWorkStatus, 60000);
 </script>
 </body>
-</html>
-
-
-
-
-
+    </html>
