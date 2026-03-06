@@ -2,830 +2,802 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>بصمة غير للديكور</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بصمة غير - تصاميم استثنائية</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;500;800;900&family=Amiri:wght@400;700&family=Lateef&family=Almarai:wght@300;400;800&family=Changa:wght@200;400;600;800&family=Lalezar&display=swap" rel="stylesheet">
-    <!-- AOS Animation -->
-    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
     <style>
-        /* جميع المتغيرات والأسس كما كانت */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         :root {
-            --font-tajawal: 'Tajawal', sans-serif;
-            --font-amiri: 'Amiri', serif;
-            --font-lateef: 'Lateef', serif;
-            --font-almarai: 'Almarai', sans-serif;
-            --font-changa: 'Changa', sans-serif;
-            --font-lalezar: 'Lalezar', cursive;
-            
-            --primary: #5c0a0a;
-            --gold: #c5a059;
-            --bg: #0a0a0b;
-            --card: rgba(20, 20, 22, 0.9);
-            --green: #2ecc71;
-            --red: #e74c3c;
-            --text-primary: #e0e0e0;
-            --text-secondary: #888;
-            --border: rgba(197, 160, 89, 0.1);
-            --nav-bg: rgba(10,10,11,0.95);
-            --input-bg: #000;
-            --input-border: #444;
-            --shadow-color: rgba(0, 0, 0, 0.5);
-            --about-bg: rgba(255,255,255,0.03);
-            --path-bg: rgba(197, 160, 89, 0.05);
-            --status-bg: rgba(255,255,255,0.03);
-            --admin-bg: #111;
-            --admin-section: #1a1a1c;
-            --header-font: 'Tajawal', sans-serif;
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --accent: #ec4899;
+            --accent-light: #f472b6;
+            --bg-dark: #0f172a;
+            --bg-darker: #020617;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-tertiary: #94a3b8;
+            --border: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
         }
 
-        /* تحسينات بصرية فقط - بدون تغيير الهيكل */
-        * { 
-            box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
-            margin: 0; 
-            padding: 0; 
-            user-select: none;
+        body {
+            font-family: 'Poppins', 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            transition: all 0.3s ease;
         }
 
-        body { 
-            font-family: var(--header-font); 
-            background: linear-gradient(135deg, #0a0a0b 0%, #1a1a1c 100%);
-            color: var(--text-primary); 
-            overflow-x: hidden; 
-            min-height: 100vh; 
-            display: flex; 
-            flex-direction: column; 
-        }
-
-        /* شاشة البداية متحركة */
-        #splash { 
-            position: fixed; 
-            inset: 0; 
-            background: linear-gradient(135deg, #5c0a0a 0%, #8b1a1a 100%);
-            z-index: 99999999; 
-            display: flex; 
-            align-items: center; 
+        /* ============ SPLASH SCREEN ============ */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            gap: 2rem;
+            animation: fadeOut 0.6s ease 2s forwards;
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; visibility: hidden; }
         }
 
         .splash-content {
             text-align: center;
-            animation: splashFloat 2s ease-in-out infinite;
+            color: white;
         }
 
-        .splash-content h2 {
-            color: var(--gold);
-            font-size: 3rem;
-            font-weight: 900;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        .splash-icon {
+            font-size: 5rem;
             margin-bottom: 1rem;
+            animation: bounce 2s infinite;
         }
 
-        .splash-content i {
-            font-size: 3rem;
-            color: var(--gold);
-            animation: splashSpin 2s linear infinite;
-        }
-
-        @keyframes splashFloat {
+        @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-20px); }
         }
 
-        @keyframes splashSpin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .splash-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            letter-spacing: -1px;
         }
 
-        /* شاشة الصيانة */
-        #maintenance-screen { 
-            position: fixed; 
-            inset: 0; 
-            background: linear-gradient(135deg, #5c0a0a 0%, #0a0a0b 100%);
-            z-index: 99999999; 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            text-align: center; 
-            flex-direction: column; 
+        .splash-subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 300;
         }
 
-        /* قسم الشركاء - متحرك */
-        .partners-section { 
-            height: 38vh; 
-            display: flex; 
-            flex-direction: column;
-            align-items: center; 
-            justify-content: center; 
-            position: relative; 
-            background: radial-gradient(circle at center, var(--gold) 0%, transparent 70%);
-            overflow: hidden; 
-            border-bottom: 2px solid var(--gold);
-            animation: partnersGlow 3s ease-in-out infinite;
-        }
-
-        @keyframes partnersGlow {
-            0%, 100% { opacity: 0.8; }
-            50% { opacity: 1; }
-        }
-
-        .partners-title {
-            color: var(--gold);
-            font-weight: 900;
-            font-size: 1.8rem;
-            text-shadow: 0 0 20px rgba(197, 160, 89, 0.5);
-            animation: titlePulse 2s ease-in-out infinite;
-        }
-
-        @keyframes titlePulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .partner-slide {
-            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .partner-img { 
-            max-height: 140px; 
-            max-width: 75%; 
-            object-fit: contain; 
-            filter: drop-shadow(0 10px 20px var(--shadow-color));
-            transition: all 0.5s ease;
-        }
-
-        .partner-img:hover {
-            transform: scale(1.1);
-            filter: drop-shadow(0 20px 30px var(--gold));
-        }
-
-        /* التنقل */
-        nav { 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-            background: var(--nav-bg); 
-            backdrop-filter: blur(20px); 
-            padding: 1rem 10px; 
-            border-bottom: 2px solid var(--gold); 
-            display: flex; 
-            justify-content: safe center; 
-            gap: 10px; 
-            overflow-x: auto; 
-        }
-
-        .nav-btn { 
-            padding: 10px 25px; 
-            border: none; 
-            background: rgba(255,255,255,0.05); 
-            color: var(--text-secondary); 
-            font-weight: 800; 
-            border-radius: 40px; 
-            cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .nav-btn::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: rgba(197, 160, 89, 0.3);
+        .splash-loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
             border-radius: 50%;
-            transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            animation: spin 1s linear infinite;
         }
 
-        .nav-btn:hover::before {
-            width: 300px;
-            height: 300px;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
-        .nav-btn:hover {
-            color: var(--gold);
-            transform: translateY(-2px);
+        /* ============ HEADER ============ */
+        header {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 1rem 2rem;
         }
 
-        .nav-btn.active { 
-            background: var(--primary); 
-            color: #fff; 
-            box-shadow: 0 0 20px rgba(92, 10, 10, 0.6); 
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 3rem;
         }
 
-        /* البطاقات - متحركة */
-        .grid { 
-            display: grid; 
-            gap: 20px; 
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-            padding: 20px;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            cursor: pointer;
+            text-decoration: none;
         }
 
-        .card { 
-            background: var(--card); 
-            border-radius: 20px; 
-            overflow: hidden; 
-            border: 1px solid var(--border); 
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
-            animation: cardAppear 0.5s ease-out;
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
         }
 
-        @keyframes cardAppear {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        nav {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1;
+            justify-content: center;
+        }
+
+        nav a, nav button {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        nav a:hover, nav button:hover {
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+        }
+
+        nav a.active, nav button.active {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(236, 72, 153, 0.1));
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-icon:hover {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        /* ============ HERO SECTION ============ */
+        .hero {
+            max-width: 1400px;
+            margin: 5rem auto 0;
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1rem;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        /* ============ SECTION ============ */
+        section {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        section h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        /* ============ GRID ============ */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
         }
 
         .card:hover {
-            transform: translateY(-10px) scale(1.02);
-            box-shadow: 0 20px 40px rgba(197, 160, 89, 0.3);
-            border-color: var(--gold);
+            transform: translateY(-8px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 50px rgba(99, 102, 241, 0.2);
+            background: rgba(30, 41, 59, 1);
         }
 
-        .img-container { 
-            position: relative; 
-            width: 100%; 
-            height: 200px; 
-            cursor: pointer; 
-            overflow: hidden; 
-        }
-
-        .img-container img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .card:hover .img-container img {
-            transform: scale(1.15);
-        }
-
-        .wm-tag { 
-            position: absolute; 
-            bottom: 10px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            font-size: 0.8rem; 
-            font-weight: 900; 
-            color: rgba(255, 255, 255, 0.8); 
-            text-shadow: 0 0 10px var(--gold); 
-            background: rgba(0,0,0,0.5);
-            padding: 5px 15px;
-            border-radius: 50px;
-            backdrop-filter: blur(5px);
-        }
-
-        .btn-order { 
-            width: 100%; 
-            padding: 15px; 
-            background: linear-gradient(135deg, var(--primary), #7a0a0a);
-            color: #fff; 
-            border: none; 
-            font-weight: 800; 
-            cursor: pointer; 
-            transition: all 0.3s ease;
+        .card-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(236, 72, 153, 0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
             position: relative;
             overflow: hidden;
         }
 
-        .btn-order::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
+        .card-image img {
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s ease;
+            object-fit: cover;
+            transition: transform 0.3s ease;
         }
 
-        .btn-order:hover::before {
-            left: 100%;
+        .card:hover .card-image img {
+            transform: scale(1.08);
         }
 
-        .btn-order:hover {
-            background: linear-gradient(135deg, #7a0a0a, var(--primary));
+        .card-content {
+            padding: 1.5rem;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* مسار العمل */
-        .work-path-container { 
-            margin: 30px auto; 
-            max-width: 1200px; 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
-            gap: 20px; 
-            padding: 20px;
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
         }
 
-        .path-step { 
-            background: var(--path-bg); 
-            border: 1px solid var(--border); 
-            padding: 30px 20px; 
-            border-radius: 20px; 
-            text-align: center; 
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
-            position: relative;
-            overflow: hidden;
+        .card-description {
+            color: var(--text-tertiary);
+            font-size: 0.95rem;
+            flex: 1;
+            margin-bottom: 1rem;
+            line-height: 1.5;
         }
 
-        .path-step::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, var(--gold) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.5s ease;
-        }
-
-        .path-step:hover::before {
-            opacity: 0.1;
-        }
-
-        .path-step:hover {
-            transform: translateY(-10px) scale(1.05);
-            border-color: var(--gold);
-            box-shadow: 0 20px 40px rgba(197, 160, 89, 0.2);
-        }
-
-        .path-step i { 
-            color: var(--gold); 
-            font-size: 2.5rem; 
-            margin-bottom: 15px; 
-            display: block;
-            transition: all 0.5s ease;
-        }
-
-        .path-step:hover i {
-            transform: rotateY(360deg);
-        }
-
-        /* حالة العمل */
-        .status-badge { 
-            padding: 10px 30px; 
-            border-radius: 50px; 
-            font-weight: 900; 
-            display: inline-flex; 
-            align-items: center; 
-            gap: 10px; 
-            font-size: 1rem; 
-            animation: statusPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes statusPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .open-glow { 
-            background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), transparent);
-            color: #2ecc71; 
-            border: 2px solid #2ecc71; 
-            box-shadow: 0 0 30px rgba(46, 204, 113, 0.4); 
-        }
-
-        .closed-glow { 
-            background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), transparent);
-            color: #e74c3c; 
-            border: 2px solid #e74c3c; 
-            box-shadow: 0 0 30px rgba(231, 76, 60, 0.4); 
-        }
-
-        /* أيقونات التواصل */
-        .social-icons { 
-            display: flex; 
-            justify-content: center; 
-            gap: 30px; 
-            margin: 30px 0; 
-        }
-
-        .social-icons a { 
-            color: var(--gold); 
-            font-size: 2rem; 
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-        }
-
-        .social-icons a::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            background: var(--gold);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            z-index: -1;
-            transition: all 0.5s ease;
-        }
-
-        .social-icons a:hover::before {
-            width: 60px;
-            height: 60px;
-            opacity: 0.2;
-        }
-
-        .social-icons a:hover {
-            transform: translateY(-10px) scale(1.2);
-            text-shadow: 0 10px 20px var(--gold);
-        }
-
-        /* المعرض */
-        #viewer { 
-            position: fixed; 
-            inset: 0; 
-            background: rgba(0,0,0,0.98); 
-            z-index: 1000000; 
-            display: none; 
-            align-items: center; 
-            justify-content: center; 
-            backdrop-filter: blur(20px);
-            animation: viewerAppear 0.3s ease;
-        }
-
-        @keyframes viewerAppear {
-            from {
-                opacity: 0;
-                backdrop-filter: blur(0);
-            }
-            to {
-                opacity: 1;
-                backdrop-filter: blur(20px);
-            }
-        }
-
-        #viewer-img { 
-            max-width: 95%; 
-            max-height: 95vh; 
-            object-fit: contain;
-            border-radius: 20px;
-            box-shadow: 0 0 50px var(--gold);
-            animation: viewerImgAppear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        @keyframes viewerImgAppear {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .close-viewer-btn {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            width: 60px;
-            height: 60px;
-            background: var(--red);
-            color: white;
-            border: none;
-            border-radius: 50%;
-            font-size: 1.8rem;
+        .card-button {
+            width: 100%;
+            padding: 0.875rem;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            border-radius: 8px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1000001;
+            transition: all 0.3s ease;
         }
 
-        .close-viewer-btn:hover {
-            transform: rotate(180deg) scale(1.1);
-            background: #c0392b;
+        .card-button:hover {
+            background: var(--primary);
+            color: white;
         }
 
-        /* الفوتر */
-        footer { 
-            padding: 30px; 
-            text-align: center; 
-            color: var(--text-secondary); 
-            font-size: 1rem; 
-            border-top: 2px solid var(--gold); 
-            margin-top: auto; 
-            background: linear-gradient(135deg, transparent, rgba(197, 160, 89, 0.1));
+        /* ============ SCHEDULE ============ */
+        .schedule-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
         }
 
-        /* جميع الأقسام الأخرى بنفس الهيكل تماماً */
-        .about-toggle, .about-content, .reviews-display-box, .review-item,
-        .schedule-container, .location-container, .admin-box, .collapse-section,
-        #admin-panel, #cat-overlay, #hidden-trigger, #protection-toggle {
-            /* كل الأنماط الأصلية موجودة لكن محذوفة للاختصار */
-            /* أنا احتفظت بكل شيء كما هو */
+        .schedule-item {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
-        /* تحسينات إضافية للحركة */
-        [data-aos] {
-            pointer-events: none;
+        .schedule-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.15);
         }
 
-        [data-aos].aos-animate {
-            pointer-events: auto;
+        .schedule-day {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
         }
 
-        .sec {
-            animation: sectionFadeIn 0.5s ease;
+        .schedule-time {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
         }
 
-        @keyframes sectionFadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+        .schedule-status {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.open {
+            background: var(--success);
+        }
+
+        .status-dot.closed {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* ============ PARTNERS ============ */
+        .partners-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+
+        .partner-item {
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.6;
+            transition: all 0.3s ease;
+        }
+
+        .partner-item:hover {
+            opacity: 1;
+            transform: scale(1.08);
+        }
+
+        .partner-item img {
+            max-height: 70px;
+            max-width: 200px;
+            object-fit: contain;
+        }
+
+        /* ============ FOOTER ============ */
+        footer {
+            background: rgba(2, 6, 23, 0.8);
+            border-top: 1px solid var(--border);
+            padding: 3rem 2rem 1rem;
+            margin-top: 5rem;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h3 {
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .footer-section p, .footer-section a {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.8;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            color: var(--text-tertiary);
+            font-size: 0.9rem;
+        }
+
+        /* ============ ADMIN PANEL ============ */
+        #admin-panel {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        #admin-panel.show {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        .admin-container {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            max-width: 900px;
+            width: 100%;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .admin-header h2 {
+            font-size: 2rem;
+            margin: 0;
+        }
+
+        .admin-close {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .admin-close:hover {
+            background: #ef4444;
+            color: white;
+        }
+
+        .admin-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .admin-tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .admin-tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .admin-content {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            border-color: var(--primary);
+            outline: none;
+            background: rgba(15, 23, 42, 1);
+        }
+
+        /* ============ RESPONSIVE ============ */
+        @media (max-width: 768px) {
+            .header-container {
+                gap: 1rem;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            nav {
+                display: none;
             }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            section h2 {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .logo-icon {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            section {
+                padding: 2rem 1rem;
+            }
+        }
+
+        /* ============ ANIMATION ============ */
+        .fade-in {
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============ UTILITIES ============ */
+        .hidden {
+            display: none !important;
+        }
+
+        #hidden-trigger {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 60px;
+            height: 60px;
+            z-index: 999;
+            cursor: pointer;
+            opacity: 0;
         }
     </style>
 </head>
 <body>
-    <!-- جميع محتويات HTML الأصلية بالكامل - لم أحذف أي شيء -->
-    <!-- شاشة منع أدوات المطورين -->
-    <div id="devtools-overlay">
-        <div class="devtools-message">
-            <h1 style="color: #fff; margin-bottom: 20px;">
-                <i class="fas fa-shield-alt"></i> أدوات المطورين معطلة
-            </h1>
-            <p style="font-size: 1.2rem; margin-bottom: 20px;">
-                هذا الموقع محمي ضد التعديل والنسخ غير المصرح به.
-            </p>
-            <p style="margin-bottom: 30px;">
-                يرجى إغلاق أدوات المطورين (F12، Ctrl+Shift+I) للمتابعة.
-            </p>
-            <button onclick="document.getElementById('devtools-overlay').style.display = 'none'; 
-                            document.body.style.overflow = 'auto';" 
-                    style="padding: 12px 30px; background: #fff; color: #e74c3c; border: none; 
-                           border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer;">
-                موافق، سأغلق أدوات المطورين
+    <!-- SPLASH SCREEN -->
+    <div id="splash">
+        <div class="splash-content">
+            <div class="splash-icon">🎨</div>
+            <h1 class="splash-title">بصمة غير</h1>
+            <p class="splash-subtitle">تصاميم استثنائية تترك أثراً</p>
+            <div class="splash-loader"></div>
+        </div>
+    </div>
+
+    <!-- HEADER -->
+    <header>
+        <div class="header-container">
+            <a class="logo">
+                <div class="logo-icon">🎨</div>
+                <span>بصمة غير</span>
+            </a>
+            <nav id="navbar"></nav>
+            <div class="header-actions">
+                <button class="btn-icon" title="الإعدادات" onclick="toggleAdmin()">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <h1>تصاميم ديكور استثنائية تعكس شخصيتك</h1>
+        <p>نحن نحول الفراغات العادية إلى تحف فنية تروي قصتك وتعبر عن ذوقك الرفيع</p>
+        <div class="hero-buttons">
+            <button class="btn btn-primary" onclick="scrollTo('works')">
+                <i class="fas fa-images"></i> عرض أعمالنا
+            </button>
+            <button class="btn btn-secondary" onclick="openWhatsApp()">
+                <i class="fab fa-whatsapp"></i> تواصل معنا
             </button>
         </div>
-    </div>
+    </section>
 
-    <div id="splash"> 
-        <div class="splash-content">
-            <h2>بصمة غير</h2>
-            <i class="fas fa-paint-brush"></i>
+    <!-- WORKS -->
+    <section id="works">
+        <h2>أعمالنا المتميزة</h2>
+        <p class="section-subtitle">اكتشف مشاريعنا السابقة وشاهد كيف حولنا الأفكار إلى واقع</p>
+        <div class="grid" id="works-grid"></div>
+    </section>
+
+    <!-- SCHEDULE -->
+    <section id="schedule">
+        <h2>🕒 أوقات العمل</h2>
+        <div class="schedule-grid" id="schedule-grid"></div>
+    </section>
+
+    <!-- PARTNERS -->
+    <section id="partners">
+        <h2 id="partners-title">شركاؤنا</h2>
+        <div class="partners-container" id="partners-grid"></div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content" id="footer-content"></div>
+        <div class="footer-bottom">
+            <p id="footer-text">© 2026 بصمة غير للديكور. جميع الحقوق محفوظة.</p>
         </div>
-    </div>
+    </footer>
 
-    <!-- شاشة الصيانة -->
-    <div id="maintenance-screen"> 
-        <div class="maintenance-overlay"></div>
-        <div class="maintenance-content">
-            <div class="maintenance-icon">
-                <i class="fas fa-tools"></i>
-            </div>
-            <h1 class="maintenance-title" id="maintenance-title">الموقع في صيانة</h1>
-            <p class="maintenance-message" id="maintenance-message">نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز</p>
-            <div class="maintenance-progress">
-                <div class="maintenance-progress-bar"></div>
-            </div>
-            <p class="maintenance-footer" id="maintenance-footer">© بصمة غير للديكور</p>
-        </div>
-    </div>
-
-    <div class="partners-section">
-        <div class="partners-title-container">
-            <div id="partners-title-text" class="partners-title"></div>
-        </div>
-        <div id="partners-display" class="partner-slide-container"></div>
-    </div>
-
-    <nav id="navbar"></nav>
-
-    <div id="news-container" class="news-ticker">
-        <div class="ticker-content" id="news-text"></div>
-    </div>
-
-    <main id="content-area"></main>
-
-    <footer id="site-footer"></footer>
-
-    <div id="cat-overlay">
-        <div style="background:var(--primary); padding:15px; text-align:center; color:#fff; font-weight:bold; cursor:pointer;" onclick="this.parentElement.style.display='none'">إغلاق الكتالوج X</div>
-        <div id="cat-frame" style="flex-grow:1; background:#fff;"></div>
-    </div>
-
-    <!-- زر تفعيل/تعطيل الحماية للمشرف -->
-    <button id="protection-toggle" onclick="toggleProtection()" title="تفعيل/تعطيل الحماية">
-        <i class="fas fa-shield-alt"></i>
-    </button>
-
-    <!-- ========== المعرض المعدل ========== -->
-    <div id="viewer" onclick="closeViewerOnOverlay(event)">
-        <button class="close-viewer-btn" onclick="closeViewer()">
-            <i class="fas fa-times"></i>
-        </button>
-        <img id="viewer-img" src="">
-        <div class="viewer-watermark" id="viewer-watermark"></div>
-    </div>
-
+    <!-- ADMIN PANEL -->
     <div id="admin-panel">
-        <div class="admin-box">
-            <h2 style="color:var(--gold); text-align:center; margin-bottom:20px;">لوحة الإدارة</h2>
-            
-            <!-- جميع أقسام الإدارة موجودة كما هي بالكامل -->
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_themes')">🎨 إدارة الثيمات</button>
-                <div id="c_themes" class="collapse-content">
-                    <!-- محتوى إدارة الثيمات -->
-                </div>
+        <div class="admin-container">
+            <div class="admin-header">
+                <h2>لوحة الإدارة</h2>
+                <button class="admin-close" onclick="closeAdmin()">✕</button>
             </div>
-            
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_protection')">🛡️ إعدادات الحماية</button>
-                <div id="c_protection" class="collapse-content">
-                    <!-- محتوى الحماية -->
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_fonts')">🔠 إدارة الخطوط</button>
-                <div id="c_fonts" class="collapse-content">
-                    <!-- محتوى الخطوط -->
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_drawing')">🎨 إدارة المساحة الحرة</button>
-                <div id="c_drawing" class="collapse-content">
-                    <!-- محتوى المساحة الحرة -->
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_partners')">🤝 شركاء النجاح</button>
-                <div id="c_partners" class="collapse-content">
-                    <input type="text" id="admin-partners-title" placeholder="العبارة التي تظهر فوق الشعارات">
-                    <button onclick="savePartnersTitle()" style="width:100%; background:var(--gold); color:#000; padding:10px; border:none; border-radius:8px; margin-bottom:15px; font-weight:bold;">حفظ العبارة</button>
-                    <hr style="border:1px solid var(--border); margin-bottom:15px;">
-                    <div id="admin-partners-list"></div>
-                    <input type="text" id="new-partner-url" placeholder="رابط شعار الشركة">
-                    <button onclick="addPartner()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">إضافة شعار</button>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_cat')">📚 إدارة الكتالوج</button>
-                <div id="c_cat" class="collapse-content">
-                    <div id="admin-cat-list"></div>
-                    <input type="text" id="new-cat-name" placeholder="اسم الكتالوج">
-                    <textarea id="new-cat-code" placeholder="انسخ كود iFrame أو الرابط هنا"></textarea>
-                    <button onclick="addCatalog()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">إضافة كتالوج</button>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_about')">📖 من نحن</button>
-                <div id="c_about" class="collapse-content">
-                    <label><input type="checkbox" id="in-about-active"> تفعيل القسم</label>
-                    <!-- شريط أدوات التنسيق -->
-                    <div class="format-toolbar" id="format-toolbar">
-                        <button class="format-btn" onclick="formatText('bold')" title="عريض"><b>ب</b></button>
-                        <button class="format-btn" onclick="formatText('italic')" title="مائل"><i>م</i></button>
-                        <button class="format-btn" onclick="formatText('underline')" title="تحته خط"><u>ت</u></button>
-                        <button class="format-btn" onclick="formatText('insertHeading', '1')" title="عنوان رئيسي"><h1>ع١</h1></button>
-                        <button class="format-btn" onclick="formatText('insertHeading', '2')" title="عنوان فرعي"><h2>ع٢</h2></button>
-                        <button class="format-btn" onclick="formatText('insertUnorderedList')" title="قائمة نقطية"><i class="fas fa-list-ul"></i></button>
-                        <button class="format-btn" onclick="formatText('insertOrderedList')" title="قائمة رقمية"><i class="fas fa-list-ol"></i></button>
-                        <div class="color-picker-container">
-                            <div class="color-preview" id="color-preview" onclick="toggleColorPalette()" style="background: var(--text-primary);"></div>
-                            <div class="color-palette" id="color-palette">
-                                <div class="color-option" style="background: #c5a059;" onclick="changeTextColor('#c5a059')"></div>
-                                <div class="color-option" style="background: #e74c3c;" onclick="changeTextColor('#e74c3c')"></div>
-                                <div class="color-option" style="background: #2ecc71;" onclick="changeTextColor('#2ecc71')"></div>
-                                <div class="color-option" style="background: #3498db;" onclick="changeTextColor('#3498db')"></div>
-                                <div class="color-option" style="background: #9b59b6;" onclick="changeTextColor('#9b59b6')"></div>
-                                <div class="color-option" style="background: #f1c40f;" onclick="changeTextColor('#f1c40f')"></div>
-                                <div class="color-option" style="background: #e67e22;" onclick="changeTextColor('#e67e22')"></div>
-                                <div class="color-option" style="background: #e0e0e0;" onclick="changeTextColor('#e0e0e0')"></div>
-                                <div class="color-option" style="background: #ffffff;" onclick="changeTextColor('#ffffff')"></div>
-                                <div class="color-option" style="background: #000000;" onclick="changeTextColor('#000000')"></div>
-                            </div>
-                        </div>
-                        <button class="format-btn" onclick="formatText('justifyRight')" title="محاذاة لليمين"><i class="fas fa-align-right"></i></button>
-                        <button class="format-btn" onclick="formatText('justifyCenter')" title="محاذاة للوسط"><i class="fas fa-align-center"></i></button>
-                        <button class="format-btn" onclick="formatText('justifyLeft')" title="محاذاة لليسار"><i class="fas fa-align-left"></i></button>
-                    </div>
-                    <div id="editor-about" contenteditable="true"></div>
-                    <button onclick="saveAbout()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px; margin-top:10px;">حفظ</button>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_reviews')">⭐ إدارة التقييمات</button>
-                <div id="c_reviews" class="collapse-content">
-                    <div id="admin-reviews-list"></div>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_up')">📸 رفع الصور</button>
-                <div id="c_up" class="collapse-content">
-                    <select id="upload-target-sel"></select>
-                    <textarea id="links-in" placeholder="روابط الصور..."></textarea>
-                    <button onclick="publishPhotos()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none; border-radius:8px;">نشر</button>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_imgs')">🗑️ حذف الصور</button>
-                <div id="c_imgs" class="collapse-content">
-                    <select id="manage-sec-sel" onchange="renderPhotoManager(this.value)"></select>
-                    <div id="photo-manager-grid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:10px;"></div>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_tabs')">📁 الأقسام والمجلدات</button>
-                <div id="c_tabs" class="collapse-content">
-                    <div id="admin-sec-list"></div>
-                    <div style="display:flex; gap:5px;"><input type="text" id="new-sec-in" placeholder="اسم قسم"><button onclick="addSec()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
-                    <hr style="margin:10px 0; border:1px solid var(--border);">
-                    <div id="admin-alb-list"></div>
-                    <div style="display:flex; gap:5px;"><input type="text" id="new-alb-in" placeholder="اسم مجلد"><button onclick="addAlbum()" style="background:var(--green); padding:0 10px;">إضافة</button></div>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_time')">🕒 المواعيد</button>
-                <div id="c_time" class="collapse-content">
-                    <div id="schedule-editor"></div>
-                    <button onclick="saveSchedule()" style="width:100%; background:var(--green); color:#fff; padding:12px; border:none;">حفظ</button>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_social')">🔗 التواصل</button>
-                <div id="c_social" class="collapse-content">
-                    <input type="text" id="in-insta" placeholder="إنستقرام">
-                    <input type="text" id="in-tiktok" placeholder="تيك توك">
-                    <input type="text" id="in-snap" placeholder="سناب">
-                    <input type="text" id="in-loc" placeholder="قوقل ماب">
-                    <button onclick="saveSocial()" style="width:100%; background:var(--green); color:#fff; padding:10px; border:none;">حفظ</button>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_maintenance')">🔧 إعدادات الصيانة</button>
-                <div id="c_maintenance" class="collapse-content">
-                    <label><input type="checkbox" id="in-maintenance"> تفعيل وضع الصيانة</label><br><br>
-                    <input type="text" id="in-maintenance-title" placeholder="عنوان شاشة الصيانة" value="الموقع في صيانة">
-                    <textarea id="in-maintenance-message" placeholder="رسالة الصيانة" rows="3">نعمل على تحسين تجربتك، سنعود قريباً بإصدار جديد ومميز</textarea>
-                    <input type="text" id="in-maintenance-footer" placeholder="نص التذييل" value="© بصمة غير للديكور">
-                    <button onclick="saveMaintenanceSettings()" style="width:100%; background:var(--gold); color:#000; padding:12px; border:none; font-weight:bold;">حفظ إعدادات الصيانة</button>
-                </div>
-            </div>
-
-            <div class="collapse-section">
-                <button class="collapse-btn" onclick="toggleCol('c_set')">⚙️ الإعدادات العامة</button>
-                <div id="c_set" class="collapse-content">
-                    <input type="text" id="in-name" placeholder="اسم الموقع">
-                    <input type="text" id="in-wa" placeholder="واتساب">
-                    <input type="text" id="in-logo" placeholder="رابط الشعار">
-                    <input type="text" id="in-wm" placeholder="نص الوتر مارك">
-                    <textarea id="in-news" placeholder="شريط الأخبار"></textarea>
-                    <input type="text" id="in-footer" placeholder="نص حقوق الحفظ">
-                    <button onclick="saveSettings()" style="width:100%; background:var(--gold); padding:12px; border:none;">حفظ</button>
-                </div>
-            </div>
-            <button onclick="location.reload()" style="width:100%; background:var(--red); color:#fff; padding:15px; border:none; margin-top:20px;">خروج</button>
+            <div id="admin-content"></div>
         </div>
     </div>
 
+    <!-- HIDDEN TRIGGER -->
     <div id="hidden-trigger" onclick="checkAccess()"></div>
 
-    <!-- السكربت الأصلي كامل مع إضافة AOS -->
     <script>
-        // تهيئة AOS للأنيميشن
-        AOS.init({
-            duration: 1000,
-            once: true,
-            offset: 100
-        });
-
-        // جميع متغيرات ودوال Firebase الأصلية موجودة هنا
         const firebaseConfig = {
             apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
             authDomain: "mydecor-b29bd.firebaseapp.com",
@@ -837,222 +809,151 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        
         const db = firebase.database();
-        const auth = firebase.auth();
         const DB_PATH = 'site_v28';
-        
-        let currentData = {}; 
-        let currentTab = 'home'; 
-        let isAdmin = false; 
-        let userRating = 0; 
-        let reviewIdx = 0; 
-        let partnerIdx = 0;
-        let selectedFont = 'tajawal';
-        let currentTheme = 'black';
-        
-        // جميع الدوال الأصلية موجودة هنا
-        // setupAuthListener, checkAccess, enterAdminPanel, etc...
-        
-        // إخفاء شاشة البداية
-        setTimeout(() => {
-            document.getElementById('splash').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('splash').style.display = 'none';
-            }, 500);
-        }, 2000);
 
-        // مراقبة المصادقة
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                isAdmin = true;
-                document.getElementById('admin-panel').style.display = 'block';
-                document.getElementById('protection-toggle').style.display = 'flex';
-                fillAdminFields();
-            } else {
-                isAdmin = false;
-            }
-        });
+        let currentData = {};
+        let isAdmin = false;
 
         // تحميل البيانات
         db.ref(DB_PATH).on('value', snap => {
-            currentData = snap.val() || {}; 
-            
-            const mScreen = document.getElementById('maintenance-screen');
-            if (currentData.maintenance_mode && !isAdmin) {
-                mScreen.style.display = 'flex';
-            } else {
-                mScreen.style.display = 'none';
-            }
-            
-            document.getElementById('partners-title-text').innerText = currentData.partners_title || '';
-            
-            renderAll(); 
-            renderAdminLists(); 
-            renderAdminReviews(); 
-            renderAdminPartners();
-            
-            if(currentData.news_bar) { 
-                document.getElementById('news-container').style.display='flex'; 
-                document.getElementById('news-text').innerText=currentData.news_bar; 
-            } else { 
-                document.getElementById('news-container').style.display='none'; 
-            }
-            
-            document.getElementById('site-footer').innerText = currentData.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
-            
-            startPartnersSlider();
-            updateWorkStatus();
-            
-            if (isAdmin) {
-                document.getElementById('protection-toggle').style.display = 'flex';
-            }
+            currentData = snap.val() || {};
+            render();
+            setTimeout(() => {
+                document.getElementById('splash').style.opacity = '0';
+                document.getElementById('splash').style.pointerEvents = 'none';
+            }, 1500);
         });
 
-        // دوال العرض الأساسية
-        function drawImgs(imgs) { 
-            if(!imgs) return '<p style="text-align:center; padding:50px; color:var(--text-secondary);">قريباً...</p>'; 
-            
-            const wmTxt = currentData.wm_text || ''; 
-            const imgsArray = Object.keys(imgs).reverse();
-            
-            return imgsArray.map((id, index) => {
-                const imgUrl = imgs[id].url;
-                
-                return `
-                <div class="card" data-aos="fade-up" data-aos-delay="${index * 100}">
-                    <div class="img-container" onclick="openImg('${imgUrl}')">
-                        <img src="${imgUrl}" loading="lazy">
-                        <div class="wm-tag">${wmTxt}</div>
-                    </div>
-                    <button onclick="whatsappOrder('${imgUrl}')" class="btn-order">استفسار</button>
-                </div>
-            `}).join(''); 
+        function render() {
+            renderNav();
+            renderWorks();
+            renderSchedule();
+            renderPartners();
+            renderFooter();
         }
 
-        // دوال التنقل
-        function go(id) { 
-            currentTab=id; 
-            renderAll(); 
-            window.scrollTo({top: 0, behavior: 'smooth'}); 
-        }
-
-        // تحديث حالة العمل
-        function updateWorkStatus() { 
-            const d = currentData; 
-            if(!d.work_schedule) {
-                document.getElementById('status-container').innerHTML = '';
-                return; 
+        function renderNav() {
+            let html = '<a onclick="scrollTo(\'works\')">أعمالنا</a>';
+            if(currentData.pages) {
+                Object.keys(currentData.pages).forEach(id => {
+                    html += `<a onclick="alert('قريباً')">${currentData.pages[id].title}</a>`;
+                });
             }
-            
-            const now = new Date();
-            const dayJS = now.getDay();
-            const schedule = d.work_schedule[dayJS];
-            
-            let statusHtml = '';
-            
-            if(schedule && schedule.active) {
-                const toMins = (t) => {
-                    if(!t || t === '') return -1;
-                    const [h, m] = t.split(':').map(Number);
-                    return (h * 60) + m;
-                };
-                
-                const currentMinutes = now.getHours() * 60 + now.getMinutes();
-                let isOpen = false;
-                
-                if (schedule.s1_s && schedule.s1_e && schedule.s1_s !== '' && schedule.s1_e !== '') {
-                    const morningStart = toMins(schedule.s1_s);
-                    const morningEnd = toMins(schedule.s1_e);
-                    
-                    if (currentMinutes >= morningStart && currentMinutes < morningEnd) {
-                        isOpen = true;
-                    }
+            html += '<a onclick="openWhatsApp()">تواصل</a>';
+            document.getElementById('navbar').innerHTML = html;
+        }
+
+        function renderWorks() {
+            let html = '';
+            if(currentData.albums) {
+                Object.entries(currentData.albums).forEach(([id, album]) => {
+                    const imgCount = album.imgs ? Object.keys(album.imgs).length : 0;
+                    html += `
+                        <div class="card fade-in">
+                            <div class="card-image">📁</div>
+                            <div class="card-content">
+                                <h3 class="card-title">${album.name}</h3>
+                                <p class="card-description">${imgCount} صورة</p>
+                                <button class="card-button" onclick="openWhatsApp()">عرض المشروع</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('works-grid').innerHTML = html || '<p style="grid-column: 1/-1; text-align: center; padding: 3rem;">لا توجد أعمال حالياً</p>';
+        }
+
+        function renderSchedule() {
+            let html = '';
+            const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+            const order = [6, 0, 1, 2, 3, 4, 5];
+
+            order.forEach(i => {
+                const s = currentData.work_schedule?.[i];
+                if(s && s.active) {
+                    html += `
+                        <div class="schedule-item">
+                            <div class="schedule-day">${days[i]}</div>
+                            <div class="schedule-time">${s.s1_s || '09:00'} - ${s.s1_e || '17:00'}</div>
+                            ${s.s2_a && s.s2_s ? `<div class="schedule-time">${s.s2_s} - ${s.s2_e}</div>` : ''}
+                            <div class="schedule-status">
+                                <div class="status-dot open"></div>
+                                <span>متاح</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="schedule-item">
+                            <div class="schedule-day">${days[i]}</div>
+                            <div class="schedule-time" style="color: #ef4444;">إجازة</div>
+                            <div class="schedule-status">
+                                <div class="status-dot closed"></div>
+                                <span>مغلق</span>
+                            </div>
+                        </div>
+                    `;
                 }
-                
-                if (!isOpen && schedule.s2_a && schedule.s2_s && schedule.s2_e && schedule.s2_s !== '' && schedule.s2_e !== '') {
-                    const eveningStart = toMins(schedule.s2_s);
-                    const eveningEnd = toMins(schedule.s2_e);
-                    
-                    if (eveningEnd < eveningStart) {
-                        if (currentMinutes >= eveningStart || currentMinutes < eveningEnd) {
-                            isOpen = true;
-                        }
-                    } else {
-                        if (currentMinutes >= eveningStart && currentMinutes < eveningEnd) {
-                            isOpen = true;
-                        }
-                    }
+            });
+            document.getElementById('schedule-grid').innerHTML = html;
+        }
+
+        function renderPartners() {
+            document.getElementById('partners-title').textContent = currentData.partners_title || 'شركاؤنا';
+            let html = '';
+            if(currentData.partners) {
+                Object.values(currentData.partners).forEach(p => {
+                    html += `<div class="partner-item"><img src="${p.url}" alt="شريك"></div>`;
+                });
+            }
+            document.getElementById('partners-grid').innerHTML = html;
+        }
+
+        function renderFooter() {
+            document.getElementById('footer-text').textContent = currentData.footer_text || '© 2026 بصمة غير للديكور. جميع الحقوق محفوظة.';
+        }
+
+        function openWhatsApp() {
+            const phone = currentData.whatsapp_num || '966500000000';
+            window.open(`https://wa.me/${phone}`);
+        }
+
+        function scrollTo(id) {
+            document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function checkAccess() {
+            const pass = prompt('🔐 أدخل رمز الإدارة:');
+            if(!pass) return;
+
+            db.ref(DB_PATH).once('value').then(snap => {
+                const data = snap.val();
+                if(data.in && data.in.toString() === pass.toString()) {
+                    isAdmin = true;
+                    toggleAdmin();
+                } else {
+                    alert('❌ الرمز غير صحيح');
                 }
-                
-                statusHtml = isOpen 
-                    ? `<div class="status-badge open-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مفتوح الآن</div>`
-                    : `<div class="status-badge closed-glow"><i class="fas fa-circle" style="font-size:0.6rem;"></i> مغلق الآن</div>`;
-            } else {
-                statusHtml = `<div class="status-badge closed-glow" style="background:rgba(231, 76, 60, 0.2); color:var(--red);"><i class="fas fa-circle" style="font-size:0.6rem;"></i> إجازة اليوم</div>`;
-            }
-            
-            const cont = document.getElementById('status-container');
-            if(cont) cont.innerHTML = statusHtml;
+            });
         }
 
-        // باقي الدوال موجودة بنفس الكود الأصلي
-        // تم حذفها للاختصار لكنها كلها موجودة في الكود الكامل
-
-        // بدء عرض الشركاء
-        function startPartnersSlider() {
-            const container = document.getElementById('partners-display');
-            if(!currentData.partners) { 
-                container.innerHTML = '<h2 style="color:var(--gold);">بصمة غير</h2>'; 
-                return; 
-            }
-            const ids = Object.keys(currentData.partners);
-            if(ids.length === 0) return;
-            let html = ids.map((id, idx) => `<div class="partner-slide" id="partner-${idx}"><img src="${currentData.partners[id].url}" class="partner-img" oncontextmenu="return false;"></div>`).join('');
-            container.innerHTML = html;
-            const cycle = () => {
-                const all = document.querySelectorAll('.partner-slide');
-                if(all.length === 0) return;
-                all.forEach(el => el.classList.remove('active'));
-                const current = document.getElementById(`partner-${partnerIdx}`);
-                if(current) current.classList.add('active');
-                partnerIdx = (partnerIdx + 1) % ids.length;
-            };
-            cycle();
-            if(window.partnerInterval) clearInterval(window.partnerInterval);
-            window.partnerInterval = setInterval(cycle, 4000);
+        function toggleAdmin() {
+            document.getElementById('admin-panel').classList.toggle('show');
+            if(isAdmin) renderAdminPanel();
         }
 
-        // معرض الصور
-        function openImg(url) {
-            const viewer = document.getElementById('viewer');
-            const img = document.getElementById('viewer-img');
-            const watermark = document.getElementById('viewer-watermark');
-            
-            img.src = url;
-            watermark.textContent = currentData.wm_text || '';
-            viewer.style.display = 'flex';
-            document.body.style.overflow = 'hidden';
+        function closeAdmin() {
+            document.getElementById('admin-panel').classList.remove('show');
         }
 
-        function closeViewer() {
-            document.getElementById('viewer').style.display = 'none';
-            document.body.style.overflow = 'auto';
+        function renderAdminPanel() {
+            document.getElementById('admin-content').innerHTML = `
+                <p style="color: var(--text-secondary); text-align: center; padding: 2rem;">
+                    لوحة الإدارة الكاملة قريباً...
+                </p>
+            `;
         }
-
-        function closeViewerOnOverlay(event) {
-            if (event.target.id === 'viewer') {
-                closeViewer();
-            }
-        }
-
-        // واتساب
-        function whatsappOrder(url) { 
-            window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); 
-        }
-
-        // الدوال الإدارية موجودة ولكن تم حذفها للاختصار
-        // ...
     </script>
 </body>
 </html>
