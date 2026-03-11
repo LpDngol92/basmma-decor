@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>بصمة غير للديكور</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -539,7 +539,25 @@ nav::-webkit-scrollbar { display: none; }
     position: fixed; inset: 0; background: rgba(0,0,0,0.97);
     z-index: 1000000; display: none; align-items: center; justify-content: center;
 }
-#viewer-img { max-width: 92%; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+#viewer-img {
+    max-width: 92%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+    cursor: zoom-in;
+    transition: transform 0.2s ease;
+    pointer-events: auto !important;
+    -webkit-user-select: none;
+    user-select: none;
+}
+#viewer-img.zoomed {
+    cursor: zoom-out;
+    transform: scale(1.8);
+    max-width: none;
+    max-height: none;
+    width: auto;
+    height: auto;
+}
 .viewer-close {
     position: fixed; top: 20px; right: 20px;
     width: 46px; height: 46px; background: rgba(255,255,255,0.08);
@@ -896,7 +914,7 @@ footer { padding: 30px 20px; text-align: center; color: var(--text-muted); font-
 <!-- Image Viewer -->
 <div id="viewer" onclick="closeViewerOnOverlay(event)">
     <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
-    <img id="viewer-img" src="">
+    <img id="viewer-img" src="" onclick="toggleZoom(event)">
     <div class="viewer-watermark" id="viewer-watermark"></div>
 </div>
 
@@ -1336,9 +1354,17 @@ function closeViewer() {
     document.getElementById('viewer').style.display = 'none';
     document.body.style.overflow = 'auto';
     document.removeEventListener('keydown', handleKeydown);
+    // reset zoom when closing
+    document.getElementById('viewer-img').classList.remove('zoomed');
 }
 function closeViewerOnOverlay(e) { if (e.target.id === 'viewer') closeViewer(); }
 function handleKeydown(e) { if (e.key === 'Escape') closeViewer(); }
+// Zoom function
+function toggleZoom(e) {
+    e.stopPropagation();
+    const img = document.getElementById('viewer-img');
+    img.classList.toggle('zoomed');
+}
 
 // ======================== MAINTENANCE ========================
 function showMaintenanceScreen() {
