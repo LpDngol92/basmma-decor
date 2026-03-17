@@ -2,194 +2,625 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>بصمة غير للديكور</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=El+Messiri:wght@400;600;700&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg: #f8f9fa;
+            --bg2: #e9ecef;
+            --bg3: #dee2e6;
+            --card: #ffffff;
+            --card-hover: #f1f3f5;
+            --gold: #b2976a;
+            --gold-light: #d4b68a;
+            --gold-dark: #8e7352;
+            --primary: #6c4f3a;
+            --primary-hover: #8b6b50;
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --text-muted: #6c757d;
+            --border: rgba(0, 0, 0, 0.08);
+            --border-hover: rgba(0, 0, 0, 0.15);
+            --green: #2b8c5e;
+            --red: #c44536;
+            --nav-bg: rgba(255, 255, 255, 0.9);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --shadow-gold: 0 8px 25px rgba(178, 151, 106, 0.15);
+            --input-bg: #ffffff;
+            --header-font: 'Cairo', sans-serif;
+        }
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
-        :root {
-            --gold: #b2976a;
-            --gold-dark: #8e7352;
-            --bg: #f8f9fa;
-            --card-bg: white;
-            --text: #333;
-        }
         body {
-            font-family: 'Cairo', sans-serif;
+            font-family: var(--header-font);
             background: var(--bg);
-            color: var(--text);
-            padding: 20px;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
-        .hero {
+        .hero-section {
+            background: var(--bg2);
+            padding: 50px 20px;
             text-align: center;
-            margin: 40px 0;
+            border-bottom: 1px solid var(--border);
         }
-        .hero h1 {
+        .hero-brand-name {
+            font-size: 3.5rem;
+            font-weight: 900;
             color: var(--gold-dark);
-            font-size: 3rem;
         }
-        .hero p {
-            color: #777;
-            font-size: 1.2rem;
+        .hero-divider {
+            width: 50px;
+            height: 2px;
+            background: var(--gold);
+            margin: 10px auto;
+        }
+        .hero-brand-sub {
+            color: var(--text-muted);
+            font-size: 1rem;
             letter-spacing: 2px;
+        }
+        nav {
+            background: var(--nav-bg);
+            backdrop-filter: blur(10px);
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-btn {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-radius: 30px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .nav-btn.active {
+            background: var(--gold);
+            color: white;
+        }
+        .sec {
+            width: 95%;
+            max-width: 1400px;
+            margin: 30px auto;
+            display: none;
+        }
+        .sec.active {
+            display: block;
+        }
+        .section-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 2rem;
+            color: var(--gold-dark);
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-            max-width: 1300px;
-            margin: 40px auto;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
         }
         .card {
-            background: var(--card-bg);
+            background: var(--card);
             border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-            transition: transform 0.3s;
-            border: 1px solid #eee;
+            border: 1px solid var(--border);
+            transition: 0.3s;
         }
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(178,151,106,0.2);
+            box-shadow: var(--shadow-gold);
         }
-        .card img {
+        .img-container {
+            height: 200px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .img-container img {
             width: 100%;
-            height: 220px;
+            height: 100%;
             object-fit: cover;
-            border-bottom: 3px solid var(--gold);
         }
-        .card-content {
-            padding: 15px;
-        }
-        .card h3 {
-            margin-bottom: 10px;
+        .btn-order {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-top: 1px solid var(--border);
+            background: var(--card);
             color: var(--gold-dark);
+            font-weight: 600;
+            cursor: pointer;
         }
-        .btn {
+        .btn-order:hover {
             background: var(--gold);
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            font-size: 1rem;
-            transition: background 0.3s;
         }
-        .btn:hover {
-            background: var(--gold-dark);
-        }
-        footer {
+        .folder-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px 20px;
             text-align: center;
-            margin-top: 60px;
-            color: #aaa;
-            border-top: 1px solid #ddd;
-            padding-top: 20px;
-        }
-        .whatsapp-btn {
-            background: #25D366;
-            color: white;
-            border: none;
-            padding: 12px 30px;
-            border-radius: 50px;
-            font-size: 1.2rem;
             cursor: pointer;
+        }
+        .folder-card:hover {
+            border-color: var(--gold);
+        }
+        .folder-icon {
+            font-size: 3rem;
+            color: var(--gold);
+        }
+        #viewer {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 1000000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .viewer-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #viewer-img {
+            max-width: 100%;
+            max-height: 100vh;
+            object-fit: contain;
+            cursor: zoom-in;
+        }
+        #viewer-img.zoomed {
+            cursor: grab;
+        }
+        .viewer-close {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            z-index: 1000002;
+            font-size: 1.2rem;
+        }
+        .viewer-close:hover {
+            background: var(--red);
+        }
+        .viewer-nav {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            border-radius: 12px;
+            cursor: pointer;
+            z-index: 1000002;
+            font-size: 1.5rem;
+        }
+        .viewer-nav:hover {
+            background: var(--gold);
+        }
+        .viewer-prev {
+            left: 20px;
+        }
+        .viewer-next {
+            right: 20px;
+        }
+        .viewer-counter {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            z-index: 1000002;
+        }
+        .whatsapp-cta {
             display: inline-flex;
             align-items: center;
             gap: 10px;
+            padding: 15px 40px;
+            background: #25D366;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
             margin: 20px 0;
         }
-        .whatsapp-btn:hover {
-            background: #128C7E;
+        .social-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .social-icon-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+        .social-icon-btn:hover {
+            color: var(--gold);
+            border-color: var(--gold);
+        }
+        footer {
+            padding: 25px;
+            text-align: center;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            margin-top: auto;
+        }
+        #hidden-trigger {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 60px;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 200000000;
+        }
+        #admin-panel {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 100000000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .admin-box {
+            max-width: 800px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 24px;
+        }
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
         }
     </style>
 </head>
 <body>
+    <div class="hero-section">
+        <div class="hero-brand">
+            <div class="hero-brand-name" id="site-name-display">بصمة غير</div>
+            <div class="hero-divider"></div>
+            <div class="hero-brand-sub">للديكور والتصميم الداخلي</div>
+        </div>
+    </div>
 
-<div class="hero">
-    <h1>بصمة غير</h1>
-    <p>للديكور والتصميم الداخلي</p>
-</div>
+    <nav id="navbar"></nav>
 
-<!-- شبكة الصور -->
-<div class="grid" id="image-grid">
-    <!-- هتتحط هنا بالJavaScript -->
-</div>
+    <main id="content-area"></main>
 
-<div style="text-align: center;">
-    <button class="whatsapp-btn" id="whatsappGlobalBtn">
-        <i class="fab fa-whatsapp"></i> تواصل معنا عبر واتساب
-    </button>
-</div>
+    <footer id="site-footer">جميع الحقوق محفوظة © بصمة غير للديكور</footer>
 
-<footer>
-    جميع الحقوق محفوظة © بصمة غير للديكور 2025
-</footer>
+    <div id="viewer" onclick="closeViewerOnOverlay(event)">
+        <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
+        <button class="viewer-nav viewer-prev" onclick="navigateSlide(-1)"><i class="fas fa-chevron-right"></i></button>
+        <button class="viewer-nav viewer-next" onclick="navigateSlide(1)"><i class="fas fa-chevron-left"></i></button>
+        <div class="viewer-counter" id="viewer-counter"></div>
+        <div class="viewer-container">
+            <img id="viewer-img" src="" draggable="false">
+        </div>
+    </div>
 
-<script>
-    // صور ديكور حقيقية من Unsplash
-    const images = [
-        {
-            url: "https://images.unsplash.com/photo-1618221195710-ddde0e36dac9?w=400",
-            title: "غرفة معيشة عصرية"
-        },
-        {
-            url: "https://images.unsplash.com/photo-1618213749401-2a8c6b3f5f5d?w=400",
-            title: "غرفة نوم فاخرة"
-        },
-        {
-            url: "https://images.unsplash.com/photo-1618213749401-2a8c6b3f5f5d?w=400",
-            title: "مطبخ عصري"
-        },
-        {
-            url: "https://images.unsplash.com/photo-1618221381711-42ca8ab6e908?w=400",
-            title: "مجلس عربي"
-        },
-        {
-            url: "https://images.unsplash.com/photo-1618213811503-3d3f7c5c9f5b?w=400",
-            title: "ديكور مدخل"
-        },
-        {
-            url: "https://images.unsplash.com/photo-1618213811503-3d3f7c5c9f5b?w=400",
-            title: "غرفة طعام"
+    <div id="hidden-trigger" onclick="checkAccess()"></div>
+
+    <div id="admin-panel">
+        <div class="admin-box">
+            <h2 style="color:var(--gold); text-align:center;">🔐 لوحة الإدارة</h2>
+            <p style="text-align:center;">هنا راح تظهر إعدادات الموقع</p>
+            <button onclick="location.reload()" style="width:100%; padding:10px; background:var(--gold); color:white; border:none; border-radius:8px; margin-top:20px;">إغلاق</button>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+            authDomain: "mydecor-b29bd.firebaseapp.com",
+            databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "mydecor-b29bd",
+            storageBucket: "mydecor-b29bd.firebasestorage.app",
+            messagingSenderId: "302609299720",
+            appId: "1:302609299720:web:e086b600c3ee824acd54bd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const DB_PATH = 'site_v28';
+
+        let currentData = {};
+        let currentTab = 'home';
+        let isAdmin = false;
+
+        // متغيرات عرض الشرائح
+        let currentSlideImages = [];
+        let currentSlideIndex = 0;
+        let currentSlideImageIds = [];
+
+        // صور تجريبية (إذا Firebase فاضية)
+        const sampleImages = [
+            "https://images.unsplash.com/photo-1618221195710-ddde0e36dac9?w=400",
+            "https://images.unsplash.com/photo-1618213749401-2a8c6b3f5f5d?w=400",
+            "https://images.unsplash.com/photo-1618221381711-42ca8ab6e908?w=400",
+            "https://images.unsplash.com/photo-1618213811503-3d3f7c5c9f5b?w=400",
+            "https://images.unsplash.com/photo-1618213749401-2a8c6b3f5f5d?w=400",
+            "https://images.unsplash.com/photo-1618221195710-ddde0e36dac9?w=400"
+        ];
+
+        // تحميل البيانات
+        db.ref(DB_PATH).on('value', snap => {
+            currentData = snap.val() || {};
+            renderAll();
+        }, error => {
+            console.log("Firebase مش شغال، بنستخدم بيانات تجريبية");
+            currentData = {
+                site_name: "بصمة غير",
+                whatsapp_num: "966500000000",
+                wm_text: "بصمة غير",
+                footer_text: "جميع الحقوق محفوظة © بصمة غير للديكور",
+                insta_url: "https://instagram.com",
+                tiktok_url: "https://tiktok.com",
+                snap_url: "https://snapchat.com",
+                location_url: "https://maps.google.com",
+                albums: {
+                    album1: { name: "أعمالنا", imgs: {} }
+                }
+            };
+            // حط صور تجريبية
+            sampleImages.forEach((url, index) => {
+                currentData.albums.album1.imgs[`img${index}`] = { url };
+            });
+            renderAll();
+        });
+
+        function renderAll() {
+            const d = currentData;
+            document.getElementById('site-name-display').textContent = d.site_name || 'بصمة غير';
+            document.getElementById('site-footer').textContent = d.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
+
+            let navHtml = `
+                <button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>
+                <button class="nav-btn ${currentTab==='catalogs'?'active':''}" onclick="go('catalogs')">الكتالوج</button>
+                <button class="nav-btn ${currentTab==='works'?'active':''}" onclick="go('works')">أعمالنا</button>
+            `;
+            document.getElementById('navbar').innerHTML = navHtml;
+
+            let contentHtml = '';
+
+            // الصفحة الرئيسية
+            contentHtml += `<section class="sec ${currentTab==='home'?'active':''}">
+                <div style="text-align:center; padding:40px;">
+                    <h2 style="color:var(--gold-dark); margin-bottom:20px;">مرحباً بكم في بصمة غير</h2>
+                    <p style="color:var(--text-secondary); max-width:600px; margin:0 auto;">نقدم لكم أفضل التصاميم الداخلية والديكورات العصرية</p>
+                    
+                    <button onclick="whatsappGlobal()" class="whatsapp-cta">
+                        <i class="fab fa-whatsapp"></i> تواصل معنا
+                    </button>
+                    
+                    <div class="social-row">
+                        ${d.insta_url ? `<a href="${d.insta_url}" target="_blank" class="social-icon-btn"><i class="fab fa-instagram"></i></a>` : ''}
+                        ${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank" class="social-icon-btn"><i class="fab fa-tiktok"></i></a>` : ''}
+                        ${d.snap_url ? `<a href="${d.snap_url}" target="_blank" class="social-icon-btn"><i class="fab fa-snapchat"></i></a>` : ''}
+                        ${d.location_url ? `<a href="${d.location_url}" target="_blank" class="social-icon-btn"><i class="fas fa-map-marker-alt"></i></a>` : ''}
+                    </div>
+                </div>
+            </section>`;
+
+            // الكتالوج
+            contentHtml += `<section class="sec ${currentTab==='catalogs'?'active':''}">
+                <div class="section-header">
+                    <div class="section-title">الكتالوج</div>
+                </div>
+                <div class="grid">
+                    ${drawFolders(d.catalogs)}
+                </div>
+            </section>`;
+
+            // أعمالنا
+            contentHtml += `<section class="sec ${currentTab==='works'?'active':''}">
+                <div class="section-header">
+                    <div class="section-title">أعمالنا</div>
+                </div>
+                <div class="grid">
+                    ${drawAlbums(d.albums)}
+                </div>
+            </section>`;
+
+            // صفحات الألبومات
+            if (d.albums) {
+                Object.keys(d.albums).forEach(id => {
+                    contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}">
+                        <button onclick="go('works')" class="back-btn" style="margin-bottom:20px; padding:8px 20px; border:1px solid var(--border); border-radius:30px; background:none; cursor:pointer;">
+                            <i class="fas fa-arrow-right"></i> عودة
+                        </button>
+                        <div class="section-header">
+                            <div class="section-title">${d.albums[id].name}</div>
+                        </div>
+                        <div class="grid">
+                            ${drawImgs(d.albums[id].imgs)}
+                        </div>
+                    </section>`;
+                });
+            }
+
+            document.getElementById('content-area').innerHTML = contentHtml;
         }
-    ];
 
-    // عرض الصور في الصفحة
-    const grid = document.getElementById('image-grid');
-    images.forEach(img => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `
-            <img src="${img.url}" alt="${img.title}">
-            <div class="card-content">
-                <h3>${img.title}</h3>
-                <button class="btn" onclick="whatsappOrder('${img.url}')">
-                    <i class="fab fa-whatsapp"></i> استفسار
-                </button>
-            </div>
-        `;
-        grid.appendChild(card);
-    });
+        function drawImgs(imgs) {
+            if (!imgs) return '';
+            const ids = Object.keys(imgs);
+            const urls = ids.map(id => imgs[id].url);
+            
+            return ids.map((id, index) => {
+                const url = imgs[id].url;
+                return `<div class="card">
+                    <div class="img-container" onclick="openImg('${url}', ${index}, ${JSON.stringify(urls)}, ${JSON.stringify(ids)})">
+                        <img src="${url}" loading="lazy">
+                    </div>
+                    <button onclick="whatsappOrder('${url}')" class="btn-order">استفسار</button>
+                </div>`;
+            }).join('');
+        }
 
-    // دوال الواتساب
-    function whatsappOrder(url) {
-        const phone = "966500000000"; // غير الرقم هنا
-        const msg = `السلام عليكم، أود الاستفسار عن هذا التصميم: ${url}`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
+        function drawAlbums(albs) {
+            if (!albs) return '';
+            return Object.keys(albs).map(id => `
+                <div class="folder-card" onclick="go('alb-${id}')">
+                    <div class="folder-icon"><i class="fas fa-folder-open"></i></div>
+                    <div class="folder-name">${albs[id].name}</div>
+                </div>
+            `).join('');
+        }
 
-    document.getElementById('whatsappGlobalBtn').addEventListener('click', function() {
-        const phone = "966500000000";
-        const msg = "السلام عليكم، أود التواصل مع بصمة غير للديكور.";
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
-    });
-</script>
+        function drawFolders(cats) {
+            if (!cats) return '<p style="text-align:center;">قريباً...</p>';
+            return Object.keys(cats).map(id => `
+                <div class="folder-card">
+                    <div class="folder-icon"><i class="fas fa-book-open"></i></div>
+                    <div class="folder-name">${cats[id].name}</div>
+                </div>
+            `).join('');
+        }
 
+        // دوال التنقل
+        function go(id) { currentTab = id; renderAll(); window.scrollTo(0, 0); }
+
+        // دوال الواتساب
+        function whatsappGlobal() {
+            const num = currentData.whatsapp_num || '966500000000';
+            window.open(`https://wa.me/${num}?text=${encodeURIComponent('السلام عليكم، أود التواصل معكم')}`, '_blank');
+        }
+        function whatsappOrder(url) {
+            const num = currentData.whatsapp_num || '966500000000';
+            window.open(`https://wa.me/${num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n' + url)}`, '_blank');
+        }
+
+        // دوال viewer
+        function openImg(url, index, allUrls, allIds) {
+            if (allUrls && allIds) {
+                currentSlideImages = allUrls;
+                currentSlideImageIds = allIds;
+                currentSlideIndex = index || 0;
+            } else {
+                currentSlideImages = [url];
+                currentSlideImageIds = ['img'];
+                currentSlideIndex = 0;
+            }
+            
+            document.getElementById('viewer-img').src = url;
+            document.getElementById('viewer').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            document.addEventListener('keydown', handleKeydown);
+            updateViewerCounter();
+        }
+
+        function updateViewerCounter() {
+            const counter = document.getElementById('viewer-counter');
+            if (currentSlideImages.length > 1) {
+                counter.textContent = ` ${currentSlideIndex + 1} / ${currentSlideImages.length}`;
+                counter.style.display = 'block';
+            } else {
+                counter.style.display = 'none';
+            }
+        }
+
+        function navigateSlide(direction) {
+            if (!currentSlideImages.length) return;
+            currentSlideIndex += direction;
+            if (currentSlideIndex < 0) currentSlideIndex = currentSlideImages.length - 1;
+            if (currentSlideIndex >= currentSlideImages.length) currentSlideIndex = 0;
+            
+            document.getElementById('viewer-img').src = currentSlideImages[currentSlideIndex];
+            updateViewerCounter();
+        }
+
+        function handleKeydown(e) {
+            if (e.key === 'Escape') closeViewer();
+            if (e.key === 'ArrowLeft') navigateSlide(1);
+            if (e.key === 'ArrowRight') navigateSlide(-1);
+        }
+
+        function closeViewer() {
+            document.getElementById('viewer').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            document.removeEventListener('keydown', handleKeydown);
+        }
+
+        function closeViewerOnOverlay(e) {
+            if (e.target.id === 'viewer') closeViewer();
+        }
+
+        // الدخول للإدارة
+        function checkAccess() {
+            const code = prompt("🔐 رمز الإدارة:");
+            if (code === "1234") {  // غير الرمز حسب ما عندك
+                isAdmin = true;
+                document.getElementById('admin-panel').style.display = 'block';
+            } else if (code) {
+                alert("❌ الرمز غير صحيح");
+            }
+        }
+
+        // تكبير الصور
+        let zoomScale = 1;
+        document.getElementById('viewer-img').addEventListener('dblclick', function(e) {
+            e.preventDefault();
+            if (zoomScale === 1) {
+                zoomScale = 2;
+                this.style.transform = `scale(${zoomScale})`;
+                this.classList.add('zoomed');
+            } else {
+                zoomScale = 1;
+                this.style.transform = 'scale(1)';
+                this.classList.remove('zoomed');
+            }
+        });
+
+        window.go = go;
+        window.whatsappGlobal = whatsappGlobal;
+        window.whatsappOrder = whatsappOrder;
+        window.openImg = openImg;
+        window.navigateSlide = navigateSlide;
+        window.closeViewer = closeViewer;
+        window.closeViewerOnOverlay = closeViewerOnOverlay;
+        window.checkAccess = checkAccess;
+    </script>
 </body>
 </html>
