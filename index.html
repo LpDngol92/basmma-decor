@@ -34,11 +34,14 @@
             --input-bg: #ffffff;
             --header-font: 'Cairo', sans-serif;
         }
+
         * {
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
             margin: 0;
             padding: 0;
         }
+
         body {
             font-family: var(--header-font);
             background: var(--bg);
@@ -48,6 +51,7 @@
             display: flex;
             flex-direction: column;
         }
+
         .hero-section {
             background: var(--bg2);
             padding: 50px 20px;
@@ -70,6 +74,7 @@
             font-size: 1rem;
             letter-spacing: 2px;
         }
+
         nav {
             background: var(--nav-bg);
             backdrop-filter: blur(10px);
@@ -78,6 +83,9 @@
             gap: 10px;
             overflow-x: auto;
             border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
         }
         .nav-btn {
             padding: 8px 20px;
@@ -88,11 +96,13 @@
             border-radius: 30px;
             cursor: pointer;
             white-space: nowrap;
+            font-family: var(--header-font);
         }
         .nav-btn.active {
             background: var(--gold);
             color: white;
         }
+
         .sec {
             width: 95%;
             max-width: 1400px;
@@ -102,6 +112,7 @@
         .sec.active {
             display: block;
         }
+
         .section-header {
             text-align: center;
             margin-bottom: 30px;
@@ -110,11 +121,13 @@
             font-size: 2rem;
             color: var(--gold-dark);
         }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 20px;
         }
+
         .card {
             background: var(--card);
             border-radius: 16px;
@@ -126,16 +139,23 @@
             transform: translateY(-5px);
             box-shadow: var(--shadow-gold);
         }
+
         .img-container {
             height: 200px;
             cursor: pointer;
             overflow: hidden;
+            position: relative;
         }
         .img-container img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: 0.3s;
         }
+        .img-container:hover img {
+            transform: scale(1.05);
+        }
+
         .btn-order {
             width: 100%;
             padding: 12px;
@@ -145,11 +165,13 @@
             color: var(--gold-dark);
             font-weight: 600;
             cursor: pointer;
+            font-family: var(--header-font);
         }
         .btn-order:hover {
             background: var(--gold);
             color: white;
         }
+
         .folder-card {
             background: var(--card);
             border: 1px solid var(--border);
@@ -165,6 +187,7 @@
             font-size: 3rem;
             color: var(--gold);
         }
+
         #viewer {
             position: fixed;
             inset: 0;
@@ -186,9 +209,6 @@
             max-height: 100vh;
             object-fit: contain;
             cursor: zoom-in;
-        }
-        #viewer-img.zoomed {
-            cursor: grab;
         }
         .viewer-close {
             position: fixed;
@@ -241,6 +261,7 @@
             border-radius: 20px;
             z-index: 1000002;
         }
+
         .whatsapp-cta {
             display: inline-flex;
             align-items: center;
@@ -276,6 +297,7 @@
             color: var(--gold);
             border-color: var(--gold);
         }
+
         footer {
             padding: 25px;
             text-align: center;
@@ -283,6 +305,7 @@
             border-top: 1px solid var(--border);
             margin-top: auto;
         }
+
         #hidden-trigger {
             position: fixed;
             bottom: 0;
@@ -293,6 +316,7 @@
             cursor: pointer;
             z-index: 200000000;
         }
+
         #admin-panel {
             display: none;
             position: fixed;
@@ -309,6 +333,7 @@
             padding: 30px;
             border-radius: 24px;
         }
+
         @media (max-width: 600px) {
             .grid {
                 grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -317,310 +342,306 @@
     </style>
 </head>
 <body>
-    <div class="hero-section">
-        <div class="hero-brand">
-            <div class="hero-brand-name" id="site-name-display">بصمة غير</div>
-            <div class="hero-divider"></div>
-            <div class="hero-brand-sub">للديكور والتصميم الداخلي</div>
-        </div>
+
+<div class="hero-section">
+    <div class="hero-brand">
+        <div class="hero-brand-name" id="site-name-display">بصمة غير</div>
+        <div class="hero-divider"></div>
+        <div class="hero-brand-sub">للديكور والتصميم الداخلي</div>
     </div>
+</div>
 
-    <nav id="navbar"></nav>
+<nav id="navbar"></nav>
 
-    <main id="content-area"></main>
+<main id="content-area"></main>
 
-    <footer id="site-footer">جميع الحقوق محفوظة © بصمة غير للديكور</footer>
+<footer id="site-footer">جميع الحقوق محفوظة © بصمة غير للديكور</footer>
 
-    <div id="viewer" onclick="closeViewerOnOverlay(event)">
-        <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
-        <button class="viewer-nav viewer-prev" onclick="navigateSlide(-1)"><i class="fas fa-chevron-right"></i></button>
-        <button class="viewer-nav viewer-next" onclick="navigateSlide(1)"><i class="fas fa-chevron-left"></i></button>
-        <div class="viewer-counter" id="viewer-counter"></div>
-        <div class="viewer-container">
-            <img id="viewer-img" src="" draggable="false">
-        </div>
+<!-- Viewer -->
+<div id="viewer" onclick="closeViewerOnOverlay(event)">
+    <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
+    <button class="viewer-nav viewer-prev" onclick="navigateSlide(-1)"><i class="fas fa-chevron-right"></i></button>
+    <button class="viewer-nav viewer-next" onclick="navigateSlide(1)"><i class="fas fa-chevron-left"></i></button>
+    <div class="viewer-counter" id="viewer-counter"></div>
+    <div class="viewer-container">
+        <img id="viewer-img" src="" draggable="false">
     </div>
+</div>
 
-    <div id="hidden-trigger" onclick="checkAccess()"></div>
+<div id="hidden-trigger" onclick="checkAccess()"></div>
 
-    <div id="admin-panel">
-        <div class="admin-box">
-            <h2 style="color:var(--gold); text-align:center;">🔐 لوحة الإدارة</h2>
-            <p style="text-align:center;">هنا راح تظهر إعدادات الموقع</p>
-            <button onclick="location.reload()" style="width:100%; padding:10px; background:var(--gold); color:white; border:none; border-radius:8px; margin-top:20px;">إغلاق</button>
-        </div>
+<div id="admin-panel">
+    <div class="admin-box">
+        <h2 style="color:var(--gold); text-align:center;">🔐 لوحة الإدارة</h2>
+        <p style="text-align:center;">هنا راح تظهر إعدادات الموقع</p>
+        <button onclick="location.reload()" style="width:100%; padding:10px; background:var(--gold); color:white; border:none; border-radius:8px; margin-top:20px;">إغلاق</button>
     </div>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
-            authDomain: "mydecor-b29bd.firebaseapp.com",
-            databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "mydecor-b29bd",
-            storageBucket: "mydecor-b29bd.firebasestorage.app",
-            messagingSenderId: "302609299720",
-            appId: "1:302609299720:web:e086b600c3ee824acd54bd"
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+        authDomain: "mydecor-b29bd.firebaseapp.com",
+        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mydecor-b29bd",
+        storageBucket: "mydecor-b29bd.firebasestorage.app",
+        messagingSenderId: "302609299720",
+        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const DB_PATH = 'site_v28';
+
+    let currentData = {};
+    let currentTab = 'home';
+    let isAdmin = false;
+
+    // متغيرات viewer
+    let currentSlideImages = [];
+    let currentSlideIndex = 0;
+    let currentSlideImageIds = [];
+
+    // صور تجريبية
+    const sampleImages = [
+        "https://images.unsplash.com/photo-1618221195710-ddde0e36dac9?w=400",
+        "https://images.unsplash.com/photo-1618213749401-2a8c6b3f5f5d?w=400",
+        "https://images.unsplash.com/photo-1618221381711-42ca8ab6e908?w=400",
+        "https://images.unsplash.com/photo-1618213811503-3d3f7c5c9f5b?w=400",
+        "https://images.unsplash.com/photo-1618221195710-ddde0e36dac9?w=400"
+    ];
+
+    // تحميل البيانات
+    db.ref(DB_PATH).on('value', snap => {
+        currentData = snap.val() || {};
+        renderAll();
+    }, error => {
+        console.log("Firebase مش شغال، بنستخدم بيانات تجريبية");
+        currentData = {
+            site_name: "بصمة غير",
+            whatsapp_num: "966500000000",
+            wm_text: "بصمة غير",
+            footer_text: "جميع الحقوق محفوظة © بصمة غير للديكور",
+            insta_url: "https://instagram.com",
+            tiktok_url: "https://tiktok.com",
+            snap_url: "https://snapchat.com",
+            location_url: "https://maps.google.com",
+            albums: {
+                album1: { name: "أعمالنا", imgs: {} }
+            }
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const DB_PATH = 'site_v28';
-
-        let currentData = {};
-        let currentTab = 'home';
-        let isAdmin = false;
-
-        // متغيرات عرض الشرائح
-        let currentSlideImages = [];
-        let currentSlideIndex = 0;
-        let currentSlideImageIds = [];
-
-        // صور تجريبية (إذا Firebase فاضية)
-        const sampleImages = [
-            "https://images.unsplash.com/photo-1618221195710-ddde0e36dac9?w=400",
-            "https://images.unsplash.com/photo-1618213749401-2a8c6b3f5f5d?w=400",
-            "https://images.unsplash.com/photo-1618221381711-42ca8ab6e908?w=400",
-            "https://images.unsplash.com/photo-1618213811503-3d3f7c5c9f5b?w=400",
-            "https://images.unsplash.com/photo-1618213749401-2a8c6b3f5f5d?w=400",
-            "https://images.unsplash.com/photo-1618221195710-ddde0e36dac9?w=400"
-        ];
-
-        // تحميل البيانات
-        db.ref(DB_PATH).on('value', snap => {
-            currentData = snap.val() || {};
-            renderAll();
-        }, error => {
-            console.log("Firebase مش شغال، بنستخدم بيانات تجريبية");
-            currentData = {
-                site_name: "بصمة غير",
-                whatsapp_num: "966500000000",
-                wm_text: "بصمة غير",
-                footer_text: "جميع الحقوق محفوظة © بصمة غير للديكور",
-                insta_url: "https://instagram.com",
-                tiktok_url: "https://tiktok.com",
-                snap_url: "https://snapchat.com",
-                location_url: "https://maps.google.com",
-                albums: {
-                    album1: { name: "أعمالنا", imgs: {} }
-                }
-            };
-            // حط صور تجريبية
-            sampleImages.forEach((url, index) => {
-                currentData.albums.album1.imgs[`img${index}`] = { url };
-            });
-            renderAll();
+        sampleImages.forEach((url, index) => {
+            currentData.albums.album1.imgs[`img${index}`] = { url };
         });
+        renderAll();
+    });
 
-        function renderAll() {
-            const d = currentData;
-            document.getElementById('site-name-display').textContent = d.site_name || 'بصمة غير';
-            document.getElementById('site-footer').textContent = d.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
+    function renderAll() {
+        const d = currentData;
+        document.getElementById('site-name-display').textContent = d.site_name || 'بصمة غير';
+        document.getElementById('site-footer').textContent = d.footer_text || 'جميع الحقوق محفوظة © بصمة غير للديكور';
 
-            let navHtml = `
-                <button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>
-                <button class="nav-btn ${currentTab==='catalogs'?'active':''}" onclick="go('catalogs')">الكتالوج</button>
-                <button class="nav-btn ${currentTab==='works'?'active':''}" onclick="go('works')">أعمالنا</button>
-            `;
-            document.getElementById('navbar').innerHTML = navHtml;
+        let navHtml = `
+            <button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>
+            <button class="nav-btn ${currentTab==='catalogs'?'active':''}" onclick="go('catalogs')">الكتالوج</button>
+            <button class="nav-btn ${currentTab==='works'?'active':''}" onclick="go('works')">أعمالنا</button>
+        `;
+        document.getElementById('navbar').innerHTML = navHtml;
 
-            let contentHtml = '';
+        let contentHtml = '';
 
-            // الصفحة الرئيسية
-            contentHtml += `<section class="sec ${currentTab==='home'?'active':''}">
-                <div style="text-align:center; padding:40px;">
-                    <h2 style="color:var(--gold-dark); margin-bottom:20px;">مرحباً بكم في بصمة غير</h2>
-                    <p style="color:var(--text-secondary); max-width:600px; margin:0 auto;">نقدم لكم أفضل التصاميم الداخلية والديكورات العصرية</p>
-                    
-                    <button onclick="whatsappGlobal()" class="whatsapp-cta">
-                        <i class="fab fa-whatsapp"></i> تواصل معنا
+        // الصفحة الرئيسية
+        contentHtml += `<section class="sec ${currentTab==='home'?'active':''}">
+            <div style="text-align:center; padding:40px;">
+                <h2 style="color:var(--gold-dark); margin-bottom:20px;">مرحباً بكم في بصمة غير</h2>
+                <p style="color:var(--text-secondary); max-width:600px; margin:0 auto;">نقدم لكم أفضل التصاميم الداخلية والديكورات العصرية</p>
+                
+                <button onclick="whatsappGlobal()" class="whatsapp-cta">
+                    <i class="fab fa-whatsapp"></i> تواصل معنا
+                </button>
+                
+                <div class="social-row">
+                    ${d.insta_url ? `<a href="${d.insta_url}" target="_blank" class="social-icon-btn"><i class="fab fa-instagram"></i></a>` : ''}
+                    ${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank" class="social-icon-btn"><i class="fab fa-tiktok"></i></a>` : ''}
+                    ${d.snap_url ? `<a href="${d.snap_url}" target="_blank" class="social-icon-btn"><i class="fab fa-snapchat"></i></a>` : ''}
+                    ${d.location_url ? `<a href="${d.location_url}" target="_blank" class="social-icon-btn"><i class="fas fa-map-marker-alt"></i></a>` : ''}
+                </div>
+            </div>
+        </section>`;
+
+        // الكتالوج
+        contentHtml += `<section class="sec ${currentTab==='catalogs'?'active':''}">
+            <div class="section-header">
+                <div class="section-title">الكتالوج</div>
+            </div>
+            <div class="grid">
+                ${drawFolders(d.catalogs)}
+            </div>
+        </section>`;
+
+        // أعمالنا
+        contentHtml += `<section class="sec ${currentTab==='works'?'active':''}">
+            <div class="section-header">
+                <div class="section-title">أعمالنا</div>
+            </div>
+            <div class="grid">
+                ${drawAlbums(d.albums)}
+            </div>
+        </section>`;
+
+        // صفحات الألبومات
+        if (d.albums) {
+            Object.keys(d.albums).forEach(id => {
+                contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}">
+                    <button onclick="go('works')" style="margin-bottom:20px; padding:8px 20px; border:1px solid var(--border); border-radius:30px; background:none; cursor:pointer;">
+                        <i class="fas fa-arrow-right"></i> عودة
                     </button>
-                    
-                    <div class="social-row">
-                        ${d.insta_url ? `<a href="${d.insta_url}" target="_blank" class="social-icon-btn"><i class="fab fa-instagram"></i></a>` : ''}
-                        ${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank" class="social-icon-btn"><i class="fab fa-tiktok"></i></a>` : ''}
-                        ${d.snap_url ? `<a href="${d.snap_url}" target="_blank" class="social-icon-btn"><i class="fab fa-snapchat"></i></a>` : ''}
-                        ${d.location_url ? `<a href="${d.location_url}" target="_blank" class="social-icon-btn"><i class="fas fa-map-marker-alt"></i></a>` : ''}
+                    <div class="section-header">
+                        <div class="section-title">${d.albums[id].name}</div>
                     </div>
-                </div>
-            </section>`;
-
-            // الكتالوج
-            contentHtml += `<section class="sec ${currentTab==='catalogs'?'active':''}">
-                <div class="section-header">
-                    <div class="section-title">الكتالوج</div>
-                </div>
-                <div class="grid">
-                    ${drawFolders(d.catalogs)}
-                </div>
-            </section>`;
-
-            // أعمالنا
-            contentHtml += `<section class="sec ${currentTab==='works'?'active':''}">
-                <div class="section-header">
-                    <div class="section-title">أعمالنا</div>
-                </div>
-                <div class="grid">
-                    ${drawAlbums(d.albums)}
-                </div>
-            </section>`;
-
-            // صفحات الألبومات
-            if (d.albums) {
-                Object.keys(d.albums).forEach(id => {
-                    contentHtml += `<section class="sec ${currentTab==='alb-'+id?'active':''}">
-                        <button onclick="go('works')" class="back-btn" style="margin-bottom:20px; padding:8px 20px; border:1px solid var(--border); border-radius:30px; background:none; cursor:pointer;">
-                            <i class="fas fa-arrow-right"></i> عودة
-                        </button>
-                        <div class="section-header">
-                            <div class="section-title">${d.albums[id].name}</div>
-                        </div>
-                        <div class="grid">
-                            ${drawImgs(d.albums[id].imgs)}
-                        </div>
-                    </section>`;
-                });
-            }
-
-            document.getElementById('content-area').innerHTML = contentHtml;
-        }
-
-        function drawImgs(imgs) {
-            if (!imgs) return '';
-            const ids = Object.keys(imgs);
-            const urls = ids.map(id => imgs[id].url);
-            
-            return ids.map((id, index) => {
-                const url = imgs[id].url;
-                return `<div class="card">
-                    <div class="img-container" onclick="openImg('${url}', ${index}, ${JSON.stringify(urls)}, ${JSON.stringify(ids)})">
-                        <img src="${url}" loading="lazy">
+                    <div class="grid">
+                        ${drawImgs(d.albums[id].imgs)}
                     </div>
-                    <button onclick="whatsappOrder('${url}')" class="btn-order">استفسار</button>
-                </div>`;
-            }).join('');
+                </section>`;
+            });
         }
 
-        function drawAlbums(albs) {
-            if (!albs) return '';
-            return Object.keys(albs).map(id => `
-                <div class="folder-card" onclick="go('alb-${id}')">
-                    <div class="folder-icon"><i class="fas fa-folder-open"></i></div>
-                    <div class="folder-name">${albs[id].name}</div>
+        document.getElementById('content-area').innerHTML = contentHtml;
+    }
+
+    // دالة عرض الصور مع تمرير كل البيانات المطلوبة
+    function drawImgs(imgs) {
+        if (!imgs) return '<p style="text-align:center;">لا توجد صور</p>';
+        
+        const ids = Object.keys(imgs);
+        const urls = ids.map(id => imgs[id].url);
+        
+        return ids.map((id, index) => {
+            const url = imgs[id].url;
+            return `<div class="card">
+                <div class="img-container" onclick='openImg(${index}, ${JSON.stringify(urls)}, ${JSON.stringify(ids)})'>
+                    <img src="${url}" loading="lazy">
                 </div>
-            `).join('');
+                <button onclick="whatsappOrder('${url}')" class="btn-order">استفسار</button>
+            </div>`;
+        }).join('');
+    }
+
+    function drawAlbums(albs) {
+        if (!albs) return '';
+        return Object.keys(albs).map(id => `
+            <div class="folder-card" onclick="go('alb-${id}')">
+                <div class="folder-icon"><i class="fas fa-folder-open"></i></div>
+                <div class="folder-name">${albs[id].name}</div>
+            </div>
+        `).join('');
+    }
+
+    function drawFolders(cats) {
+        if (!cats) return '<p style="text-align:center;">قريباً...</p>';
+        return Object.keys(cats).map(id => `
+            <div class="folder-card">
+                <div class="folder-icon"><i class="fas fa-book-open"></i></div>
+                <div class="folder-name">${cats[id].name}</div>
+            </div>
+        `).join('');
+    }
+
+    // دالة فتح الصور (المعدلة)
+    function openImg(index, urls, ids) {
+        currentSlideImages = urls;
+        currentSlideImageIds = ids;
+        currentSlideIndex = index;
+        
+        document.getElementById('viewer-img').src = urls[index];
+        document.getElementById('viewer').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', handleKeydown);
+        
+        const counter = document.getElementById('viewer-counter');
+        if (urls.length > 1) {
+            counter.textContent = ` ${index + 1} / ${urls.length}`;
+            counter.style.display = 'block';
+        } else {
+            counter.style.display = 'none';
         }
+    }
 
-        function drawFolders(cats) {
-            if (!cats) return '<p style="text-align:center;">قريباً...</p>';
-            return Object.keys(cats).map(id => `
-                <div class="folder-card">
-                    <div class="folder-icon"><i class="fas fa-book-open"></i></div>
-                    <div class="folder-name">${cats[id].name}</div>
-                </div>
-            `).join('');
+    function navigateSlide(direction) {
+        if (!currentSlideImages.length) return;
+        currentSlideIndex += direction;
+        if (currentSlideIndex < 0) currentSlideIndex = currentSlideImages.length - 1;
+        if (currentSlideIndex >= currentSlideImages.length) currentSlideIndex = 0;
+        
+        document.getElementById('viewer-img').src = currentSlideImages[currentSlideIndex];
+        document.getElementById('viewer-counter').textContent = ` ${currentSlideIndex + 1} / ${currentSlideImages.length}`;
+    }
+
+    function handleKeydown(e) {
+        if (e.key === 'Escape') closeViewer();
+        if (e.key === 'ArrowLeft') navigateSlide(1);
+        if (e.key === 'ArrowRight') navigateSlide(-1);
+    }
+
+    function closeViewer() {
+        document.getElementById('viewer').style.display = 'none';
+        document.body.style.overflow = 'auto';
+        document.removeEventListener('keydown', handleKeydown);
+    }
+
+    function closeViewerOnOverlay(e) {
+        if (e.target.id === 'viewer') closeViewer();
+    }
+
+    // دوال الواتساب
+    function whatsappGlobal() {
+        const num = currentData.whatsapp_num || '966500000000';
+        window.open(`https://wa.me/${num}?text=${encodeURIComponent('السلام عليكم، أود التواصل معكم')}`, '_blank');
+    }
+    
+    function whatsappOrder(url) {
+        const num = currentData.whatsapp_num || '966500000000';
+        window.open(`https://wa.me/${num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n' + url)}`, '_blank');
+    }
+
+    function go(id) { 
+        currentTab = id; 
+        renderAll(); 
+        window.scrollTo(0, 0); 
+    }
+
+    function checkAccess() {
+        const code = prompt("🔐 رمز الإدارة:");
+        if (code === "1234") {
+            isAdmin = true;
+            document.getElementById('admin-panel').style.display = 'block';
+        } else if (code) {
+            alert("❌ الرمز غير صحيح");
         }
+    }
 
-        // دوال التنقل
-        function go(id) { currentTab = id; renderAll(); window.scrollTo(0, 0); }
-
-        // دوال الواتساب
-        function whatsappGlobal() {
-            const num = currentData.whatsapp_num || '966500000000';
-            window.open(`https://wa.me/${num}?text=${encodeURIComponent('السلام عليكم، أود التواصل معكم')}`, '_blank');
+    // تكبير الصور
+    let zoomScale = 1;
+    document.getElementById('viewer-img').addEventListener('dblclick', function(e) {
+        e.preventDefault();
+        if (zoomScale === 1) {
+            zoomScale = 2;
+            this.style.transform = `scale(${zoomScale})`;
+        } else {
+            zoomScale = 1;
+            this.style.transform = 'scale(1)';
         }
-        function whatsappOrder(url) {
-            const num = currentData.whatsapp_num || '966500000000';
-            window.open(`https://wa.me/${num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n' + url)}`, '_blank');
-        }
+    });
 
-        // دوال viewer
-        function openImg(url, index, allUrls, allIds) {
-            if (allUrls && allIds) {
-                currentSlideImages = allUrls;
-                currentSlideImageIds = allIds;
-                currentSlideIndex = index || 0;
-            } else {
-                currentSlideImages = [url];
-                currentSlideImageIds = ['img'];
-                currentSlideIndex = 0;
-            }
-            
-            document.getElementById('viewer-img').src = url;
-            document.getElementById('viewer').style.display = 'flex';
-            document.body.style.overflow = 'hidden';
-            document.addEventListener('keydown', handleKeydown);
-            updateViewerCounter();
-        }
+    // تصدير الدوال
+    window.go = go;
+    window.whatsappGlobal = whatsappGlobal;
+    window.whatsappOrder = whatsappOrder;
+    window.openImg = openImg;
+    window.navigateSlide = navigateSlide;
+    window.closeViewer = closeViewer;
+    window.closeViewerOnOverlay = closeViewerOnOverlay;
+    window.checkAccess = checkAccess;
+</script>
 
-        function updateViewerCounter() {
-            const counter = document.getElementById('viewer-counter');
-            if (currentSlideImages.length > 1) {
-                counter.textContent = ` ${currentSlideIndex + 1} / ${currentSlideImages.length}`;
-                counter.style.display = 'block';
-            } else {
-                counter.style.display = 'none';
-            }
-        }
-
-        function navigateSlide(direction) {
-            if (!currentSlideImages.length) return;
-            currentSlideIndex += direction;
-            if (currentSlideIndex < 0) currentSlideIndex = currentSlideImages.length - 1;
-            if (currentSlideIndex >= currentSlideImages.length) currentSlideIndex = 0;
-            
-            document.getElementById('viewer-img').src = currentSlideImages[currentSlideIndex];
-            updateViewerCounter();
-        }
-
-        function handleKeydown(e) {
-            if (e.key === 'Escape') closeViewer();
-            if (e.key === 'ArrowLeft') navigateSlide(1);
-            if (e.key === 'ArrowRight') navigateSlide(-1);
-        }
-
-        function closeViewer() {
-            document.getElementById('viewer').style.display = 'none';
-            document.body.style.overflow = 'auto';
-            document.removeEventListener('keydown', handleKeydown);
-        }
-
-        function closeViewerOnOverlay(e) {
-            if (e.target.id === 'viewer') closeViewer();
-        }
-
-        // الدخول للإدارة
-        function checkAccess() {
-            const code = prompt("🔐 رمز الإدارة:");
-            if (code === "1234") {  // غير الرمز حسب ما عندك
-                isAdmin = true;
-                document.getElementById('admin-panel').style.display = 'block';
-            } else if (code) {
-                alert("❌ الرمز غير صحيح");
-            }
-        }
-
-        // تكبير الصور
-        let zoomScale = 1;
-        document.getElementById('viewer-img').addEventListener('dblclick', function(e) {
-            e.preventDefault();
-            if (zoomScale === 1) {
-                zoomScale = 2;
-                this.style.transform = `scale(${zoomScale})`;
-                this.classList.add('zoomed');
-            } else {
-                zoomScale = 1;
-                this.style.transform = 'scale(1)';
-                this.classList.remove('zoomed');
-            }
-        });
-
-        window.go = go;
-        window.whatsappGlobal = whatsappGlobal;
-        window.whatsappOrder = whatsappOrder;
-        window.openImg = openImg;
-        window.navigateSlide = navigateSlide;
-        window.closeViewer = closeViewer;
-        window.closeViewerOnOverlay = closeViewerOnOverlay;
-        window.checkAccess = checkAccess;
-    </script>
 </body>
 </html>
