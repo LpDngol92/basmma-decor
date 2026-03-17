@@ -12,7 +12,6 @@
 
 <style>
 :root {
-    /* الألوان الجديدة - فاتحة وأنيقة */
     --bg: #f8f9fa;
     --bg2: #e9ecef;
     --bg3: #dee2e6;
@@ -38,7 +37,6 @@
     --theme-name: 'light';
 }
 
-/* ثيم رمضاني فاتح */
 :root.theme-ramadan-light {
     --bg: #f5f9f2;
     --bg2: #e0f0e0;
@@ -141,7 +139,7 @@ body {
     position: fixed;
     bottom: 30px;
     left: 30px;
-    max-width: 300px;
+    max-width: 320px;
     background: var(--card);
     border: 1px solid var(--gold);
     border-radius: 20px;
@@ -216,6 +214,76 @@ body {
 }
 
 .bubble-close:hover {
+    transform: scale(1.1);
+    background: #a5372b;
+}
+
+/* ======================== FAVORITE BUBBLE ======================== */
+.fav-bubble {
+    position: fixed;
+    bottom: 100px;
+    left: 30px;
+    max-width: 280px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+    color: white;
+    border-radius: 20px;
+    padding: 15px 20px;
+    z-index: 9999998;
+    display: none;
+    animation: favPop 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+@keyframes favPop {
+    0% { transform: scale(0.3) translateX(100px); opacity: 0; }
+    70% { transform: scale(1.1); }
+    100% { transform: scale(1) translateX(0); opacity: 1; }
+}
+
+.fav-bubble-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.fav-bubble-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+}
+
+.fav-bubble-text {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.fav-bubble-close {
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 24px;
+    height: 24px;
+    background: var(--red);
+    border: 2px solid white;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.2s;
+}
+
+.fav-bubble-close:hover {
     transform: scale(1.1);
     background: #a5372b;
 }
@@ -1115,6 +1183,42 @@ nav::-webkit-scrollbar {
     text-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
 }
 
+.favorite-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.3s ease;
+    z-index: 10;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.favorite-btn:hover {
+    transform: scale(1.1);
+    background: white;
+}
+
+.favorite-btn.active {
+    color: var(--red);
+    border-color: var(--red);
+    background: white;
+}
+
+.favorite-btn i {
+    font-size: 1rem;
+    pointer-events: none;
+}
+
 .btn-order {
     width: 100%;
     padding: 12px;
@@ -1168,6 +1272,59 @@ nav::-webkit-scrollbar {
     color: var(--text-primary);
 }
 
+/* ======================== FAVORITES PAGE ======================== */
+#favorites-page {
+    display: none;
+    padding: 20px;
+}
+
+.favorites-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.favorites-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--gold-dark);
+}
+
+.favorites-count {
+    background: var(--gold);
+    color: white;
+    padding: 6px 15px;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.favorites-grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+}
+
+.favorites-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    grid-column: 1/-1;
+}
+
+.favorites-empty i {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.3;
+}
+
+.favorites-empty p {
+    font-size: 1.1rem;
+}
+
 /* ======================== VIEWER ======================== */
 #viewer {
     position: fixed;
@@ -1193,7 +1350,7 @@ nav::-webkit-scrollbar {
 
 #viewer-img {
     max-width: 100%;
-    max-height: 85vh;
+    max-height: 90vh;
     object-fit: contain;
     transition: transform 0.1s ease;
     transform-origin: center center;
@@ -1210,33 +1367,40 @@ nav::-webkit-scrollbar {
 
 .viewer-controls {
     position: fixed;
-    bottom: 20px;
+    bottom: 30px;
     left: 0;
     right: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 25px;
     z-index: 1000002;
     padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    width: fit-content;
+    margin: 0 auto;
+    border-radius: 60px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .viewer-counter {
     background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    padding: 8px 16px;
+    padding: 8px 20px;
     border-radius: 30px;
     color: white;
-    font-size: 0.9rem;
+    font-size: 1rem;
     font-weight: 600;
     border: 1px solid rgba(255, 255, 255, 0.1);
     letter-spacing: 0.5px;
+    min-width: 80px;
+    text-align: center;
 }
 
 .viewer-nav-btn {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
@@ -1248,7 +1412,7 @@ nav::-webkit-scrollbar {
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
 }
 
 .viewer-nav-btn:hover {
@@ -1259,10 +1423,10 @@ nav::-webkit-scrollbar {
 
 .viewer-close {
     position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
+    top: 30px;
+    right: 30px;
+    width: 52px;
+    height: 52px;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
@@ -1274,7 +1438,7 @@ nav::-webkit-scrollbar {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     transition: all 0.3s ease;
 }
 
@@ -1295,229 +1459,6 @@ nav::-webkit-scrollbar {
     pointer-events: none;
     white-space: nowrap;
     z-index: 1000001;
-}
-
-/* ======================== DRAWING SECTION ======================== */
-.drawing-section {
-    background: var(--card);
-    border-radius: 24px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-    max-width: 900px;
-    margin: 0 auto;
-    box-shadow: var(--shadow);
-}
-
-.drawing-section-header {
-    padding: 22px 26px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg2);
-}
-
-.drawing-section-title {
-    font-size: 1.4rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    margin-bottom: 4px;
-}
-
-.drawing-section-sub {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.drawing-tools-bar {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border);
-    background: var(--card);
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    flex-wrap: wrap;
-}
-
-.tool-group {
-    display: flex;
-    gap: 6px;
-}
-
-.tool-btn {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.25s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-}
-
-.tool-btn:hover {
-    border-color: var(--border-hover);
-    color: var(--gold);
-    transform: translateY(-2px);
-}
-
-.tool-btn.active {
-    background: var(--gold);
-    border-color: var(--gold);
-    color: white;
-}
-
-.tools-divider {
-    width: 1px;
-    height: 32px;
-    background: var(--border);
-}
-
-.color-dots-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-}
-
-.color-dot {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
-    border: 2px solid white;
-    transition: all 0.25s;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.color-dot:hover {
-    transform: scale(1.15);
-    border-color: var(--gold);
-}
-
-.color-dot.selected {
-    border-color: var(--gold-dark);
-    box-shadow: 0 0 0 2px rgba(178, 151, 106, 0.3);
-    transform: scale(1.1);
-}
-
-.brush-size-inline {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-right: auto;
-}
-
-.brush-size-inline label {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-}
-
-.brush-size-inline input[type=range] {
-    width: 90px;
-    -webkit-appearance: none;
-    height: 4px;
-    background: var(--bg3);
-    border-radius: 2px;
-    outline: none;
-}
-
-.brush-size-inline input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--gold);
-    cursor: pointer;
-    border: 2px solid white;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-}
-
-.brush-size-inline span {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    min-width: 32px;
-}
-
-.drawing-canvas-container {
-    background: #ffffff;
-    position: relative;
-}
-
-.drawing-canvas {
-    width: 100%;
-    height: 440px;
-    display: block;
-    cursor: crosshair;
-    touch-action: none;
-}
-
-.canvas-placeholder {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    pointer-events: none;
-    color: #aaa;
-}
-
-.canvas-placeholder i {
-    font-size: 3rem;
-    opacity: 0.2;
-    display: block;
-    margin-bottom: 10px;
-}
-
-.canvas-placeholder p {
-    font-size: 0.95rem;
-    opacity: 0.4;
-}
-
-.drawing-footer {
-    padding: 18px 20px;
-    border-top: 1px solid var(--border);
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-}
-
-.draw-action-btn {
-    padding: 12px 24px;
-    border-radius: 30px;
-    border: none;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: var(--header-font);
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.draw-save {
-    background: var(--gold);
-    color: white;
-}
-
-.draw-send {
-    background: #25D366;
-    color: white;
-}
-
-.draw-clear {
-    background: var(--bg2);
-    color: var(--text-secondary);
-    border: 1px solid var(--border);
-}
-
-.draw-action-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* ======================== ADMIN PANEL ======================== */
@@ -2010,25 +1951,8 @@ footer {
         gap: 12px;
     }
     
-    .drawing-canvas {
-        height: 320px;
-    }
-    
-    .drawing-footer {
-        gap: 8px;
-    }
-    
-    .draw-action-btn {
-        padding: 10px 18px;
-        font-size: 0.85rem;
-    }
-    
     .hero-brand-name {
         letter-spacing: 2px;
-    }
-    
-    .brush-size-inline {
-        display: none;
     }
     
     .section-title {
@@ -2044,6 +1968,31 @@ footer {
         right: 15px;
         max-width: none;
         bottom: 20px;
+    }
+
+    .fav-bubble {
+        left: 15px;
+        right: 15px;
+        max-width: none;
+        bottom: 90px;
+    }
+
+    .viewer-controls {
+        gap: 15px;
+        bottom: 20px;
+    }
+
+    .viewer-nav-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1rem;
+    }
+
+    .viewer-close {
+        top: 20px;
+        right: 20px;
+        width: 44px;
+        height: 44px;
     }
 }
 
@@ -2099,6 +2048,19 @@ footer {
     </div>
 </div>
 
+<!-- Favorite Bubble -->
+<div class="fav-bubble" id="favBubble">
+    <div class="fav-bubble-close" onclick="closeFavBubble()">
+        <i class="fas fa-times"></i>
+    </div>
+    <div class="fav-bubble-content">
+        <div class="fav-bubble-icon">
+            <i class="fas fa-heart"></i>
+        </div>
+        <div class="fav-bubble-text" id="favBubbleMessage">تمت الإضافة إلى المفضلة ❤️</div>
+    </div>
+</div>
+
 <!-- Maintenance -->
 <div id="maintenance-screen">
     <div class="maintenance-content">
@@ -2137,6 +2099,15 @@ footer {
 
 <!-- Main Content -->
 <main id="content-area"></main>
+
+<!-- Favorites Page -->
+<div id="favorites-page">
+    <div class="favorites-header">
+        <h2 class="favorites-title"><i class="fas fa-heart" style="color:var(--red); margin-left:10px;"></i> المفضلة</h2>
+        <span class="favorites-count" id="favorites-count">0</span>
+    </div>
+    <div class="favorites-grid" id="favorites-grid"></div>
+</div>
 
 <!-- Footer -->
 <footer id="site-footer">جميع الحقوق محفوظة © بصمة غير للديكور</footer>
@@ -2216,7 +2187,6 @@ footer {
                 <label><input type="checkbox" id="enable-keyboard-protection" checked> منع اختصارات المفاتيح</label><br>
                 <label><input type="checkbox" id="enable-image-protection" checked> منع سحب الصور</label><br>
                 <label><input type="checkbox" id="enable-selection-protection" checked> منع نسخ النصوص</label><br>
-                <label><input type="checkbox" id="enable-drawing-exemption" checked> إعفاء المساحة الحرة</label>
                 <button onclick="saveProtectionSettings()" class="admin-btn admin-btn-gold">حفظ إعدادات الحماية</button>
             </div>
         </div>
@@ -2232,19 +2202,6 @@ footer {
                 <div class="font-option lalezar" onclick="selectFont('lalezar')">لاله زار — Lalezar</div>
                 <input type="text" id="custom-font-input" placeholder="خط مخصص...">
                 <button onclick="selectCustomFont()" class="admin-btn admin-btn-gold">تطبيق خط مخصص</button>
-            </div>
-        </div>
-
-        <!-- Drawing Settings -->
-        <div class="collapse-section">
-            <button class="collapse-btn" onclick="toggleCol('c_drawing')">✏️ إعدادات المساحة الحرة <span class="arrow">▾</span></button>
-            <div id="c_drawing" class="collapse-content">
-                <label><input type="checkbox" id="enable-drawing-section" checked> تفعيل المساحة الحرة</label>
-                <input type="text" id="drawing-title-input" placeholder="عنوان القسم" value="المساحة الحرة">
-                <textarea id="drawing-description-input" placeholder="وصف القسم" rows="2">ارسم فكرتك وسنحولها إلى واقع</textarea>
-                <input type="text" id="drawing-button-text" placeholder="نص زر التنقل" value="المساحة الحرة">
-                <input type="text" id="drawing-whatsapp-message" placeholder="رسالة واتساب" value="السلام عليكم، أود الاستفسار عن هذا الرسم:">
-                <button onclick="saveDrawingSettings()" class="admin-btn admin-btn-gold">حفظ</button>
             </div>
         </div>
 
@@ -2428,6 +2385,9 @@ let partnerIdx = 0;
 let selectedFont = 'tajawal';
 let currentTheme = 'black';
 
+// Favorites
+let favorites = JSON.parse(localStorage.getItem('site_favorites')) || [];
+
 // Image gallery variables
 let currentImageList = [];
 let currentImageIndex = 0;
@@ -2440,12 +2400,6 @@ const protectionSettings = {
     imageProtection: true, textSelection: true,
     drawingExemption: true, devToolsDetection: false
 };
-
-// Drawing
-let drawingCanvas, drawingCtx;
-let currentTool = 'pen', currentDrawColor = '#000000', currentBrushSize = 5;
-let isDrawing = false, lastX = 0, lastY = 0;
-let canvasHistory = [], historyIndex = -1;
 
 // Image Zoom
 let zoomScale = 1;
@@ -2460,13 +2414,11 @@ function showPopupBubble() {
     const bubble = document.getElementById('popupBubble');
     if (!bubble) return;
     
-    // Get message from Firebase or use default
     const message = currentData.popup_message || 'مرحباً بكم في عالم التصميم والأناقة ✨ نتمنى لكم تجربة مميزة';
     document.getElementById('popupMessage').textContent = message;
     
     bubble.style.display = 'block';
     
-    // Auto hide after 8 seconds
     setTimeout(() => {
         if (bubble.style.display === 'block') {
             closePopupBubble();
@@ -2481,26 +2433,147 @@ function closePopupBubble() {
     }
 }
 
+// ======================== FAVORITE BUBBLE ========================
+function showFavBubble(message, isAdd = true) {
+    const bubble = document.getElementById('favBubble');
+    const messageEl = document.getElementById('favBubbleMessage');
+    const icon = bubble.querySelector('.fav-bubble-icon i');
+    
+    if (isAdd) {
+        messageEl.textContent = message || 'تمت الإضافة إلى المفضلة ❤️';
+        icon.className = 'fas fa-heart';
+        bubble.style.background = 'linear-gradient(135deg, var(--gold), var(--gold-dark))';
+    } else {
+        messageEl.textContent = message || 'تمت الإزالة من المفضلة';
+        icon.className = 'fas fa-heart-broken';
+        bubble.style.background = 'linear-gradient(135deg, #c44536, #a5372b)';
+    }
+    
+    bubble.style.display = 'block';
+    
+    setTimeout(() => {
+        if (bubble.style.display === 'block') {
+            closeFavBubble();
+        }
+    }, 3000);
+}
+
+function closeFavBubble() {
+    const bubble = document.getElementById('favBubble');
+    if (bubble) {
+        bubble.style.display = 'none';
+    }
+}
+
+// ======================== FAVORITES FUNCTIONS ========================
+function toggleFavorite(imgId, imgUrl, imgTitle = '') {
+    const index = favorites.findIndex(f => f.id === imgId);
+    
+    if (index === -1) {
+        // Add to favorites
+        favorites.push({
+            id: imgId,
+            url: imgUrl,
+            title: imgTitle,
+            date: new Date().toISOString()
+        });
+        showFavBubble('تمت الإضافة إلى المفضلة ❤️', true);
+    } else {
+        // Remove from favorites
+        favorites.splice(index, 1);
+        showFavBubble('تمت الإزالة من المفضلة', false);
+    }
+    
+    localStorage.setItem('site_favorites', JSON.stringify(favorites));
+    updateFavoriteButtons();
+    renderFavoritesPage();
+}
+
+function isFavorite(imgId) {
+    return favorites.some(f => f.id === imgId);
+}
+
+function updateFavoriteButtons() {
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+        const imgId = btn.getAttribute('data-img-id');
+        if (imgId && isFavorite(imgId)) {
+            btn.classList.add('active');
+            btn.innerHTML = '<i class="fas fa-heart"></i>';
+        } else {
+            btn.classList.remove('active');
+            btn.innerHTML = '<i class="far fa-heart"></i>';
+        }
+    });
+}
+
+function renderFavoritesPage() {
+    const grid = document.getElementById('favorites-grid');
+    const count = document.getElementById('favorites-count');
+    
+    if (!grid) return;
+    
+    if (favorites.length === 0) {
+        grid.innerHTML = `
+            <div class="favorites-empty">
+                <i class="far fa-heart"></i>
+                <p>لا توجد صور في المفضلة بعد</p>
+                <p style="font-size:0.9rem; margin-top:10px;">أضف صورك المفضلة بالضغط على ♡</p>
+            </div>
+        `;
+        count.textContent = '0';
+        return;
+    }
+    
+    const wm = currentData.wm_text || '';
+    
+    // Sort by date (newest first)
+    const sortedFavs = [...favorites].reverse();
+    
+    grid.innerHTML = sortedFavs.map((fav, index) => `
+        <div class="card">
+            <div class="img-container" onclick="openImg('${fav.url}', ${JSON.stringify(sortedFavs.map(f => f.url))}, ${index})">
+                <img src="${fav.url}" loading="lazy"
+                     onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\'height:165px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);\\'><i class=\\'fas fa-image fa-2x\\'></i></div>';">
+                <div class="img-overlay"><i class="fas fa-expand-alt"></i></div>
+                <div class="wm-tag">${wm}</div>
+            </div>
+            <button class="favorite-btn active" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')" data-img-id="${fav.id}">
+                <i class="fas fa-heart"></i>
+            </button>
+            <button onclick="whatsappOrder('${fav.url}')" class="btn-order">استفسار</button>
+        </div>
+    `).join('');
+    
+    count.textContent = favorites.length;
+}
+
+function showFavorites() {
+    document.getElementById('favorites-page').style.display = 'block';
+    document.getElementById('content-area').style.display = 'none';
+    renderFavoritesPage();
+}
+
+function hideFavorites() {
+    document.getElementById('favorites-page').style.display = 'none';
+    document.getElementById('content-area').style.display = 'block';
+}
+
 // ======================== IMAGE GALLERY FUNCTIONS ========================
 function openImg(url, imageList, index) {
     const viewer = document.getElementById('viewer');
     const img = document.getElementById('viewer-img');
     
-    // Store the image list and current index
     if (imageList && Array.isArray(imageList)) {
         currentImageList = imageList;
         currentImageIndex = index || 0;
     } else {
-        // If only one image is provided, create a list with that image
         currentImageList = [url];
         currentImageIndex = 0;
     }
     
-    // Load the current image
     img.src = currentImageList[currentImageIndex];
     document.getElementById('viewer-watermark').textContent = currentData.wm_text || '';
     
-    // Update counter
     updateImageCounter();
     
     viewer.style.display = 'flex';
@@ -2535,9 +2608,9 @@ function handleViewerKeydown(e) {
     if (e.key === 'Escape') {
         closeViewer();
     } else if (e.key === 'ArrowLeft') {
-        navigateImage('next'); // RTL layout
+        navigateImage('next');
     } else if (e.key === 'ArrowRight') {
-        navigateImage('prev'); // RTL layout
+        navigateImage('prev');
     }
 }
 
@@ -2563,13 +2636,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setupNavDrag();
     setupImageZoom();
     
-    // Show popup after page loads
     setTimeout(showPopupBubble, 1000);
 });
 
-// Show popup on each page refresh
 window.addEventListener('load', () => {
     setTimeout(showPopupBubble, 1000);
+    renderFavoritesPage();
 });
 
 function setupAuthListener() {
@@ -2610,7 +2682,6 @@ function setupNavDrag() {
         nav.scrollLeft = scrollLeft - walk;
     });
 
-    // Touch events for mobile
     nav.addEventListener('touchstart', (e) => {
         isDown = true;
         startX = e.touches[0].pageX - nav.offsetLeft;
@@ -2639,7 +2710,6 @@ function setupImageZoom() {
         resetZoom();
     });
 
-    // Pinch zoom
     viewer.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
             e.preventDefault();
@@ -2674,7 +2744,6 @@ function setupImageZoom() {
             zoomPosition.x = e.touches[0].clientX - dragStart.x;
             zoomPosition.y = e.touches[0].clientY - dragStart.y;
             
-            // Constrain panning
             const maxX = (img.offsetWidth * (zoomScale - 1)) / 2;
             const maxY = (img.offsetHeight * (zoomScale - 1)) / 2;
             zoomPosition.x = Math.min(Math.max(zoomPosition.x, -maxX), maxX);
@@ -2691,7 +2760,6 @@ function setupImageZoom() {
         }
     });
 
-    // Double tap to zoom
     img.addEventListener('dblclick', (e) => {
         e.preventDefault();
         if (isZoomed) {
@@ -2821,7 +2889,7 @@ function toggleProtection() {
 }
 
 function preventRightClickAdvanced(e) {
-    if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) return;
+    if (!isProtectionEnabled) return;
     e.preventDefault(); return false;
 }
 function preventImageDrag(e) {
@@ -2834,15 +2902,8 @@ function preventCopy(e) {
     if (tag !== 'INPUT' && tag !== 'TEXTAREA') { e.preventDefault(); return false; }
 }
 function preventSelection(e) {
-    if (!isProtectionEnabled || (isDrawingExempted && isInDrawingArea(e.target))) return;
-    if (!isInDrawingArea(e.target)) e.preventDefault();
-}
-function isInDrawingArea(el) {
-    while (el) {
-        if (el.classList && (el.classList.contains('drawing-canvas-container') || el.classList.contains('drawing-canvas') || el.id === 'drawing-canvas')) return true;
-        el = el.parentElement;
-    }
-    return false;
+    if (!isProtectionEnabled) return;
+    e.preventDefault();
 }
 
 function saveProtectionSettings() {
@@ -2850,7 +2911,6 @@ function saveProtectionSettings() {
     protectionSettings.keyboardShortcuts = document.getElementById('enable-keyboard-protection').checked;
     protectionSettings.imageProtection = document.getElementById('enable-image-protection').checked;
     protectionSettings.textSelection = document.getElementById('enable-selection-protection').checked;
-    protectionSettings.drawingExemption = document.getElementById('enable-drawing-exemption').checked;
     isDrawingExempted = protectionSettings.drawingExemption;
     db.ref(DB_PATH).update({ protection_settings: protectionSettings }).then(() => {
         alert('✅ تم حفظ إعدادات الحماية');
@@ -2996,9 +3056,8 @@ function renderAll() {
 
     // Nav
     let navHtml = `<button class="nav-btn ${currentTab==='home'?'active':''}" onclick="go('home')">الرئيسية</button>`;
+    navHtml += `<button class="nav-btn ${currentTab==='favorites'?'active':''}" onclick="showFavorites()">المفضلة</button>`;
     navHtml += `<button class="nav-btn ${currentTab==='catalogs'?'active':''}" onclick="go('catalogs')">الكتالوج</button>`;
-    if (d.drawing_active !== false)
-        navHtml += `<button class="nav-btn ${currentTab==='drawing'?'active':''}" onclick="go('drawing')">${d.drawing_button_text||'المساحة الحرة'}</button>`;
     if (d.pages) Object.keys(d.pages).forEach(id =>
         navHtml += `<button class="nav-btn ${currentTab===id?'active':''}" onclick="go('${id}')">${d.pages[id].title}</button>`
     );
@@ -3110,41 +3169,6 @@ function renderAll() {
         <div class="grid">${drawFolders(d.catalogs)}</div>
     </section>`;
 
-    // DRAWING
-    if (d.drawing_active !== false) {
-        contentHtml += `<section class="sec ${currentTab==='drawing'?'active':''}">
-            <div class="drawing-section">
-                <div class="drawing-section-header">
-                    <div class="drawing-section-title">${d.drawing_title||'المساحة الحرة'}</div>
-                    <div class="drawing-section-sub">${d.drawing_description||'ارسم فكرتك وسنحولها إلى واقع مذهل'}</div>
-                </div>
-                <div class="drawing-tools-bar">
-                    <div class="tool-group" id="drawing-tools-grid"></div>
-                    <div class="tools-divider"></div>
-                    <div class="color-dots-row" id="color-dots-row"></div>
-                    <div class="brush-size-inline">
-                        <label>الحجم:</label>
-                        <input type="range" id="brush-size-slider" min="1" max="50" value="5">
-                        <span id="brush-size-value">5px</span>
-                    </div>
-                </div>
-                <div class="drawing-canvas-container">
-                    <canvas id="drawing-canvas" class="drawing-canvas"></canvas>
-                    <div class="canvas-placeholder" id="canvas-placeholder">
-                        <i class="fas fa-magic"></i>
-                        <p>ابدأ الرسم هنا</p>
-                    </div>
-                </div>
-                <div class="drawing-footer">
-                    <button onclick="saveDrawing()" class="draw-action-btn draw-save"><i class="fas fa-download"></i> حفظ</button>
-                    <button onclick="sendDrawingToWhatsApp()" class="draw-action-btn draw-send"><i class="fab fa-whatsapp"></i> إرسال</button>
-                    <button onclick="undoDrawing()" class="draw-action-btn draw-clear"><i class="fas fa-undo"></i> تراجع</button>
-                    <button onclick="clearCanvas()" class="draw-action-btn draw-clear"><i class="fas fa-trash"></i> مسح</button>
-                </div>
-            </div>
-        </section>`;
-    }
-
     // PAGES
     if (d.pages) Object.keys(d.pages).forEach(id =>
         contentHtml += `<section class="sec ${currentTab===id?'active':''}">
@@ -3178,30 +3202,38 @@ function renderAll() {
     );
 
     document.getElementById('content-area').innerHTML = contentHtml;
+    document.getElementById('favorites-page').style.display = 'none';
     updateWorkStatus();
     startReviewSlider();
-
-    if (currentTab === 'drawing') setTimeout(initDrawingCanvas, 300);
+    updateFavoriteButtons();
 }
 
 function drawImgs(imgs) {
     if (!imgs) return `<p style="text-align:center; padding:50px; color:var(--text-muted); grid-column:1/-1;">قريباً...</p>`;
     const wm = currentData.wm_text || '';
     
-    // Create an array of image URLs
     const imageUrls = Object.keys(imgs).map(id => imgs[id].url);
     
     return Object.keys(imgs).reverse().map((id, index) => {
-        const actualIndex = imageUrls.length - 1 - index; // Adjust for reverse order
+        const actualIndex = imageUrls.length - 1 - index;
+        const imgUrl = imgs[id].url;
+        const imgId = id;
+        
+        const isFav = isFavorite(imgId) ? 'active' : '';
+        const favIcon = isFav ? 'fas fa-heart' : 'far fa-heart';
+        
         return `
         <div class="card">
-            <div class="img-container" onclick="openImg('${imgs[id].url}', ${JSON.stringify(imageUrls)}, ${actualIndex})">
-                <img src="${imgs[id].url}" loading="lazy"
+            <div class="img-container" onclick="openImg('${imgUrl}', ${JSON.stringify(imageUrls)}, ${actualIndex})">
+                <img src="${imgUrl}" loading="lazy"
                      onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\'height:165px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);\\'><i class=\\'fas fa-image fa-2x\\'></i></div>';">
                 <div class="img-overlay"><i class="fas fa-expand-alt"></i></div>
                 <div class="wm-tag">${wm}</div>
             </div>
-            <button onclick="whatsappOrder('${imgs[id].url}')" class="btn-order">استفسار</button>
+            <button class="favorite-btn ${isFav}" onclick="event.stopPropagation(); toggleFavorite('${imgId}', '${imgUrl}')" data-img-id="${imgId}">
+                <i class="${favIcon}"></i>
+            </button>
+            <button onclick="whatsappOrder('${imgUrl}')" class="btn-order">استفسار</button>
         </div>`;
     }).join('');
 }
@@ -3224,150 +3256,6 @@ function drawFolders(obj) {
         </div>`).join('');
 }
 
-// ======================== DRAWING ========================
-function initDrawingCanvas() {
-    drawingCanvas = document.getElementById('drawing-canvas');
-    if (!drawingCanvas) return;
-    drawingCtx = drawingCanvas.getContext('2d');
-    drawingCanvas.width = drawingCanvas.parentElement.clientWidth;
-    drawingCanvas.height = parseInt(getComputedStyle(drawingCanvas).height);
-    clearCanvas(false);
-    setupCanvasEvents();
-    setupColorPickerDots();
-    setupToolButtonsDraw();
-    const slider = document.getElementById('brush-size-slider');
-    const sval = document.getElementById('brush-size-value');
-    if (slider && sval) {
-        slider.addEventListener('input', () => {
-            currentBrushSize = parseInt(slider.value);
-            sval.textContent = currentBrushSize + 'px';
-        });
-    }
-}
-
-function clearCanvas(showAlert = false) {
-    if (!drawingCtx && !drawingCanvas) return;
-    drawingCtx.fillStyle = '#f9f9f9';
-    drawingCtx.fillRect(0, 0, drawingCanvas.width, drawingCanvas.height);
-    canvasHistory = []; historyIndex = -1;
-    saveCanvasState();
-    const ph = document.getElementById('canvas-placeholder');
-    if (ph) ph.style.display = 'block';
-}
-
-function saveCanvasState() {
-    if (!drawingCanvas) return;
-    if (historyIndex < canvasHistory.length - 1) canvasHistory = canvasHistory.slice(0, historyIndex + 1);
-    canvasHistory.push(drawingCanvas.toDataURL());
-    historyIndex = canvasHistory.length - 1;
-    if (canvasHistory.length > 20) { canvasHistory.shift(); historyIndex--; }
-}
-
-function undoDrawing() {
-    if (historyIndex > 0) {
-        historyIndex--;
-        const img = new Image();
-        img.onload = () => { drawingCtx.clearRect(0,0,drawingCanvas.width,drawingCanvas.height); drawingCtx.drawImage(img,0,0); };
-        img.src = canvasHistory[historyIndex];
-    }
-}
-
-function setupCanvasEvents() {
-    drawingCanvas.addEventListener('mousedown', startDrawing);
-    drawingCanvas.addEventListener('mousemove', doDraw);
-    drawingCanvas.addEventListener('mouseup', stopDrawing);
-    drawingCanvas.addEventListener('mouseout', stopDrawing);
-    drawingCanvas.addEventListener('touchstart', e => { e.preventDefault(); const t = e.touches[0]; startDrawing({clientX:t.clientX, clientY:t.clientY}); });
-    drawingCanvas.addEventListener('touchmove', e => { e.preventDefault(); const t = e.touches[0]; doDraw({clientX:t.clientX, clientY:t.clientY}); });
-    drawingCanvas.addEventListener('touchend', e => { e.preventDefault(); stopDrawing(); });
-}
-
-function startDrawing(e) {
-    isDrawing = true;
-    const rect = drawingCanvas.getBoundingClientRect();
-    [lastX, lastY] = [e.clientX - rect.left, e.clientY - rect.top];
-    drawingCtx.beginPath(); drawingCtx.moveTo(lastX, lastY);
-    const ph = document.getElementById('canvas-placeholder');
-    if (ph) ph.style.display = 'none';
-}
-
-function doDraw(e) {
-    if (!isDrawing) return;
-    const rect = drawingCanvas.getBoundingClientRect();
-    const x = e.clientX - rect.left, y = e.clientY - rect.top;
-    drawingCtx.lineWidth = currentBrushSize;
-    drawingCtx.lineCap = 'round'; drawingCtx.lineJoin = 'round';
-    if (currentTool === 'eraser') {
-        drawingCtx.globalCompositeOperation = 'destination-out';
-        drawingCtx.strokeStyle = 'rgba(0,0,0,1)';
-    } else {
-        drawingCtx.globalCompositeOperation = 'source-over';
-        drawingCtx.strokeStyle = currentDrawColor;
-    }
-    drawingCtx.lineTo(x, y); drawingCtx.stroke();
-    [lastX, lastY] = [x, y];
-}
-
-function stopDrawing() {
-    if (isDrawing) { isDrawing = false; drawingCtx.closePath(); saveCanvasState(); }
-}
-
-function setupColorPickerDots() {
-    const colors = ['#000000','#ffffff','#c9a96e','#e74c3c','#2ecc71','#3498db','#9b59b6','#f1c40f','#e67e22','#1abc9c','#34495e','#e91e63'];
-    const row = document.getElementById('color-dots-row');
-    if (!row) return;
-    row.innerHTML = colors.map(c => `<div class="color-dot" style="background:${c}" onclick="selectDrawColor('${c}')"></div>`).join('');
-    selectDrawColor('#000000');
-}
-
-function selectDrawColor(color) {
-    currentDrawColor = color;
-    document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
-    document.querySelectorAll('.color-dot').forEach(d => {
-        const bg = d.style.backgroundColor;
-        if (bg === color || hexToRgbStr(color) === bg) d.classList.add('selected');
-    });
-}
-
-function hexToRgbStr(hex) {
-    const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return r ? `rgb(${parseInt(r[1],16)}, ${parseInt(r[2],16)}, ${parseInt(r[3],16)})` : hex;
-}
-
-function setupToolButtonsDraw() {
-    const tools = [
-        {id:'pen', icon:'fas fa-pen'}, {id:'brush', icon:'fas fa-paint-brush'},
-        {id:'eraser', icon:'fas fa-eraser'}
-    ];
-    const grid = document.getElementById('drawing-tools-grid');
-    if (!grid) return;
-    grid.innerHTML = tools.map(t => `<button class="tool-btn" id="tool-${t.id}" onclick="selectDrawTool('${t.id}')"><i class="${t.icon}"></i></button>`).join('');
-    selectDrawTool('pen');
-}
-
-function selectDrawTool(id) {
-    currentTool = id;
-    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-    const btn = document.getElementById(`tool-${id}`);
-    if (btn) btn.classList.add('active');
-}
-
-function saveDrawing() {
-    if (!drawingCanvas) return;
-    const link = document.createElement('a');
-    link.download = `تصميم-بصمة-غير-${Date.now()}.png`;
-    link.href = drawingCanvas.toDataURL();
-    link.click();
-}
-
-function sendDrawingToWhatsApp() {
-    const num = currentData.whatsapp_num || '966500000000';
-    const msg = currentData.drawing_whatsapp_message || 'السلام عليكم، أود الاستفسار عن رسم تصميمي:';
-    if (confirm('سيتم فتح واتساب. يرجى حفظ الرسم أولاً ثم إرساله كصورة.')) {
-        window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
-    }
-}
-
 // ======================== FIREBASE LOAD ========================
 db.ref(DB_PATH).on('value', snap => {
     currentData = snap.val() || {};
@@ -3385,7 +3273,6 @@ db.ref(DB_PATH).on('value', snap => {
     renderAdminReviews();
     renderAdminPartners();
 
-    // News
     if (currentData.news_bar) {
         document.getElementById('news-container').style.display = 'flex';
         document.getElementById('news-text').innerText = currentData.news_bar;
@@ -3399,7 +3286,6 @@ db.ref(DB_PATH).on('value', snap => {
     updateWorkStatus();
     if (isAdmin) document.getElementById('protection-toggle').style.display = 'flex';
     
-    // Show popup if not admin
     if (!isAdmin) {
         setTimeout(showPopupBubble, 1000);
     }
@@ -3432,7 +3318,12 @@ function toggleAbout(id, btn) {
     if (btn) { const icon = btn.querySelector('i'); if (icon) icon.style.transform = el.classList.contains('open') ? 'rotate(180deg)' : ''; }
 }
 
-function go(id) { currentTab = id; renderAll(); window.scrollTo(0, 0); }
+function go(id) { 
+    hideFavorites();
+    currentTab = id; 
+    renderAll(); 
+    window.scrollTo(0, 0); 
+}
 
 function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
 function whatsappOrder(url) { window.open(`https://wa.me/${currentData.whatsapp_num}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); }
@@ -3479,7 +3370,6 @@ function saveAbout() { db.ref(DB_PATH).update({ about_text:document.getElementBy
 function saveSocial() { db.ref(DB_PATH).update({ insta_url:document.getElementById('in-insta').value, tiktok_url:document.getElementById('in-tiktok').value, snap_url:document.getElementById('in-snap').value, location_url:document.getElementById('in-loc').value }).then(()=>alert('تم')); }
 function saveSettings() { db.ref(DB_PATH).update({ site_name:document.getElementById('in-name').value, whatsapp_num:document.getElementById('in-wa').value, wm_text:document.getElementById('in-wm').value, news_bar:document.getElementById('in-news').value, footer_text:document.getElementById('in-footer').value }).then(()=>alert('تم')); }
 function saveMaintenanceSettings() { db.ref(DB_PATH).update({ maintenance_mode:document.getElementById('in-maintenance').checked, maintenance_title:document.getElementById('in-maintenance-title').value, maintenance_message:document.getElementById('in-maintenance-message').value, maintenance_footer:document.getElementById('in-maintenance-footer').value }).then(()=>alert('تم')); }
-function saveDrawingSettings() { db.ref(DB_PATH).update({ drawing_active:document.getElementById('enable-drawing-section').checked, drawing_title:document.getElementById('drawing-title-input').value, drawing_description:document.getElementById('drawing-description-input').value, drawing_button_text:document.getElementById('drawing-button-text').value, drawing_whatsapp_message:document.getElementById('drawing-whatsapp-message').value }).then(()=>{ alert('تم'); renderAll(); }); }
 function addSec() { const n=document.getElementById('new-sec-in').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>{ document.getElementById('new-sec-in').value=''; alert('تم'); }); }
 function addAlbum() { const n=document.getElementById('new-alb-in').value; if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(()=>{ document.getElementById('new-alb-in').value=''; alert('تم'); }); }
 function publishPhotos() { const path=document.getElementById('upload-target-sel').value; const urls=document.getElementById('links-in').value.split('\n').filter(u=>u.trim()); if(!path||!urls.length) return alert('يرجى تحديد وجهة وروابط'); Promise.all(urls.map(u=>db.ref(DB_PATH+'/'+path+'/imgs').push({url:u.trim()}))).then(()=>{ alert('تم نشر الصور'); document.getElementById('links-in').value=''; }); }
@@ -3566,14 +3456,7 @@ function fillAdminFields() {
         document.getElementById('enable-keyboard-protection').checked = protectionSettings.keyboardShortcuts !== false;
         document.getElementById('enable-image-protection').checked = protectionSettings.imageProtection !== false;
         document.getElementById('enable-selection-protection').checked = protectionSettings.textSelection !== false;
-        document.getElementById('enable-drawing-exemption').checked = protectionSettings.drawingExemption !== false;
-        isDrawingExempted = protectionSettings.drawingExemption !== false;
     }
-    document.getElementById('drawing-title-input').value = d.drawing_title || 'المساحة الحرة';
-    document.getElementById('drawing-description-input').value = d.drawing_description || 'ارسم فكرتك وسنحولها إلى واقع';
-    document.getElementById('drawing-button-text').value = d.drawing_button_text || 'المساحة الحرة';
-    document.getElementById('drawing-whatsapp-message').value = d.drawing_whatsapp_message || 'السلام عليكم، رسم تصميمي:';
-    document.getElementById('enable-drawing-section').checked = d.drawing_active !== false;
     if (d.theme) {
         document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
         const tBtn = document.querySelector(`.theme-btn.${d.theme}-theme`);
