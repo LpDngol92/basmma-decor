@@ -64,14 +64,11 @@
     -webkit-tap-highlight-color: transparent;
     margin: 0;
     padding: 0;
-    user-select: none;
-    -webkit-user-select: none;
 }
 
 img {
     -webkit-user-drag: none;
     user-drag: none;
-    pointer-events: none;
     -webkit-touch-callout: none;
 }
 
@@ -510,7 +507,6 @@ nav {
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     cursor: grab;
-    user-select: none;
     scrollbar-width: none;
 }
 
@@ -1350,7 +1346,7 @@ nav::-webkit-scrollbar {
 
 #viewer-img {
     max-width: 100%;
-    max-height: 90vh;
+    max-height: 100vh;
     object-fit: contain;
     transition: transform 0.1s ease;
     transform-origin: center center;
@@ -1358,7 +1354,6 @@ nav::-webkit-scrollbar {
     cursor: grab;
     touch-action: none;
     pointer-events: auto !important;
-    border-radius: 8px;
 }
 
 #viewer-img:active {
@@ -1375,7 +1370,7 @@ nav::-webkit-scrollbar {
     justify-content: center;
     gap: 25px;
     z-index: 1000002;
-    padding: 10px;
+    padding: 15px;
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
@@ -1387,24 +1382,23 @@ nav::-webkit-scrollbar {
 
 .viewer-counter {
     background: rgba(0, 0, 0, 0.5);
-    padding: 8px 20px;
+    padding: 8px 25px;
     border-radius: 30px;
     color: white;
     font-size: 1rem;
     font-weight: 600;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    letter-spacing: 0.5px;
-    min-width: 80px;
+    min-width: 90px;
     text-align: center;
 }
 
 .viewer-nav-btn {
-    width: 52px;
-    height: 52px;
+    width: 55px;
+    height: 55px;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50%;
     color: white;
     display: flex;
@@ -1412,25 +1406,29 @@ nav::-webkit-scrollbar {
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
 }
 
 .viewer-nav-btn:hover {
     background: var(--gold);
     border-color: var(--gold);
-    transform: scale(1.05);
+    transform: scale(1.1);
+}
+
+.viewer-nav-btn:active {
+    transform: scale(0.95);
 }
 
 .viewer-close {
     position: fixed;
     top: 30px;
     right: 30px;
-    width: 52px;
-    height: 52px;
+    width: 55px;
+    height: 55px;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: white;
     border-radius: 50%;
     cursor: pointer;
@@ -1438,14 +1436,18 @@ nav::-webkit-scrollbar {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     transition: all 0.3s ease;
 }
 
 .viewer-close:hover {
     background: var(--red);
     border-color: var(--red);
-    transform: rotate(90deg);
+    transform: rotate(90deg) scale(1.1);
+}
+
+.viewer-close:active {
+    transform: rotate(90deg) scale(0.95);
 }
 
 .viewer-watermark {
@@ -1980,19 +1982,27 @@ footer {
     .viewer-controls {
         gap: 15px;
         bottom: 20px;
+        padding: 10px;
     }
 
     .viewer-nav-btn {
-        width: 44px;
-        height: 44px;
-        font-size: 1rem;
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
     }
 
     .viewer-close {
         top: 20px;
         right: 20px;
-        width: 44px;
-        height: 44px;
+        width: 45px;
+        height: 45px;
+        font-size: 1.2rem;
+    }
+
+    .viewer-counter {
+        padding: 6px 15px;
+        font-size: 0.9rem;
+        min-width: 70px;
     }
 }
 
@@ -2394,11 +2404,10 @@ let currentImageIndex = 0;
 
 // Protection
 let isProtectionEnabled = true;
-let isDrawingExempted = true;
 const protectionSettings = {
     rightClick: true, keyboardShortcuts: true,
     imageProtection: true, textSelection: true,
-    drawingExemption: true, devToolsDetection: false
+    devToolsDetection: false
 };
 
 // Image Zoom
@@ -2466,20 +2475,17 @@ function closeFavBubble() {
 }
 
 // ======================== FAVORITES FUNCTIONS ========================
-function toggleFavorite(imgId, imgUrl, imgTitle = '') {
+function toggleFavorite(imgId, imgUrl) {
     const index = favorites.findIndex(f => f.id === imgId);
     
     if (index === -1) {
-        // Add to favorites
         favorites.push({
             id: imgId,
             url: imgUrl,
-            title: imgTitle,
             date: new Date().toISOString()
         });
         showFavBubble('تمت الإضافة إلى المفضلة ❤️', true);
     } else {
-        // Remove from favorites
         favorites.splice(index, 1);
         showFavBubble('تمت الإزالة من المفضلة', false);
     }
@@ -2525,13 +2531,12 @@ function renderFavoritesPage() {
     }
     
     const wm = currentData.wm_text || '';
-    
-    // Sort by date (newest first)
     const sortedFavs = [...favorites].reverse();
+    const imageUrls = sortedFavs.map(f => f.url);
     
     grid.innerHTML = sortedFavs.map((fav, index) => `
         <div class="card">
-            <div class="img-container" onclick="openImg('${fav.url}', ${JSON.stringify(sortedFavs.map(f => f.url))}, ${index})">
+            <div class="img-container" onclick='openImg("${fav.url}", ${JSON.stringify(imageUrls)}, ${index})'>
                 <img src="${fav.url}" loading="lazy"
                      onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\'height:165px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);\\'><i class=\\'fas fa-image fa-2x\\'></i></div>';">
                 <div class="img-overlay"><i class="fas fa-expand-alt"></i></div>
@@ -2563,9 +2568,9 @@ function openImg(url, imageList, index) {
     const viewer = document.getElementById('viewer');
     const img = document.getElementById('viewer-img');
     
-    if (imageList && Array.isArray(imageList)) {
+    if (imageList && Array.isArray(imageList) && imageList.length > 0) {
         currentImageList = imageList;
-        currentImageIndex = index || 0;
+        currentImageIndex = index !== undefined ? index : 0;
     } else {
         currentImageList = [url];
         currentImageIndex = 0;
@@ -2609,8 +2614,10 @@ function handleViewerKeydown(e) {
         closeViewer();
     } else if (e.key === 'ArrowLeft') {
         navigateImage('next');
+        e.preventDefault();
     } else if (e.key === 'ArrowRight') {
         navigateImage('prev');
+        e.preventDefault();
     }
 }
 
@@ -2846,7 +2853,7 @@ function applyTheme(name) {
 function loadProtectionSettings() {
     db.ref(DB_PATH + '/protection_settings').once('value').then(snap => {
         const s = snap.val();
-        if (s) { Object.assign(protectionSettings, s); isDrawingExempted = protectionSettings.drawingExemption !== false; }
+        if (s) { Object.assign(protectionSettings, s); }
         enableAdvancedProtection();
     });
 }
@@ -2911,7 +2918,6 @@ function saveProtectionSettings() {
     protectionSettings.keyboardShortcuts = document.getElementById('enable-keyboard-protection').checked;
     protectionSettings.imageProtection = document.getElementById('enable-image-protection').checked;
     protectionSettings.textSelection = document.getElementById('enable-selection-protection').checked;
-    isDrawingExempted = protectionSettings.drawingExemption;
     db.ref(DB_PATH).update({ protection_settings: protectionSettings }).then(() => {
         alert('✅ تم حفظ إعدادات الحماية');
         if (isProtectionEnabled) { disableAdvancedProtection(); enableAdvancedProtection(); }
@@ -3176,7 +3182,7 @@ function renderAll() {
                 <div class="section-title">${d.pages[id].title}</div>
                 <div class="section-title-line"></div>
             </div>
-            <div class="grid">${drawImgs(d.pages[id].imgs)}</div>
+            <div class="grid">${drawImgs(d.pages[id].imgs, id)}</div>
         </section>`
     );
 
@@ -3197,7 +3203,7 @@ function renderAll() {
                 <div class="section-title">${d.albums[id].name}</div>
                 <div class="section-title-line"></div>
             </div>
-            <div class="grid">${drawImgs(d.albums[id].imgs)}</div>
+            <div class="grid">${drawImgs(d.albums[id].imgs, 'album_'+id)}</div>
         </section>`
     );
 
@@ -3208,7 +3214,7 @@ function renderAll() {
     updateFavoriteButtons();
 }
 
-function drawImgs(imgs) {
+function drawImgs(imgs, parentId) {
     if (!imgs) return `<p style="text-align:center; padding:50px; color:var(--text-muted); grid-column:1/-1;">قريباً...</p>`;
     const wm = currentData.wm_text || '';
     
@@ -3217,14 +3223,14 @@ function drawImgs(imgs) {
     return Object.keys(imgs).reverse().map((id, index) => {
         const actualIndex = imageUrls.length - 1 - index;
         const imgUrl = imgs[id].url;
-        const imgId = id;
+        const imgId = parentId ? parentId + '_' + id : id;
         
         const isFav = isFavorite(imgId) ? 'active' : '';
         const favIcon = isFav ? 'fas fa-heart' : 'far fa-heart';
         
         return `
         <div class="card">
-            <div class="img-container" onclick="openImg('${imgUrl}', ${JSON.stringify(imageUrls)}, ${actualIndex})">
+            <div class="img-container" onclick='openImg("${imgUrl}", ${JSON.stringify(imageUrls)}, ${actualIndex})'>
                 <img src="${imgUrl}" loading="lazy"
                      onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\\'height:165px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);\\'><i class=\\'fas fa-image fa-2x\\'></i></div>';">
                 <div class="img-overlay"><i class="fas fa-expand-alt"></i></div>
