@@ -144,6 +144,15 @@
     opacity: 0.95;
 }
 
+.return-text {
+    font-size: 1.2rem;
+    margin: 10px 0 5px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    letter-spacing: 1px;
+}
+
 .eid-countdown {
     display: flex;
     justify-content: center;
@@ -2430,7 +2439,7 @@ footer {
 
 <div class="eid-gift-content" id="eidGiftContent">
     <div class="eid-gift-title">🎁 هدية العيد</div>
-    <div class="eid-gift-text">كل عام وأنتم بخير بمناسبة عيد الفطر المبارك<br>خصم خاص 20% على جميع التصاميم والديكورات</div>
+    <div class="eid-gift-text" id="eidGiftText">خصم خاص 20% على جميع التصاميم والديكورات</div>
     <button class="eid-gift-close" onclick="toggleEidGift()">استلام الهدية</button>
 </div>
 
@@ -2486,7 +2495,8 @@ footer {
 <!-- Eid Banner -->
 <div class="eid-mubarak-banner">
     <div class="eid-title">✨ عيد فطر مبارك ✨</div>
-    <div class="eid-subtitle">كل عام وأنتم بخير بمناسبة عيد الفطر المبارك</div>
+    <div class="eid-subtitle" id="eidMessage">كل عام وأنتم بخير بمناسبة عيد الفطر المبارك</div>
+    <div class="return-text">سنعود بعد</div>
     <div class="eid-countdown" id="eidCountdown">
         <div class="countdown-item">
             <span class="countdown-number" id="days">00</span>
@@ -2814,7 +2824,8 @@ footer {
                 <label><input type="checkbox" id="in-eid-gift" checked> تفعيل هدية العيد</label>
                 <input type="text" id="in-eid-gift-text" placeholder="نص هدية العيد" value="خصم خاص 20% على جميع التصاميم والديكورات">
                 <input type="text" id="in-eid-message" placeholder="رسالة التهنئة" value="كل عام وأنتم بخير بمناسبة عيد الفطر المبارك">
-                <input type="date" id="in-eid-date" value="2025-03-30">
+                <label>تاريخ العودة:</label>
+                <input type="datetime-local" id="in-eid-return-date" value="">
                 <button onclick="saveEidSettings()" class="admin-btn admin-btn-gold">حفظ إعدادات العيد</button>
             </div>
         </div>
@@ -2853,6 +2864,7 @@ let currentTheme = 'black';
 // Eid mode
 let eidMode = false;
 let eidInterval;
+let returnDate = null;
 
 // Favorites
 let favorites = JSON.parse(localStorage.getItem('site_favorites')) || [];
@@ -2901,7 +2913,12 @@ function initEidMode() {
             document.querySelector('.eid-gift-box').style.display = 'none';
         }
         
-        startEidCountdown();
+        // Set return date from input
+        const returnDateInput = document.getElementById('in-eid-return-date');
+        if (returnDateInput && returnDateInput.value) {
+            returnDate = new Date(returnDateInput.value).getTime();
+            startEidCountdown();
+        }
     } else {
         document.documentElement.classList.remove('eid-theme');
         document.querySelector('.eid-mubarak-banner').style.display = 'none';
@@ -2916,14 +2933,15 @@ function initEidMode() {
 }
 
 function startEidCountdown() {
-    const eidDate = document.getElementById('in-eid-date').value;
-    if (!eidDate) return;
+    if (!returnDate) return;
     
-    const targetDate = new Date(eidDate).getTime();
+    if (eidInterval) {
+        clearInterval(eidInterval);
+    }
     
     eidInterval = setInterval(() => {
         const now = new Date().getTime();
-        const distance = targetDate - now;
+        const distance = returnDate - now;
         
         if (distance < 0) {
             document.getElementById('days').textContent = '00';
@@ -2982,7 +3000,7 @@ function toggleEidGift() {
     
     if (gift.classList.contains('active')) {
         const giftText = document.getElementById('in-eid-gift-text').value;
-        document.querySelector('.eid-gift-text').textContent = giftText;
+        document.getElementById('eidGiftText').textContent = giftText;
     }
 }
 
@@ -2994,7 +3012,7 @@ function toggleEidMode(enabled) {
         document.querySelector('.eid-lanterns').style.display = 'flex';
         
         const message = document.getElementById('in-eid-message').value;
-        document.querySelector('.eid-subtitle').textContent = message;
+        document.getElementById('eidMessage').textContent = message;
         
         const confettiCheck = document.getElementById('in-eid-confetti');
         if (confettiCheck && confettiCheck.checked) {
@@ -3008,7 +3026,12 @@ function toggleEidMode(enabled) {
             document.querySelector('.eid-gift-box').style.display = 'none';
         }
         
-        startEidCountdown();
+        // Set return date from input
+        const returnDateInput = document.getElementById('in-eid-return-date');
+        if (returnDateInput && returnDateInput.value) {
+            returnDate = new Date(returnDateInput.value).getTime();
+            startEidCountdown();
+        }
     } else {
         document.documentElement.classList.remove('eid-theme');
         document.querySelector('.eid-mubarak-banner').style.display = 'none';
@@ -3029,7 +3052,7 @@ function saveEidSettings() {
         eid_gift: document.getElementById('in-eid-gift').checked,
         eid_gift_text: document.getElementById('in-eid-gift-text').value,
         eid_message: document.getElementById('in-eid-message').value,
-        eid_date: document.getElementById('in-eid-date').value
+        eid_return_date: document.getElementById('in-eid-return-date').value
     }).then(() => {
         alert('✅ تم حفظ إعدادات العيد');
         toggleEidMode(document.getElementById('in-eid-mode').checked);
@@ -3918,7 +3941,7 @@ db.ref(DB_PATH).on('value', snap => {
         document.getElementById('in-eid-gift').checked = currentData.eid_gift !== false;
         document.getElementById('in-eid-gift-text').value = currentData.eid_gift_text || 'خصم خاص 20% على جميع التصاميم والديكورات';
         document.getElementById('in-eid-message').value = currentData.eid_message || 'كل عام وأنتم بخير بمناسبة عيد الفطر المبارك';
-        document.getElementById('in-eid-date').value = currentData.eid_date || '2025-03-30';
+        document.getElementById('in-eid-return-date').value = currentData.eid_return_date || '';
         toggleEidMode(true);
     }
     
@@ -4093,7 +4116,7 @@ function fillAdminFields() {
     document.getElementById('in-eid-gift').checked = d.eid_gift !== false;
     document.getElementById('in-eid-gift-text').value = d.eid_gift_text || 'خصم خاص 20% على جميع التصاميم والديكورات';
     document.getElementById('in-eid-message').value = d.eid_message || 'كل عام وأنتم بخير بمناسبة عيد الفطر المبارك';
-    document.getElementById('in-eid-date').value = d.eid_date || '2025-03-30';
+    document.getElementById('in-eid-return-date').value = d.eid_return_date || '';
     
     if (d.protection_settings) {
         Object.assign(protectionSettings, d.protection_settings);
