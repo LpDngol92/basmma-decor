@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
+        /* --- جميع الأنماط السابقة محفوظة كما هي --- */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Cairo', sans-serif; background: #fafafc; color: #1c1c1e; overflow-x: hidden; }
         :root {
@@ -165,18 +166,45 @@
 <div id="toastMsg" class="toast-msg"></div>
 
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", authDomain: "mydecor-b29bd.firebaseapp.com", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd", storageBucket: "mydecor-b29bd.firebasestorage.app", messagingSenderId: "302609299720", appId: "1:302609299720:web:e086b600c3ee824acd54bd" };
+    // Firebase Config
+    const firebaseConfig = {
+        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+        authDomain: "mydecor-b29bd.firebaseapp.com",
+        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mydecor-b29bd",
+        storageBucket: "mydecor-b29bd.firebasestorage.app",
+        messagingSenderId: "302609299720",
+        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
+    };
     firebase.initializeApp(firebaseConfig);
-    const db = firebase.database(), DB_PATH = 'site_v28';
-    let currentData = {}, isAdmin = false, favorites = JSON.parse(localStorage.getItem('site_favorites_v6')) || [], currentPage = 'home';
-    let currentImageList = [], currentImageIndex = 0, currentImageId = '';
+    const db = firebase.database();
+    const DB_PATH = 'site_v28';
+
+    let currentData = {};
+    let isAdmin = false;
+    let favorites = JSON.parse(localStorage.getItem('site_favorites_v6')) || [];
+    let currentPage = 'home';
+    let currentImageList = [];
+    let currentImageIndex = 0;
+    let currentImageId = '';
     let zoomScale = 1, translate = { x: 0, y: 0 }, isZoomed = false, isDragging = false;
     let startX, startY, startTX, startTY;
     let tabScrollInterval = null;
     let popupTimeout = null;
 
-    function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
-    window.addEventListener('load', () => { setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); }, 1000); });
+    function showToast(msg) {
+        const t = document.getElementById('toastMsg');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2000);
+    }
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('splash').style.opacity = '0';
+            setTimeout(() => document.getElementById('splash').style.display = 'none', 500);
+        }, 1000);
+    });
 
     // Popup Functions
     function showPopup() {
@@ -188,28 +216,47 @@
         if (popupTimeout) clearTimeout(popupTimeout);
         popupTimeout = setTimeout(() => { closePopup(); }, (currentData.popup_duration || 8) * 1000);
     }
-    function closePopup() { document.getElementById('popupBubble').style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); }
+    function closePopup() {
+        document.getElementById('popupBubble').style.display = 'none';
+        if (popupTimeout) clearTimeout(popupTimeout);
+    }
 
     // Favorites
     function saveFav() { localStorage.setItem('site_favorites_v6', JSON.stringify(favorites)); }
     function toggleFavorite(imgId, imgUrl) {
         const exists = favorites.find(f => f.id === imgId);
-        if (exists) { favorites = favorites.filter(f => f.id !== imgId); showToast('🗑️ تمت الإزالة من المفضلة'); }
-        else { favorites.unshift({ id: imgId, url: imgUrl, date: Date.now() }); showToast('❤️ أضيف إلى المفضلة'); }
-        saveFav(); renderCurrentPage(); updateViewerFavButton();
+        if (exists) {
+            favorites = favorites.filter(f => f.id !== imgId);
+            showToast('🗑️ تمت الإزالة من المفضلة');
+        } else {
+            favorites.unshift({ id: imgId, url: imgUrl, date: Date.now() });
+            showToast('❤️ أضيف إلى المفضلة');
+        }
+        saveFav();
+        renderCurrentPage();
+        updateViewerFavButton();
     }
     function isFav(imgId) { return favorites.some(f => f.id === imgId); }
     function updateViewerFavButton() {
         const btn = document.getElementById('viewerFavBtn');
         if (btn && currentImageId) {
-            if (isFav(currentImageId)) { btn.classList.add('active'); btn.innerHTML = '<i class="fas fa-heart"></i>'; btn.style.background = 'white'; btn.style.color = 'var(--danger)'; }
-            else { btn.classList.remove('active'); btn.innerHTML = '<i class="far fa-heart"></i>'; btn.style.background = 'rgba(0,0,0,0.6)'; btn.style.color = 'white'; }
+            if (isFav(currentImageId)) {
+                btn.classList.add('active');
+                btn.innerHTML = '<i class="fas fa-heart"></i>';
+                btn.style.background = 'white';
+                btn.style.color = 'var(--danger)';
+            } else {
+                btn.classList.remove('active');
+                btn.innerHTML = '<i class="far fa-heart"></i>';
+                btn.style.background = 'rgba(0,0,0,0.6)';
+                btn.style.color = 'white';
+            }
         }
     }
     function viewerToggleFavorite() { if (currentImageId && currentImageList[currentImageIndex]) toggleFavorite(currentImageId, currentImageList[currentImageIndex]); }
     function viewerWhatsapp() { if (currentImageList[currentImageIndex]) window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+currentImageList[currentImageIndex])}`, '_blank'); }
 
-    // ========== VIEWER FUNCTIONS (Zoom and Navigation) ==========
+    // Viewer Functions with Zoom (Works on both desktop and mobile)
     function openViewer(url, imageList, index, imgId) {
         currentImageList = imageList;
         currentImageIndex = index;
@@ -258,6 +305,7 @@
         const img = document.getElementById('viewerImg');
         if (!img) return;
         
+        // Remove old listeners
         img.removeEventListener('wheel', handleWheel);
         img.removeEventListener('mousedown', handleMouseDown);
         img.removeEventListener('dblclick', handleDoubleClick);
@@ -300,6 +348,7 @@
             else { zoomScale = 2; img.style.transform = `scale(2) translate(0px, 0px)`; isZoomed = true; }
         }
         
+        // Touch events
         let touchStartX, touchStartY, touchStartTX, touchStartTY;
         function handleTouchStart(e) {
             if (!isZoomed) return;
@@ -325,6 +374,7 @@
         
         function handleTouchEnd() { isDragging = false; }
         
+        // Pinch zoom
         let initialDistance = 0;
         img.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
@@ -399,7 +449,7 @@
         c.innerHTML = open ? `<div class="status-badge status-open"><i class="fas fa-circle"></i> مفتوح الآن</div>` : `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق الآن</div>`;
     }
 
-    // Tabs Auto-Scroll
+    // Tabs Auto-Scroll (stops when not on home)
     function startTabAutoScroll() {
         if (tabScrollInterval) clearInterval(tabScrollInterval);
         if (currentPage !== 'home') return;
@@ -415,15 +465,12 @@
         }, 3000);
     }
 
-    // Helper to safely escape strings for JSON in HTML attributes
-    function escapeForJson(str) {
-        return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
-    }
-
-    // ========== RENDER FUNCTIONS - ALL SECTIONS USE SAME PATTERN ==========
+    // ========== CRITICAL: Render Functions with Correct Image Viewer ==========
+    // This function is used for all sections that display images (pages, favorites)
     function renderImageGallery(images, parentId) {
         if (!images || Object.keys(images).length === 0) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
         const imageIds = Object.keys(images);
+        // Build complete list of URLs for this section
         const allUrls = imageIds.map(id => images[id].url);
         let html = '<div class="photo-grid">';
         // Reverse to show newest first
@@ -432,9 +479,10 @@
             const imgUrl = images[imgId].url;
             const fullId = `${parentId}_${imgId}`;
             const favClass = isFav(fullId) ? 'active' : '';
-            // Safely pass the list of all URLs as JSON string
-            const urlsJson = JSON.stringify(allUrls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            html += `<div class="photo-item" onclick="openViewer('${escapeForJson(imgUrl)}', ${urlsJson}, ${actualIndex}, '${fullId}')">
+            // Safely escape for onclick attribute
+            const escapedUrls = JSON.stringify(allUrls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const escapedUrl = imgUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            html += `<div class="photo-item" onclick="openViewer('${escapedUrl}', ${escapedUrls}, ${actualIndex}, '${fullId}')">
                         <img src="${imgUrl}" loading="lazy">
                         <div class="photo-overlay">
                             <div class="action-buttons">
@@ -501,8 +549,9 @@
         const urls = favorites.map(f => f.url);
         let html = '<div class="photo-grid">';
         favorites.forEach((fav, idx) => {
-            const urlsJson = JSON.stringify(urls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            html += `<div class="photo-item" onclick="openViewer('${escapeForJson(fav.url)}', ${urlsJson}, ${idx}, '${fav.id}')">
+            const escapedUrls = JSON.stringify(urls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const escapedUrl = fav.url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            html += `<div class="photo-item" onclick="openViewer('${escapedUrl}', ${escapedUrls}, ${idx}, '${fav.id}')">
                         <img src="${fav.url}" loading="lazy">
                         <div class="photo-overlay">
                             <div class="action-buttons">
@@ -580,7 +629,7 @@
 
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
 
-    // Admin Panel Functions (complete)
+    // Admin Panel Functions (Complete)
     function buildAdminSections() {
         const d = currentData;
         const targetOpts = () => { let o = '<option value="">-- اختر الوجهة --</option>'; if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">ألبوم: ${d.albums[id].name}</option>`); if(d.pages) Object.keys(d.pages).forEach(id=>o+=`<option value="pages/${id}">صفحة: ${d.pages[id].title}</option>`); return o; };
