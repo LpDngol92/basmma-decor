@@ -42,6 +42,59 @@
             --whatsapp: #25D366;
         }
 
+        /* Splash Screen */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            transition: opacity 0.5s ease;
+        }
+        .splash-logo {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent);
+            animation: splashPulse 1.2s infinite alternate;
+        }
+        .splash-line {
+            width: 60px;
+            height: 2px;
+            background: var(--accent);
+            animation: splashGrow 1.2s infinite alternate;
+        }
+        @keyframes splashPulse {
+            0% { opacity: 0.5; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1.02); }
+        }
+        @keyframes splashGrow {
+            0% { width: 40px; opacity: 0.5; }
+            100% { width: 100px; opacity: 1; }
+        }
+
+        /* Maintenance Screen */
+        #maintenance-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 999998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            flex-direction: column;
+        }
+        .maintenance-content {
+            padding: 40px;
+            background: var(--bg-card);
+            border-radius: 24px;
+            max-width: 90%;
+        }
+
         /* Top Navigation Bar */
         .top-nav {
             position: sticky;
@@ -68,13 +121,12 @@
             color: var(--text-secondary);
         }
         
-        /* Partners Marquee (smooth scrolling) */
+        /* Partners Marquee */
         .partners-marquee {
             background: var(--bg-secondary);
             padding: 10px 0;
             overflow: hidden;
             border-bottom: 1px solid var(--border);
-            position: relative;
         }
         .marquee-track {
             display: flex;
@@ -89,30 +141,44 @@
             margin: 0 20px;
             object-fit: contain;
             filter: grayscale(0.2);
-            transition: filter 0.3s, transform 0.2s;
+            transition: filter 0.3s;
             cursor: pointer;
-        }
-        .partner-logo:hover {
-            filter: grayscale(0);
-            transform: scale(1.05);
         }
         @keyframes marqueeScroll {
             0% { transform: translateX(0); }
             100% { transform: translateX(-50%); }
         }
         
-        /* Tabs Section */
-        .tabs-section {
+        /* Tabs Section with Scroll Indicator */
+        .tabs-wrapper {
+            position: relative;
+            border-bottom: 1px solid var(--border);
             background: var(--bg-primary);
-            padding: 8px 16px;
+        }
+        .tabs-section {
             display: flex;
             gap: 8px;
             overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 8px 16px;
             scrollbar-width: none;
-            border-bottom: 1px solid var(--border);
         }
         .tabs-section::-webkit-scrollbar {
             display: none;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            animation: slideGlow 1.5s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes slideGlow {
+            0%, 100% { opacity: 0.5; transform: translateX(0); }
+            50% { opacity: 1; transform: translateX(20px); }
         }
         .tab-btn {
             padding: 10px 20px;
@@ -130,10 +196,6 @@
         .tab-btn.active {
             background: var(--accent);
             color: white;
-        }
-        .tab-btn:hover:not(.active) {
-            background: var(--bg-secondary);
-            color: var(--accent-dark);
         }
 
         /* Main Content */
@@ -154,20 +216,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Home Page Components */
-        .hero-card {
-            background: linear-gradient(135deg, var(--accent-light), #fff);
-            border-radius: 28px;
-            padding: 32px 24px;
-            text-align: center;
-            margin-bottom: 24px;
-            border: 1px solid var(--border);
-        }
-        .hero-card h2 {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: var(--accent-dark);
-        }
+        /* Info Cards */
         .info-card {
             background: var(--bg-card);
             border-radius: 20px;
@@ -175,10 +224,6 @@
             margin-bottom: 20px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow-sm);
-            transition: all 0.2s;
-        }
-        .info-card:hover {
-            box-shadow: var(--shadow-md);
         }
         .card-title {
             font-size: 1.2rem;
@@ -191,32 +236,6 @@
             border-right: 3px solid var(--accent);
             padding-right: 12px;
         }
-        .toggle-btn {
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px;
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .toggle-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease;
-            background: var(--bg-card);
-            border-radius: 0 0 16px 16px;
-        }
-        .toggle-content.open {
-            max-height: 1000px;
-            padding: 20px;
-            border: 1px solid var(--border);
-            border-top: none;
-        }
         .star-rating {
             display: flex;
             gap: 8px;
@@ -228,10 +247,8 @@
             font-size: 1.8rem;
             color: #ddd;
             cursor: pointer;
-            transition: color 0.2s;
         }
-        .star-rating i.active,
-        .star-rating i:hover {
+        .star-rating i.active {
             color: var(--accent);
         }
         .review-slider {
@@ -249,33 +266,19 @@
             opacity: 1;
             position: relative;
         }
-        .review-stars {
-            color: var(--accent);
-            margin-bottom: 10px;
-        }
-        /* Schedule Grouped Style (original) */
+        /* Schedule Grouped Style */
         .schedule-group {
             padding: 12px 0;
             border-bottom: 1px solid var(--border);
         }
-        .schedule-group:last-child {
-            border-bottom: none;
-        }
         .schedule-days {
             font-weight: 700;
             color: var(--accent-dark);
-            margin-bottom: 8px;
         }
         .time-period {
             display: flex;
-            align-items: center;
             gap: 8px;
-            margin-bottom: 5px;
-            flex-wrap: wrap;
-        }
-        .period-label {
-            color: var(--text-secondary);
-            font-size: 0.85rem;
+            margin-top: 5px;
         }
         .time-text {
             background: var(--bg-secondary);
@@ -298,29 +301,17 @@
             border-radius: 40px;
             font-weight: 600;
         }
-        .status-open {
-            background: #e8f5e9;
-            color: var(--success);
-        }
-        .status-closed {
-            background: #ffebee;
-            color: var(--danger);
-        }
+        .status-open { background: #e8f5e9; color: var(--success); }
+        .status-closed { background: #ffebee; color: var(--danger); }
         .whatsapp-btn {
             background: var(--whatsapp);
             color: white;
             border: none;
-            padding: 14px 24px;
+            padding: 14px;
             border-radius: 40px;
             font-weight: 700;
-            cursor: pointer;
             width: 100%;
-            font-size: 1rem;
-            transition: all 0.2s;
-        }
-        .whatsapp-btn:hover {
-            transform: scale(1.02);
-            background: #20b359;
+            cursor: pointer;
         }
         .social-links {
             display: flex;
@@ -338,14 +329,12 @@
             justify-content: center;
             color: var(--text-secondary);
             font-size: 1.3rem;
-            transition: all 0.2s;
-            cursor: pointer;
             text-decoration: none;
+            transition: all 0.2s;
         }
         .social-link:hover {
             background: var(--accent);
             color: white;
-            transform: translateY(-3px);
         }
         .location-btn {
             background: var(--accent);
@@ -354,11 +343,10 @@
             padding: 12px;
             border-radius: 12px;
             width: 100%;
-            font-weight: 600;
             cursor: pointer;
         }
 
-        /* Photo Grid (Instagram Style - preserved) */
+        /* Photo Grid */
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -380,19 +368,6 @@
         .photo-item:hover img {
             transform: scale(1.05);
         }
-        .photo-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .photo-item:hover .photo-overlay {
-            opacity: 1;
-        }
         .fav-btn {
             position: absolute;
             top: 8px;
@@ -404,12 +379,9 @@
             height: 32px;
             cursor: pointer;
             z-index: 2;
-            color: var(--text-secondary);
-            transition: all 0.2s;
         }
-        .fav-btn.active {
-            color: var(--danger);
-        }
+        .fav-btn.active { color: var(--danger); }
+        
         .album-card, .folder-card {
             background: var(--bg-card);
             border-radius: 16px;
@@ -421,14 +393,12 @@
         }
         .album-card:hover, .folder-card:hover {
             transform: translateY(-3px);
-            box-shadow: var(--shadow-md);
             border-color: var(--accent);
         }
         .empty-state {
             text-align: center;
             padding: 60px 20px;
             color: var(--text-secondary);
-            grid-column: 1/-1;
         }
 
         /* Viewer Modal with Zoom */
@@ -441,7 +411,6 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            touch-action: none;
         }
         .viewer-container {
             width: 100%;
@@ -450,7 +419,6 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
-            position: relative;
         }
         .viewer-img {
             max-width: 90%;
@@ -459,9 +427,7 @@
             transition: transform 0.1s ease;
             cursor: grab;
         }
-        .viewer-img:active {
-            cursor: grabbing;
-        }
+        .viewer-img:active { cursor: grabbing; }
         .viewer-controls {
             position: fixed;
             bottom: 30px;
@@ -470,7 +436,6 @@
             background: rgba(0,0,0,0.5);
             padding: 12px 24px;
             border-radius: 50px;
-            backdrop-filter: blur(10px);
         }
         .viewer-controls button {
             background: none;
@@ -493,27 +458,25 @@
             cursor: pointer;
         }
 
-        /* Hidden Admin Button (Left Side) */
+        /* Hidden Admin Button (Left Side - No Crown) */
         .hidden-admin {
             position: fixed;
             bottom: 20px;
             left: 20px;
-            width: 48px;
-            height: 48px;
-            background: rgba(0,0,0,0.1);
+            width: 40px;
+            height: 40px;
+            background: transparent;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             z-index: 2000;
-            opacity: 0.3;
-            transition: opacity 0.2s;
+            opacity: 0;
         }
         .hidden-admin:hover {
-            opacity: 1;
-            background: var(--accent);
-            color: white;
+            opacity: 0.3;
+            background: rgba(0,0,0,0.1);
         }
 
         /* Admin Panel */
@@ -526,13 +489,8 @@
             display: none;
             padding: 20px;
         }
-        .admin-panel.active {
-            display: block;
-        }
-        .admin-card {
-            max-width: 700px;
-            margin: 0 auto;
-        }
+        .admin-panel.active { display: block; }
+        .admin-card { max-width: 700px; margin: 0 auto; }
         .collapse-section {
             background: var(--bg-secondary);
             border-radius: 16px;
@@ -549,13 +507,8 @@
             display: flex;
             justify-content: space-between;
             cursor: pointer;
-            font-size: 1rem;
         }
-        .collapse-content {
-            display: none;
-            padding: 16px;
-            border-top: 1px solid var(--border);
-        }
+        .collapse-content { display: none; padding: 16px; border-top: 1px solid var(--border); }
         input, textarea, select {
             width: 100%;
             padding: 12px;
@@ -585,11 +538,6 @@
             border-radius: 12px;
             margin-bottom: 8px;
         }
-        .partner-item img {
-            width: 50px;
-            height: 50px;
-            object-fit: contain;
-        }
         .toast-msg {
             position: fixed;
             bottom: 100px;
@@ -603,25 +551,27 @@
             z-index: 10002;
             display: none;
         }
-        .back-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: none;
-            border: none;
-            color: var(--accent-dark);
-            margin-bottom: 16px;
-            cursor: pointer;
-            font-weight: 600;
-        }
     </style>
 </head>
 <body>
 
-<!-- Hidden Admin Trigger (Left Side) -->
-<div class="hidden-admin" onclick="checkAccess()">
-    <i class="fas fa-crown"></i>
+<!-- Splash Screen -->
+<div id="splash">
+    <div class="splash-logo">بصمة غير</div>
+    <div class="splash-line"></div>
 </div>
+
+<!-- Maintenance Screen -->
+<div id="maintenance-screen">
+    <div class="maintenance-content">
+        <i class="fas fa-tools" style="font-size: 4rem; color: var(--accent);"></i>
+        <h2 id="maintenance-title">الموقع في صيانة</h2>
+        <p id="maintenance-message">نعمل على تحسين تجربتك، سنعود قريباً</p>
+    </div>
+</div>
+
+<!-- Hidden Admin Button (Left Side - Invisible) -->
+<div class="hidden-admin" onclick="checkAccess()"></div>
 
 <!-- Top Navigation -->
 <div class="top-nav">
@@ -629,14 +579,13 @@
         <h1 id="siteTitle">بصمة غير</h1>
         <p>للديكور والتصميم الداخلي</p>
     </div>
-    
-    <!-- Partners Marquee (smooth moving logos) -->
     <div class="partners-marquee" id="partnersMarquee" style="display: none;">
         <div class="marquee-track" id="marqueeTrack"></div>
     </div>
-    
-    <!-- Tabs Section -->
-    <div class="tabs-section" id="tabsSection"></div>
+    <div class="tabs-wrapper">
+        <div class="tabs-section" id="tabsSection"></div>
+        <div class="scroll-indicator"></div>
+    </div>
 </div>
 
 <!-- Main Content -->
@@ -655,7 +604,7 @@
     </div>
 </div>
 
-<!-- Admin Panel (Complete) -->
+<!-- Admin Panel -->
 <div id="adminPanel" class="admin-panel">
     <div class="admin-card">
         <h2 style="margin-bottom: 20px;">⚡ لوحة الإدارة</h2>
@@ -667,7 +616,6 @@
 <div id="toastMsg" class="toast-msg"></div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
         authDomain: "mydecor-b29bd.firebaseapp.com",
@@ -689,13 +637,7 @@
     let currentImageIndex = 0;
     let reviewInterval = null;
     let reviewIdx = 0;
-    
-    // Zoom variables
-    let zoomScale = 1;
-    let isZoomed = false;
-    let dragStart = { x: 0, y: 0 };
-    let translate = { x: 0, y: 0 };
-    let isDragging = false;
+    let zoomScale = 1, isZoomed = false, translate = { x: 0, y: 0 }, isDragging = false;
 
     function showToast(msg) {
         const toast = document.getElementById('toastMsg');
@@ -704,7 +646,14 @@
         setTimeout(() => toast.style.display = 'none', 2000);
     }
 
-    // Favorites
+    // Hide splash after load
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            document.getElementById('splash').style.opacity = '0';
+            setTimeout(() => document.getElementById('splash').style.display = 'none', 500);
+        }, 1000);
+    });
+
     function saveFav() { localStorage.setItem('site_favorites_v3', JSON.stringify(favorites)); }
     function toggleFavorite(imgId, imgUrl) {
         const exists = favorites.find(f => f.id === imgId);
@@ -720,253 +669,92 @@
     }
     function isFav(imgId) { return favorites.some(f => f.id === imgId); }
 
-    // Schedule Helper (Grouped like original)
+    function formatTime12(t) { if(!t) return ""; let [h,m]=t.split(':'); h=parseInt(h); return `${h%12||12}:${m} ${h>=12?'م':'ص'}`; }
+    
     function getGroupedScheduleHtml(d) {
         if (!d.work_schedule) return '<p>لم تحدد المواعيد بعد</p>';
         const dayNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
         const daysOrder = [6,0,1,2,3,4,5];
         let groups = [], offDays = [];
-        
         daysOrder.forEach(jsDay => {
             const s = d.work_schedule[jsDay];
             if (s && s.active) {
-                const key = `${s.s1_s||''}-${s.s1_e||''}-${s.s2_a||false}-${s.s2_s||''}-${s.s2_e||''}`;
+                const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}-${s.s2_s}-${s.s2_e}`;
                 let g = groups.find(g => g.key === key);
                 if (g) g.days.push(dayNames[jsDay]);
                 else groups.push({ key, days: [dayNames[jsDay]], data: s });
             } else offDays.push(dayNames[jsDay]);
         });
-        
         let html = '';
         groups.forEach(g => {
-            const dText = g.days.length === 1 ? g.days[0] :
-                          g.days.length === 2 ? `${g.days[0]} و ${g.days[1]}` :
-                          `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
-            html += `<div class="schedule-group">
-                <div class="schedule-days">${dText}</div>
-                <div class="time-period">
-                    <span class="period-label">صباحاً:</span>
-                    <span class="time-text">${formatTime12(g.data.s1_s||'09:00')}</span>
-                    <span>—</span>
-                    <span class="time-text">${formatTime12(g.data.s1_e||'17:00')}</span>
-                </div>`;
-            if (g.data.s2_a && g.data.s2_s && g.data.s2_e) {
-                html += `<div class="time-period">
-                    <span class="period-label">مساءً:</span>
-                    <span class="time-text">${formatTime12(g.data.s2_s)}</span>
-                    <span>—</span>
-                    <span class="time-text">${formatTime12(g.data.s2_e)}</span>
-                </div>`;
-            }
+            const dText = g.days.length === 1 ? g.days[0] : `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
+            html += `<div class="schedule-group"><div class="schedule-days">${dText}</div>
+                <div class="time-period"><span class="time-text">${formatTime12(g.data.s1_s||'09:00')}</span> — <span class="time-text">${formatTime12(g.data.s1_e||'17:00')}</span></div>`;
+            if (g.data.s2_a) html += `<div class="time-period"><span class="time-text">${formatTime12(g.data.s2_s)}</span> — <span class="time-text">${formatTime12(g.data.s2_e)}</span></div>`;
             html += `</div>`;
         });
-        
-        if (offDays.length) {
-            const offText = offDays.length === 1 ? offDays[0] : offDays.join('، ');
-            html += `<div class="holiday-text"><i class="fas fa-moon"></i> عطلة: ${offText}</div>`;
-        }
+        if (offDays.length) html += `<div class="holiday-text"><i class="fas fa-moon"></i> عطلة: ${offDays.join('، ')}</div>`;
         return html;
     }
     
-    function formatTime12(t) {
-        if (!t) return "";
-        let [h, m] = t.split(':');
-        h = parseInt(h);
-        return `${h%12||12}:${m} ${h>=12?'م':'ص'}`;
-    }
-    
     function updateWorkStatus() {
-        const d = currentData;
         const container = document.getElementById('statusContainer');
-        if (!container || !d.work_schedule) return;
-        const now = new Date();
-        const day = now.getDay();
-        const schedule = d.work_schedule[day];
+        if (!container || !currentData.work_schedule) return;
+        const now = new Date(), day = now.getDay(), s = currentData.work_schedule[day];
         let isOpen = false;
-        if (schedule && schedule.active) {
-            const toMins = (t) => { if(!t) return -1; let [h,m] = t.split(':').map(Number); return h*60+m; };
+        if (s && s.active) {
+            const toMins = (t) => { let [h,m]=t.split(':').map(Number); return h*60+m; };
             const cur = now.getHours()*60+now.getMinutes();
-            const s1 = toMins(schedule.s1_s), e1 = toMins(schedule.s1_e);
+            const s1 = toMins(s.s1_s), e1 = toMins(s.s1_e);
             if (cur >= s1 && cur < e1) isOpen = true;
-            if (!isOpen && schedule.s2_a && schedule.s2_s && schedule.s2_e) {
-                const s2 = toMins(schedule.s2_s), e2 = toMins(schedule.s2_e);
+            if (!isOpen && s.s2_a && s.s2_s && s.s2_e) {
+                const s2 = toMins(s.s2_s), e2 = toMins(s.s2_e);
                 if ((e2 < s2 && (cur >= s2 || cur < e2)) || (cur >= s2 && cur < e2)) isOpen = true;
             }
         }
-        container.innerHTML = isOpen ? 
-            `<div class="status-badge status-open"><i class="fas fa-circle"></i> مفتوح الآن</div>` :
-            `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق الآن</div>`;
+        container.innerHTML = isOpen ? `<div class="status-badge status-open"><i class="fas fa-circle"></i> مفتوح الآن</div>` : `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق الآن</div>`;
     }
     
-    // Render Partners Marquee
-    function renderPartnersMarquee() {
-        const container = document.getElementById('partnersMarquee');
-        const track = document.getElementById('marqueeTrack');
-        if (!container || !track) return;
-        const partners = currentData.partners ? Object.values(currentData.partners) : [];
-        if (partners.length === 0) {
-            container.style.display = 'none';
-            return;
-        }
-        container.style.display = 'block';
-        // Double the items for seamless loop
-        let html = '';
-        [...partners, ...partners].forEach(p => {
-            html += `<img src="${p.url}" class="partner-logo" alt="شريك" onclick="window.open('${p.url}', '_blank')">`;
-        });
-        track.innerHTML = html;
-    }
-    
-    // Render Tabs
-    function renderTabs() {
-        const container = document.getElementById('tabsSection');
-        let html = `<button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button>`;
-        html += `<button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button>`;
-        html += `<button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button>`;
-        html += `<button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
-        if (currentData.pages) {
-            Object.keys(currentData.pages).forEach(id => {
-                const isActive = currentPage === `page_${id}`;
-                html += `<button class="tab-btn ${isActive ? 'active' : ''}" data-page="page_${id}">${currentData.pages[id].title}</button>`;
-            });
-        }
-        container.innerHTML = html;
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                currentPage = btn.dataset.page;
-                renderTabs();
-                renderCurrentPage();
-            });
-        });
-    }
-    
-    // Image Viewer with Zoom
+    // Viewer with Zoom
     function openViewer(url, imageList, index) {
         currentImageList = imageList;
         currentImageIndex = index;
-        const img = document.getElementById('viewerImg');
-        img.src = url;
+        document.getElementById('viewerImg').src = url;
         document.getElementById('viewerCounter').innerText = `${index+1}/${imageList.length}`;
         document.getElementById('viewerModal').style.display = 'flex';
         document.body.style.overflow = 'hidden';
         resetZoom();
         setupZoomEvents();
     }
-    function closeViewer() {
-        document.getElementById('viewerModal').style.display = 'none';
-        document.body.style.overflow = '';
-        resetZoom();
-    }
+    function closeViewer() { document.getElementById('viewerModal').style.display = 'none'; document.body.style.overflow = ''; resetZoom(); }
     function closeViewerOnBg(e) { if (e.target === document.getElementById('viewerModal')) closeViewer(); }
-    function viewerNext() {
-        if (currentImageIndex < currentImageList.length-1) currentImageIndex++;
-        else currentImageIndex = 0;
-        document.getElementById('viewerImg').src = currentImageList[currentImageIndex];
-        document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`;
-        resetZoom();
-    }
-    function viewerPrev() {
-        if (currentImageIndex > 0) currentImageIndex--;
-        else currentImageIndex = currentImageList.length-1;
-        document.getElementById('viewerImg').src = currentImageList[currentImageIndex];
-        document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`;
-        resetZoom();
-    }
-    function resetZoom() {
-        zoomScale = 1;
-        translate = { x: 0, y: 0 };
-        const img = document.getElementById('viewerImg');
-        img.style.transform = `scale(1) translate(0px, 0px)`;
-        isZoomed = false;
-    }
+    function viewerNext() { currentImageIndex = (currentImageIndex + 1) % currentImageList.length; document.getElementById('viewerImg').src = currentImageList[currentImageIndex]; document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`; resetZoom(); }
+    function viewerPrev() { currentImageIndex = (currentImageIndex - 1 + currentImageList.length) % currentImageList.length; document.getElementById('viewerImg').src = currentImageList[currentImageIndex]; document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`; resetZoom(); }
+    function resetZoom() { zoomScale = 1; translate = { x: 0, y: 0 }; document.getElementById('viewerImg').style.transform = `scale(1) translate(0px, 0px)`; isZoomed = false; }
     function setupZoomEvents() {
         const img = document.getElementById('viewerImg');
-        img.onwheel = (e) => {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            zoomScale = Math.min(Math.max(zoomScale + delta, 1), 3);
-            img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`;
-            isZoomed = zoomScale > 1;
-        };
-        let startX, startY, startTranslateX, startTranslateY;
-        img.onmousedown = (e) => {
-            if (!isZoomed) return;
-            e.preventDefault();
-            isDragging = true;
-            startX = e.clientX;
-            startY = e.clientY;
-            startTranslateX = translate.x;
-            startTranslateY = translate.y;
-        };
-        window.onmousemove = (e) => {
-            if (!isDragging || !isZoomed) return;
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            translate.x = startTranslateX + dx;
-            translate.y = startTranslateY + dy;
-            img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`;
-        };
+        img.onwheel = (e) => { e.preventDefault(); zoomScale = Math.min(Math.max(zoomScale + (e.deltaY > 0 ? -0.1 : 0.1), 1), 3); img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`; isZoomed = zoomScale > 1; };
+        let startX, startY, startTX, startTY;
+        img.onmousedown = (e) => { if (!isZoomed) return; e.preventDefault(); isDragging = true; startX = e.clientX; startY = e.clientY; startTX = translate.x; startTY = translate.y; };
+        window.onmousemove = (e) => { if (!isDragging || !isZoomed) return; translate.x = startTX + (e.clientX - startX); translate.y = startTY + (e.clientY - startY); img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`; };
         window.onmouseup = () => { isDragging = false; };
-        img.ondblclick = (e) => {
-            e.preventDefault();
-            if (zoomScale > 1) resetZoom();
-            else { zoomScale = 2; img.style.transform = `scale(2) translate(0px, 0px)`; isZoomed = true; }
-        };
+        img.ondblclick = () => { if (zoomScale > 1) resetZoom(); else { zoomScale = 2; img.style.transform = `scale(2) translate(0px, 0px)`; isZoomed = true; } };
     }
     
-    // Render Functions
+    // Render functions
     function renderHome() {
         const d = currentData;
-        const aboutHtml = d.about_active !== false ? `
-            <div class="info-card">
-                <div class="card-title"><i class="fas fa-info-circle"></i> من نحن</div>
-                <div>${d.about_text || 'نقدم لكم أرقى التصاميم الداخلية والديكورات الفاخرة التي تجمع بين الأناقة والجودة العالية.'}</div>
-            </div>
-        ` : '';
-        
         let reviewsHtml = '';
         if (d.reviews && Object.keys(d.reviews).length) {
-            const items = Object.keys(d.reviews).map((id, i) => `
-                <div class="review-item" data-review-idx="${i}">
-                    <div class="review-stars">${'★'.repeat(d.reviews[id].rating)}${'☆'.repeat(5-d.reviews[id].rating)}</div>
-                    <div class="review-text">"${d.reviews[id].message}"</div>
-                    <div class="review-name">— ${d.reviews[id].name}</div>
-                </div>
-            `).join('');
-            reviewsHtml = `<div class="info-card"><div class="card-title"><i class="fas fa-star"></i> تقييمات العملاء</div><div class="review-slider" id="reviewSlider">${items}</div></div>`;
+            reviewsHtml = `<div class="info-card"><div class="card-title"><i class="fas fa-star"></i> تقييمات العملاء</div><div class="review-slider" id="reviewSlider">${Object.keys(d.reviews).map((id,i)=>`<div class="review-item"><div class="review-stars">${'★'.repeat(d.reviews[id].rating)}${'☆'.repeat(5-d.reviews[id].rating)}</div><div class="review-text">"${d.reviews[id].message}"</div><div class="review-name">— ${d.reviews[id].name}</div></div>`).join('')}</div></div>`;
         }
-        
-        const scheduleHtml = `<div class="info-card"><div class="card-title"><i class="fas fa-clock"></i> أوقات العمل</div>${getGroupedScheduleHtml(d)}<div id="statusContainer" style="margin-top:15px;"></div></div>`;
-        
-        const locationHtml = d.location_url ? `<div class="info-card"><button onclick="window.open('${d.location_url}','_blank')" class="location-btn"><i class="fas fa-map-marker-alt"></i> موقعنا على الخريطة</button></div>` : '';
-        
         return `
-            <div class="hero-card">
-                <h2>✨ بصمة غير للديكور ✨</h2>
-                <p>تصميم داخلي فاخر بلمسة عصرية</p>
-            </div>
-            ${aboutHtml}
-            <div class="info-card">
-                <div class="card-title"><i class="fas fa-star"></i> أضف تقييمك</div>
-                <input type="text" id="reviewName" placeholder="اسمك الكريم">
-                <div class="star-rating" id="starRating">
-                    <i class="fas fa-star" data-star="5"></i>
-                    <i class="fas fa-star" data-star="4"></i>
-                    <i class="fas fa-star" data-star="3"></i>
-                    <i class="fas fa-star" data-star="2"></i>
-                    <i class="fas fa-star" data-star="1"></i>
-                </div>
-                <textarea id="reviewMsg" placeholder="شاركنا تجربتك..." rows="3"></textarea>
-                <button onclick="submitReview()" class="admin-btn btn-gold">إرسال التقييم</button>
-            </div>
+            <div class="info-card"><div class="card-title"><i class="fas fa-info-circle"></i> من نحن</div>${d.about_text || 'نقدم لكم أرقى التصاميم الداخلية والديكورات الفاخرة.'}</div>
+            <div class="info-card"><div class="card-title"><i class="fas fa-star"></i> أضف تقييمك</div><input type="text" id="reviewName" placeholder="اسمك الكريم"><div class="star-rating" id="starRating"><i class="fas fa-star" data-star="5"></i><i class="fas fa-star" data-star="4"></i><i class="fas fa-star" data-star="3"></i><i class="fas fa-star" data-star="2"></i><i class="fas fa-star" data-star="1"></i></div><textarea id="reviewMsg" placeholder="شاركنا تجربتك..." rows="3"></textarea><button onclick="submitReview()" class="admin-btn btn-gold">إرسال التقييم</button></div>
             ${reviewsHtml}
-            ${scheduleHtml}
-            ${locationHtml}
-            <div class="info-card">
-                <div class="card-title"><i class="fab fa-whatsapp"></i> تواصل معنا</div>
-                <button onclick="whatsappGlobal()" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</button>
-                <div class="social-links" id="socialLinks"></div>
-            </div>
+            <div class="info-card"><div class="card-title"><i class="fas fa-clock"></i> أوقات العمل</div>${getGroupedScheduleHtml(d)}<div id="statusContainer" style="margin-top:15px;"></div></div>
+            ${d.location_url ? `<div class="info-card"><button onclick="window.open('${d.location_url}','_blank')" class="location-btn"><i class="fas fa-map-marker-alt"></i> موقعنا على الخريطة</button></div>` : ''}
+            <div class="info-card"><div class="card-title"><i class="fab fa-whatsapp"></i> تواصل معنا</div><button onclick="whatsappGlobal()" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</button><div class="social-links" id="socialLinks"></div></div>
         `;
     }
     
@@ -976,12 +764,8 @@
         let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">';
         Object.keys(d.albums).forEach(id => {
             const album = d.albums[id];
-            let cover = '';
-            if (album.imgs && Object.keys(album.imgs).length) cover = Object.values(album.imgs)[0].url;
-            html += `<div class="album-card" onclick="openAlbum('${id}')">
-                        ${cover ? `<img src="${cover}" style="width:100%; height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;">` : '<i class="fas fa-folder-open fa-3x"></i>'}
-                        <h4>${album.name}</h4>
-                     </div>`;
+            let cover = album.imgs && Object.keys(album.imgs).length ? Object.values(album.imgs)[0].url : '';
+            html += `<div class="album-card" onclick="openAlbum('${id}')">${cover ? `<img src="${cover}" style="width:100%; height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;">` : '<i class="fas fa-folder-open fa-3x"></i>'}<h4>${album.name}</h4></div>`;
         });
         html += '</div>';
         return html;
@@ -989,64 +773,65 @@
     
     function openAlbum(albumId) {
         const album = currentData.albums[albumId];
-        if (!album || !album.imgs) return;
-        const urls = Object.values(album.imgs).map(img => img.url);
-        if (urls.length) openViewer(urls[0], urls, 0);
+        if (album && album.imgs) {
+            const urls = Object.values(album.imgs).map(img => img.url);
+            if (urls.length) openViewer(urls[0], urls, 0);
+        }
     }
     
     function renderCatalogs() {
         const d = currentData;
         if (!d.catalogs || Object.keys(d.catalogs).length === 0) return '<div class="empty-state"><i class="fas fa-book-open fa-3x"></i><p>لا توجد كتالوجات بعد</p></div>';
         let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">';
-        Object.keys(d.catalogs).forEach(id => {
-            html += `<div class="folder-card" onclick="openCatalog('${id}')">
-                        <i class="fas fa-book-open fa-3x" style="color:var(--accent);"></i>
-                        <h4>${d.catalogs[id].name}</h4>
-                     </div>`;
-        });
+        Object.keys(d.catalogs).forEach(id => { html += `<div class="folder-card" onclick="openCatalog('${id}')"><i class="fas fa-book-open fa-3x" style="color:var(--accent);"></i><h4>${d.catalogs[id].name}</h4></div>`; });
         html += '</div>';
         return html;
     }
     
-    function openCatalog(catId) {
-        const cat = currentData.catalogs[catId];
-        if (cat && cat.code) {
-            const win = window.open();
-            win.document.write(cat.code);
-        } else showToast('رابط الكتالوج غير متاح');
-    }
+    function openCatalog(catId) { const cat = currentData.catalogs[catId]; if (cat && cat.code) { const win = window.open(); win.document.write(cat.code); } else showToast('رابط الكتالوج غير متاح'); }
     
     function renderFavorites() {
         if (favorites.length === 0) return '<div class="empty-state"><i class="far fa-heart fa-3x"></i><p>لا توجد صور في المفضلة</p></div>';
         let html = '<div class="photo-grid">';
-        favorites.forEach((fav, idx) => {
-            html += `<div class="photo-item" onclick="openViewer('${fav.url}', ${JSON.stringify(favorites.map(f=>f.url))}, ${idx})">
-                        <img src="${fav.url}" loading="lazy">
-                        <button class="fav-btn active" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')"><i class="fas fa-heart"></i></button>
-                     </div>`;
-        });
+        favorites.forEach((fav, idx) => { html += `<div class="photo-item" onclick="openViewer('${fav.url}', ${JSON.stringify(favorites.map(f=>f.url))}, ${idx})"><img src="${fav.url}" loading="lazy"><button class="fav-btn active" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')"><i class="fas fa-heart"></i></button></div>`; });
         html += '</div>';
         return html;
     }
     
     function renderPage(pageId) {
         const page = currentData.pages[pageId];
-        if (!page || !page.imgs) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور في هذا القسم</p></div>';
+        if (!page || !page.imgs) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
         const urls = Object.values(page.imgs).map(img => img.url);
         let html = '<div class="photo-grid">';
-        Object.keys(page.imgs).forEach((imgId, idx) => {
-            html += `<div class="photo-item" onclick="openViewer('${page.imgs[imgId].url}', ${JSON.stringify(urls)}, ${idx})">
-                        <img src="${page.imgs[imgId].url}" loading="lazy">
-                        <button class="fav-btn ${isFav(`page_${pageId}_${imgId}`) ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('page_${pageId}_${imgId}', '${page.imgs[imgId].url}')"><i class="fas ${isFav(`page_${pageId}_${imgId}`) ? 'fa-heart' : 'fa-heart'}"></i></button>
-                     </div>`;
-        });
+        Object.keys(page.imgs).forEach((imgId, idx) => { html += `<div class="photo-item" onclick="openViewer('${page.imgs[imgId].url}', ${JSON.stringify(urls)}, ${idx})"><img src="${page.imgs[imgId].url}" loading="lazy"><button class="fav-btn ${isFav(`page_${pageId}_${imgId}`) ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('page_${pageId}_${imgId}', '${page.imgs[imgId].url}')"><i class="fas fa-heart"></i></button></div>`; });
         html += '</div>';
         return html;
     }
     
+    function renderTabs() {
+        const container = document.getElementById('tabsSection');
+        let html = `<button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button>`;
+        html += `<button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button>`;
+        html += `<button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button>`;
+        html += `<button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
+        if (currentData.pages) Object.keys(currentData.pages).forEach(id => { html += `<button class="tab-btn ${currentPage === `page_${id}` ? 'active' : ''}" data-page="page_${id}">${currentData.pages[id].title}</button>`; });
+        container.innerHTML = html;
+        document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { currentPage = btn.dataset.page; renderTabs(); renderCurrentPage(); }); });
+        // Auto scroll indicator animation
+        const tabs = document.querySelector('.tabs-section');
+        if (tabs) { setInterval(() => { if (tabs.scrollLeft < tabs.scrollWidth - tabs.clientWidth) tabs.scrollBy({ left: 50, behavior: 'smooth' }); else tabs.scrollTo({ left: 0, behavior: 'smooth' }); }, 4000); }
+    }
+    
+    function renderPartnersMarquee() {
+        const container = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack');
+        const partners = currentData.partners ? Object.values(currentData.partners) : [];
+        if (partners.length === 0) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+        track.innerHTML = [...partners, ...partners].map(p => `<img src="${p.url}" class="partner-logo" onclick="window.open('${p.url}', '_blank')">`).join('');
+    }
+    
     function renderSocial() {
-        const d = currentData;
-        const container = document.getElementById('socialLinks');
+        const d = currentData, container = document.getElementById('socialLinks');
         if (!container) return;
         let html = '';
         if (d.insta_url) html += `<a href="${d.insta_url}" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>`;
@@ -1059,209 +844,101 @@
         if (reviewInterval) clearInterval(reviewInterval);
         const items = document.querySelectorAll('.review-item');
         if (!items.length) return;
-        items.forEach((item, i) => { item.classList.remove('active'); });
-        items[reviewIdx % items.length].classList.add('active');
-        reviewInterval = setInterval(() => {
-            reviewIdx = (reviewIdx + 1) % items.length;
-            items.forEach((item, i) => item.classList.remove('active'));
-            items[reviewIdx].classList.add('active');
-        }, 4000);
-    }
-    
-    function renderCurrentPage() {
-        const main = document.getElementById('mainContent');
-        let content = '';
-        if (currentPage === 'home') {
-            content = renderHome();
-        } else if (currentPage === 'works') {
-            content = `<h2 style="margin-bottom:20px;"><i class="fas fa-images"></i> أعمالنا</h2>${renderWorks()}`;
-        } else if (currentPage === 'catalogs') {
-            content = `<h2 style="margin-bottom:20px;"><i class="fas fa-book-open"></i> الكتالوجات</h2>${renderCatalogs()}`;
-        } else if (currentPage === 'favorites') {
-            content = `<h2 style="margin-bottom:20px;"><i class="fas fa-heart"></i> المفضلة</h2>${renderFavorites()}`;
-        } else if (currentPage.startsWith('page_')) {
-            const pageId = currentPage.replace('page_', '');
-            content = `<h2 style="margin-bottom:20px;">${currentData.pages?.[pageId]?.title || ''}</h2>${renderPage(pageId)}`;
-        }
-        main.innerHTML = content;
-        document.getElementById('siteTitle').innerText = currentData.site_name || 'بصمة غير';
-        renderSocial();
-        updateWorkStatus();
-        renderPartnersMarquee();
-        setTimeout(() => {
-            startReviewSlider();
-            setupStarRating();
-        }, 100);
+        items.forEach((item, i) => item.classList.remove('active'));
+        items[0]?.classList.add('active');
+        reviewInterval = setInterval(() => { reviewIdx = (reviewIdx + 1) % items.length; items.forEach((item, i) => item.classList.remove('active')); items[reviewIdx]?.classList.add('active'); }, 4000);
     }
     
     function setupStarRating() {
         let selectedStar = 0;
         const stars = document.querySelectorAll('#starRating i');
-        stars.forEach(star => {
-            star.onclick = () => { selectedStar = parseInt(star.dataset.star); stars.forEach(s => s.classList.remove('active')); for(let i=stars.length-1; i>=stars.length-selectedStar; i--) stars[i].classList.add('active'); };
-        });
-        window.submitReview = () => {
-            const name = document.getElementById('reviewName').value;
-            const msg = document.getElementById('reviewMsg').value;
-            if (!name || !msg || !selectedStar) return showToast('يرجى إكمال جميع الحقول');
-            db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selectedStar, date: new Date().toLocaleDateString('ar-SA') }).then(() => {
-                showToast('شكراً لتقييمك!');
-                document.getElementById('reviewName').value = '';
-                document.getElementById('reviewMsg').value = '';
-                selectedStar = 0;
-                stars.forEach(s => s.classList.remove('active'));
-            });
-        };
+        stars.forEach(star => { star.onclick = () => { selectedStar = parseInt(star.dataset.star); stars.forEach(s => s.classList.remove('active')); for(let i=stars.length-1; i>=stars.length-selectedStar; i--) stars[i]?.classList.add('active'); }; });
+        window.submitReview = () => { const name = document.getElementById('reviewName')?.value, msg = document.getElementById('reviewMsg')?.value; if (!name || !msg || !selectedStar) return showToast('يرجى إكمال جميع الحقول'); db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selectedStar }).then(() => { showToast('شكراً لتقييمك!'); document.getElementById('reviewName').value = ''; document.getElementById('reviewMsg').value = ''; selectedStar = 0; stars.forEach(s => s.classList.remove('active')); }); };
+    }
+    
+    function renderCurrentPage() {
+        const main = document.getElementById('mainContent');
+        let content = '';
+        if (currentPage === 'home') content = renderHome();
+        else if (currentPage === 'works') content = `<h2 style="margin-bottom:20px;"><i class="fas fa-images"></i> أعمالنا</h2>${renderWorks()}`;
+        else if (currentPage === 'catalogs') content = `<h2 style="margin-bottom:20px;"><i class="fas fa-book-open"></i> الكتالوجات</h2>${renderCatalogs()}`;
+        else if (currentPage === 'favorites') content = `<h2 style="margin-bottom:20px;"><i class="fas fa-heart"></i> المفضلة</h2>${renderFavorites()}`;
+        else if (currentPage.startsWith('page_')) { const pageId = currentPage.replace('page_', ''); content = `<h2 style="margin-bottom:20px;">${currentData.pages?.[pageId]?.title || ''}</h2>${renderPage(pageId)}`; }
+        main.innerHTML = content;
+        document.getElementById('siteTitle').innerText = currentData.site_name || 'بصمة غير';
+        renderSocial();
+        updateWorkStatus();
+        setTimeout(() => { startReviewSlider(); setupStarRating(); }, 100);
     }
     
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
     
-    // Admin Panel Functions (Complete)
+    // Admin Functions
     function buildAdminSections() {
-        const container = document.getElementById('adminSections');
         const d = currentData;
-        container.innerHTML = `
+        const targetOptions = () => {
+            let opts = '<option value="">-- اختر الوجهة --</option>';
+            if (d.albums) Object.keys(d.albums).forEach(id => opts += `<option value="albums/${id}">ألبوم: ${d.albums[id].name}</option>`);
+            if (d.pages) Object.keys(d.pages).forEach(id => opts += `<option value="pages/${id}">صفحة: ${d.pages[id].title}</option>`);
+            return opts;
+        };
+        document.getElementById('adminSections').innerHTML = `
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🛡️ وضع الصيانة <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode ? 'checked' : ''}> تفعيل وضع الصيانة</label><input id="maintenanceTitle" placeholder="عنوان الصيانة" value="${d.maintenance_title || 'الموقع في صيانة'}"><textarea id="maintenanceMsg" placeholder="رسالة الصيانة">${d.maintenance_message || 'نعمل على تحسين تجربتك'}</textarea><button class="admin-btn btn-gold" onclick="saveMaintenance()">حفظ</button></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🤝 شركاء النجاح <span>▾</span></button><div class="collapse-content"><div id="partnersAdminList"></div><input id="partnerUrl" placeholder="رابط الشعار"><button class="admin-btn btn-green" onclick="addPartner()">إضافة شريك</button></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 الأقسام والتبويبات <span>▾</span></button><div class="collapse-content"><div id="pagesList"></div><div style="display:flex; gap:8px;"><input id="newPageName" placeholder="اسم قسم جديد"><button class="admin-btn btn-green" onclick="addPage()">إضافة</button></div></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 الألبومات <span>▾</span></button><div class="collapse-content"><div id="albumsList"></div><div style="display:flex; gap:8px;"><input id="newAlbumName" placeholder="اسم ألبوم جديد"><button class="admin-btn btn-green" onclick="addAlbum()">إضافة</button></div></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📚 الكتالوجات <span>▾</span></button><div class="collapse-content"><div id="catalogsList"></div><div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" placeholder="كود iFrame" rows="3"></textarea><button class="admin-btn btn-green" onclick="addCatalog()">إضافة</button></div></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📸 رفع الصور <span>▾</span></button><div class="collapse-content"><select id="targetType"><option value="albums">ألبوم</option><option value="pages">صفحة</option></select><input id="targetId" placeholder="معرف القسم/الألبوم"><textarea id="imageUrls" placeholder="روابط الصور (كل رابط في سطر)" rows="4"></textarea><button class="admin-btn btn-green" onclick="uploadPhotos()">نشر الصور</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🗑️ حذف الصور <span>▾</span></button><div class="collapse-content"><select id="deleteTarget" onchange="loadImagesForDelete()"></select><div id="imagesDeleteGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:12px;"></div></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📸 رفع الصور <span>▾</span></button><div class="collapse-content"><select id="uploadTarget">${targetOptions()}</select><textarea id="imageUrls" placeholder="روابط الصور (كل رابط في سطر)" rows="4"></textarea><button class="admin-btn btn-green" onclick="uploadPhotos()">نشر الصور</button></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🗑️ حذف الصور <span>▾</span></button><div class="collapse-content"><select id="deleteTarget" onchange="loadImagesForDelete()">${targetOptions()}</select><div id="imagesDeleteGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:12px;"></div></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📖 من نحن <span>▾</span></button><div class="collapse-content"><textarea id="aboutEditor" rows="5">${d.about_text || ''}</textarea><label><input type="checkbox" id="aboutActive" ${d.about_active !== false ? 'checked' : ''}> تفعيل القسم</label><button class="admin-btn btn-gold" onclick="saveAbout()">حفظ</button></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🕒 مواعيد العمل <span>▾</span></button><div class="collapse-content"><div id="scheduleEditor"></div><button class="admin-btn btn-gold" onclick="saveSchedule()">حفظ المواعيد</button></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🔗 التواصل الاجتماعي <span>▾</span></button><div class="collapse-content"><input id="instaInput" placeholder="انستقرام" value="${d.insta_url || ''}"><input id="tiktokInput" placeholder="تيك توك" value="${d.tiktok_url || ''}"><input id="snapInput" placeholder="سناب شات" value="${d.snap_url || ''}"><input id="locationInput" placeholder="رابط قوقل ماب" value="${d.location_url || ''}"><button class="admin-btn btn-gold" onclick="saveSocial()">حفظ</button></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">⚙️ الإعدادات العامة <span>▾</span></button><div class="collapse-content"><input id="siteNameInput" placeholder="اسم الموقع" value="${d.site_name || ''}"><input id="whatsappInput" placeholder="رقم واتساب" value="${d.whatsapp_num || ''}"><input id="wmInput" placeholder="العلامة المائية" value="${d.wm_text || ''}"><input id="footerInput" placeholder="حقوق الملكية" value="${d.footer_text || ''}"><button class="admin-btn btn-gold" onclick="saveGeneral()">حفظ</button></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">⭐ إدارة التقييمات <span>▾</span></button><div class="collapse-content"><div id="reviewsAdminList"></div></div></div>
         `;
-        renderPagesList();
-        renderAlbumsList();
-        renderCatalogsList();
-        renderPartnersAdmin();
-        renderReviewsAdmin();
-        renderScheduleEditor();
-        renderDeleteTargets();
+        renderPagesList(); renderAlbumsList(); renderCatalogsList(); renderPartnersAdmin(); renderReviewsAdmin(); renderScheduleEditor();
     }
     function toggleCollapse(btn) { const content = btn.nextElementSibling; content.style.display = content.style.display === 'block' ? 'none' : 'block'; }
-    function renderPagesList() {
-        const container = document.getElementById('pagesList');
-        if (!container || !currentData.pages) return;
-        container.innerHTML = Object.keys(currentData.pages).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join('');
-    }
-    function addPage() { const name = document.getElementById('newPageName').value; if(name) db.ref(DB_PATH+'/pages').push({title:name}).then(()=>showToast('تم إضافة القسم')); }
-    function renderAlbumsList() {
-        const container = document.getElementById('albumsList');
-        if(!container || !currentData.albums) return;
-        container.innerHTML = Object.keys(currentData.albums).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join('');
-    }
-    function addAlbum() { const name = document.getElementById('newAlbumName').value; if(name) db.ref(DB_PATH+'/albums').push({name}).then(()=>showToast('تم إضافة الألبوم')); }
-    function renderCatalogsList() {
-        const container = document.getElementById('catalogsList');
-        if(!container || !currentData.catalogs) return;
-        container.innerHTML = Object.keys(currentData.catalogs).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.catalogs[id].name}" onchange="db.ref(DB_PATH+'/catalogs/${id}').update({name:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/catalogs/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join('');
-    }
-    function addCatalog() { const name = document.getElementById('newCatalogName').value; const code = document.getElementById('newCatalogCode').value; if(name && code) db.ref(DB_PATH+'/catalogs').push({name,code}).then(()=>showToast('تم إضافة الكتالوج')); }
-    function renderPartnersAdmin() {
-        const container = document.getElementById('partnersAdminList');
-        if(!container || !currentData.partners) return;
-        container.innerHTML = Object.keys(currentData.partners).map(id => `<div class="partner-item"><img src="${currentData.partners[id].url}"><span style="flex:1; font-size:12px;">${currentData.partners[id].url.substring(0,40)}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join('');
-    }
-    function addPartner() { const url = document.getElementById('partnerUrl').value; if(url) db.ref(DB_PATH+'/partners').push({url}).then(()=>showToast('تم إضافة الشريك')); }
-    function renderReviewsAdmin() {
-        const container = document.getElementById('reviewsAdminList');
-        if(!container || !currentData.reviews) return;
-        container.innerHTML = Object.keys(currentData.reviews).map(id => `<div style="padding:8px; border-bottom:1px solid var(--border);"><b>${currentData.reviews[id].name}</b> ${'★'.repeat(currentData.reviews[id].rating)}<p>${currentData.reviews[id].message}</p><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" class="admin-btn btn-red" style="padding:4px">حذف</button></div>`).join('');
-    }
-    function renderScheduleEditor() {
-        const container = document.getElementById('scheduleEditor');
-        if(!container) return;
-        const d = currentData;
-        const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-        let html = '';
-        for(let i=0; i<=6; i++) {
-            const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:false, s1_s:'09:00', s1_e:'17:00', s2_a:false};
-            html += `<div style="border:1px solid var(--border); padding:12px; margin-bottom:12px; border-radius:12px;">
-                        <label><input type="checkbox" id="dayActive_${i}" ${s.active?'checked':''}> ${days[i]}</label>
-                        <div><input type="time" id="s1s_${i}" value="${s.s1_s||'09:00'}"> — <input type="time" id="s1e_${i}" value="${s.s1_e||'17:00'}"></div>
-                        <label><input type="checkbox" id="s2a_${i}" ${s.s2_a?'checked':''}> فترة مسائية</label>
-                        <div id="evening_${i}" style="${s.s2_a?'':'display:none'}"><input type="time" id="s2s_${i}" value="${s.s2_s||''}"> — <input type="time" id="s2e_${i}" value="${s.s2_e||''}"></div>
-                     </div>`;
-        }
-        container.innerHTML = html;
-        for(let i=0; i<=6; i++) {
-            const cb = document.getElementById(`s2a_${i}`);
-            if(cb) cb.onchange = () => document.getElementById(`evening_${i}`).style.display = cb.checked ? 'block' : 'none';
-        }
-    }
-    function saveSchedule() {
-        let schedule = {};
-        for(let i=0; i<=6; i++) {
-            schedule[i] = {
-                active: document.getElementById(`dayActive_${i}`).checked,
-                s1_s: document.getElementById(`s1s_${i}`).value,
-                s1_e: document.getElementById(`s1e_${i}`).value,
-                s2_a: document.getElementById(`s2a_${i}`).checked,
-                s2_s: document.getElementById(`s2s_${i}`).value,
-                s2_e: document.getElementById(`s2e_${i}`).value
-            };
-        }
-        db.ref(DB_PATH+'/work_schedule').set(schedule).then(()=>showToast('تم حفظ المواعيد'));
-    }
+    function renderPagesList() { const c = document.getElementById('pagesList'); if(!c||!currentData.pages) return; c.innerHTML = Object.keys(currentData.pages).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join(''); }
+    function addPage() { const n=document.getElementById('newPageName').value; if(n) db.ref(DB_PATH+'/pages').push({title:n}).then(()=>showToast('تم إضافة القسم')); }
+    function renderAlbumsList() { const c=document.getElementById('albumsList'); if(!c||!currentData.albums) return; c.innerHTML = Object.keys(currentData.albums).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join(''); }
+    function addAlbum() { const n=document.getElementById('newAlbumName').value; if(n) db.ref(DB_PATH+'/albums').push({name:n}).then(()=>showToast('تم إضافة الألبوم')); }
+    function renderCatalogsList() { const c=document.getElementById('catalogsList'); if(!c||!currentData.catalogs) return; c.innerHTML = Object.keys(currentData.catalogs).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.catalogs[id].name}" onchange="db.ref(DB_PATH+'/catalogs/${id}').update({name:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/catalogs/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join(''); }
+    function addCatalog() { const n=document.getElementById('newCatalogName').value, c=document.getElementById('newCatalogCode').value; if(n&&c) db.ref(DB_PATH+'/catalogs').push({name:n,code:c}).then(()=>showToast('تم إضافة الكتالوج')); }
+    function renderPartnersAdmin() { const c=document.getElementById('partnersAdminList'); if(!c||!currentData.partners) return; c.innerHTML = Object.keys(currentData.partners).map(id => `<div class="partner-item"><img src="${currentData.partners[id].url}"><span style="flex:1; font-size:12px;">${currentData.partners[id].url.substring(0,40)}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join(''); }
+    function addPartner() { const u=document.getElementById('partnerUrl').value; if(u) db.ref(DB_PATH+'/partners').push({url:u}).then(()=>showToast('تم إضافة الشريك')); }
+    function renderReviewsAdmin() { const c=document.getElementById('reviewsAdminList'); if(!c||!currentData.reviews) return; c.innerHTML = Object.keys(currentData.reviews).map(id => `<div style="padding:8px; border-bottom:1px solid var(--border);"><b>${currentData.reviews[id].name}</b> ${'★'.repeat(currentData.reviews[id].rating)}<p>${currentData.reviews[id].message}</p><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" class="admin-btn btn-red" style="padding:4px">حذف</button></div>`).join(''); }
+    function renderScheduleEditor() { const c=document.getElementById('scheduleEditor'), days=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"]; let h=''; for(let i=0;i<=6;i++){ const s=currentData.work_schedule?.[i]||{active:false,s1_s:'09:00',s1_e:'17:00',s2_a:false}; h+=`<div style="border:1px solid var(--border); padding:12px; margin-bottom:12px;"><label><input type="checkbox" id="dayActive_${i}" ${s.active?'checked':''}> ${days[i]}</label><div><input type="time" id="s1s_${i}" value="${s.s1_s}"> — <input type="time" id="s1e_${i}" value="${s.s1_e}"></div><label><input type="checkbox" id="s2a_${i}" ${s.s2_a?'checked':''}> فترة مسائية</label><div id="evening_${i}" style="${s.s2_a?'':'display:none'}"><input type="time" id="s2s_${i}" value="${s.s2_s||''}"> — <input type="time" id="s2e_${i}" value="${s.s2_e||''}"></div></div>`; } c.innerHTML=h; for(let i=0;i<=6;i++){ const cb=document.getElementById(`s2a_${i}`); if(cb) cb.onchange=()=>document.getElementById(`evening_${i}`).style.display=cb.checked?'block':'none'; } }
+    function saveSchedule() { let s={}; for(let i=0;i<=6;i++) s[i]={ active:document.getElementById(`dayActive_${i}`).checked, s1_s:document.getElementById(`s1s_${i}`).value, s1_e:document.getElementById(`s1e_${i}`).value, s2_a:document.getElementById(`s2a_${i}`).checked, s2_s:document.getElementById(`s2s_${i}`).value, s2_e:document.getElementById(`s2e_${i}`).value }; db.ref(DB_PATH+'/work_schedule').set(s).then(()=>showToast('تم حفظ المواعيد')); }
     function saveAbout() { db.ref(DB_PATH).update({ about_text:document.getElementById('aboutEditor').value, about_active:document.getElementById('aboutActive').checked }).then(()=>showToast('تم حفظ من نحن')); }
     function saveSocial() { db.ref(DB_PATH).update({ insta_url:document.getElementById('instaInput').value, tiktok_url:document.getElementById('tiktokInput').value, snap_url:document.getElementById('snapInput').value, location_url:document.getElementById('locationInput').value }).then(()=>showToast('تم حفظ الروابط')); }
     function saveGeneral() { db.ref(DB_PATH).update({ site_name:document.getElementById('siteNameInput').value, whatsapp_num:document.getElementById('whatsappInput').value, wm_text:document.getElementById('wmInput').value, footer_text:document.getElementById('footerInput').value }).then(()=>showToast('تم حفظ الإعدادات')); }
-    function uploadPhotos() {
-        const type = document.getElementById('targetType').value;
-        const id = document.getElementById('targetId').value;
-        const urls = document.getElementById('imageUrls').value.split('\n').filter(u=>u.trim());
-        if(!id || urls.length===0) return showToast('أدخل المعرف والروابط');
-        const path = `${type}/${id}/imgs`;
-        Promise.all(urls.map(url=>db.ref(DB_PATH+'/'+path).push({url:url.trim()}))).then(()=>{ showToast('تم نشر الصور'); document.getElementById('imageUrls').value=''; });
-    }
-    function renderDeleteTargets() {
-        const select = document.getElementById('deleteTarget');
-        if(!select) return;
-        let options = '<option value="">اختر الوجهة</option>';
-        if(currentData.pages) Object.keys(currentData.pages).forEach(id => options += `<option value="pages/${id}">صفحة: ${currentData.pages[id].title}</option>`);
-        if(currentData.albums) Object.keys(currentData.albums).forEach(id => options += `<option value="albums/${id}">ألبوم: ${currentData.albums[id].name}</option>`);
-        select.innerHTML = options;
-    }
-    function loadImagesForDelete() {
-        const path = document.getElementById('deleteTarget').value;
-        const grid = document.getElementById('imagesDeleteGrid');
-        if(!path) { grid.innerHTML = ''; return; }
-        const [type, id] = path.split('/');
-        const folder = currentData[type] && currentData[type][id];
-        if(!folder || !folder.imgs) { grid.innerHTML = '<p>لا توجد صور</p>'; return; }
-        grid.innerHTML = Object.keys(folder.imgs).map(imgId => `<div><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1; object-fit:cover;"><button onclick="deleteImage('${path}', '${imgId}')" class="admin-btn btn-red" style="padding:4px">حذف</button></div>`).join('');
-    }
-    function deleteImage(path, imgId) { db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{ showToast('تم الحذف'); loadImagesForDelete(); }); }
+    function saveMaintenance() { db.ref(DB_PATH).update({ maintenance_mode:document.getElementById('maintenanceMode').checked, maintenance_title:document.getElementById('maintenanceTitle').value, maintenance_message:document.getElementById('maintenanceMsg').value }).then(()=>showToast('تم حفظ إعدادات الصيانة')); }
+    function uploadPhotos() { const target=document.getElementById('uploadTarget').value; const urls=document.getElementById('imageUrls').value.split('\n').filter(u=>u.trim()); if(!target||urls.length===0) return showToast('اختر الوجهة وأدخل الروابط'); db.ref(DB_PATH+'/'+target+'/imgs').push(urls.map(url=>({url:url.trim()}))[0]).then(()=>{ showToast('تم نشر الصور'); document.getElementById('imageUrls').value=''; }); }
+    function loadImagesForDelete() { const path=document.getElementById('deleteTarget').value, grid=document.getElementById('imagesDeleteGrid'); if(!path){ grid.innerHTML=''; return; } const [type,id]=path.split('/'); const folder=currentData[type]?.[id]; if(!folder||!folder.imgs){ grid.innerHTML='<p>لا توجد صور</p>'; return; } grid.innerHTML=Object.keys(folder.imgs).map(imgId=>`<div><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1; object-fit:cover;"><button onclick="deleteImage('${path}', '${imgId}')" class="admin-btn btn-red" style="padding:4px">حذف</button></div>`).join(''); }
+    function deleteImage(path,imgId){ db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{ showToast('تم الحذف'); loadImagesForDelete(); }); }
     function closeAdminPanel() { document.getElementById('adminPanel').classList.remove('active'); }
-    function checkAccess() {
-        const pwd = prompt("رمز الإدارة:");
-        if(!pwd) return;
-        db.ref(DB_PATH).once('value').then(snap=>{
-            const data = snap.val();
-            if(data && data.in && data.in.toString() === pwd) { isAdmin=true; document.getElementById('adminPanel').classList.add('active'); buildAdminSections(); }
-            else showToast('رمز غير صحيح');
-        });
-    }
+    function checkAccess() { const pwd=prompt("رمز الإدارة:"); if(!pwd) return; db.ref(DB_PATH).once('value').then(snap=>{ const data=snap.val(); if(data && data.in && data.in.toString()===pwd) { isAdmin=true; document.getElementById('adminPanel').classList.add('active'); buildAdminSections(); } else showToast('رمز غير صحيح'); }); }
     
-    // Firebase Listener
+    function checkMaintenance() { const m=currentData.maintenance_mode; if(m && !isAdmin) document.getElementById('maintenance-screen').style.display='flex'; else document.getElementById('maintenance-screen').style.display='none'; }
+    
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
         renderTabs();
         renderCurrentPage();
+        renderPartnersMarquee();
+        checkMaintenance();
         if (isAdmin && document.getElementById('adminPanel').classList.contains('active')) buildAdminSections();
     });
     
-    // Expose globals
-    window.openViewer = openViewer; window.closeViewer = closeViewer; window.closeViewerOnBg = closeViewerOnBg;
-    window.viewerNext = viewerNext; window.viewerPrev = viewerPrev; window.toggleFavorite = toggleFavorite;
-    window.openAlbum = openAlbum; window.openCatalog = openCatalog; window.whatsappGlobal = whatsappGlobal;
-    window.checkAccess = checkAccess; window.closeAdminPanel = closeAdminPanel; window.toggleCollapse = toggleCollapse;
-    window.addPage = addPage; window.addAlbum = addAlbum; window.addCatalog = addCatalog; window.addPartner = addPartner;
-    window.saveAbout = saveAbout; window.saveSchedule = saveSchedule; window.saveSocial = saveSocial; window.saveGeneral = saveGeneral;
-    window.uploadPhotos = uploadPhotos; window.loadImagesForDelete = loadImagesForDelete; window.deleteImage = deleteImage;
+    window.openViewer=openViewer; window.closeViewer=closeViewer; window.closeViewerOnBg=closeViewerOnBg;
+    window.viewerNext=viewerNext; window.viewerPrev=viewerPrev; window.toggleFavorite=toggleFavorite;
+    window.openAlbum=openAlbum; window.openCatalog=openCatalog; window.whatsappGlobal=whatsappGlobal;
+    window.checkAccess=checkAccess; window.closeAdminPanel=closeAdminPanel; window.toggleCollapse=toggleCollapse;
+    window.addPage=addPage; window.addAlbum=addAlbum; window.addCatalog=addCatalog; window.addPartner=addPartner;
+    window.saveAbout=saveAbout; window.saveSchedule=saveSchedule; window.saveSocial=saveSocial; window.saveGeneral=saveGeneral;
+    window.uploadPhotos=uploadPhotos; window.loadImagesForDelete=loadImagesForDelete; window.deleteImage=deleteImage;
+    window.saveMaintenance=saveMaintenance;
     
     renderTabs();
     renderCurrentPage();
