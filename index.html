@@ -37,7 +37,6 @@
             --border: #e9ecef;
             --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
             --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
-            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
             --success: #28a745;
             --danger: #dc3545;
             --whatsapp: #25D366;
@@ -47,43 +46,94 @@
         .top-nav {
             position: sticky;
             top: 0;
-            background: rgba(255,255,255,0.96);
+            background: rgba(255,255,255,0.98);
             backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border);
-            padding: 12px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             z-index: 1000;
         }
-        .logo-area h1 {
-            font-size: 1.3rem;
+        
+        .logo-section {
+            padding: 12px 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo-section h1 {
+            font-size: 1.5rem;
             font-weight: 800;
             color: var(--accent-dark);
             letter-spacing: 1px;
         }
-        .logo-area p {
-            font-size: 0.7rem;
+        .logo-section p {
+            font-size: 0.75rem;
             color: var(--text-secondary);
         }
-        .nav-icons {
-            display: flex;
-            gap: 20px;
-        }
-        .nav-icon {
-            background: none;
-            border: none;
-            font-size: 1.4rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
+        
+        /* Partners Marquee (smooth scrolling) */
+        .partners-marquee {
+            background: var(--bg-secondary);
+            padding: 10px 0;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
             position: relative;
         }
-        .nav-icon.active {
-            color: var(--accent-dark);
+        .marquee-track {
+            display: flex;
+            animation: marqueeScroll 25s linear infinite;
+            width: fit-content;
         }
-        .nav-icon:hover {
+        .marquee-track:hover {
+            animation-play-state: paused;
+        }
+        .partner-logo {
+            height: 40px;
+            margin: 0 20px;
+            object-fit: contain;
+            filter: grayscale(0.2);
+            transition: filter 0.3s, transform 0.2s;
+            cursor: pointer;
+        }
+        .partner-logo:hover {
+            filter: grayscale(0);
             transform: scale(1.05);
+        }
+        @keyframes marqueeScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        
+        /* Tabs Section */
+        .tabs-section {
+            background: var(--bg-primary);
+            padding: 8px 16px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            border-bottom: 1px solid var(--border);
+        }
+        .tabs-section::-webkit-scrollbar {
+            display: none;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            font-family: 'Cairo', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+        .tab-btn:hover:not(.active) {
+            background: var(--bg-secondary);
+            color: var(--accent-dark);
         }
 
         /* Main Content */
@@ -129,7 +179,6 @@
         }
         .info-card:hover {
             box-shadow: var(--shadow-md);
-            transform: translateY(-2px);
         }
         .card-title {
             font-size: 1.2rem;
@@ -204,21 +253,42 @@
             color: var(--accent);
             margin-bottom: 10px;
         }
+        /* Schedule Grouped Style (original) */
         .schedule-group {
             padding: 12px 0;
             border-bottom: 1px solid var(--border);
         }
+        .schedule-group:last-child {
+            border-bottom: none;
+        }
+        .schedule-days {
+            font-weight: 700;
+            color: var(--accent-dark);
+            margin-bottom: 8px;
+        }
         .time-period {
             display: flex;
+            align-items: center;
             gap: 8px;
+            margin-bottom: 5px;
             flex-wrap: wrap;
-            margin: 5px 0;
+        }
+        .period-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
         }
         .time-text {
             background: var(--bg-secondary);
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.85rem;
+        }
+        .holiday-text {
+            background: #ffebee;
+            color: var(--danger);
+            padding: 10px;
+            border-radius: 12px;
+            margin-top: 10px;
         }
         .status-badge {
             display: inline-flex;
@@ -288,7 +358,7 @@
             cursor: pointer;
         }
 
-        /* Photo Grid (Instagram Style) */
+        /* Photo Grid (Instagram Style - preserved) */
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -335,6 +405,7 @@
             cursor: pointer;
             z-index: 2;
             color: var(--text-secondary);
+            transition: all 0.2s;
         }
         .fav-btn.active {
             color: var(--danger);
@@ -352,6 +423,12 @@
             transform: translateY(-3px);
             box-shadow: var(--shadow-md);
             border-color: var(--accent);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            grid-column: 1/-1;
         }
 
         /* Viewer Modal with Zoom */
@@ -548,16 +625,18 @@
 
 <!-- Top Navigation -->
 <div class="top-nav">
-    <div class="logo-area">
+    <div class="logo-section">
         <h1 id="siteTitle">بصمة غير</h1>
         <p>للديكور والتصميم الداخلي</p>
     </div>
-    <div class="nav-icons">
-        <button class="nav-icon" data-page="home"><i class="fas fa-home"></i></button>
-        <button class="nav-icon" data-page="works"><i class="fas fa-images"></i></button>
-        <button class="nav-icon" data-page="catalogs"><i class="fas fa-book-open"></i></button>
-        <button class="nav-icon" data-page="favorites"><i class="fas fa-heart"></i></button>
+    
+    <!-- Partners Marquee (smooth moving logos) -->
+    <div class="partners-marquee" id="partnersMarquee" style="display: none;">
+        <div class="marquee-track" id="marqueeTrack"></div>
     </div>
+    
+    <!-- Tabs Section -->
+    <div class="tabs-section" id="tabsSection"></div>
 </div>
 
 <!-- Main Content -->
@@ -600,7 +679,6 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const auth = firebase.auth();
     const DB_PATH = 'site_v28';
 
     let currentData = {};
@@ -611,8 +689,6 @@
     let currentImageIndex = 0;
     let reviewInterval = null;
     let reviewIdx = 0;
-    let partnerInterval = null;
-    let partnerIdx = 0;
     
     // Zoom variables
     let zoomScale = 1;
@@ -644,6 +720,126 @@
     }
     function isFav(imgId) { return favorites.some(f => f.id === imgId); }
 
+    // Schedule Helper (Grouped like original)
+    function getGroupedScheduleHtml(d) {
+        if (!d.work_schedule) return '<p>لم تحدد المواعيد بعد</p>';
+        const dayNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+        const daysOrder = [6,0,1,2,3,4,5];
+        let groups = [], offDays = [];
+        
+        daysOrder.forEach(jsDay => {
+            const s = d.work_schedule[jsDay];
+            if (s && s.active) {
+                const key = `${s.s1_s||''}-${s.s1_e||''}-${s.s2_a||false}-${s.s2_s||''}-${s.s2_e||''}`;
+                let g = groups.find(g => g.key === key);
+                if (g) g.days.push(dayNames[jsDay]);
+                else groups.push({ key, days: [dayNames[jsDay]], data: s });
+            } else offDays.push(dayNames[jsDay]);
+        });
+        
+        let html = '';
+        groups.forEach(g => {
+            const dText = g.days.length === 1 ? g.days[0] :
+                          g.days.length === 2 ? `${g.days[0]} و ${g.days[1]}` :
+                          `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
+            html += `<div class="schedule-group">
+                <div class="schedule-days">${dText}</div>
+                <div class="time-period">
+                    <span class="period-label">صباحاً:</span>
+                    <span class="time-text">${formatTime12(g.data.s1_s||'09:00')}</span>
+                    <span>—</span>
+                    <span class="time-text">${formatTime12(g.data.s1_e||'17:00')}</span>
+                </div>`;
+            if (g.data.s2_a && g.data.s2_s && g.data.s2_e) {
+                html += `<div class="time-period">
+                    <span class="period-label">مساءً:</span>
+                    <span class="time-text">${formatTime12(g.data.s2_s)}</span>
+                    <span>—</span>
+                    <span class="time-text">${formatTime12(g.data.s2_e)}</span>
+                </div>`;
+            }
+            html += `</div>`;
+        });
+        
+        if (offDays.length) {
+            const offText = offDays.length === 1 ? offDays[0] : offDays.join('، ');
+            html += `<div class="holiday-text"><i class="fas fa-moon"></i> عطلة: ${offText}</div>`;
+        }
+        return html;
+    }
+    
+    function formatTime12(t) {
+        if (!t) return "";
+        let [h, m] = t.split(':');
+        h = parseInt(h);
+        return `${h%12||12}:${m} ${h>=12?'م':'ص'}`;
+    }
+    
+    function updateWorkStatus() {
+        const d = currentData;
+        const container = document.getElementById('statusContainer');
+        if (!container || !d.work_schedule) return;
+        const now = new Date();
+        const day = now.getDay();
+        const schedule = d.work_schedule[day];
+        let isOpen = false;
+        if (schedule && schedule.active) {
+            const toMins = (t) => { if(!t) return -1; let [h,m] = t.split(':').map(Number); return h*60+m; };
+            const cur = now.getHours()*60+now.getMinutes();
+            const s1 = toMins(schedule.s1_s), e1 = toMins(schedule.s1_e);
+            if (cur >= s1 && cur < e1) isOpen = true;
+            if (!isOpen && schedule.s2_a && schedule.s2_s && schedule.s2_e) {
+                const s2 = toMins(schedule.s2_s), e2 = toMins(schedule.s2_e);
+                if ((e2 < s2 && (cur >= s2 || cur < e2)) || (cur >= s2 && cur < e2)) isOpen = true;
+            }
+        }
+        container.innerHTML = isOpen ? 
+            `<div class="status-badge status-open"><i class="fas fa-circle"></i> مفتوح الآن</div>` :
+            `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق الآن</div>`;
+    }
+    
+    // Render Partners Marquee
+    function renderPartnersMarquee() {
+        const container = document.getElementById('partnersMarquee');
+        const track = document.getElementById('marqueeTrack');
+        if (!container || !track) return;
+        const partners = currentData.partners ? Object.values(currentData.partners) : [];
+        if (partners.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+        container.style.display = 'block';
+        // Double the items for seamless loop
+        let html = '';
+        [...partners, ...partners].forEach(p => {
+            html += `<img src="${p.url}" class="partner-logo" alt="شريك" onclick="window.open('${p.url}', '_blank')">`;
+        });
+        track.innerHTML = html;
+    }
+    
+    // Render Tabs
+    function renderTabs() {
+        const container = document.getElementById('tabsSection');
+        let html = `<button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button>`;
+        html += `<button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button>`;
+        html += `<button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button>`;
+        html += `<button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
+        if (currentData.pages) {
+            Object.keys(currentData.pages).forEach(id => {
+                const isActive = currentPage === `page_${id}`;
+                html += `<button class="tab-btn ${isActive ? 'active' : ''}" data-page="page_${id}">${currentData.pages[id].title}</button>`;
+            });
+        }
+        container.innerHTML = html;
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentPage = btn.dataset.page;
+                renderTabs();
+                renderCurrentPage();
+            });
+        });
+    }
+    
     // Image Viewer with Zoom
     function openViewer(url, imageList, index) {
         currentImageList = imageList;
@@ -717,14 +913,14 @@
             else { zoomScale = 2; img.style.transform = `scale(2) translate(0px, 0px)`; isZoomed = true; }
         };
     }
-
+    
     // Render Functions
     function renderHome() {
         const d = currentData;
         const aboutHtml = d.about_active !== false ? `
             <div class="info-card">
                 <div class="card-title"><i class="fas fa-info-circle"></i> من نحن</div>
-                <div class="toggle-content open" style="padding:0; max-height:none;">${d.about_text || 'نقدم لكم أرقى التصاميم الداخلية والديكورات الفاخرة التي تجمع بين الأناقة والجودة العالية.'}</div>
+                <div>${d.about_text || 'نقدم لكم أرقى التصاميم الداخلية والديكورات الفاخرة التي تجمع بين الأناقة والجودة العالية.'}</div>
             </div>
         ` : '';
         
@@ -740,14 +936,14 @@
             reviewsHtml = `<div class="info-card"><div class="card-title"><i class="fas fa-star"></i> تقييمات العملاء</div><div class="review-slider" id="reviewSlider">${items}</div></div>`;
         }
         
-        const scheduleHtml = `<div class="info-card"><div class="card-title"><i class="fas fa-clock"></i> أوقات العمل</div>${getScheduleHtml(d)}<div id="statusContainer" style="margin-top:15px;"></div></div>`;
+        const scheduleHtml = `<div class="info-card"><div class="card-title"><i class="fas fa-clock"></i> أوقات العمل</div>${getGroupedScheduleHtml(d)}<div id="statusContainer" style="margin-top:15px;"></div></div>`;
         
         const locationHtml = d.location_url ? `<div class="info-card"><button onclick="window.open('${d.location_url}','_blank')" class="location-btn"><i class="fas fa-map-marker-alt"></i> موقعنا على الخريطة</button></div>` : '';
         
         return `
             <div class="hero-card">
-                <h2>✨ عيد فطر مبارك ✨</h2>
-                <p>كل عام وأنتم بخير</p>
+                <h2>✨ بصمة غير للديكور ✨</h2>
+                <p>تصميم داخلي فاخر بلمسة عصرية</p>
             </div>
             ${aboutHtml}
             <div class="info-card">
@@ -771,54 +967,12 @@
                 <button onclick="whatsappGlobal()" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</button>
                 <div class="social-links" id="socialLinks"></div>
             </div>
-            <div class="info-card" id="partnersContainer"><div class="card-title"><i class="fas fa-handshake"></i> شركاء النجاح</div><div id="partnersSlider" class="partner-slider"></div></div>
         `;
-    }
-    
-    function getScheduleHtml(d) {
-        if (!d.work_schedule) return '<p>لم تحدد المواعيد بعد</p>';
-        const dayNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-        let html = '';
-        for (let i=0; i<=6; i++) {
-            const s = d.work_schedule[i];
-            if (s && s.active) {
-                html += `<div class="schedule-group"><div class="schedule-days"><strong>${dayNames[i]}</strong></div>
-                    <div class="time-period"><span class="time-text">${s.s1_s || '09:00'}</span> — <span class="time-text">${s.s1_e || '17:00'}</span></div>`;
-                if (s.s2_a) html += `<div class="time-period"><span class="time-text">${s.s2_s || ''}</span> — <span class="time-text">${s.s2_e || ''}</span></div>`;
-                html += `</div>`;
-            } else if (s && !s.active) {
-                html += `<div class="schedule-group"><strong>${dayNames[i]}</strong> <span style="color:var(--danger);">(عطلة)</span></div>`;
-            }
-        }
-        return html;
-    }
-    
-    function updateWorkStatus() {
-        const d = currentData;
-        const container = document.getElementById('statusContainer');
-        if (!container || !d.work_schedule) return;
-        const now = new Date();
-        const day = now.getDay();
-        const schedule = d.work_schedule[day];
-        let isOpen = false;
-        if (schedule && schedule.active) {
-            const toMins = (t) => { let [h,m] = t.split(':').map(Number); return h*60+m; };
-            const cur = now.getHours()*60+now.getMinutes();
-            const s1 = toMins(schedule.s1_s), e1 = toMins(schedule.s1_e);
-            if (cur >= s1 && cur < e1) isOpen = true;
-            if (!isOpen && schedule.s2_a && schedule.s2_s && schedule.s2_e) {
-                const s2 = toMins(schedule.s2_s), e2 = toMins(schedule.s2_e);
-                if ((e2 < s2 && (cur >= s2 || cur < e2)) || (cur >= s2 && cur < e2)) isOpen = true;
-            }
-        }
-        container.innerHTML = isOpen ? 
-            `<div class="status-badge status-open"><i class="fas fa-circle"></i> مفتوح الآن</div>` :
-            `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق الآن</div>`;
     }
     
     function renderWorks() {
         const d = currentData;
-        if (!d.albums || Object.keys(d.albums).length === 0) return '<div class="empty-state">لا توجد ألبومات بعد</div>';
+        if (!d.albums || Object.keys(d.albums).length === 0) return '<div class="empty-state"><i class="fas fa-folder-open fa-3x"></i><p>لا توجد ألبومات بعد</p></div>';
         let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">';
         Object.keys(d.albums).forEach(id => {
             const album = d.albums[id];
@@ -842,7 +996,7 @@
     
     function renderCatalogs() {
         const d = currentData;
-        if (!d.catalogs || Object.keys(d.catalogs).length === 0) return '<div class="empty-state">لا توجد كتالوجات بعد</div>';
+        if (!d.catalogs || Object.keys(d.catalogs).length === 0) return '<div class="empty-state"><i class="fas fa-book-open fa-3x"></i><p>لا توجد كتالوجات بعد</p></div>';
         let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">';
         Object.keys(d.catalogs).forEach(id => {
             html += `<div class="folder-card" onclick="openCatalog('${id}')">
@@ -875,12 +1029,19 @@
         return html;
     }
     
-    function renderPartners() {
-        const container = document.getElementById('partnersSlider');
-        if (!container || !currentData.partners) return;
-        const partners = Object.values(currentData.partners);
-        if (!partners.length) return;
-        container.innerHTML = `<div style="display:flex; gap:15px; overflow-x:auto; padding:10px 0;">${partners.map(p => `<img src="${p.url}" style="height:60px; object-fit:contain;">`).join('')}</div>`;
+    function renderPage(pageId) {
+        const page = currentData.pages[pageId];
+        if (!page || !page.imgs) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور في هذا القسم</p></div>';
+        const urls = Object.values(page.imgs).map(img => img.url);
+        let html = '<div class="photo-grid">';
+        Object.keys(page.imgs).forEach((imgId, idx) => {
+            html += `<div class="photo-item" onclick="openViewer('${page.imgs[imgId].url}', ${JSON.stringify(urls)}, ${idx})">
+                        <img src="${page.imgs[imgId].url}" loading="lazy">
+                        <button class="fav-btn ${isFav(`page_${pageId}_${imgId}`) ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('page_${pageId}_${imgId}', '${page.imgs[imgId].url}')"><i class="fas ${isFav(`page_${pageId}_${imgId}`) ? 'fa-heart' : 'fa-heart'}"></i></button>
+                     </div>`;
+        });
+        html += '</div>';
+        return html;
     }
     
     function renderSocial() {
@@ -918,12 +1079,15 @@
             content = `<h2 style="margin-bottom:20px;"><i class="fas fa-book-open"></i> الكتالوجات</h2>${renderCatalogs()}`;
         } else if (currentPage === 'favorites') {
             content = `<h2 style="margin-bottom:20px;"><i class="fas fa-heart"></i> المفضلة</h2>${renderFavorites()}`;
+        } else if (currentPage.startsWith('page_')) {
+            const pageId = currentPage.replace('page_', '');
+            content = `<h2 style="margin-bottom:20px;">${currentData.pages?.[pageId]?.title || ''}</h2>${renderPage(pageId)}`;
         }
         main.innerHTML = content;
         document.getElementById('siteTitle').innerText = currentData.site_name || 'بصمة غير';
         renderSocial();
-        renderPartners();
         updateWorkStatus();
+        renderPartnersMarquee();
         setTimeout(() => {
             startReviewSlider();
             setupStarRating();
@@ -957,17 +1121,17 @@
         const container = document.getElementById('adminSections');
         const d = currentData;
         container.innerHTML = `
-            ${buildCollapse('الشركاء', 'partnersContent', `<div id="partnersAdminList"></div><input id="partnerUrl" placeholder="رابط الشعار"><button class="admin-btn btn-green" onclick="addPartner()">إضافة شريك</button>`)}
-            ${buildCollapse('الأقسام والتبويبات', 'tabsContent', `<div id="pagesList"></div><div style="display:flex; gap:8px;"><input id="newPageName" placeholder="اسم قسم جديد"><button class="admin-btn btn-green" onclick="addPage()">إضافة</button></div>`)}
-            ${buildCollapse('الألبومات', 'albumsContent', `<div id="albumsList"></div><div style="display:flex; gap:8px;"><input id="newAlbumName" placeholder="اسم ألبوم جديد"><button class="admin-btn btn-green" onclick="addAlbum()">إضافة</button></div>`)}
-            ${buildCollapse('الكتالوجات', 'catalogsContent', `<div id="catalogsList"></div><div style="display:flex; gap:8px;"><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" placeholder="كود iFrame" rows="3"></textarea><button class="admin-btn btn-green" onclick="addCatalog()">إضافة</button></div>`)}
-            ${buildCollapse('رفع الصور', 'uploadContent', `<select id="targetType"><option value="albums">ألبوم</option><option value="pages">صفحة</option></select><input id="targetId" placeholder="معرف القسم/الألبوم"><textarea id="imageUrls" placeholder="روابط الصور (كل رابط في سطر)" rows="4"></textarea><button class="admin-btn btn-green" onclick="uploadPhotos()">نشر الصور</button>`)}
-            ${buildCollapse('حذف الصور', 'deleteContent', `<select id="deleteTarget" onchange="loadImagesForDelete()"></select><div id="imagesDeleteGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:12px;"></div>`)}
-            ${buildCollapse('من نحن', 'aboutContent', `<textarea id="aboutEditor" rows="5">${d.about_text || ''}</textarea><label><input type="checkbox" id="aboutActive" ${d.about_active !== false ? 'checked' : ''}> تفعيل القسم</label><button class="admin-btn btn-gold" onclick="saveAbout()">حفظ</button>`)}
-            ${buildCollapse('مواعيد العمل', 'scheduleContent', `<div id="scheduleEditor"></div><button class="admin-btn btn-gold" onclick="saveSchedule()">حفظ المواعيد</button>`)}
-            ${buildCollapse('التواصل الاجتماعي', 'socialContent', `<input id="instaInput" placeholder="انستقرام" value="${d.insta_url || ''}"><input id="tiktokInput" placeholder="تيك توك" value="${d.tiktok_url || ''}"><input id="snapInput" placeholder="سناب شات" value="${d.snap_url || ''}"><input id="locationInput" placeholder="رابط قوقل ماب" value="${d.location_url || ''}"><button class="admin-btn btn-gold" onclick="saveSocial()">حفظ</button>`)}
-            ${buildCollapse('الإعدادات العامة', 'generalContent', `<input id="siteNameInput" placeholder="اسم الموقع" value="${d.site_name || ''}"><input id="whatsappInput" placeholder="رقم واتساب" value="${d.whatsapp_num || ''}"><input id="wmInput" placeholder="العلامة المائية" value="${d.wm_text || ''}"><input id="footerInput" placeholder="حقوق الملكية" value="${d.footer_text || ''}"><button class="admin-btn btn-gold" onclick="saveGeneral()">حفظ</button>`)}
-            ${buildCollapse('التقييمات', 'reviewsContent', `<div id="reviewsAdminList"></div>`)}
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🤝 شركاء النجاح <span>▾</span></button><div class="collapse-content"><div id="partnersAdminList"></div><input id="partnerUrl" placeholder="رابط الشعار"><button class="admin-btn btn-green" onclick="addPartner()">إضافة شريك</button></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 الأقسام والتبويبات <span>▾</span></button><div class="collapse-content"><div id="pagesList"></div><div style="display:flex; gap:8px;"><input id="newPageName" placeholder="اسم قسم جديد"><button class="admin-btn btn-green" onclick="addPage()">إضافة</button></div></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 الألبومات <span>▾</span></button><div class="collapse-content"><div id="albumsList"></div><div style="display:flex; gap:8px;"><input id="newAlbumName" placeholder="اسم ألبوم جديد"><button class="admin-btn btn-green" onclick="addAlbum()">إضافة</button></div></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📚 الكتالوجات <span>▾</span></button><div class="collapse-content"><div id="catalogsList"></div><div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" placeholder="كود iFrame" rows="3"></textarea><button class="admin-btn btn-green" onclick="addCatalog()">إضافة</button></div></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📸 رفع الصور <span>▾</span></button><div class="collapse-content"><select id="targetType"><option value="albums">ألبوم</option><option value="pages">صفحة</option></select><input id="targetId" placeholder="معرف القسم/الألبوم"><textarea id="imageUrls" placeholder="روابط الصور (كل رابط في سطر)" rows="4"></textarea><button class="admin-btn btn-green" onclick="uploadPhotos()">نشر الصور</button></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🗑️ حذف الصور <span>▾</span></button><div class="collapse-content"><select id="deleteTarget" onchange="loadImagesForDelete()"></select><div id="imagesDeleteGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:12px;"></div></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📖 من نحن <span>▾</span></button><div class="collapse-content"><textarea id="aboutEditor" rows="5">${d.about_text || ''}</textarea><label><input type="checkbox" id="aboutActive" ${d.about_active !== false ? 'checked' : ''}> تفعيل القسم</label><button class="admin-btn btn-gold" onclick="saveAbout()">حفظ</button></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🕒 مواعيد العمل <span>▾</span></button><div class="collapse-content"><div id="scheduleEditor"></div><button class="admin-btn btn-gold" onclick="saveSchedule()">حفظ المواعيد</button></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🔗 التواصل الاجتماعي <span>▾</span></button><div class="collapse-content"><input id="instaInput" placeholder="انستقرام" value="${d.insta_url || ''}"><input id="tiktokInput" placeholder="تيك توك" value="${d.tiktok_url || ''}"><input id="snapInput" placeholder="سناب شات" value="${d.snap_url || ''}"><input id="locationInput" placeholder="رابط قوقل ماب" value="${d.location_url || ''}"><button class="admin-btn btn-gold" onclick="saveSocial()">حفظ</button></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">⚙️ الإعدادات العامة <span>▾</span></button><div class="collapse-content"><input id="siteNameInput" placeholder="اسم الموقع" value="${d.site_name || ''}"><input id="whatsappInput" placeholder="رقم واتساب" value="${d.whatsapp_num || ''}"><input id="wmInput" placeholder="العلامة المائية" value="${d.wm_text || ''}"><input id="footerInput" placeholder="حقوق الملكية" value="${d.footer_text || ''}"><button class="admin-btn btn-gold" onclick="saveGeneral()">حفظ</button></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">⭐ إدارة التقييمات <span>▾</span></button><div class="collapse-content"><div id="reviewsAdminList"></div></div></div>
         `;
         renderPagesList();
         renderAlbumsList();
@@ -976,9 +1140,6 @@
         renderReviewsAdmin();
         renderScheduleEditor();
         renderDeleteTargets();
-    }
-    function buildCollapse(title, id, content) {
-        return `<div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">${title} <span>▾</span></button><div class="collapse-content" id="${id}">${content}</div></div>`;
     }
     function toggleCollapse(btn) { const content = btn.nextElementSibling; content.style.display = content.style.display === 'block' ? 'none' : 'block'; }
     function renderPagesList() {
@@ -1085,19 +1246,10 @@
         });
     }
     
-    // Navigation
-    document.querySelectorAll('.nav-icon').forEach(btn => {
-        btn.addEventListener('click', () => {
-            currentPage = btn.dataset.page;
-            document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderCurrentPage();
-        });
-    });
-    
     // Firebase Listener
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
+        renderTabs();
         renderCurrentPage();
         if (isAdmin && document.getElementById('adminPanel').classList.contains('active')) buildAdminSections();
     });
@@ -1111,6 +1263,7 @@
     window.saveAbout = saveAbout; window.saveSchedule = saveSchedule; window.saveSocial = saveSocial; window.saveGeneral = saveGeneral;
     window.uploadPhotos = uploadPhotos; window.loadImagesForDelete = loadImagesForDelete; window.deleteImage = deleteImage;
     
+    renderTabs();
     renderCurrentPage();
 </script>
 </body>
