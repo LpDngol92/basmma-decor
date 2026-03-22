@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* جميع الأنماط السابقة محفوظة كما هي */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Cairo', sans-serif; background: #fafafc; color: #1c1c1e; overflow-x: hidden; }
         :root {
@@ -71,14 +70,125 @@
         .social-link { width: 48px; height: 48px; background: var(--bg-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1.3rem; text-decoration: none; transition: all 0.2s; }
         .social-link:hover { background: var(--accent); color: white; }
         .location-btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; cursor: pointer; }
+        /* Photo Grid */
         .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
         .photo-item { aspect-ratio: 1; background: #f0f0f0; position: relative; cursor: pointer; overflow: hidden; }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
         .photo-item:hover img { transform: scale(1.05); }
-        .album-card, .folder-card { background: var(--bg-card); border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s; }
-        .album-card:hover, .folder-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+        /* New overlay style for photo items: icons at bottom left/right */
+        .photo-item .photo-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            padding: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .photo-item:hover .photo-overlay {
+            opacity: 1;
+        }
+        .photo-item .action-btn-icon {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+        }
+        .photo-item .action-btn-icon.fav-btn-icon { color: var(--text-secondary); }
+        .photo-item .action-btn-icon.fav-btn-icon.active { color: var(--danger); background: white; }
+        .photo-item .action-btn-icon.whatsapp-btn-icon { color: var(--whatsapp); }
+
+        /* Album Cards (Works section) */
+        .album-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .album-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+        }
+        .album-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+        .album-card h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 8px;
+        }
+        /* Overlay for album cards: icons on left and right */
+        .album-card .album-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .album-card:hover .album-overlay {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .album-card .album-icon-btn {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.2rem;
+        }
+        .album-card .album-icon-btn.fav-album-btn { color: var(--text-secondary); }
+        .album-card .album-icon-btn.fav-album-btn.active { color: var(--danger); background: white; }
+        .album-card .album-icon-btn.whatsapp-album-btn { color: var(--whatsapp); }
+
+        .folder-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .folder-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent);
+        }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
-        /* Viewer Modal */
+        /* Viewer Modal (unchanged) */
         .viewer-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 20000; display: none; align-items: center; justify-content: center; flex-direction: column; }
         .viewer-container { width: 100%; height: 85vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; touch-action: none; }
         .viewer-img { max-width: 90%; max-height: 85vh; object-fit: contain; transition: transform 0.1s ease; cursor: grab; user-select: none; }
@@ -161,7 +271,7 @@
 
     let currentData = {};
     let isAdmin = false;
-    let favorites = JSON.parse(localStorage.getItem('site_favorites_v7')) || [];
+    let favorites = JSON.parse(localStorage.getItem('site_favorites_v8')) || [];
     let currentPage = 'home';
     let currentImageList = [];
     let currentImageIndex = 0;
@@ -179,7 +289,7 @@
     function closePopup() { document.getElementById('popupBubble').style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); }
 
     // Favorites
-    function saveFav() { localStorage.setItem('site_favorites_v7', JSON.stringify(favorites)); }
+    function saveFav() { localStorage.setItem('site_favorites_v8', JSON.stringify(favorites)); }
     function toggleFavorite(imgId, imgUrl) {
         const exists = favorites.find(f => f.id === imgId);
         if (exists) { favorites = favorites.filter(f => f.id !== imgId); showToast('🗑️ تمت الإزالة من المفضلة'); }
@@ -303,13 +413,9 @@
         }, 3000);
     }
 
-    // ========== UNIFIED IMAGE GALLERY RENDERER (Robust with data-attributes) ==========
-    // This function creates a grid of images, each storing its full list of URLs in data-urls,
-    // and a single event listener handles the click to open the viewer.
+    // ========== RENDER FUNCTIONS ==========
     function renderImageGallery(images, parentId) {
-        if (!images || Object.keys(images).length === 0) {
-            return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
-        }
+        if (!images || Object.keys(images).length === 0) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
         const imageIds = Object.keys(images);
         const allUrls = imageIds.map(id => images[id].url);
         const reversedIds = [...imageIds].reverse();
@@ -320,15 +426,12 @@
             const imgUrl = images[imgId].url;
             const fullId = `${parentId}_${imgId}`;
             const favClass = isFav(fullId) ? 'active' : '';
-            // Store the full list of URLs as a JSON string in data-urls, and index in data-index
-            const urlsJson = JSON.stringify(allUrls).replace(/</g, '&lt;').replace(/>/g, '&gt;'); // basic escaping
+            const urlsJson = JSON.stringify(allUrls).replace(/</g, '&lt;').replace(/>/g, '&gt;');
             html += `<div class="photo-item" data-urls='${urlsJson}' data-index='${originalIndex}' data-id='${fullId}' data-url='${imgUrl.replace(/'/g, "\\'")}'>
                         <img src="${imgUrl}" loading="lazy">
                         <div class="photo-overlay">
-                            <div class="action-buttons">
-                                <button class="action-btn-icon fav-btn-icon ${favClass}" onclick="event.stopPropagation(); toggleFavorite('${fullId}', '${imgUrl}')"><i class="fas fa-heart"></i></button>
-                                <button class="action-btn-icon whatsapp-btn-icon" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+imgUrl)}', '_blank')"><i class="fab fa-whatsapp"></i></button>
-                            </div>
+                            <button class="action-btn-icon fav-btn-icon ${favClass}" onclick="event.stopPropagation(); toggleFavorite('${fullId}', '${imgUrl}')"><i class="fas fa-heart"></i></button>
+                            <button class="action-btn-icon whatsapp-btn-icon" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+imgUrl)}', '_blank')"><i class="fab fa-whatsapp"></i></button>
                         </div>
                      </div>`;
         }
@@ -336,26 +439,6 @@
         return html;
     }
 
-    // Global click handler for photo items (delegation)
-    document.addEventListener('click', function(e) {
-        const photoItem = e.target.closest('.photo-item');
-        if (!photoItem) return;
-        const urlsAttr = photoItem.getAttribute('data-urls');
-        if (!urlsAttr) return;
-        try {
-            const urls = JSON.parse(urlsAttr);
-            const index = parseInt(photoItem.getAttribute('data-index'));
-            const id = photoItem.getAttribute('data-id');
-            const url = photoItem.getAttribute('data-url') || urls[index];
-            if (url && urls.length) {
-                openViewer(url, urls, index, id);
-            }
-        } catch (err) {
-            console.error('Error parsing image data', err);
-        }
-    });
-
-    // ========== PAGE RENDERERS ==========
     function renderHome() {
         const d = currentData;
         let reviewsHtml = '';
@@ -372,6 +455,7 @@
         `;
     }
 
+    // Render Works with Album Cards that have side icons
     function renderWorks() {
         const d = currentData;
         if (!d.albums || Object.keys(d.albums).length === 0) return '<div class="empty-state"><i class="fas fa-folder-open fa-3x"></i><p>لا توجد ألبومات بعد</p></div>';
@@ -379,10 +463,31 @@
         Object.keys(d.albums).forEach(id => {
             const album = d.albums[id];
             let cover = album.imgs && Object.keys(album.imgs).length ? Object.values(album.imgs)[0].url : '';
-            html += `<div class="album-card" onclick="openAlbum('${id}')">${cover ? `<img src="${cover}" style="width:100%; height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;">` : '<i class="fas fa-folder-open fa-3x"></i>'}<h4>${album.name}</h4></div>`;
+            const coverId = `album_${id}_cover`;
+            const isFavCover = isFav(coverId);
+            html += `<div class="album-card" data-album-id="${id}">
+                        ${cover ? `<img src="${cover}" loading="lazy" onerror="this.style.display='none'">` : '<i class="fas fa-folder-open fa-3x"></i>'}
+                        <h4>${album.name}</h4>
+                        <div class="album-overlay">
+                            <button class="album-icon-btn fav-album-btn ${isFavCover ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${coverId}', '${cover}')"><i class="fas fa-heart"></i></button>
+                            <button class="album-icon-btn whatsapp-album-btn" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+cover)}', '_blank')"><i class="fab fa-whatsapp"></i></button>
+                        </div>
+                     </div>`;
         });
         html += '</div>';
         return html;
+    }
+
+    // Attach album click listener separately because the album card click should open the album
+    function attachAlbumListeners() {
+        document.querySelectorAll('.album-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                // If the click target is one of the buttons, do not open album
+                if (e.target.closest('.album-icon-btn')) return;
+                const albumId = card.getAttribute('data-album-id');
+                if (albumId) openAlbum(albumId);
+            });
+        });
     }
 
     function openAlbum(albumId) {
@@ -413,10 +518,8 @@
             html += `<div class="photo-item" data-urls='${urlsJson}' data-index='${idx}' data-id='${fav.id}' data-url='${fav.url.replace(/'/g, "\\'")}'>
                         <img src="${fav.url}" loading="lazy">
                         <div class="photo-overlay">
-                            <div class="action-buttons">
-                                <button class="action-btn-icon fav-btn-icon active" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')"><i class="fas fa-heart"></i></button>
-                                <button class="action-btn-icon whatsapp-btn-icon" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+fav.url)}', '_blank')"><i class="fab fa-whatsapp"></i></button>
-                            </div>
+                            <button class="action-btn-icon fav-btn-icon active" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')"><i class="fas fa-heart"></i></button>
+                            <button class="action-btn-icon whatsapp-btn-icon" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+fav.url)}', '_blank')"><i class="fab fa-whatsapp"></i></button>
                         </div>
                      </div>`;
         });
@@ -484,9 +587,28 @@
         setTimeout(() => { startReviewSlider(); setupStarRating(); }, 100);
         startTabAutoScroll();
         if (currentPage === 'home') setTimeout(showPopup, 1500);
+        attachAlbumListeners(); // attach after rendering works section
     }
 
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
+
+    // Global click handler for photo items (delegation)
+    document.addEventListener('click', function(e) {
+        const photoItem = e.target.closest('.photo-item');
+        if (photoItem && !e.target.closest('.action-btn-icon')) {
+            const urlsAttr = photoItem.getAttribute('data-urls');
+            if (!urlsAttr) return;
+            try {
+                const urls = JSON.parse(urlsAttr);
+                const index = parseInt(photoItem.getAttribute('data-index'));
+                const id = photoItem.getAttribute('data-id');
+                const url = photoItem.getAttribute('data-url') || urls[index];
+                if (url && urls.length) {
+                    openViewer(url, urls, index, id);
+                }
+            } catch (err) { console.error(err); }
+        }
+    });
 
     // ========== ADMIN PANEL (complete, as before) ==========
     function buildAdminSections() {
