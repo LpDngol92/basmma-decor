@@ -8,7 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -18,361 +18,467 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f5f7;
+            font-family: 'Cairo', sans-serif;
+            background: #fafafc;
             color: #1c1c1e;
             overflow-x: hidden;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
-        /* Modern Instagram-like theme */
         :root {
             --bg-primary: #ffffff;
-            --bg-secondary: #f5f5f7;
+            --bg-secondary: #f8f9fa;
             --bg-card: #ffffff;
             --text-primary: #1c1c1e;
             --text-secondary: #6c6c70;
-            --accent: #d4af37;
-            --accent-dark: #b49450;
+            --accent: #c9a96e;
+            --accent-dark: #b48c48;
+            --accent-light: #e6d5b8;
             --border: #e9ecef;
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
             --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+            --success: #28a745;
+            --danger: #dc3545;
+            --whatsapp: #25D366;
         }
 
-        /* Reels / Story style navigation */
-        .story-bar {
-            background: var(--bg-primary);
-            padding: 12px 16px;
-            overflow-x: auto;
-            white-space: nowrap;
-            display: flex;
-            gap: 12px;
-            scrollbar-width: none;
-            border-bottom: 1px solid var(--border);
+        /* Top Navigation Bar */
+        .top-nav {
             position: sticky;
             top: 0;
-            z-index: 100;
-            backdrop-filter: blur(10px);
-            background: rgba(255,255,255,0.92);
-        }
-        .story-bar::-webkit-scrollbar { display: none; }
-        .story-item {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            flex-shrink: 0;
-        }
-        .story-avatar {
-            width: 68px;
-            height: 68px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), #e6c87c);
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 20px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            padding: 2px;
+            z-index: 1000;
         }
-        .story-avatar-inner {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
+        .logo-area h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
             color: var(--accent-dark);
-            background: #f8f9fa;
+            letter-spacing: 1px;
         }
-        .story-label {
-            font-size: 11px;
-            font-weight: 500;
+        .logo-area p {
+            font-size: 0.7rem;
             color: var(--text-secondary);
         }
-
-        /* Main Feed */
-        .feed {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 16px;
+        .nav-icons {
+            display: flex;
+            gap: 20px;
         }
-        .post-card {
+        .nav-icon {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .nav-icon.active {
+            color: var(--accent-dark);
+        }
+        .nav-icon:hover {
+            transform: scale(1.05);
+        }
+
+        /* Main Content */
+        .main-content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px 16px 100px;
+        }
+        .page {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .page.active-page {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Home Page Components */
+        .hero-card {
+            background: linear-gradient(135deg, var(--accent-light), #fff);
+            border-radius: 28px;
+            padding: 32px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+        .hero-card h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent-dark);
+        }
+        .info-card {
             background: var(--bg-card);
             border-radius: 20px;
+            padding: 20px;
             margin-bottom: 20px;
-            box-shadow: var(--shadow-sm);
             border: 1px solid var(--border);
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
         }
-        .post-card:hover {
-            transform: translateY(-2px);
+        .info-card:hover {
             box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
         }
-        .post-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
-        }
-        .post-user {
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
+            color: var(--accent-dark);
+            border-right: 3px solid var(--accent);
+            padding-right: 12px;
         }
-        .post-avatar {
-            width: 40px;
-            height: 40px;
+        .toggle-btn {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .toggle-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+            background: var(--bg-card);
+            border-radius: 0 0 16px 16px;
+        }
+        .toggle-content.open {
+            max-height: 1000px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-top: none;
+        }
+        .star-rating {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-direction: row-reverse;
+        }
+        .star-rating i {
+            font-size: 1.8rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .star-rating i.active,
+        .star-rating i:hover {
+            color: var(--accent);
+        }
+        .review-slider {
+            position: relative;
+            min-height: 180px;
+        }
+        .review-item {
+            position: absolute;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            text-align: center;
+        }
+        .review-item.active {
+            opacity: 1;
+            position: relative;
+        }
+        .review-stars {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+        .schedule-group {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .time-period {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 5px 0;
+        }
+        .time-text {
+            background: var(--bg-secondary);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 40px;
+            font-weight: 600;
+        }
+        .status-open {
+            background: #e8f5e9;
+            color: var(--success);
+        }
+        .status-closed {
+            background: #ffebee;
+            color: var(--danger);
+        }
+        .whatsapp-btn {
+            background: var(--whatsapp);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 40px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .whatsapp-btn:hover {
+            transform: scale(1.02);
+            background: #20b359;
+        }
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .social-link {
+            width: 48px;
+            height: 48px;
+            background: var(--bg-secondary);
             border-radius: 50%;
-            background: var(--accent);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
-            font-weight: bold;
-        }
-        .post-info h4 {
-            font-size: 14px;
-            font-weight: 700;
-        }
-        .post-info p {
-            font-size: 11px;
             color: var(--text-secondary);
-        }
-        .post-image {
-            width: 100%;
-            aspect-ratio: 1 / 1;
-            object-fit: cover;
+            font-size: 1.3rem;
+            transition: all 0.2s;
             cursor: pointer;
-            background: #f0f0f0;
-        }
-        .post-actions {
-            padding: 12px 16px;
-            display: flex;
-            gap: 20px;
-            border-top: 1px solid var(--border);
-        }
-        .action-btn {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-secondary);
-            transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 18px;
-        }
-        .action-btn i { font-size: 24px; }
-        .action-btn.active { color: #ed4956; }
-        .action-btn:hover { transform: scale(1.05); }
-        .post-caption {
-            padding: 0 16px 12px;
-            font-size: 13px;
-            color: var(--text-primary);
-        }
-        .hashtag {
-            color: var(--accent-dark);
             text-decoration: none;
         }
+        .social-link:hover {
+            background: var(--accent);
+            color: white;
+            transform: translateY(-3px);
+        }
+        .location-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+        }
 
-        /* Catalog & Album Grid (Explore style) */
-        .explore-grid {
+        /* Photo Grid (Instagram Style) */
+        .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 2px;
-            background: var(--bg-primary);
+            gap: 4px;
         }
-        .explore-item {
-            aspect-ratio: 1 / 1;
-            background: #e9ecef;
-            cursor: pointer;
+        .photo-item {
+            aspect-ratio: 1;
+            background: #f0f0f0;
             position: relative;
+            cursor: pointer;
             overflow: hidden;
         }
-        .explore-item img {
+        .photo-item img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             transition: transform 0.3s;
         }
-        .explore-item:hover img { transform: scale(1.03); }
-        .overlay-icon {
+        .photo-item:hover img {
+            transform: scale(1.05);
+        }
+        .photo-overlay {
             position: absolute;
-            bottom: 8px;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .photo-item:hover .photo-overlay {
+            opacity: 1;
+        }
+        .fav-btn {
+            position: absolute;
+            top: 8px;
             right: 8px;
-            color: white;
-            background: rgba(0,0,0,0.5);
+            background: rgba(255,255,255,0.9);
+            border: none;
             border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-        }
-
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(255,255,255,0.96);
-            backdrop-filter: blur(20px);
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 20px 24px;
-            border-top: 1px solid var(--border);
-            z-index: 1000;
-        }
-        .nav-icon {
-            font-size: 24px;
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            z-index: 2;
             color: var(--text-secondary);
-            background: none;
-            border: none;
+        }
+        .fav-btn.active {
+            color: var(--danger);
+        }
+        .album-card, .folder-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
             cursor: pointer;
-            transition: color 0.2s;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
         }
-        .nav-icon.active { color: var(--accent-dark); }
-        .content-area { padding-bottom: 80px; }
-        .page { display: none; }
-        .page.active-page { display: block; }
-
-        /* Favorites page */
-        .favorites-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 2px;
-        }
-        .fav-item {
-            aspect-ratio: 1;
-            background: #f0f0f0;
-            position: relative;
-        }
-        .fav-item img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .remove-fav {
-            position: absolute;
-            top: 6px;
-            left: 6px;
-            background: rgba(0,0,0,0.6);
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            border: none;
-            cursor: pointer;
+        .album-card:hover, .folder-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent);
         }
 
-        /* Viewer (Instagram style) */
+        /* Viewer Modal with Zoom */
         .viewer-modal {
             position: fixed;
             inset: 0;
-            background: black;
-            z-index: 2000;
+            background: rgba(0,0,0,0.95);
+            z-index: 10000;
             display: none;
             align-items: center;
             justify-content: center;
             flex-direction: column;
+            touch-action: none;
+        }
+        .viewer-container {
+            width: 100%;
+            height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
         }
         .viewer-img {
-            max-width: 100%;
+            max-width: 90%;
             max-height: 80vh;
             object-fit: contain;
+            transition: transform 0.1s ease;
+            cursor: grab;
+        }
+        .viewer-img:active {
+            cursor: grabbing;
+        }
+        .viewer-controls {
+            position: fixed;
+            bottom: 30px;
+            display: flex;
+            gap: 30px;
+            background: rgba(0,0,0,0.5);
+            padding: 12px 24px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+        .viewer-controls button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
         }
         .viewer-close {
-            position: absolute;
+            position: fixed;
             top: 20px;
             left: 20px;
             background: rgba(0,0,0,0.5);
             border: none;
             color: white;
-            font-size: 28px;
-            border-radius: 50%;
+            font-size: 1.5rem;
             width: 44px;
             height: 44px;
-            cursor: pointer;
-        }
-        .viewer-nav {
-            position: absolute;
-            bottom: 30px;
-            display: flex;
-            gap: 40px;
-            background: rgba(0,0,0,0.5);
-            padding: 12px 24px;
-            border-radius: 40px;
-        }
-        .viewer-nav button {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 28px;
+            border-radius: 50%;
             cursor: pointer;
         }
 
-        /* Admin panel toggle */
-        .admin-trigger {
+        /* Hidden Admin Button (Left Side) */
+        .hidden-admin {
             position: fixed;
-            bottom: 90px;
-            right: 16px;
+            bottom: 20px;
+            left: 20px;
             width: 48px;
             height: 48px;
-            background: var(--accent);
+            background: rgba(0,0,0,0.1);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
             cursor: pointer;
-            z-index: 1100;
-            box-shadow: var(--shadow-md);
+            z-index: 2000;
+            opacity: 0.3;
+            transition: opacity 0.2s;
         }
-        /* Admin panel styles (compact but complete) */
+        .hidden-admin:hover {
+            opacity: 1;
+            background: var(--accent);
+            color: white;
+        }
+
+        /* Admin Panel */
         .admin-panel {
             position: fixed;
             inset: 0;
             background: var(--bg-primary);
-            z-index: 3000;
+            z-index: 10001;
             overflow-y: auto;
             display: none;
             padding: 20px;
         }
-        .admin-panel.active { display: block; }
+        .admin-panel.active {
+            display: block;
+        }
         .admin-card {
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
         }
         .collapse-section {
             background: var(--bg-secondary);
             border-radius: 16px;
             margin-bottom: 12px;
-            overflow: hidden;
+            border: 1px solid var(--border);
         }
         .collapse-btn {
             width: 100%;
             padding: 16px;
             background: none;
             border: none;
-            font-weight: 600;
+            font-weight: 700;
             text-align: right;
             display: flex;
             justify-content: space-between;
             cursor: pointer;
+            font-size: 1rem;
         }
-        .collapse-content { display: none; padding: 16px; border-top: 1px solid var(--border); }
+        .collapse-content {
+            display: none;
+            padding: 16px;
+            border-top: 1px solid var(--border);
+        }
         input, textarea, select {
             width: 100%;
             padding: 12px;
@@ -391,19 +497,21 @@
             cursor: pointer;
         }
         .btn-gold { background: var(--accent); color: #1c1c1e; }
-        .btn-red { background: #ed4956; color: white; }
-        .btn-green { background: #34c759; color: white; }
-
-        /* empty states */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-secondary);
+        .btn-red { background: var(--danger); color: white; }
+        .btn-green { background: var(--success); color: white; }
+        .partner-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            margin-bottom: 8px;
         }
-        .section-title {
-            font-size: 20px;
-            font-weight: 700;
-            padding: 16px;
+        .partner-item img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
         }
         .toast-msg {
             position: fixed;
@@ -415,71 +523,60 @@
             padding: 10px 20px;
             border-radius: 40px;
             font-size: 14px;
-            z-index: 2000;
+            z-index: 10002;
             display: none;
+        }
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: var(--accent-dark);
+            margin-bottom: 16px;
+            cursor: pointer;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
-<!-- Bottom Navigation -->
-<div class="bottom-nav">
-    <button class="nav-icon" data-page="feed"><i class="fas fa-home"></i></button>
-    <button class="nav-icon" data-page="explore"><i class="fas fa-compass"></i></button>
-    <button class="nav-icon" data-page="favorites"><i class="fas fa-heart"></i></button>
-    <button class="nav-icon" data-page="profile"><i class="fas fa-user"></i></button>
+<!-- Hidden Admin Trigger (Left Side) -->
+<div class="hidden-admin" onclick="checkAccess()">
+    <i class="fas fa-crown"></i>
 </div>
 
-<div class="admin-trigger" onclick="checkAccess()"><i class="fas fa-crown"></i></div>
-
-<!-- Main Content Area -->
-<div class="content-area" id="content-area">
-    <!-- Feed Page -->
-    <div class="page" id="feed-page">
-        <div class="story-bar" id="storyBar"></div>
-        <div class="feed" id="feedContainer"></div>
+<!-- Top Navigation -->
+<div class="top-nav">
+    <div class="logo-area">
+        <h1 id="siteTitle">بصمة غير</h1>
+        <p>للديكور والتصميم الداخلي</p>
     </div>
-
-    <!-- Explore Page (Albums + Catalogs) -->
-    <div class="page" id="explore-page">
-        <div class="section-title"><i class="fas fa-compass"></i> استكشف</div>
-        <div id="exploreContainer"></div>
-    </div>
-
-    <!-- Favorites Page -->
-    <div class="page" id="favorites-page">
-        <div class="section-title"><i class="fas fa-heart" style="color:#ed4956"></i> المفضلة</div>
-        <div id="favoritesGrid" class="favorites-grid"></div>
-    </div>
-
-    <!-- Profile Page -->
-    <div class="page" id="profile-page">
-        <div class="section-title">الملف الشخصي</div>
-        <div style="padding: 20px; text-align: center;">
-            <div style="width: 100px; height: 100px; background: var(--accent); border-radius: 50%; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 48px; color: white;">ب</div>
-            <h3 id="siteNameProfile">بصمة غير للديكور</h3>
-            <p style="color: var(--text-secondary); margin: 8px 0;">تصميم داخلي | ديكور فاخر</p>
-            <div id="aboutProfile" style="margin-top: 20px; text-align: right; background: var(--bg-secondary); padding: 20px; border-radius: 20px;"></div>
-            <div style="margin-top: 20px;">
-                <button onclick="whatsappGlobal()" class="admin-btn btn-green" style="width: auto; padding: 12px 30px;"><i class="fab fa-whatsapp"></i> تواصل معنا</button>
-            </div>
-            <div id="socialLinks" style="margin-top: 20px; display: flex; gap: 20px; justify-content: center;"></div>
-        </div>
+    <div class="nav-icons">
+        <button class="nav-icon" data-page="home"><i class="fas fa-home"></i></button>
+        <button class="nav-icon" data-page="works"><i class="fas fa-images"></i></button>
+        <button class="nav-icon" data-page="catalogs"><i class="fas fa-book-open"></i></button>
+        <button class="nav-icon" data-page="favorites"><i class="fas fa-heart"></i></button>
     </div>
 </div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent"></div>
 
 <!-- Viewer Modal -->
 <div id="viewerModal" class="viewer-modal" onclick="closeViewerOnBg(event)">
     <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
-    <img id="viewerImage" class="viewer-img" src="">
-    <div class="viewer-nav">
+    <div class="viewer-container">
+        <img id="viewerImg" class="viewer-img" src="" draggable="false">
+    </div>
+    <div class="viewer-controls">
         <button onclick="viewerPrev()"><i class="fas fa-chevron-right"></i></button>
         <span id="viewerCounter" style="color:white">1/1</span>
         <button onclick="viewerNext()"><i class="fas fa-chevron-left"></i></button>
     </div>
 </div>
 
-<!-- Admin Panel (Preserved fully functional) -->
+<!-- Admin Panel (Complete) -->
 <div id="adminPanel" class="admin-panel">
     <div class="admin-card">
         <h2 style="margin-bottom: 20px;">⚡ لوحة الإدارة</h2>
@@ -491,7 +588,7 @@
 <div id="toastMsg" class="toast-msg"></div>
 
 <script>
-    // Firebase Config (same as original)
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
         authDomain: "mydecor-b29bd.firebaseapp.com",
@@ -508,12 +605,22 @@
 
     let currentData = {};
     let isAdmin = false;
-    let favorites = JSON.parse(localStorage.getItem('site_favorites_v2')) || [];
+    let favorites = JSON.parse(localStorage.getItem('site_favorites_v3')) || [];
+    let currentPage = 'home';
     let currentImageList = [];
     let currentImageIndex = 0;
-    let activePage = 'feed';
+    let reviewInterval = null;
+    let reviewIdx = 0;
+    let partnerInterval = null;
+    let partnerIdx = 0;
+    
+    // Zoom variables
+    let zoomScale = 1;
+    let isZoomed = false;
+    let dragStart = { x: 0, y: 0 };
+    let translate = { x: 0, y: 0 };
+    let isDragging = false;
 
-    // Helper: Toast
     function showToast(msg) {
         const toast = document.getElementById('toastMsg');
         toast.innerText = msg;
@@ -521,115 +628,232 @@
         setTimeout(() => toast.style.display = 'none', 2000);
     }
 
-    // Favorites logic
-    function saveFavorites() { localStorage.setItem('site_favorites_v2', JSON.stringify(favorites)); }
+    // Favorites
+    function saveFav() { localStorage.setItem('site_favorites_v3', JSON.stringify(favorites)); }
     function toggleFavorite(imgId, imgUrl) {
         const exists = favorites.find(f => f.id === imgId);
         if (exists) {
             favorites = favorites.filter(f => f.id !== imgId);
-            showToast('✨ تمت الإزالة من المفضلة');
+            showToast('🗑️ تمت الإزالة من المفضلة');
         } else {
             favorites.unshift({ id: imgId, url: imgUrl, date: Date.now() });
             showToast('❤️ أضيف إلى المفضلة');
         }
-        saveFavorites();
+        saveFav();
         renderCurrentPage();
     }
     function isFav(imgId) { return favorites.some(f => f.id === imgId); }
 
-    // Render Feed (Instagram style)
-    function renderFeed() {
-        const container = document.getElementById('feedContainer');
+    // Image Viewer with Zoom
+    function openViewer(url, imageList, index) {
+        currentImageList = imageList;
+        currentImageIndex = index;
+        const img = document.getElementById('viewerImg');
+        img.src = url;
+        document.getElementById('viewerCounter').innerText = `${index+1}/${imageList.length}`;
+        document.getElementById('viewerModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        resetZoom();
+        setupZoomEvents();
+    }
+    function closeViewer() {
+        document.getElementById('viewerModal').style.display = 'none';
+        document.body.style.overflow = '';
+        resetZoom();
+    }
+    function closeViewerOnBg(e) { if (e.target === document.getElementById('viewerModal')) closeViewer(); }
+    function viewerNext() {
+        if (currentImageIndex < currentImageList.length-1) currentImageIndex++;
+        else currentImageIndex = 0;
+        document.getElementById('viewerImg').src = currentImageList[currentImageIndex];
+        document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`;
+        resetZoom();
+    }
+    function viewerPrev() {
+        if (currentImageIndex > 0) currentImageIndex--;
+        else currentImageIndex = currentImageList.length-1;
+        document.getElementById('viewerImg').src = currentImageList[currentImageIndex];
+        document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`;
+        resetZoom();
+    }
+    function resetZoom() {
+        zoomScale = 1;
+        translate = { x: 0, y: 0 };
+        const img = document.getElementById('viewerImg');
+        img.style.transform = `scale(1) translate(0px, 0px)`;
+        isZoomed = false;
+    }
+    function setupZoomEvents() {
+        const img = document.getElementById('viewerImg');
+        img.onwheel = (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            zoomScale = Math.min(Math.max(zoomScale + delta, 1), 3);
+            img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`;
+            isZoomed = zoomScale > 1;
+        };
+        let startX, startY, startTranslateX, startTranslateY;
+        img.onmousedown = (e) => {
+            if (!isZoomed) return;
+            e.preventDefault();
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startTranslateX = translate.x;
+            startTranslateY = translate.y;
+        };
+        window.onmousemove = (e) => {
+            if (!isDragging || !isZoomed) return;
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            translate.x = startTranslateX + dx;
+            translate.y = startTranslateY + dy;
+            img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`;
+        };
+        window.onmouseup = () => { isDragging = false; };
+        img.ondblclick = (e) => {
+            e.preventDefault();
+            if (zoomScale > 1) resetZoom();
+            else { zoomScale = 2; img.style.transform = `scale(2) translate(0px, 0px)`; isZoomed = true; }
+        };
+    }
+
+    // Render Functions
+    function renderHome() {
         const d = currentData;
-        let posts = [];
-        // collect images from albums and pages
-        if (d.albums) {
-            Object.keys(d.albums).forEach(albumId => {
-                const album = d.albums[albumId];
-                if (album.imgs) {
-                    Object.keys(album.imgs).forEach(imgId => {
-                        posts.push({ url: album.imgs[imgId].url, id: `album_${albumId}_${imgId}`, title: album.name });
-                    });
-                }
-            });
-        }
-        if (d.pages) {
-            Object.keys(d.pages).forEach(pageId => {
-                const page = d.pages[pageId];
-                if (page.imgs) {
-                    Object.keys(page.imgs).forEach(imgId => {
-                        posts.push({ url: page.imgs[imgId].url, id: `page_${pageId}_${imgId}`, title: page.title });
-                    });
-                }
-            });
-        }
-        posts.reverse().slice(0, 30).forEach((post, idx) => {
-            const isLiked = isFav(post.id);
-            container.innerHTML += `
-                <div class="post-card">
-                    <div class="post-header">
-                        <div class="post-user">
-                            <div class="post-avatar"><i class="fas fa-palette"></i></div>
-                            <div class="post-info">
-                                <h4>بصمة غير للديكور</h4>
-                                <p>${post.title || 'تصميم داخلي'}</p>
-                            </div>
-                        </div>
-                        <i class="fas fa-ellipsis-h" style="color: var(--text-secondary);"></i>
-                    </div>
-                    <img class="post-image" src="${post.url}" onclick="openImageViewer('${post.url}', ${JSON.stringify(posts.map(p=>p.url))}, ${idx})">
-                    <div class="post-actions">
-                        <button class="action-btn ${isLiked ? 'active' : ''}" onclick="toggleFavorite('${post.id}', '${post.url}')">
-                            <i class="fas ${isLiked ? 'fa-heart' : 'fa-heart'}"></i>
-                        </button>
-                        <button class="action-btn" onclick="whatsappOrder('${post.url}')"><i class="fab fa-whatsapp"></i></button>
-                    </div>
-                    <div class="post-caption">
-                        <strong>بصمة غير للديكور</strong> تصميم فاخر وأناقة لا تضاهى <span class="hashtag">#ديكور_فاخر</span>
-                    </div>
+        const aboutHtml = d.about_active !== false ? `
+            <div class="info-card">
+                <div class="card-title"><i class="fas fa-info-circle"></i> من نحن</div>
+                <div class="toggle-content open" style="padding:0; max-height:none;">${d.about_text || 'نقدم لكم أرقى التصاميم الداخلية والديكورات الفاخرة التي تجمع بين الأناقة والجودة العالية.'}</div>
+            </div>
+        ` : '';
+        
+        let reviewsHtml = '';
+        if (d.reviews && Object.keys(d.reviews).length) {
+            const items = Object.keys(d.reviews).map((id, i) => `
+                <div class="review-item" data-review-idx="${i}">
+                    <div class="review-stars">${'★'.repeat(d.reviews[id].rating)}${'☆'.repeat(5-d.reviews[id].rating)}</div>
+                    <div class="review-text">"${d.reviews[id].message}"</div>
+                    <div class="review-name">— ${d.reviews[id].name}</div>
                 </div>
-            `;
-        });
-        if (posts.length === 0) container.innerHTML = '<div class="empty-state"><i class="fas fa-images fa-3x"></i><p>لا توجد أعمال معروضة بعد</p></div>';
+            `).join('');
+            reviewsHtml = `<div class="info-card"><div class="card-title"><i class="fas fa-star"></i> تقييمات العملاء</div><div class="review-slider" id="reviewSlider">${items}</div></div>`;
+        }
+        
+        const scheduleHtml = `<div class="info-card"><div class="card-title"><i class="fas fa-clock"></i> أوقات العمل</div>${getScheduleHtml(d)}<div id="statusContainer" style="margin-top:15px;"></div></div>`;
+        
+        const locationHtml = d.location_url ? `<div class="info-card"><button onclick="window.open('${d.location_url}','_blank')" class="location-btn"><i class="fas fa-map-marker-alt"></i> موقعنا على الخريطة</button></div>` : '';
+        
+        return `
+            <div class="hero-card">
+                <h2>✨ عيد فطر مبارك ✨</h2>
+                <p>كل عام وأنتم بخير</p>
+            </div>
+            ${aboutHtml}
+            <div class="info-card">
+                <div class="card-title"><i class="fas fa-star"></i> أضف تقييمك</div>
+                <input type="text" id="reviewName" placeholder="اسمك الكريم">
+                <div class="star-rating" id="starRating">
+                    <i class="fas fa-star" data-star="5"></i>
+                    <i class="fas fa-star" data-star="4"></i>
+                    <i class="fas fa-star" data-star="3"></i>
+                    <i class="fas fa-star" data-star="2"></i>
+                    <i class="fas fa-star" data-star="1"></i>
+                </div>
+                <textarea id="reviewMsg" placeholder="شاركنا تجربتك..." rows="3"></textarea>
+                <button onclick="submitReview()" class="admin-btn btn-gold">إرسال التقييم</button>
+            </div>
+            ${reviewsHtml}
+            ${scheduleHtml}
+            ${locationHtml}
+            <div class="info-card">
+                <div class="card-title"><i class="fab fa-whatsapp"></i> تواصل معنا</div>
+                <button onclick="whatsappGlobal()" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</button>
+                <div class="social-links" id="socialLinks"></div>
+            </div>
+            <div class="info-card" id="partnersContainer"><div class="card-title"><i class="fas fa-handshake"></i> شركاء النجاح</div><div id="partnersSlider" class="partner-slider"></div></div>
+        `;
     }
-
-    // Explore: albums & catalogs
-    function renderExplore() {
-        const container = document.getElementById('exploreContainer');
+    
+    function getScheduleHtml(d) {
+        if (!d.work_schedule) return '<p>لم تحدد المواعيد بعد</p>';
+        const dayNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+        let html = '';
+        for (let i=0; i<=6; i++) {
+            const s = d.work_schedule[i];
+            if (s && s.active) {
+                html += `<div class="schedule-group"><div class="schedule-days"><strong>${dayNames[i]}</strong></div>
+                    <div class="time-period"><span class="time-text">${s.s1_s || '09:00'}</span> — <span class="time-text">${s.s1_e || '17:00'}</span></div>`;
+                if (s.s2_a) html += `<div class="time-period"><span class="time-text">${s.s2_s || ''}</span> — <span class="time-text">${s.s2_e || ''}</span></div>`;
+                html += `</div>`;
+            } else if (s && !s.active) {
+                html += `<div class="schedule-group"><strong>${dayNames[i]}</strong> <span style="color:var(--danger);">(عطلة)</span></div>`;
+            }
+        }
+        return html;
+    }
+    
+    function updateWorkStatus() {
         const d = currentData;
-        let html = '<div class="explore-grid">';
-        if (d.albums) {
-            Object.keys(d.albums).forEach(albumId => {
-                const album = d.albums[albumId];
-                let cover = '';
-                if (album.imgs && Object.keys(album.imgs).length) cover = Object.values(album.imgs)[0].url;
-                html += `<div class="explore-item" onclick="openAlbum('${albumId}')">
-                            ${cover ? `<img src="${cover}" loading="lazy">` : '<div style="background:#e9ecef; height:100%; display:flex; align-items:center; justify-content:center;"><i class="fas fa-folder-open fa-2x"></i></div>'}
-                            <div class="overlay-icon"><i class="fas fa-folder"></i></div>
-                         </div>`;
-            });
+        const container = document.getElementById('statusContainer');
+        if (!container || !d.work_schedule) return;
+        const now = new Date();
+        const day = now.getDay();
+        const schedule = d.work_schedule[day];
+        let isOpen = false;
+        if (schedule && schedule.active) {
+            const toMins = (t) => { let [h,m] = t.split(':').map(Number); return h*60+m; };
+            const cur = now.getHours()*60+now.getMinutes();
+            const s1 = toMins(schedule.s1_s), e1 = toMins(schedule.s1_e);
+            if (cur >= s1 && cur < e1) isOpen = true;
+            if (!isOpen && schedule.s2_a && schedule.s2_s && schedule.s2_e) {
+                const s2 = toMins(schedule.s2_s), e2 = toMins(schedule.s2_e);
+                if ((e2 < s2 && (cur >= s2 || cur < e2)) || (cur >= s2 && cur < e2)) isOpen = true;
+            }
         }
-        if (d.catalogs) {
-            Object.keys(d.catalogs).forEach(catId => {
-                html += `<div class="explore-item" onclick="openCatalog('${catId}')">
-                            <div style="background:#e9ecef; height:100%; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-                                <i class="fas fa-book-open fa-3x" style="color:var(--accent);"></i>
-                                <span style="font-size:12px; margin-top:8px;">${d.catalogs[catId].name}</span>
-                            </div>
-                         </div>`;
-            });
-        }
-        html += '</div>';
-        if ((!d.albums || Object.keys(d.albums).length===0) && (!d.catalogs || Object.keys(d.catalogs).length===0)) html = '<div class="empty-state"><i class="fas fa-compass fa-3x"></i><p>قريباً .. المزيد من الأعمال</p></div>';
-        container.innerHTML = html;
+        container.innerHTML = isOpen ? 
+            `<div class="status-badge status-open"><i class="fas fa-circle"></i> مفتوح الآن</div>` :
+            `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق الآن</div>`;
     }
-
+    
+    function renderWorks() {
+        const d = currentData;
+        if (!d.albums || Object.keys(d.albums).length === 0) return '<div class="empty-state">لا توجد ألبومات بعد</div>';
+        let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">';
+        Object.keys(d.albums).forEach(id => {
+            const album = d.albums[id];
+            let cover = '';
+            if (album.imgs && Object.keys(album.imgs).length) cover = Object.values(album.imgs)[0].url;
+            html += `<div class="album-card" onclick="openAlbum('${id}')">
+                        ${cover ? `<img src="${cover}" style="width:100%; height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;">` : '<i class="fas fa-folder-open fa-3x"></i>'}
+                        <h4>${album.name}</h4>
+                     </div>`;
+        });
+        html += '</div>';
+        return html;
+    }
+    
     function openAlbum(albumId) {
         const album = currentData.albums[albumId];
-        if (!album || !album.imgs) return showToast('لا توجد صور');
+        if (!album || !album.imgs) return;
         const urls = Object.values(album.imgs).map(img => img.url);
-        if (urls.length) openImageViewer(urls[0], urls, 0);
+        if (urls.length) openViewer(urls[0], urls, 0);
     }
+    
+    function renderCatalogs() {
+        const d = currentData;
+        if (!d.catalogs || Object.keys(d.catalogs).length === 0) return '<div class="empty-state">لا توجد كتالوجات بعد</div>';
+        let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">';
+        Object.keys(d.catalogs).forEach(id => {
+            html += `<div class="folder-card" onclick="openCatalog('${id}')">
+                        <i class="fas fa-book-open fa-3x" style="color:var(--accent);"></i>
+                        <h4>${d.catalogs[id].name}</h4>
+                     </div>`;
+        });
+        html += '</div>';
+        return html;
+    }
+    
     function openCatalog(catId) {
         const cat = currentData.catalogs[catId];
         if (cat && cat.code) {
@@ -637,152 +861,220 @@
             win.document.write(cat.code);
         } else showToast('رابط الكتالوج غير متاح');
     }
-
-    // Favorites render
-    function renderFavoritesPage() {
-        const grid = document.getElementById('favoritesGrid');
-        if (favorites.length === 0) {
-            grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="far fa-heart fa-3x"></i><p>لا توجد صور في المفضلة</p></div>';
-            return;
-        }
-        let html = '';
-        favorites.forEach(fav => {
-            html += `<div class="fav-item">
-                        <img src="${fav.url}" onclick="openImageViewer('${fav.url}', ${JSON.stringify(favorites.map(f=>f.url))}, ${favorites.findIndex(f=>f.id===fav.id)})">
-                        <button class="remove-fav" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')"><i class="fas fa-trash-alt"></i></button>
+    
+    function renderFavorites() {
+        if (favorites.length === 0) return '<div class="empty-state"><i class="far fa-heart fa-3x"></i><p>لا توجد صور في المفضلة</p></div>';
+        let html = '<div class="photo-grid">';
+        favorites.forEach((fav, idx) => {
+            html += `<div class="photo-item" onclick="openViewer('${fav.url}', ${JSON.stringify(favorites.map(f=>f.url))}, ${idx})">
+                        <img src="${fav.url}" loading="lazy">
+                        <button class="fav-btn active" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')"><i class="fas fa-heart"></i></button>
                      </div>`;
         });
-        grid.innerHTML = html;
+        html += '</div>';
+        return html;
     }
-
-    // Profile page
-    function renderProfile() {
+    
+    function renderPartners() {
+        const container = document.getElementById('partnersSlider');
+        if (!container || !currentData.partners) return;
+        const partners = Object.values(currentData.partners);
+        if (!partners.length) return;
+        container.innerHTML = `<div style="display:flex; gap:15px; overflow-x:auto; padding:10px 0;">${partners.map(p => `<img src="${p.url}" style="height:60px; object-fit:contain;">`).join('')}</div>`;
+    }
+    
+    function renderSocial() {
         const d = currentData;
-        document.getElementById('siteNameProfile').innerText = d.site_name || 'بصمة غير للديكور';
-        document.getElementById('aboutProfile').innerHTML = d.about_text || 'نقدم لكم أرقى التصاميم الداخلية والديكورات الفاخرة التي تجمع بين الأناقة والجودة العالية.';
-        let socialHtml = '';
-        if (d.insta_url) socialHtml += `<a href="${d.insta_url}" target="_blank" style="font-size:28px; color:var(--accent);"><i class="fab fa-instagram"></i></a>`;
-        if (d.tiktok_url) socialHtml += `<a href="${d.tiktok_url}" target="_blank" style="font-size:28px; color:var(--accent);"><i class="fab fa-tiktok"></i></a>`;
-        if (d.snap_url) socialHtml += `<a href="${d.snap_url}" target="_blank" style="font-size:28px; color:var(--accent);"><i class="fab fa-snapchat"></i></a>`;
-        document.getElementById('socialLinks').innerHTML = socialHtml;
+        const container = document.getElementById('socialLinks');
+        if (!container) return;
+        let html = '';
+        if (d.insta_url) html += `<a href="${d.insta_url}" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>`;
+        if (d.tiktok_url) html += `<a href="${d.tiktok_url}" target="_blank" class="social-link"><i class="fab fa-tiktok"></i></a>`;
+        if (d.snap_url) html += `<a href="${d.snap_url}" target="_blank" class="social-link"><i class="fab fa-snapchat"></i></a>`;
+        container.innerHTML = html;
     }
-
-    // Story Bar (from albums)
-    function renderStoryBar() {
-        const bar = document.getElementById('storyBar');
-        const d = currentData;
-        let stories = [];
-        if (d.albums) {
-            Object.keys(d.albums).forEach(id => {
-                const alb = d.albums[id];
-                let cover = '';
-                if (alb.imgs && Object.keys(alb.imgs).length) cover = Object.values(alb.imgs)[0].url;
-                stories.push({ name: alb.name, cover, id });
-            });
-        }
-        if (stories.length === 0) { bar.style.display = 'none'; return; }
-        bar.style.display = 'flex';
-        bar.innerHTML = stories.map(s => `
-            <div class="story-item" onclick="openAlbum('${s.id}')">
-                <div class="story-avatar">
-                    <div class="story-avatar-inner">${s.cover ? `<img src="${s.cover}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">` : '<i class="fas fa-folder"></i>'}</div>
-                </div>
-                <div class="story-label">${s.name.substring(0,10)}</div>
-            </div>
-        `).join('');
+    
+    function startReviewSlider() {
+        if (reviewInterval) clearInterval(reviewInterval);
+        const items = document.querySelectorAll('.review-item');
+        if (!items.length) return;
+        items.forEach((item, i) => { item.classList.remove('active'); });
+        items[reviewIdx % items.length].classList.add('active');
+        reviewInterval = setInterval(() => {
+            reviewIdx = (reviewIdx + 1) % items.length;
+            items.forEach((item, i) => item.classList.remove('active'));
+            items[reviewIdx].classList.add('active');
+        }, 4000);
     }
-
-    // Image Viewer
-    function openImageViewer(url, list, idx) {
-        currentImageList = list;
-        currentImageIndex = idx;
-        document.getElementById('viewerImage').src = url;
-        document.getElementById('viewerCounter').innerText = `${idx+1}/${list.length}`;
-        document.getElementById('viewerModal').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-    function closeViewer() {
-        document.getElementById('viewerModal').style.display = 'none';
-        document.body.style.overflow = '';
-    }
-    function closeViewerOnBg(e) { if (e.target === document.getElementById('viewerModal')) closeViewer(); }
-    function viewerNext() {
-        if (currentImageIndex < currentImageList.length-1) currentImageIndex++;
-        else currentImageIndex = 0;
-        document.getElementById('viewerImage').src = currentImageList[currentImageIndex];
-        document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`;
-    }
-    function viewerPrev() {
-        if (currentImageIndex > 0) currentImageIndex--;
-        else currentImageIndex = currentImageList.length-1;
-        document.getElementById('viewerImage').src = currentImageList[currentImageIndex];
-        document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`;
-    }
-
-    function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
-    function whatsappOrder(url) { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); }
-
+    
     function renderCurrentPage() {
-        if (activePage === 'feed') { renderFeed(); renderStoryBar(); }
-        else if (activePage === 'explore') renderExplore();
-        else if (activePage === 'favorites') renderFavoritesPage();
-        else if (activePage === 'profile') renderProfile();
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
-        document.getElementById(`${activePage}-page`).classList.add('active-page');
-        document.querySelectorAll('.nav-icon').forEach(btn => btn.classList.remove('active'));
-        document.querySelector(`.nav-icon[data-page="${activePage}"]`).classList.add('active');
+        const main = document.getElementById('mainContent');
+        let content = '';
+        if (currentPage === 'home') {
+            content = renderHome();
+        } else if (currentPage === 'works') {
+            content = `<h2 style="margin-bottom:20px;"><i class="fas fa-images"></i> أعمالنا</h2>${renderWorks()}`;
+        } else if (currentPage === 'catalogs') {
+            content = `<h2 style="margin-bottom:20px;"><i class="fas fa-book-open"></i> الكتالوجات</h2>${renderCatalogs()}`;
+        } else if (currentPage === 'favorites') {
+            content = `<h2 style="margin-bottom:20px;"><i class="fas fa-heart"></i> المفضلة</h2>${renderFavorites()}`;
+        }
+        main.innerHTML = content;
+        document.getElementById('siteTitle').innerText = currentData.site_name || 'بصمة غير';
+        renderSocial();
+        renderPartners();
+        updateWorkStatus();
+        setTimeout(() => {
+            startReviewSlider();
+            setupStarRating();
+        }, 100);
     }
-
-    // Admin Panel - Full preservation of original functions
+    
+    function setupStarRating() {
+        let selectedStar = 0;
+        const stars = document.querySelectorAll('#starRating i');
+        stars.forEach(star => {
+            star.onclick = () => { selectedStar = parseInt(star.dataset.star); stars.forEach(s => s.classList.remove('active')); for(let i=stars.length-1; i>=stars.length-selectedStar; i--) stars[i].classList.add('active'); };
+        });
+        window.submitReview = () => {
+            const name = document.getElementById('reviewName').value;
+            const msg = document.getElementById('reviewMsg').value;
+            if (!name || !msg || !selectedStar) return showToast('يرجى إكمال جميع الحقول');
+            db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selectedStar, date: new Date().toLocaleDateString('ar-SA') }).then(() => {
+                showToast('شكراً لتقييمك!');
+                document.getElementById('reviewName').value = '';
+                document.getElementById('reviewMsg').value = '';
+                selectedStar = 0;
+                stars.forEach(s => s.classList.remove('active'));
+            });
+        };
+    }
+    
+    function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
+    
+    // Admin Panel Functions (Complete)
     function buildAdminSections() {
         const container = document.getElementById('adminSections');
         const d = currentData;
         container.innerHTML = `
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🎨 الثيمات <span>▾</span></button><div class="collapse-content"><select id="themeSelect"><option value="light">فاتح</option><option value="dark">داكن</option><option value="gold">ذهبي</option></select><button class="admin-btn btn-gold" onclick="saveTheme()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📖 من نحن <span>▾</span></button><div class="collapse-content"><textarea id="aboutText" rows="4">${d.about_text || ''}</textarea><button class="admin-btn btn-gold" onclick="saveAbout()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">⭐ التقييمات <span>▾</span></button><div class="collapse-content" id="reviewsAdminList"></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📸 رفع صور <span>▾</span></button><div class="collapse-content"><select id="targetSelect"><option value="albums">ألبوم</option><option value="pages">صفحة</option></select><input id="albumPageId" placeholder="معرف الألبوم/الصفحة"><textarea id="imageUrls" placeholder="روابط الصور (كل رابط في سطر)" rows="4"></textarea><button class="admin-btn btn-green" onclick="uploadPhotos()">نشر</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">⚙️ الإعدادات العامة <span>▾</span></button><div class="collapse-content"><input id="siteName" placeholder="اسم الموقع" value="${d.site_name || ''}"><input id="whatsappNum" placeholder="رقم واتساب" value="${d.whatsapp_num || ''}"><input id="insta" placeholder="انستقرام" value="${d.insta_url || ''}"><input id="tiktok" placeholder="تيك توك" value="${d.tiktok_url || ''}"><button class="admin-btn btn-gold" onclick="saveGeneral()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 إدارة الألبومات <span>▾</span></button><div class="collapse-content"><div id="albumsList"></div><input id="newAlbumName" placeholder="اسم ألبوم جديد"><button class="admin-btn btn-green" onclick="addAlbum()">إضافة</button></div></div>
+            ${buildCollapse('الشركاء', 'partnersContent', `<div id="partnersAdminList"></div><input id="partnerUrl" placeholder="رابط الشعار"><button class="admin-btn btn-green" onclick="addPartner()">إضافة شريك</button>`)}
+            ${buildCollapse('الأقسام والتبويبات', 'tabsContent', `<div id="pagesList"></div><div style="display:flex; gap:8px;"><input id="newPageName" placeholder="اسم قسم جديد"><button class="admin-btn btn-green" onclick="addPage()">إضافة</button></div>`)}
+            ${buildCollapse('الألبومات', 'albumsContent', `<div id="albumsList"></div><div style="display:flex; gap:8px;"><input id="newAlbumName" placeholder="اسم ألبوم جديد"><button class="admin-btn btn-green" onclick="addAlbum()">إضافة</button></div>`)}
+            ${buildCollapse('الكتالوجات', 'catalogsContent', `<div id="catalogsList"></div><div style="display:flex; gap:8px;"><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" placeholder="كود iFrame" rows="3"></textarea><button class="admin-btn btn-green" onclick="addCatalog()">إضافة</button></div>`)}
+            ${buildCollapse('رفع الصور', 'uploadContent', `<select id="targetType"><option value="albums">ألبوم</option><option value="pages">صفحة</option></select><input id="targetId" placeholder="معرف القسم/الألبوم"><textarea id="imageUrls" placeholder="روابط الصور (كل رابط في سطر)" rows="4"></textarea><button class="admin-btn btn-green" onclick="uploadPhotos()">نشر الصور</button>`)}
+            ${buildCollapse('حذف الصور', 'deleteContent', `<select id="deleteTarget" onchange="loadImagesForDelete()"></select><div id="imagesDeleteGrid" style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:12px;"></div>`)}
+            ${buildCollapse('من نحن', 'aboutContent', `<textarea id="aboutEditor" rows="5">${d.about_text || ''}</textarea><label><input type="checkbox" id="aboutActive" ${d.about_active !== false ? 'checked' : ''}> تفعيل القسم</label><button class="admin-btn btn-gold" onclick="saveAbout()">حفظ</button>`)}
+            ${buildCollapse('مواعيد العمل', 'scheduleContent', `<div id="scheduleEditor"></div><button class="admin-btn btn-gold" onclick="saveSchedule()">حفظ المواعيد</button>`)}
+            ${buildCollapse('التواصل الاجتماعي', 'socialContent', `<input id="instaInput" placeholder="انستقرام" value="${d.insta_url || ''}"><input id="tiktokInput" placeholder="تيك توك" value="${d.tiktok_url || ''}"><input id="snapInput" placeholder="سناب شات" value="${d.snap_url || ''}"><input id="locationInput" placeholder="رابط قوقل ماب" value="${d.location_url || ''}"><button class="admin-btn btn-gold" onclick="saveSocial()">حفظ</button>`)}
+            ${buildCollapse('الإعدادات العامة', 'generalContent', `<input id="siteNameInput" placeholder="اسم الموقع" value="${d.site_name || ''}"><input id="whatsappInput" placeholder="رقم واتساب" value="${d.whatsapp_num || ''}"><input id="wmInput" placeholder="العلامة المائية" value="${d.wm_text || ''}"><input id="footerInput" placeholder="حقوق الملكية" value="${d.footer_text || ''}"><button class="admin-btn btn-gold" onclick="saveGeneral()">حفظ</button>`)}
+            ${buildCollapse('التقييمات', 'reviewsContent', `<div id="reviewsAdminList"></div>`)}
         `;
-        renderReviewsAdmin();
+        renderPagesList();
         renderAlbumsList();
+        renderCatalogsList();
+        renderPartnersAdmin();
+        renderReviewsAdmin();
+        renderScheduleEditor();
+        renderDeleteTargets();
+    }
+    function buildCollapse(title, id, content) {
+        return `<div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">${title} <span>▾</span></button><div class="collapse-content" id="${id}">${content}</div></div>`;
     }
     function toggleCollapse(btn) { const content = btn.nextElementSibling; content.style.display = content.style.display === 'block' ? 'none' : 'block'; }
-    function saveAbout() { const txt = document.getElementById('aboutText').value; db.ref(DB_PATH).update({ about_text: txt }).then(()=>showToast('تم حفظ من نحن')); }
-    function saveTheme() { const theme = document.getElementById('themeSelect').value; document.body.style.setProperty('--bg-primary', theme==='dark'?'#111':'#fff'); showToast('تم تغيير الثيم'); }
-    function saveGeneral() { db.ref(DB_PATH).update({ site_name:document.getElementById('siteName').value, whatsapp_num:document.getElementById('whatsappNum').value, insta_url:document.getElementById('insta').value, tiktok_url:document.getElementById('tiktok').value }).then(()=>showToast('تم الحفظ')); }
-    function renderReviewsAdmin() {
-        const container = document.getElementById('reviewsAdminList');
-        if(!container) return;
-        let html = '';
-        if(currentData.reviews) Object.keys(currentData.reviews).forEach(id=>{
-            const r = currentData.reviews[id];
-            html += `<div style="padding:8px; border-bottom:1px solid var(--border);"><b>${r.name}</b> ${'★'.repeat(r.rating)}<p>${r.message}</p><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" class="admin-btn btn-red" style="padding:4px">حذف</button></div>`;
-        });
-        container.innerHTML = html || '<p>لا توجد تقييمات</p>';
+    function renderPagesList() {
+        const container = document.getElementById('pagesList');
+        if (!container || !currentData.pages) return;
+        container.innerHTML = Object.keys(currentData.pages).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join('');
     }
+    function addPage() { const name = document.getElementById('newPageName').value; if(name) db.ref(DB_PATH+'/pages').push({title:name}).then(()=>showToast('تم إضافة القسم')); }
     function renderAlbumsList() {
         const container = document.getElementById('albumsList');
-        if(!container) return;
-        let html = '';
-        if(currentData.albums) Object.keys(currentData.albums).forEach(id=>{
-            html += `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`;
-        });
-        container.innerHTML = html;
+        if(!container || !currentData.albums) return;
+        container.innerHTML = Object.keys(currentData.albums).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join('');
     }
     function addAlbum() { const name = document.getElementById('newAlbumName').value; if(name) db.ref(DB_PATH+'/albums').push({name}).then(()=>showToast('تم إضافة الألبوم')); }
+    function renderCatalogsList() {
+        const container = document.getElementById('catalogsList');
+        if(!container || !currentData.catalogs) return;
+        container.innerHTML = Object.keys(currentData.catalogs).map(id => `<div style="display:flex; gap:8px; margin-bottom:8px;"><input value="${currentData.catalogs[id].name}" onchange="db.ref(DB_PATH+'/catalogs/${id}').update({name:this.value})" style="flex:1"><button onclick="db.ref(DB_PATH+'/catalogs/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join('');
+    }
+    function addCatalog() { const name = document.getElementById('newCatalogName').value; const code = document.getElementById('newCatalogCode').value; if(name && code) db.ref(DB_PATH+'/catalogs').push({name,code}).then(()=>showToast('تم إضافة الكتالوج')); }
+    function renderPartnersAdmin() {
+        const container = document.getElementById('partnersAdminList');
+        if(!container || !currentData.partners) return;
+        container.innerHTML = Object.keys(currentData.partners).map(id => `<div class="partner-item"><img src="${currentData.partners[id].url}"><span style="flex:1; font-size:12px;">${currentData.partners[id].url.substring(0,40)}</span><button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" class="admin-btn btn-red" style="width:auto; padding:6px 12px;">حذف</button></div>`).join('');
+    }
+    function addPartner() { const url = document.getElementById('partnerUrl').value; if(url) db.ref(DB_PATH+'/partners').push({url}).then(()=>showToast('تم إضافة الشريك')); }
+    function renderReviewsAdmin() {
+        const container = document.getElementById('reviewsAdminList');
+        if(!container || !currentData.reviews) return;
+        container.innerHTML = Object.keys(currentData.reviews).map(id => `<div style="padding:8px; border-bottom:1px solid var(--border);"><b>${currentData.reviews[id].name}</b> ${'★'.repeat(currentData.reviews[id].rating)}<p>${currentData.reviews[id].message}</p><button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" class="admin-btn btn-red" style="padding:4px">حذف</button></div>`).join('');
+    }
+    function renderScheduleEditor() {
+        const container = document.getElementById('scheduleEditor');
+        if(!container) return;
+        const d = currentData;
+        const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+        let html = '';
+        for(let i=0; i<=6; i++) {
+            const s = (d.work_schedule && d.work_schedule[i]) ? d.work_schedule[i] : {active:false, s1_s:'09:00', s1_e:'17:00', s2_a:false};
+            html += `<div style="border:1px solid var(--border); padding:12px; margin-bottom:12px; border-radius:12px;">
+                        <label><input type="checkbox" id="dayActive_${i}" ${s.active?'checked':''}> ${days[i]}</label>
+                        <div><input type="time" id="s1s_${i}" value="${s.s1_s||'09:00'}"> — <input type="time" id="s1e_${i}" value="${s.s1_e||'17:00'}"></div>
+                        <label><input type="checkbox" id="s2a_${i}" ${s.s2_a?'checked':''}> فترة مسائية</label>
+                        <div id="evening_${i}" style="${s.s2_a?'':'display:none'}"><input type="time" id="s2s_${i}" value="${s.s2_s||''}"> — <input type="time" id="s2e_${i}" value="${s.s2_e||''}"></div>
+                     </div>`;
+        }
+        container.innerHTML = html;
+        for(let i=0; i<=6; i++) {
+            const cb = document.getElementById(`s2a_${i}`);
+            if(cb) cb.onchange = () => document.getElementById(`evening_${i}`).style.display = cb.checked ? 'block' : 'none';
+        }
+    }
+    function saveSchedule() {
+        let schedule = {};
+        for(let i=0; i<=6; i++) {
+            schedule[i] = {
+                active: document.getElementById(`dayActive_${i}`).checked,
+                s1_s: document.getElementById(`s1s_${i}`).value,
+                s1_e: document.getElementById(`s1e_${i}`).value,
+                s2_a: document.getElementById(`s2a_${i}`).checked,
+                s2_s: document.getElementById(`s2s_${i}`).value,
+                s2_e: document.getElementById(`s2e_${i}`).value
+            };
+        }
+        db.ref(DB_PATH+'/work_schedule').set(schedule).then(()=>showToast('تم حفظ المواعيد'));
+    }
+    function saveAbout() { db.ref(DB_PATH).update({ about_text:document.getElementById('aboutEditor').value, about_active:document.getElementById('aboutActive').checked }).then(()=>showToast('تم حفظ من نحن')); }
+    function saveSocial() { db.ref(DB_PATH).update({ insta_url:document.getElementById('instaInput').value, tiktok_url:document.getElementById('tiktokInput').value, snap_url:document.getElementById('snapInput').value, location_url:document.getElementById('locationInput').value }).then(()=>showToast('تم حفظ الروابط')); }
+    function saveGeneral() { db.ref(DB_PATH).update({ site_name:document.getElementById('siteNameInput').value, whatsapp_num:document.getElementById('whatsappInput').value, wm_text:document.getElementById('wmInput').value, footer_text:document.getElementById('footerInput').value }).then(()=>showToast('تم حفظ الإعدادات')); }
     function uploadPhotos() {
-        const targetType = document.getElementById('targetSelect').value;
-        const id = document.getElementById('albumPageId').value;
+        const type = document.getElementById('targetType').value;
+        const id = document.getElementById('targetId').value;
         const urls = document.getElementById('imageUrls').value.split('\n').filter(u=>u.trim());
         if(!id || urls.length===0) return showToast('أدخل المعرف والروابط');
-        const path = targetType === 'albums' ? `albums/${id}/imgs` : `pages/${id}/imgs`;
+        const path = `${type}/${id}/imgs`;
         Promise.all(urls.map(url=>db.ref(DB_PATH+'/'+path).push({url:url.trim()}))).then(()=>{ showToast('تم نشر الصور'); document.getElementById('imageUrls').value=''; });
     }
+    function renderDeleteTargets() {
+        const select = document.getElementById('deleteTarget');
+        if(!select) return;
+        let options = '<option value="">اختر الوجهة</option>';
+        if(currentData.pages) Object.keys(currentData.pages).forEach(id => options += `<option value="pages/${id}">صفحة: ${currentData.pages[id].title}</option>`);
+        if(currentData.albums) Object.keys(currentData.albums).forEach(id => options += `<option value="albums/${id}">ألبوم: ${currentData.albums[id].name}</option>`);
+        select.innerHTML = options;
+    }
+    function loadImagesForDelete() {
+        const path = document.getElementById('deleteTarget').value;
+        const grid = document.getElementById('imagesDeleteGrid');
+        if(!path) { grid.innerHTML = ''; return; }
+        const [type, id] = path.split('/');
+        const folder = currentData[type] && currentData[type][id];
+        if(!folder || !folder.imgs) { grid.innerHTML = '<p>لا توجد صور</p>'; return; }
+        grid.innerHTML = Object.keys(folder.imgs).map(imgId => `<div><img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1; object-fit:cover;"><button onclick="deleteImage('${path}', '${imgId}')" class="admin-btn btn-red" style="padding:4px">حذف</button></div>`).join('');
+    }
+    function deleteImage(path, imgId) { db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{ showToast('تم الحذف'); loadImagesForDelete(); }); }
     function closeAdminPanel() { document.getElementById('adminPanel').classList.remove('active'); }
-
-    // Admin access
     function checkAccess() {
         const pwd = prompt("رمز الإدارة:");
         if(!pwd) return;
@@ -792,41 +1084,33 @@
             else showToast('رمز غير صحيح');
         });
     }
-    window.checkAccess = checkAccess;
-
-    // Firebase listener
+    
+    // Navigation
+    document.querySelectorAll('.nav-icon').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentPage = btn.dataset.page;
+            document.querySelectorAll('.nav-icon').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderCurrentPage();
+        });
+    });
+    
+    // Firebase Listener
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
         renderCurrentPage();
-        renderStoryBar();
         if (isAdmin && document.getElementById('adminPanel').classList.contains('active')) buildAdminSections();
     });
-
-    // Page navigation
-    document.querySelectorAll('.nav-icon').forEach(btn => {
-        btn.addEventListener('click', () => { activePage = btn.dataset.page; renderCurrentPage(); });
-    });
-    // expose global functions
-    window.toggleFavorite = toggleFavorite;
-    window.openImageViewer = openImageViewer;
-    window.closeViewer = closeViewer;
-    window.closeViewerOnBg = closeViewerOnBg;
-    window.viewerNext = viewerNext;
-    window.viewerPrev = viewerPrev;
-    window.whatsappGlobal = whatsappGlobal;
-    window.whatsappOrder = whatsappOrder;
-    window.openAlbum = openAlbum;
-    window.openCatalog = openCatalog;
-    window.saveAbout = saveAbout;
-    window.saveTheme = saveTheme;
-    window.saveGeneral = saveGeneral;
-    window.uploadPhotos = uploadPhotos;
-    window.addAlbum = addAlbum;
-    window.toggleCollapse = toggleCollapse;
-    window.closeAdminPanel = closeAdminPanel;
-
-    // Initial load
-    activePage = 'feed';
+    
+    // Expose globals
+    window.openViewer = openViewer; window.closeViewer = closeViewer; window.closeViewerOnBg = closeViewerOnBg;
+    window.viewerNext = viewerNext; window.viewerPrev = viewerPrev; window.toggleFavorite = toggleFavorite;
+    window.openAlbum = openAlbum; window.openCatalog = openCatalog; window.whatsappGlobal = whatsappGlobal;
+    window.checkAccess = checkAccess; window.closeAdminPanel = closeAdminPanel; window.toggleCollapse = toggleCollapse;
+    window.addPage = addPage; window.addAlbum = addAlbum; window.addCatalog = addCatalog; window.addPartner = addPartner;
+    window.saveAbout = saveAbout; window.saveSchedule = saveSchedule; window.saveSocial = saveSocial; window.saveGeneral = saveGeneral;
+    window.uploadPhotos = uploadPhotos; window.loadImagesForDelete = loadImagesForDelete; window.deleteImage = deleteImage;
+    
     renderCurrentPage();
 </script>
 </body>
