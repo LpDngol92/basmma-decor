@@ -415,12 +415,15 @@
         }, 3000);
     }
 
-    // ========== RENDER FUNCTIONS - FIXED: All images use openViewer with full image list ==========
-    // This function now works exactly like the album viewer - passes the full image list for navigation
+    // Helper to safely escape strings for JSON in HTML attributes
+    function escapeForJson(str) {
+        return str.replace(/[\\"']/g, '\\$&').replace(/\u0000/g, '\\0');
+    }
+
+    // ========== RENDER FUNCTIONS - ALL SECTIONS USE SAME PATTERN ==========
     function renderImageGallery(images, parentId) {
         if (!images || Object.keys(images).length === 0) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
         const imageIds = Object.keys(images);
-        // Build the complete list of image URLs for navigation
         const allUrls = imageIds.map(id => images[id].url);
         let html = '<div class="photo-grid">';
         // Reverse to show newest first
@@ -429,8 +432,9 @@
             const imgUrl = images[imgId].url;
             const fullId = `${parentId}_${imgId}`;
             const favClass = isFav(fullId) ? 'active' : '';
-            // CRITICAL: Pass the complete allUrls array so viewer can navigate between ALL images in this section
-            html += `<div class="photo-item" onclick="openViewer('${imgUrl}', ${JSON.stringify(allUrls)}, ${actualIndex}, '${fullId}')">
+            // Safely pass the list of all URLs as JSON string
+            const urlsJson = JSON.stringify(allUrls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            html += `<div class="photo-item" onclick="openViewer('${escapeForJson(imgUrl)}', ${urlsJson}, ${actualIndex}, '${fullId}')">
                         <img src="${imgUrl}" loading="lazy">
                         <div class="photo-overlay">
                             <div class="action-buttons">
@@ -497,7 +501,8 @@
         const urls = favorites.map(f => f.url);
         let html = '<div class="photo-grid">';
         favorites.forEach((fav, idx) => {
-            html += `<div class="photo-item" onclick="openViewer('${fav.url}', ${JSON.stringify(urls)}, ${idx}, '${fav.id}')">
+            const urlsJson = JSON.stringify(urls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            html += `<div class="photo-item" onclick="openViewer('${escapeForJson(fav.url)}', ${urlsJson}, ${idx}, '${fav.id}')">
                         <img src="${fav.url}" loading="lazy">
                         <div class="photo-overlay">
                             <div class="action-buttons">
