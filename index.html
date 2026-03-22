@@ -11,21 +11,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Cairo', sans-serif; background: #fafafc; color: #1c1c1e; overflow-x: hidden; line-height: 1.6; }
+        body { font-family: 'Cairo', sans-serif; background: #fafafc; color: #1c1c1e; overflow-x: hidden; }
         :root {
             --bg-primary: #ffffff; --bg-secondary: #f8f9fa; --bg-card: #ffffff;
             --text-primary: #1c1c1e; --text-secondary: #6c6c70;
-            --accent: #c9a96e; --accent-dark: #b48c48; --accent-light: #e6d5b8;
+            --accent: #c9a96e; --accent-dark: #b48c48;
             --border: #e9ecef; --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
             --success: #28a745; --danger: #dc3545; --whatsapp: #25D366;
         }
-        /* Splash Screen */
+        /* Splash */
         #splash { position: fixed; inset: 0; background: #fff; z-index: 999999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; transition: opacity 0.5s; }
         .splash-logo { font-size: 3rem; font-weight: 900; color: var(--accent); animation: pulse 1.2s infinite alternate; }
         .splash-line { width: 60px; height: 2px; background: var(--accent); animation: grow 1.2s infinite alternate; }
         @keyframes pulse { 0% { opacity: 0.5; transform: scale(0.98); } 100% { opacity: 1; transform: scale(1.02); } }
         @keyframes grow { 0% { width: 40px; } 100% { width: 100px; } }
-        /* Maintenance Screen */
+        /* Maintenance */
         #maintenance-screen { position: fixed; inset: 0; background: var(--bg-primary); z-index: 999998; display: none; align-items: center; justify-content: center; text-align: center; }
         .maintenance-content { padding: 40px; background: var(--bg-card); border-radius: 24px; max-width: 90%; }
         /* Top Navigation */
@@ -42,9 +42,7 @@
         .tabs-wrapper { position: relative; border-bottom: 1px solid var(--border); background: var(--bg-primary); }
         .tabs-section { display: flex; gap: 8px; overflow-x: auto; padding: 8px 16px; scrollbar-width: none; }
         .tabs-section::-webkit-scrollbar { display: none; }
-        .scroll-indicator { position: absolute; bottom: 0; left: 0; width: 60px; height: 3px; background: linear-gradient(90deg, var(--accent), transparent); animation: slideGlow 1.5s ease-in-out infinite; pointer-events: none; }
-        @keyframes slideGlow { 0%,100% { opacity: 0.5; transform: translateX(0); } 50% { opacity: 1; transform: translateX(20px); } }
-        .tab-btn { padding: 10px 20px; background: none; border: none; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary); border-radius: 30px; cursor: pointer; white-space: nowrap; }
+        .tab-btn { padding: 10px 20px; background: none; border: none; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary); border-radius: 30px; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
         .tab-btn.active { background: var(--accent); color: white; }
         /* Main Content */
         .main-content { max-width: 800px; margin: 0 auto; padding: 20px 16px 100px; }
@@ -73,38 +71,43 @@
         .social-link { width: 48px; height: 48px; background: var(--bg-secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 1.3rem; text-decoration: none; transition: all 0.2s; }
         .social-link:hover { background: var(--accent); color: white; }
         .location-btn { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; cursor: pointer; }
-        /* Photo Grid with Action Buttons */
+        /* Photo Grid */
         .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
         .photo-item { aspect-ratio: 1; background: #f0f0f0; position: relative; cursor: pointer; overflow: hidden; }
         .photo-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
         .photo-item:hover img { transform: scale(1.05); }
-        .photo-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 8px; display: flex; justify-content: space-between; opacity: 0; transition: opacity 0.2s; }
+        .photo-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.7)); padding: 8px; display: flex; justify-content: center; opacity: 0; transition: opacity 0.2s; }
         .photo-item:hover .photo-overlay { opacity: 1; }
-        .action-buttons { display: flex; gap: 12px; justify-content: center; width: 100%; }
-        .action-btn-icon { background: rgba(255,255,255,0.9); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
+        .action-buttons { display: flex; gap: 12px; justify-content: center; }
+        .action-btn-icon { background: rgba(255,255,255,0.95); border: none; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 1rem; }
         .action-btn-icon.fav-btn-icon { color: var(--text-secondary); }
-        .action-btn-icon.fav-btn-icon.active { color: var(--danger); background: white; }
-        .action-btn-icon.whatsapp-btn-icon { color: var(--whatsapp); background: white; }
+        .action-btn-icon.fav-btn-icon.active { color: var(--danger); }
+        .action-btn-icon.whatsapp-btn-icon { color: var(--whatsapp); }
         .action-btn-icon:hover { transform: scale(1.1); }
         .album-card, .folder-card { background: var(--bg-card); border-radius: 16px; padding: 24px; text-align: center; cursor: pointer; border: 1px solid var(--border); transition: all 0.2s; }
         .album-card:hover, .folder-card:hover { transform: translateY(-3px); border-color: var(--accent); }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
-        /* Viewer Modal with Zoom */
-        .viewer-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; display: none; align-items: center; justify-content: center; flex-direction: column; }
-        .viewer-container { width: 100%; height: 80vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
-        .viewer-img { max-width: 90%; max-height: 80vh; object-fit: contain; transition: transform 0.1s ease; cursor: grab; }
+        /* ========== VIEWER MODAL - FULL SCREEN IMAGE VIEWER ========== */
+        .viewer-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 20000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .viewer-container { width: 100%; height: 85vh; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; touch-action: none; }
+        .viewer-img { max-width: 90%; max-height: 85vh; object-fit: contain; transition: transform 0.1s ease; cursor: grab; user-select: none; -webkit-user-drag: none; }
         .viewer-img:active { cursor: grabbing; }
-        .viewer-controls { position: fixed; bottom: 30px; display: flex; gap: 30px; background: rgba(0,0,0,0.6); padding: 12px 24px; border-radius: 50px; backdrop-filter: blur(10px); z-index: 10001; }
-        .viewer-controls button { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; width: 50px; height: 50px; border-radius: 50%; transition: all 0.2s; }
-        .viewer-controls button:hover { background: rgba(255,255,255,0.2); }
-        .viewer-close { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.5); border: none; color: white; font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%; cursor: pointer; z-index: 10001; }
-        .viewer-whatsapp { position: fixed; bottom: 120px; right: 20px; background: var(--whatsapp); border: none; color: white; width: 50px; height: 50px; border-radius: 50%; font-size: 1.5rem; cursor: pointer; z-index: 10001; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-        .viewer-whatsapp:hover { transform: scale(1.05); }
+        .viewer-controls { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 25px; background: rgba(0,0,0,0.7); padding: 12px 30px; border-radius: 60px; backdrop-filter: blur(10px); z-index: 20001; }
+        .viewer-controls button { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; width: 50px; height: 50px; border-radius: 50%; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .viewer-controls button:hover { background: rgba(255,255,255,0.2); transform: scale(1.05); }
+        .viewer-counter { color: white; font-size: 1.1rem; font-weight: 600; min-width: 70px; text-align: center; display: flex; align-items: center; justify-content: center; }
+        .viewer-close { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.6); border: none; color: white; font-size: 1.5rem; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; z-index: 20001; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .viewer-close:hover { background: var(--danger); transform: rotate(90deg); }
+        .viewer-actions { position: fixed; bottom: 30px; right: 20px; display: flex; gap: 12px; z-index: 20001; }
+        .viewer-action-btn { background: rgba(0,0,0,0.7); border: none; color: white; width: 48px; height: 48px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; backdrop-filter: blur(10px); transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .viewer-action-btn:hover { transform: scale(1.1); }
+        .viewer-action-btn.whatsapp-viewer { background: var(--whatsapp); }
+        .viewer-action-btn.fav-viewer.active { color: var(--danger); background: white; }
         /* Hidden Admin Button */
         .hidden-admin { position: fixed; bottom: 20px; left: 20px; width: 40px; height: 40px; background: transparent; border-radius: 50%; cursor: pointer; z-index: 2000; opacity: 0; }
         .hidden-admin:hover { opacity: 0.3; background: rgba(0,0,0,0.1); }
         /* Admin Panel */
-        .admin-panel { position: fixed; inset: 0; background: var(--bg-primary); z-index: 10001; overflow-y: auto; display: none; padding: 20px; }
+        .admin-panel { position: fixed; inset: 0; background: var(--bg-primary); z-index: 30000; overflow-y: auto; display: none; padding: 20px; }
         .admin-panel.active { display: block; }
         .admin-card { max-width: 700px; margin: 0 auto; }
         .collapse-section { background: var(--bg-secondary); border-radius: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
@@ -116,7 +119,7 @@
         .btn-red { background: var(--danger); color: white; }
         .btn-green { background: var(--success); color: white; }
         .partner-item { display: flex; align-items: center; gap: 10px; padding: 10px; background: var(--bg-card); border-radius: 12px; margin-bottom: 8px; }
-        .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 40px; font-size: 14px; z-index: 10002; display: none; }
+        .toast-msg { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.8); color: white; padding: 10px 20px; border-radius: 40px; font-size: 14px; z-index: 30001; display: none; }
     </style>
 </head>
 <body>
@@ -128,21 +131,26 @@
 <div class="top-nav">
     <div class="logo-section"><h1 id="siteTitle">بصمة غير</h1><p>للديكور والتصميم الداخلي</p></div>
     <div class="partners-marquee" id="partnersMarquee" style="display: none;"><div class="marquee-track" id="marqueeTrack"></div></div>
-    <div class="tabs-wrapper"><div class="tabs-section" id="tabsSection"></div><div class="scroll-indicator"></div></div>
+    <div class="tabs-wrapper"><div class="tabs-section" id="tabsSection"></div></div>
 </div>
 
 <div class="main-content" id="mainContent"></div>
 
-<!-- Viewer Modal -->
-<div id="viewerModal" class="viewer-modal" onclick="closeViewerOnBg(event)">
+<!-- FULL SCREEN VIEWER MODAL -->
+<div id="viewerModal" class="viewer-modal">
     <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
-    <div class="viewer-container"><img id="viewerImg" class="viewer-img" src="" draggable="false"></div>
+    <div class="viewer-container">
+        <img id="viewerImg" class="viewer-img" src="" draggable="false">
+    </div>
     <div class="viewer-controls">
         <button onclick="viewerPrev()"><i class="fas fa-chevron-right"></i></button>
-        <span id="viewerCounter" style="color:white; font-size:1.2rem; font-weight:600;">1/1</span>
+        <span class="viewer-counter" id="viewerCounter">1 / 1</span>
         <button onclick="viewerNext()"><i class="fas fa-chevron-left"></i></button>
     </div>
-    <button class="viewer-whatsapp" id="viewerWhatsappBtn" onclick="viewerWhatsapp()"><i class="fab fa-whatsapp"></i></button>
+    <div class="viewer-actions">
+        <button class="viewer-action-btn" id="viewerFavBtn" onclick="viewerToggleFavorite()"><i class="fas fa-heart"></i></button>
+        <button class="viewer-action-btn whatsapp-viewer" onclick="viewerWhatsapp()"><i class="fab fa-whatsapp"></i></button>
+    </div>
 </div>
 
 <div id="adminPanel" class="admin-panel"><div class="admin-card"><h2 style="margin-bottom:20px;">⚡ لوحة الإدارة</h2><div id="adminSections"></div><button onclick="closeAdminPanel()" class="admin-btn btn-red" style="margin-top:20px">إغلاق</button></div></div>
@@ -152,23 +160,113 @@
     const firebaseConfig = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", authDomain: "mydecor-b29bd.firebaseapp.com", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd", storageBucket: "mydecor-b29bd.firebasestorage.app", messagingSenderId: "302609299720", appId: "1:302609299720:web:e086b600c3ee824acd54bd" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database(), DB_PATH = 'site_v28';
-    let currentData = {}, isAdmin = false, favorites = JSON.parse(localStorage.getItem('site_favorites_v4')) || [], currentPage = 'home';
-    let currentImageList = [], currentImageIndex = 0, currentImageUrl = '';
-    let reviewInterval = null, reviewIdx = 0;
-    let zoomScale = 1, translate = { x: 0, y: 0 }, isZoomed = false, isDragging = false, startX, startY, startTX, startTY;
+    let currentData = {}, isAdmin = false, favorites = JSON.parse(localStorage.getItem('site_favorites_v5')) || [], currentPage = 'home';
+    
+    // Viewer variables
+    let currentImageList = [], currentImageIndex = 0, currentImageId = '';
+    let zoomScale = 1, translate = { x: 0, y: 0 }, isZoomed = false, isDragging = false;
+    let startX, startY, startTX, startTY;
 
     function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
     window.addEventListener('load', () => { setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); }, 1000); });
 
-    function saveFav() { localStorage.setItem('site_favorites_v4', JSON.stringify(favorites)); }
+    // Favorites
+    function saveFav() { localStorage.setItem('site_favorites_v5', JSON.stringify(favorites)); }
     function toggleFavorite(imgId, imgUrl) {
         const exists = favorites.find(f => f.id === imgId);
         if (exists) { favorites = favorites.filter(f => f.id !== imgId); showToast('🗑️ تمت الإزالة من المفضلة'); }
         else { favorites.unshift({ id: imgId, url: imgUrl, date: Date.now() }); showToast('❤️ أضيف إلى المفضلة'); }
-        saveFav(); renderCurrentPage();
+        saveFav(); renderCurrentPage(); updateViewerFavButton();
     }
     function isFav(imgId) { return favorites.some(f => f.id === imgId); }
+    function updateViewerFavButton() {
+        const btn = document.getElementById('viewerFavBtn');
+        if (btn && currentImageId) {
+            if (isFav(currentImageId)) { btn.classList.add('active'); btn.innerHTML = '<i class="fas fa-heart"></i>'; btn.style.background = 'white'; btn.style.color = 'var(--danger)'; }
+            else { btn.classList.remove('active'); btn.innerHTML = '<i class="far fa-heart"></i>'; btn.style.background = 'rgba(0,0,0,0.7)'; btn.style.color = 'white'; }
+        }
+    }
+    function viewerToggleFavorite() { if (currentImageId && currentImageList[currentImageIndex]) toggleFavorite(currentImageId, currentImageList[currentImageIndex]); }
+    function viewerWhatsapp() { if (currentImageList[currentImageIndex]) window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+currentImageList[currentImageIndex])}`, '_blank'); }
 
+    // ========== VIEWER FUNCTIONS ==========
+    function openViewer(url, imageList, index, imgId) {
+        currentImageList = imageList;
+        currentImageIndex = index;
+        currentImageId = imgId || `img_${Date.now()}_${index}`;
+        const viewerImg = document.getElementById('viewerImg');
+        viewerImg.src = url;
+        document.getElementById('viewerCounter').innerText = `${index+1}/${imageList.length}`;
+        document.getElementById('viewerModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        resetZoom();
+        setupZoomEvents();
+        updateViewerFavButton();
+    }
+    function closeViewer() {
+        document.getElementById('viewerModal').style.display = 'none';
+        document.body.style.overflow = '';
+        resetZoom();
+        currentImageList = [];
+    }
+    function viewerNext() {
+        if (!currentImageList.length) return;
+        currentImageIndex = (currentImageIndex + 1) % currentImageList.length;
+        document.getElementById('viewerImg').src = currentImageList[currentImageIndex];
+        document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`;
+        currentImageId = `img_${Date.now()}_${currentImageIndex}`;
+        resetZoom();
+        updateViewerFavButton();
+    }
+    function viewerPrev() {
+        if (!currentImageList.length) return;
+        currentImageIndex = (currentImageIndex - 1 + currentImageList.length) % currentImageList.length;
+        document.getElementById('viewerImg').src = currentImageList[currentImageIndex];
+        document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`;
+        currentImageId = `img_${Date.now()}_${currentImageIndex}`;
+        resetZoom();
+        updateViewerFavButton();
+    }
+    function resetZoom() {
+        zoomScale = 1;
+        translate = { x: 0, y: 0 };
+        const img = document.getElementById('viewerImg');
+        if (img) img.style.transform = `scale(1) translate(0px, 0px)`;
+        isZoomed = false;
+    }
+    function setupZoomEvents() {
+        const img = document.getElementById('viewerImg');
+        if (!img) return;
+        img.onwheel = (e) => {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            zoomScale = Math.min(Math.max(zoomScale + delta, 1), 3);
+            img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`;
+            isZoomed = zoomScale > 1;
+        };
+        img.onmousedown = (e) => {
+            if (!isZoomed) return;
+            e.preventDefault();
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+            startTX = translate.x;
+            startTY = translate.y;
+        };
+        window.onmousemove = (e) => {
+            if (!isDragging || !isZoomed) return;
+            translate.x = startTX + (e.clientX - startX);
+            translate.y = startTY + (e.clientY - startY);
+            img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`;
+        };
+        window.onmouseup = () => { isDragging = false; };
+        img.ondblclick = () => {
+            if (zoomScale > 1) resetZoom();
+            else { zoomScale = 2; img.style.transform = `scale(2) translate(0px, 0px)`; isZoomed = true; }
+        };
+    }
+
+    // Schedule Helpers
     function formatTime12(t) { if(!t) return ""; let [h,m]=t.split(':'); h=parseInt(h); return `${h%12||12}:${m} ${h>=12?'م':'ص'}`; }
     function getGroupedScheduleHtml(d) {
         if (!d.work_schedule) return '<p>لم تحدد المواعيد بعد</p>';
@@ -208,44 +306,18 @@
         c.innerHTML = open ? `<div class="status-badge status-open"><i class="fas fa-circle"></i> مفتوح الآن</div>` : `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق الآن</div>`;
     }
 
-    // Viewer Functions with Zoom and WhatsApp
-    function openViewer(url, imageList, index) {
-        currentImageList = imageList;
-        currentImageIndex = index;
-        currentImageUrl = url;
-        document.getElementById('viewerImg').src = url;
-        document.getElementById('viewerCounter').innerText = `${index+1}/${imageList.length}`;
-        document.getElementById('viewerModal').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        resetZoom();
-        setupZoomEvents();
-    }
-    function closeViewer() { document.getElementById('viewerModal').style.display = 'none'; document.body.style.overflow = ''; resetZoom(); }
-    function closeViewerOnBg(e) { if (e.target === document.getElementById('viewerModal')) closeViewer(); }
-    function viewerNext() { currentImageIndex = (currentImageIndex + 1) % currentImageList.length; currentImageUrl = currentImageList[currentImageIndex]; document.getElementById('viewerImg').src = currentImageUrl; document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`; resetZoom(); }
-    function viewerPrev() { currentImageIndex = (currentImageIndex - 1 + currentImageList.length) % currentImageList.length; currentImageUrl = currentImageList[currentImageIndex]; document.getElementById('viewerImg').src = currentImageUrl; document.getElementById('viewerCounter').innerText = `${currentImageIndex+1}/${currentImageList.length}`; resetZoom(); }
-    function viewerWhatsapp() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+currentImageUrl)}`, '_blank'); }
-    function resetZoom() { zoomScale = 1; translate = { x: 0, y: 0 }; const img = document.getElementById('viewerImg'); if(img) img.style.transform = `scale(1) translate(0px, 0px)`; isZoomed = false; }
-    function setupZoomEvents() {
-        const img = document.getElementById('viewerImg');
-        if(!img) return;
-        img.onwheel = (e) => { e.preventDefault(); zoomScale = Math.min(Math.max(zoomScale + (e.deltaY > 0 ? -0.1 : 0.1), 1), 3); img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`; isZoomed = zoomScale > 1; };
-        img.onmousedown = (e) => { if (!isZoomed) return; e.preventDefault(); isDragging = true; startX = e.clientX; startY = e.clientY; startTX = translate.x; startTY = translate.y; };
-        window.onmousemove = (e) => { if (!isDragging || !isZoomed) return; translate.x = startTX + (e.clientX - startX); translate.y = startTY + (e.clientY - startY); img.style.transform = `scale(${zoomScale}) translate(${translate.x}px, ${translate.y}px)`; };
-        window.onmouseup = () => { isDragging = false; };
-        img.ondblclick = () => { if (zoomScale > 1) resetZoom(); else { zoomScale = 2; img.style.transform = `scale(2) translate(0px, 0px)`; isZoomed = true; } };
-    }
-
-    // Image Gallery Render with WhatsApp and Favorite buttons
+    // Render Functions with proper image viewer calls
     function renderImageGallery(images, parentId) {
         if (!images || Object.keys(images).length === 0) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
-        const urls = Object.values(images).map(img => img.url);
+        const imageIds = Object.keys(images);
+        const urls = imageIds.map(id => images[id].url);
         let html = '<div class="photo-grid">';
-        Object.keys(images).reverse().forEach((imgId, idx) => {
+        imageIds.reverse().forEach((imgId, idx) => {
+            const actualIdx = urls.length - 1 - idx;
             const imgUrl = images[imgId].url;
             const fullId = `${parentId}_${imgId}`;
             const favClass = isFav(fullId) ? 'active' : '';
-            html += `<div class="photo-item" onclick="openViewer('${imgUrl}', ${JSON.stringify(urls)}, ${urls.length-1-idx})">
+            html += `<div class="photo-item" onclick="openViewer('${imgUrl}', ${JSON.stringify(urls)}, ${actualIdx}, '${fullId}')">
                         <img src="${imgUrl}" loading="lazy">
                         <div class="photo-overlay">
                             <div class="action-buttons">
@@ -292,7 +364,7 @@
         const album = currentData.albums[albumId];
         if (album && album.imgs) {
             const urls = Object.values(album.imgs).map(img => img.url);
-            if (urls.length) openViewer(urls[0], urls, 0);
+            if (urls.length) openViewer(urls[0], urls, 0, `album_${albumId}_0`);
         }
     }
 
@@ -312,7 +384,7 @@
         const urls = favorites.map(f => f.url);
         let html = '<div class="photo-grid">';
         favorites.forEach((fav, idx) => {
-            html += `<div class="photo-item" onclick="openViewer('${fav.url}', ${JSON.stringify(urls)}, ${idx})">
+            html += `<div class="photo-item" onclick="openViewer('${fav.url}', ${JSON.stringify(urls)}, ${idx}, '${fav.id}')">
                         <img src="${fav.url}" loading="lazy">
                         <div class="photo-overlay">
                             <div class="action-buttons">
@@ -341,8 +413,6 @@
         if (currentData.pages) Object.keys(currentData.pages).forEach(id => { html += `<button class="tab-btn ${currentPage === `page_${id}` ? 'active' : ''}" data-page="page_${id}">${currentData.pages[id].title}</button>`; });
         container.innerHTML = html;
         document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { currentPage = btn.dataset.page; renderTabs(); renderCurrentPage(); }); });
-        const tabs = document.querySelector('.tabs-section');
-        if (tabs) { setInterval(() => { if (tabs.scrollLeft < tabs.scrollWidth - tabs.clientWidth) tabs.scrollBy({ left: 50, behavior: 'smooth' }); else tabs.scrollTo({ left: 0, behavior: 'smooth' }); }, 4000); }
     }
 
     function renderPartnersMarquee() {
@@ -356,12 +426,13 @@
     function renderSocial() { const d = currentData, c = document.getElementById('socialLinks'); if (!c) return; let h = ''; if (d.insta_url) h += `<a href="${d.insta_url}" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>`; if (d.tiktok_url) h += `<a href="${d.tiktok_url}" target="_blank" class="social-link"><i class="fab fa-tiktok"></i></a>`; if (d.snap_url) h += `<a href="${d.snap_url}" target="_blank" class="social-link"><i class="fab fa-snapchat"></i></a>`; c.innerHTML = h; }
 
     function startReviewSlider() {
-        if (reviewInterval) clearInterval(reviewInterval);
+        if (window.reviewInterval) clearInterval(window.reviewInterval);
         const items = document.querySelectorAll('.review-item');
         if (!items.length) return;
+        let idx = 0;
         items.forEach((item, i) => item.classList.remove('active'));
         items[0]?.classList.add('active');
-        reviewInterval = setInterval(() => { reviewIdx = (reviewIdx + 1) % items.length; items.forEach((item, i) => item.classList.remove('active')); items[reviewIdx]?.classList.add('active'); }, 4000);
+        window.reviewInterval = setInterval(() => { idx = (idx + 1) % items.length; items.forEach((item, i) => item.classList.remove('active')); items[idx]?.classList.add('active'); }, 4000);
     }
 
     function setupStarRating() {
@@ -388,7 +459,7 @@
 
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
 
-    // Admin Functions (compressed but complete)
+    // Admin Functions (simplified but complete)
     function buildAdminSections() {
         const d = currentData;
         const targetOpts = () => { let o = '<option value="">-- اختر الوجهة --</option>'; if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">ألبوم: ${d.albums[id].name}</option>`); if(d.pages) Object.keys(d.pages).forEach(id=>o+=`<option value="pages/${id}">صفحة: ${d.pages[id].title}</option>`); return o; };
@@ -432,12 +503,14 @@
     function checkMaintenance() { if(currentData.maintenance_mode && !isAdmin) document.getElementById('maintenance-screen').style.display='flex'; else document.getElementById('maintenance-screen').style.display='none'; }
 
     db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; renderTabs(); renderCurrentPage(); renderPartnersMarquee(); checkMaintenance(); if(isAdmin && document.getElementById('adminPanel').classList.contains('active')) buildAdminSections(); });
-    window.openViewer=openViewer; window.closeViewer=closeViewer; window.closeViewerOnBg=closeViewerOnBg; window.viewerNext=viewerNext; window.viewerPrev=viewerPrev; window.viewerWhatsapp=viewerWhatsapp;
-    window.toggleFavorite=toggleFavorite; window.openAlbum=openAlbum; window.openCatalog=openCatalog; window.whatsappGlobal=whatsappGlobal;
-    window.checkAccess=checkAccess; window.closeAdminPanel=closeAdminPanel; window.toggleCollapse=toggleCollapse;
-    window.addPage=addPage; window.addAlbum=addAlbum; window.addCatalog=addCatalog; window.addPartner=addPartner;
-    window.saveAbout=saveAbout; window.saveSchedule=saveSchedule; window.saveSocial=saveSocial; window.saveGeneral=saveGeneral;
-    window.uploadPhotos=uploadPhotos; window.loadImagesForDelete=loadImagesForDelete; window.deleteImage=deleteImage; window.saveMaintenance=saveMaintenance;
+    
+    window.openViewer = openViewer; window.closeViewer = closeViewer; window.viewerNext = viewerNext; window.viewerPrev = viewerPrev;
+    window.viewerToggleFavorite = viewerToggleFavorite; window.viewerWhatsapp = viewerWhatsapp;
+    window.toggleFavorite = toggleFavorite; window.openAlbum = openAlbum; window.openCatalog = openCatalog; window.whatsappGlobal = whatsappGlobal;
+    window.checkAccess = checkAccess; window.closeAdminPanel = closeAdminPanel; window.toggleCollapse = toggleCollapse;
+    window.addPage = addPage; window.addAlbum = addAlbum; window.addCatalog = addCatalog; window.addPartner = addPartner;
+    window.saveAbout = saveAbout; window.saveSchedule = saveSchedule; window.saveSocial = saveSocial; window.saveGeneral = saveGeneral;
+    window.uploadPhotos = uploadPhotos; window.loadImagesForDelete = loadImagesForDelete; window.deleteImage = deleteImage; window.saveMaintenance = saveMaintenance;
     renderTabs(); renderCurrentPage();
 </script>
 </body>
