@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* --- جميع الأنماط السابقة محفوظة كما هي --- */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: 'Cairo', sans-serif; background: #fafafc; color: #1c1c1e; overflow-x: hidden; }
         :root {
@@ -465,24 +464,34 @@
         }, 3000);
     }
 
-    // ========== CRITICAL: Render Functions with Correct Image Viewer ==========
-    // This function is used for all sections that display images (pages, favorites)
+    // ========== CRITICAL: Unified Image Gallery Renderer ==========
+    // This function works for pages, favorites, and any section that displays a grid of images
     function renderImageGallery(images, parentId) {
-        if (!images || Object.keys(images).length === 0) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
+        if (!images || Object.keys(images).length === 0) {
+            return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
+        }
+        
+        // Get all image IDs and build the full list of URLs
         const imageIds = Object.keys(images);
-        // Build complete list of URLs for this section
         const allUrls = imageIds.map(id => images[id].url);
+        
+        // Reverse to show newest first (optional, but consistent with original)
+        const reversedIds = [...imageIds].reverse();
+        
         let html = '<div class="photo-grid">';
-        // Reverse to show newest first
-        imageIds.reverse().forEach((imgId, idx) => {
-            const actualIndex = allUrls.length - 1 - idx;
+        
+        for (let i = 0; i < reversedIds.length; i++) {
+            const imgId = reversedIds[i];
+            const originalIndex = imageIds.indexOf(imgId); // original index in allUrls
             const imgUrl = images[imgId].url;
             const fullId = `${parentId}_${imgId}`;
             const favClass = isFav(fullId) ? 'active' : '';
-            // Safely escape for onclick attribute
-            const escapedUrls = JSON.stringify(allUrls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            
+            // Create a safe JSON string of all URLs
+            const urlsJson = JSON.stringify(allUrls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
             const escapedUrl = imgUrl.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            html += `<div class="photo-item" onclick="openViewer('${escapedUrl}', ${escapedUrls}, ${actualIndex}, '${fullId}')">
+            
+            html += `<div class="photo-item" onclick="openViewer('${escapedUrl}', ${urlsJson}, ${originalIndex}, '${fullId}')">
                         <img src="${imgUrl}" loading="lazy">
                         <div class="photo-overlay">
                             <div class="action-buttons">
@@ -491,11 +500,13 @@
                             </div>
                         </div>
                      </div>`;
-        });
+        }
+        
         html += '</div>';
         return html;
     }
 
+    // Home Page (no changes, just uses info cards)
     function renderHome() {
         const d = currentData;
         let reviewsHtml = '';
@@ -512,6 +523,7 @@
         `;
     }
 
+    // Works Section (Albums)
     function renderWorks() {
         const d = currentData;
         if (!d.albums || Object.keys(d.albums).length === 0) return '<div class="empty-state"><i class="fas fa-folder-open fa-3x"></i><p>لا توجد ألبومات بعد</p></div>';
@@ -533,6 +545,7 @@
         }
     }
 
+    // Catalogs Section
     function renderCatalogs() {
         const d = currentData;
         if (!d.catalogs || Object.keys(d.catalogs).length === 0) return '<div class="empty-state"><i class="fas fa-book-open fa-3x"></i><p>لا توجد كتالوجات بعد</p></div>';
@@ -544,14 +557,15 @@
 
     function openCatalog(catId) { const cat = currentData.catalogs[catId]; if (cat && cat.code) { const win = window.open(); win.document.write(cat.code); } else showToast('رابط الكتالوج غير متاح'); }
 
+    // Favorites Section
     function renderFavorites() {
         if (favorites.length === 0) return '<div class="empty-state"><i class="far fa-heart fa-3x"></i><p>لا توجد صور في المفضلة</p></div>';
         const urls = favorites.map(f => f.url);
         let html = '<div class="photo-grid">';
         favorites.forEach((fav, idx) => {
-            const escapedUrls = JSON.stringify(urls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            const urlsJson = JSON.stringify(urls).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
             const escapedUrl = fav.url.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-            html += `<div class="photo-item" onclick="openViewer('${escapedUrl}', ${escapedUrls}, ${idx}, '${fav.id}')">
+            html += `<div class="photo-item" onclick="openViewer('${escapedUrl}', ${urlsJson}, ${idx}, '${fav.id}')">
                         <img src="${fav.url}" loading="lazy">
                         <div class="photo-overlay">
                             <div class="action-buttons">
@@ -565,6 +579,7 @@
         return html;
     }
 
+    // Custom Pages
     function renderPage(pageId) {
         const page = currentData.pages[pageId];
         if (!page || !page.imgs) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
@@ -629,7 +644,7 @@
 
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
 
-    // Admin Panel Functions (Complete)
+    // Admin Panel Functions (complete, same as before)
     function buildAdminSections() {
         const d = currentData;
         const targetOpts = () => { let o = '<option value="">-- اختر الوجهة --</option>'; if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">ألبوم: ${d.albums[id].name}</option>`); if(d.pages) Object.keys(d.pages).forEach(id=>o+=`<option value="pages/${id}">صفحة: ${d.pages[id].title}</option>`); return o; };
