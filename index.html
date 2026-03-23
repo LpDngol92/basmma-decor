@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        /* ========== جميع الأنماط الأصلية مع إضافة تنسيق الحقول والأزرار ========== */
+        /* ========== جميع الأنماط الأصلية (لم تتغير) ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Cairo', sans-serif;
@@ -38,46 +38,6 @@
             --whatsapp: #25D366;
         }
 
-        /* ========== تنسيق الحقول والأزرار (أضيف ليعود الشكل الأصلي) ========== */
-        input, textarea, select {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            font-family: inherit;
-            background: white;
-            color: var(--text-primary);
-            transition: border 0.2s;
-        }
-        input:focus, textarea:focus, select:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        .admin-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            margin-top: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            background: var(--accent);
-            color: #1c1c1e;
-        }
-        .admin-btn:hover {
-            transform: translateY(-2px);
-            background: var(--accent-dark);
-        }
-        .btn-gold {
-            background: var(--accent);
-            color: #1c1c1e;
-        }
-
-        /* باقي الأنماط كما هي (محذوفة للاختصار، لكنها موجودة في الملف الكامل) */
-        /* سأضع الأنماط المتبقية المهمة فقط، ولكن الملف الكامل يحتوي على كل شيء */
-        
         /* ========== SPLASH SCREEN ========== */
         #splash {
             position: fixed;
@@ -777,6 +737,41 @@
             z-index: 30001;
             display: none;
         }
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-family: inherit;
+            background: white;
+            color: var(--text-primary);
+            transition: border 0.2s;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .admin-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--accent);
+            color: #1c1c1e;
+        }
+        .admin-btn:hover {
+            transform: translateY(-2px);
+            background: var(--accent-dark);
+        }
+        .btn-gold {
+            background: var(--accent);
+            color: #1c1c1e;
+        }
     </style>
 </head>
 <body>
@@ -1105,7 +1100,16 @@
         html += `<button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
         if (currentData.pages) Object.keys(currentData.pages).forEach(id => { html += `<button class="tab-btn ${currentPage === `page_${id}` ? 'active' : ''}" data-page="page_${id}">${currentData.pages[id].title}</button>`; });
         container.innerHTML = html;
-        document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { currentPage = btn.dataset.page; renderTabs(); renderCurrentPage(); startTabAutoScroll(); setTimeout(updateTabIndicator, 100); }); });
+
+        // إضافة مستمع النقر مع تغيير الهاش
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const page = btn.dataset.page;
+                if (window.location.hash !== `#${page}`) {
+                    window.location.hash = page;
+                }
+            });
+        });
         setTimeout(updateTabIndicator, 100);
         window.addEventListener('resize', updateTabIndicator);
         startTabAutoScroll();
@@ -1136,6 +1140,34 @@
         const stars = document.querySelectorAll('#starRating i');
         stars.forEach(star => { star.onclick = () => { selected = parseInt(star.dataset.star); stars.forEach(s => s.classList.remove('active')); for(let i=stars.length-1; i>=stars.length-selected; i--) stars[i]?.classList.add('active'); }; });
         window.submitReview = () => { const name = document.getElementById('reviewName')?.value, msg = document.getElementById('reviewMsg')?.value; if (!name || !msg || !selected) return showToast('يرجى إكمال جميع الحقول'); db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selected }).then(() => { showToast('شكراً لتقييمك!'); document.getElementById('reviewName').value = ''; document.getElementById('reviewMsg').value = ''; selected = 0; stars.forEach(s => s.classList.remove('active')); }); };
+    }
+
+    // ========== DEEP LINKING FUNCTIONS ==========
+    function loadPageFromHash() {
+        const hash = window.location.hash.substring(1); // إزالة الـ #
+        if (hash === 'home') {
+            currentPage = 'home';
+        } else if (hash === 'works') {
+            currentPage = 'works';
+        } else if (hash === 'catalogs') {
+            currentPage = 'catalogs';
+        } else if (hash === 'favorites') {
+            currentPage = 'favorites';
+        } else if (hash.startsWith('page_')) {
+            const pageId = hash.replace('page_', '');
+            if (currentData.pages && currentData.pages[pageId]) {
+                currentPage = `page_${pageId}`;
+            } else {
+                currentPage = 'home';
+                window.location.hash = 'home';
+            }
+        } else {
+            currentPage = 'home';
+            window.location.hash = 'home';
+        }
+        renderTabs();
+        renderCurrentPage();
+        setTimeout(updateTabIndicator, 100);
     }
 
     function renderCurrentPage() {
@@ -1179,13 +1211,27 @@
 
     function checkMaintenance() { if(currentData.maintenance_mode) document.getElementById('maintenance-screen').style.display='flex'; else document.getElementById('maintenance-screen').style.display='none'; }
 
-    db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; renderTabs(); renderCurrentPage(); renderPartnersMarquee(); checkMaintenance(); });
-    
+    // الاستماع لتغير الهاش
+    window.addEventListener('hashchange', loadPageFromHash);
+
+    // تحميل البيانات من Firebase وتطبيق الهاش الأولي
+    db.ref(DB_PATH).on('value', snap => {
+        currentData = snap.val() || {};
+        // إذا لم يكن هناك هاش، نضع الهاش الافتراضي
+        if (!window.location.hash || window.location.hash === '#') {
+            window.location.hash = 'home';
+        } else {
+            loadPageFromHash();
+        }
+        renderPartnersMarquee();
+        checkMaintenance();
+    });
+
+    // تعريف الدوال العامة
     window.openViewer = openViewer; window.closeViewer = closeViewer; window.viewerNext = viewerNext; window.viewerPrev = viewerPrev;
     window.viewerToggleFavorite = viewerToggleFavorite; window.viewerWhatsapp = viewerWhatsapp;
     window.toggleFavorite = toggleFavorite; window.openAlbum = openAlbum; window.openCatalog = openCatalog; window.whatsappGlobal = whatsappGlobal;
     window.closePopup = closePopup;
-    renderTabs(); renderCurrentPage();
 </script>
 </body>
 </html>
