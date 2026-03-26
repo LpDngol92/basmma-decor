@@ -150,7 +150,7 @@
             color: var(--text-secondary);
         }
 
-        /* ========== PARTNERS MARQUEE - INFINITE LOOP & LARGER SIZE ========== */
+        /* ========== PARTNERS MARQUEE - INFINITE SMOOTH SCROLL ========== */
         .partners-marquee {
             background: var(--bg-secondary);
             padding: 16px 0;
@@ -166,39 +166,65 @@
         .marquee-track {
             display: flex;
             width: fit-content;
-            animation: marqueeScrollInfinite 30s linear infinite;
+            /* الحركة اللانهائية السلسة من اليمين إلى اليسار والعودة باستمرار */
+            animation: marqueeInfinite 45s linear infinite;
         }
-        /* حركة لا نهائية بدون فراغات */
-        @keyframes marqueeScrollInfinite {
+        /* توقف مؤقت عند hover لسهولة النقر */
+        .partners-marquee:hover .marquee-track {
+            animation-play-state: paused;
+        }
+        @keyframes marqueeInfinite {
             0% {
                 transform: translateX(0);
             }
             100% {
-                transform: translateX(-50%);
+                /* نحرك بمقدار ثلث المسافة الإجمالية لأننا كررنا 3 مرات */
+                transform: translateX(-33.333%);
             }
         }
-        /* حجم الشعارات أكبر بمرتين */
+        /* تصميم الشعارات لتناسب أي صورة مع الحفاظ على الجودة */
         .partner-logo {
-            height: 80px;      /* كان 40px ، أصبح 80px (أكبر بمرتين) */
-            margin: 0 32px;    /* مسافة أكبر لتتناسب مع الحجم الجديد */
-            object-fit: contain;
+            height: 80px;           /* ارتفاع ثابت مناسب */
+            width: auto;            /* عرض تلقائي حسب النسبة */
+            max-width: 180px;       /* حد أقصى للعرض */
+            margin: 0 24px;         /* مسافة مناسبة بين الشعارات */
+            object-fit: contain;    /* يحافظ على نسب الصورة دون تشويه */
             cursor: pointer;
-            transition: transform 0.3s ease, filter 0.2s, box-shadow 0.2s;
+            transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             filter: grayscale(0.1);
-            background: rgba(255, 255, 255, 0.9);
-            padding: 10px 18px;
+            background: #ffffff;
+            padding: 8px 16px;
             border-radius: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border: 1px solid rgba(0,0,0,0.05);
         }
         .partner-logo:hover {
             transform: scale(1.08);
             filter: grayscale(0);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            background: rgba(255, 255, 255, 1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            background: #ffffff;
+            border-color: var(--accent-light);
         }
-        /* توقف مؤقت عند hover للحصول على تجربة أفضل */
-        .partners-marquee:hover .marquee-track {
-            animation-play-state: paused;
+        /* في حالة فشل تحميل الصورة نعرض خلفية بديلة */
+        .partner-logo::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #f5f5f5;
+            border-radius: 20px;
+            z-index: -1;
+        }
+        /* تحسين للشاشات الصغيرة */
+        @media (max-width: 768px) {
+            .partner-logo {
+                height: 65px;
+                max-width: 140px;
+                margin: 0 16px;
+                padding: 6px 12px;
+            }
         }
 
         /* ========== TABS SECTION ========== */
@@ -824,16 +850,6 @@
             justify-content: center;
             align-items: center;
         }
-        @media (max-width: 768px) {
-            .ad-container {
-                margin: 15px 0;
-            }
-            .partner-logo {
-                height: 65px;
-                margin: 0 20px;
-                padding: 6px 12px;
-            }
-        }
     </style>
 </head>
 <body>
@@ -1183,16 +1199,16 @@
         const partners = currentData.partners ? Object.values(currentData.partners) : [];
         if (partners.length === 0) { container.style.display = 'none'; return; }
         container.style.display = 'block';
-        // تكرار المحتوى 3 مرات لضمان سلاسة الحركة اللانهائية بدون فواصل
+        // تكرار المحتوى 3 مرات لضمان الحركة اللانهائية السلسة
         let content = '';
         for (let i = 0; i < 3; i++) {
-            content += partners.map(p => `<img src="${p.url}" class="partner-logo" onclick="window.open('${p.url}', '_blank')">`).join('');
+            content += partners.map(p => `<img src="${p.url}" class="partner-logo" alt="شريك" onclick="window.open('${p.url}', '_blank')">`).join('');
         }
         track.innerHTML = content;
-        // إعادة تعيين الرسوم المتحركة لتجنب أي مشاكل في البداية
+        // إعادة تعيين الحركة لبدء جديدة
         track.style.animation = 'none';
         track.offsetHeight; // force reflow
-        track.style.animation = 'marqueeScrollInfinite 30s linear infinite';
+        track.style.animation = 'marqueeInfinite 45s linear infinite';
     }
 
     function renderSocial() { const d = currentData, c = document.getElementById('socialLinks'); if (!c) return; let h = ''; if (d.insta_url) h += `<a href="${d.insta_url}" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>`; if (d.tiktok_url) h += `<a href="${d.tiktok_url}" target="_blank" class="social-link"><i class="fab fa-tiktok"></i></a>`; if (d.snap_url) h += `<a href="${d.snap_url}" target="_blank" class="social-link"><i class="fab fa-snapchat"></i></a>`; c.innerHTML = h; }
