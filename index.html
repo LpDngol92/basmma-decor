@@ -150,9 +150,9 @@
             color: var(--text-secondary);
         }
 
-        /* ========== PARTNERS MARQUEE - FASTER + DARK BACKGROUND ========== */
+        /* ========== PARTNERS MARQUEE - GRAY BACKGROUND (عدلنا اللون إلى رمادي) ========== */
         .partners-marquee {
-            background: #1a1a1e;  /* داكن للخلفية لإبراز الشعارات بوضوح */
+            background: #2c2c2e;  /* رمادي غامق بدلاً من الأسود */
             padding: 16px 0;
             overflow: hidden;
             border-bottom: 1px solid rgba(0,0,0,0.1);
@@ -183,7 +183,7 @@
                 transform: translateX(-33.333%);
             }
         }
-        /* تصميم الشعارات - خلفية بيضاء وحواف ناعمة لتبرز على الخلفية الداكنة */
+        /* تصميم الشعارات - خلفية بيضاء وحواف ناعمة لتبرز على الخلفية الرمادية */
         .partner-logo {
             height: 80px;           /* ارتفاع ثابت مناسب */
             width: auto;            /* عرض تلقائي حسب النسبة */
@@ -1280,18 +1280,26 @@
 
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
 
+    // تحسين معالج النقر على الصور: استخدام الصورة الفعلية من العنصر <img>
     document.addEventListener('click', function(e) {
         const photoItem = e.target.closest('.photo-item');
         if (photoItem && !e.target.closest('.action-btn-icon')) {
+            // احصل على قائمة الروابط من data-urls
             const urlsAttr = photoItem.getAttribute('data-urls');
             if (!urlsAttr) return;
             try {
                 const urls = JSON.parse(urlsAttr);
+                // استخدم الصورة المعروضة فعلياً (أكثر موثوقية)
+                const imgElement = photoItem.querySelector('img');
+                if (!imgElement) return;
+                const currentUrl = imgElement.src;  // المصدر الحقيقي للصورة
                 const index = parseInt(photoItem.getAttribute('data-index'));
+                // تحقق من أن currentUrl موجود في قائمة urls (قد يختلف ترتيب المعاينة)
+                let actualIndex = urls.findIndex(u => u === currentUrl);
+                if (actualIndex === -1) actualIndex = index; // fallback
                 const id = photoItem.getAttribute('data-id');
-                const url = photoItem.getAttribute('data-url') || urls[index];
-                if (url && urls.length) {
-                    openViewer(url, urls, index, id);
+                if (currentUrl && urls.length) {
+                    openViewer(currentUrl, urls, actualIndex, id);
                 }
             } catch (err) { console.error(err); }
         }
