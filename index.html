@@ -38,11 +38,10 @@
     }
     </script>
 
-    <!-- ========== Google AdSense (مع الأرقام الصحيحة) ========== -->
+    <!-- ========== Google AdSense ========== -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8835744121215847" crossorigin="anonymous"></script>
 
     <style>
-        /* جميع الأنماط كما هي (محذوفة للاختصار، لكنها موجودة في الكود الكامل) */
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Cairo', sans-serif;
@@ -151,39 +150,55 @@
             color: var(--text-secondary);
         }
 
-        /* ========== PARTNERS MARQUEE ========== */
+        /* ========== PARTNERS MARQUEE - INFINITE LOOP & LARGER SIZE ========== */
         .partners-marquee {
             background: var(--bg-secondary);
-            padding: 10px 0;
+            padding: 16px 0;
             overflow: hidden;
             border-bottom: 1px solid var(--border);
+            position: relative;
+        }
+        .marquee-wrapper {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
         }
         .marquee-track {
             display: flex;
-            animation: marqueeScroll 25s linear infinite;
             width: fit-content;
+            animation: marqueeScrollInfinite 30s linear infinite;
         }
+        /* حركة لا نهائية بدون فراغات */
+        @keyframes marqueeScrollInfinite {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        /* حجم الشعارات أكبر بمرتين */
         .partner-logo {
-            height: 40px;
-            margin: 0 20px;
+            height: 80px;      /* كان 40px ، أصبح 80px (أكبر بمرتين) */
+            margin: 0 32px;    /* مسافة أكبر لتتناسب مع الحجم الجديد */
             object-fit: contain;
             cursor: pointer;
             transition: transform 0.3s ease, filter 0.2s, box-shadow 0.2s;
             filter: grayscale(0.1);
-            background: rgba(255, 255, 255, 0.85);
-            padding: 6px 12px;
-            border-radius: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 18px;
+            border-radius: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         .partner-logo:hover {
             transform: scale(1.08);
             filter: grayscale(0);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background: rgba(255, 255, 255, 1);
         }
-        @keyframes marqueeScroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
+        /* توقف مؤقت عند hover للحصول على تجربة أفضل */
+        .partners-marquee:hover .marquee-track {
+            animation-play-state: paused;
         }
 
         /* ========== TABS SECTION ========== */
@@ -798,7 +813,6 @@
             padding: 40px;
             color: var(--text-secondary);
         }
-        /* ========== تنسيق الإعلانات ========== */
         .ad-container {
             margin: 20px 0;
             text-align: center;
@@ -814,6 +828,11 @@
             .ad-container {
                 margin: 15px 0;
             }
+            .partner-logo {
+                height: 65px;
+                margin: 0 20px;
+                padding: 6px 12px;
+            }
         }
     </style>
 </head>
@@ -824,7 +843,11 @@
 
 <div class="top-nav">
     <div class="logo-section"><h1 id="siteTitle">بصمة غير</h1><p>للديكور والتصميم الداخلي</p></div>
-    <div class="partners-marquee" id="partnersMarquee" style="display: none;"><div class="marquee-track" id="marqueeTrack"></div></div>
+    <div class="partners-marquee" id="partnersMarquee" style="display: none;">
+        <div class="marquee-wrapper">
+            <div class="marquee-track" id="marqueeTrack"></div>
+        </div>
+    </div>
     <div class="tabs-wrapper"><div class="tabs-section" id="tabsSection"></div><div class="tab-indicator"></div></div>
 </div>
 
@@ -874,15 +897,13 @@
     let tabScrollInterval = null;
     let popupTimeout = null;
 
-    // ========== Helper Functions ==========
+    // Helper Functions
     function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
     window.addEventListener('load', () => { setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); document.body.classList.add('loaded'); }, 1000); });
 
-    // Popup
     function showPopup() { if (!currentData.popup_enabled) return; const bubble = document.getElementById('popupBubble'); const message = currentData.popup_message || 'مرحباً بكم في عالم التصميم والأناقة ✨'; document.getElementById('popupMessage').innerText = message; bubble.style.display = 'block'; if (popupTimeout) clearTimeout(popupTimeout); popupTimeout = setTimeout(() => { closePopup(); }, (currentData.popup_duration || 8) * 1000); }
     function closePopup() { document.getElementById('popupBubble').style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); }
 
-    // Favorites
     function saveFav() { localStorage.setItem('site_favorites_v8', JSON.stringify(favorites)); }
     function toggleFavorite(imgId, imgUrl) {
         const exists = favorites.find(f => f.id === imgId);
@@ -901,7 +922,7 @@
     function viewerToggleFavorite() { if (currentImageId && currentImageList[currentImageIndex]) toggleFavorite(currentImageId, currentImageList[currentImageIndex]); }
     function viewerWhatsapp() { if (currentImageList[currentImageIndex]) window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+currentImageList[currentImageIndex])}`, '_blank'); }
 
-    // ========== Viewer with Zoom (كاملة) ==========
+    // Viewer with Zoom
     function openViewer(url, imageList, index, imgId) {
         currentImageList = imageList;
         currentImageIndex = index;
@@ -951,7 +972,7 @@
         window.addEventListener('mouseup', handleMouseUp);
     }
 
-    // ========== Schedule Helpers ==========
+    // Schedule Helpers
     function formatTime12(t) { if(!t) return ""; let [h,m]=t.split(':'); h=parseInt(h); return `${h%12||12}:${m} ${h>=12?'م':'ص'}`; }
     function getGroupedScheduleHtml(d) {
         if (!d.work_schedule) return '<p>لم تحدد المواعيد بعد</p>';
@@ -991,7 +1012,7 @@
         c.innerHTML = open ? `<div class="status-badge status-open"><i class="fas fa-circle"></i> مفتوح الآن</div>` : `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق الآن</div>`;
     }
 
-    // ========== Tabs Auto-scroll and Indicator ==========
+    // Tabs
     function updateTabIndicator() {
         const activeBtn = document.querySelector('.tab-btn.active');
         if (!activeBtn) return;
@@ -1018,7 +1039,7 @@
         }, 4000);
     }
 
-    // ========== Render Functions ==========
+    // Render Functions
     function renderImageGallery(images, parentId) {
         if (!images || Object.keys(images).length === 0) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
         const imageIds = Object.keys(images);
@@ -1143,7 +1164,6 @@
         html += `<button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
         if (currentData.pages) Object.keys(currentData.pages).forEach(id => { html += `<button class="tab-btn ${currentPage === `page_${id}` ? 'active' : ''}" data-page="page_${id}">${currentData.pages[id].title}</button>`; });
         container.innerHTML = html;
-
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const page = btn.dataset.page;
@@ -1158,11 +1178,21 @@
     }
 
     function renderPartnersMarquee() {
-        const c = document.getElementById('partnersMarquee'), t = document.getElementById('marqueeTrack');
+        const container = document.getElementById('partnersMarquee');
+        const track = document.getElementById('marqueeTrack');
         const partners = currentData.partners ? Object.values(currentData.partners) : [];
-        if (partners.length === 0) { c.style.display = 'none'; return; }
-        c.style.display = 'block';
-        t.innerHTML = [...partners, ...partners].map(p => `<img src="${p.url}" class="partner-logo" onclick="window.open('${p.url}', '_blank')">`).join('');
+        if (partners.length === 0) { container.style.display = 'none'; return; }
+        container.style.display = 'block';
+        // تكرار المحتوى 3 مرات لضمان سلاسة الحركة اللانهائية بدون فواصل
+        let content = '';
+        for (let i = 0; i < 3; i++) {
+            content += partners.map(p => `<img src="${p.url}" class="partner-logo" onclick="window.open('${p.url}', '_blank')">`).join('');
+        }
+        track.innerHTML = content;
+        // إعادة تعيين الرسوم المتحركة لتجنب أي مشاكل في البداية
+        track.style.animation = 'none';
+        track.offsetHeight; // force reflow
+        track.style.animation = 'marqueeScrollInfinite 30s linear infinite';
     }
 
     function renderSocial() { const d = currentData, c = document.getElementById('socialLinks'); if (!c) return; let h = ''; if (d.insta_url) h += `<a href="${d.insta_url}" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>`; if (d.tiktok_url) h += `<a href="${d.tiktok_url}" target="_blank" class="social-link"><i class="fab fa-tiktok"></i></a>`; if (d.snap_url) h += `<a href="${d.snap_url}" target="_blank" class="social-link"><i class="fab fa-snapchat"></i></a>`; c.innerHTML = h; }
@@ -1184,35 +1214,13 @@
         window.submitReview = () => { const name = document.getElementById('reviewName')?.value, msg = document.getElementById('reviewMsg')?.value; if (!name || !msg || !selected) return showToast('يرجى إكمال جميع الحقول'); db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selected }).then(() => { showToast('شكراً لتقييمك!'); document.getElementById('reviewName').value = ''; document.getElementById('reviewMsg').value = ''; selected = 0; stars.forEach(s => s.classList.remove('active')); }); };
     }
 
-    // ========== Deep Linking & Render ==========
     function renderCurrentPage() {
         const main = document.getElementById('mainContent');
         let content = '';
-        
-        // كود الإعلان مع الأرقام الصحيحة
-        const adCode = `
-            <div class="ad-container">
-                <ins class="adsbygoogle"
-                     style="display:block; text-align:center;"
-                     data-ad-layout="in-article"
-                     data-ad-format="fluid"
-                     data-ad-client="ca-pub-8835744121215847"
-                     data-ad-slot="9636122604"></ins>
-                <script>(adsbygoogle = window.adsbygoogle || []).push({});<\/script>
-            </div>
-        `;
+        const adCode = `<div class="ad-container"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-8835744121215847" data-ad-slot="9636122604"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});<\/script></div>`;
         
         if (currentPage === 'home') {
-            const staticHtml = `
-                <div class="static-content">
-                    <div class="info-card">
-                        <div class="card-title"><i class="fas fa-info-circle"></i> بصمة غير للديكور</div>
-                        <p>نحن مؤسسة رائدة في اعمال الديكورات  <strong>جدة، السعودية</strong>. نقدم خدمة تنفيذ وتصميم جميع اعمال الديكورات للمحلات والمكاتب.</p>
-                        <p><strong>للتواصل:</strong> <a href="tel:0541780995">0541780995</a> | <a href="https://wa.me/966541780995" target="_blank">واتساب</a></p>
-                        <p><strong>موقعنا:</strong> جدة، طريق المكرونة، أمام عمائر بغلف</p>
-                    </div>
-                </div>
-            `;
+            const staticHtml = `<div class="static-content"><div class="info-card"><div class="card-title"><i class="fas fa-info-circle"></i> بصمة غير للديكور</div><p>نحن مؤسسة رائدة في اعمال الديكورات  <strong>جدة، السعودية</strong>. نقدم خدمة تنفيذ وتصميم جميع اعمال الديكورات للمحلات والمكاتب.</p><p><strong>للتواصل:</strong> <a href="tel:0541780995">0541780995</a> | <a href="https://wa.me/966541780995" target="_blank">واتساب</a></p><p><strong>موقعنا:</strong> جدة، طريق المكرونة، أمام عمائر بغلف</p></div></div>`;
             content = adCode + staticHtml + renderHome() + adCode;
         } else if (currentPage === 'works') {
             content = `<h2 style="margin-bottom:20px;"><i class="fas fa-images"></i> أعمالنا</h2>${renderWorks()}` + adCode;
@@ -1226,7 +1234,6 @@
         } else {
             content = adCode;
         }
-        
         main.innerHTML = content;
         document.getElementById('siteTitle').innerText = currentData.site_name || 'بصمة غير';
         renderSocial();
@@ -1267,7 +1274,6 @@
 
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
 
-    // Global click handler for photo items
     document.addEventListener('click', function(e) {
         const photoItem = e.target.closest('.photo-item');
         if (photoItem && !e.target.closest('.action-btn-icon')) {
@@ -1288,7 +1294,6 @@
     function checkMaintenance() { if(currentData.maintenance_mode) document.getElementById('maintenance-screen').style.display='flex'; else document.getElementById('maintenance-screen').style.display='none'; }
 
     window.addEventListener('hashchange', loadPageFromHash);
-
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
         if (!window.location.hash || window.location.hash === '#') {
