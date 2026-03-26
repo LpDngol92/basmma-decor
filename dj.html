@@ -126,6 +126,11 @@
             border-radius: 12px;
             border: 1px solid #ddd;
         }
+        .partner-item input {
+            flex: 2;
+            margin: 0;
+            font-size: 0.85rem;
+        }
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -182,6 +187,16 @@
             width: auto;
             padding: 8px 20px;
             margin: 0;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .button-group button {
+            flex: 1;
+            margin-bottom: 0;
         }
     </style>
 </head>
@@ -267,7 +282,7 @@
         document.getElementById('adminSections').innerHTML = `
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">💬 فقاعة الترحيب <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="popupEnabled" ${d.popup_enabled?'checked':''}> تفعيل الفقاعة</label><input id="popupMessageInput" placeholder="نص الرسالة" value="${(d.popup_message||'مرحباً بكم في عالم التصميم والأناقة ✨').replace(/"/g, '&quot;')}"><input id="popupDuration" type="number" placeholder="مدة الظهور (ثواني)" value="${d.popup_duration||8}"><button class="btn-gold" onclick="savePopupSettings()">حفظ</button></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🛡️ وضع الصيانة <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode?'checked':''}> تفعيل</label><input id="maintenanceTitle" placeholder="العنوان" value="${d.maintenance_title||'الموقع في صيانة'}"><textarea id="maintenanceMsg" placeholder="الرسالة">${d.maintenance_message||'نعمل على تحسين تجربتك'}</textarea><button class="btn-gold" onclick="saveMaintenance()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🤝 شركاء النجاح <span>▾</span></button><div class="collapse-content"><div id="partnersAdminList"></div><input id="partnerUrl" placeholder="رابط الشعار (صورة)"><button class="btn-green" onclick="addPartner()">إضافة شريك</button></div></div>
+            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🤝 شركاء النجاح <span>▾</span></button><div class="collapse-content"><div id="partnersAdminList"></div><div style="margin: 15px 0 10px;"><input id="newPartnerUrl" placeholder="رابط الشعار (صورة)"><button class="btn-green" onclick="addPartner()">إضافة شريك</button></div><button class="btn-gold" onclick="saveAllPartners()">حفظ جميع التعديلات</button></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 الأقسام (الصفحات) <span>▾</span></button><div class="collapse-content"><div id="pagesList"></div><div style="display:flex; gap:8px; flex-wrap:wrap;"><input id="newPageName" placeholder="اسم القسم الجديد" style="flex:1"><button class="btn-green" onclick="addPage()">إضافة</button></div></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 الألبومات <span>▾</span></button><div class="collapse-content"><div id="albumsList"></div><div style="display:flex; gap:8px; flex-wrap:wrap;"><input id="newAlbumName" placeholder="اسم الألبوم" style="flex:1"><button class="btn-green" onclick="addAlbum()">إضافة</button></div></div></div>
             <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📚 الكتالوجات <span>▾</span></button><div class="collapse-content"><div id="catalogsList"></div><div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" placeholder="كود iFrame" rows="3"></textarea><button class="btn-green" onclick="addCatalog()">إضافة</button></div></div></div>
@@ -307,61 +322,118 @@
             maintenance_message: document.getElementById('maintenanceMsg').value
         }).then(()=>showToast('تم حفظ وضع الصيانة'));
     }
-    function addPartner() {
-        const url = document.getElementById('partnerUrl').value;
-        if(url) db.ref(DB_PATH+'/partners').push({url}).then(()=>showToast('تمت إضافة الشريك'));
-        else showToast('أدخل رابط الشعار');
-    }
+    
+    // قسم الشركاء المحسن
     function renderPartnersAdmin() {
         const c = document.getElementById('partnersAdminList');
-        if(!c || !currentData.partners) return;
+        if(!c) return;
+        if(!currentData.partners || Object.keys(currentData.partners).length === 0) {
+            c.innerHTML = '<div style="color: #6c757d; text-align:center;">لا يوجد شركاء حتى الآن</div>';
+            return;
+        }
         c.innerHTML = Object.keys(currentData.partners).map(id => `
-            <div class="partner-item">
+            <div class="partner-item" data-id="${id}">
                 <img src="${currentData.partners[id].url}" onerror="this.style.display='none'">
-                <span style="flex:1; font-size:12px; word-break:break-all;">${currentData.partners[id].url.substring(0,60)}</span>
-                <button onclick="db.ref(DB_PATH+'/partners/${id}').remove()" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
+                <input type="text" class="partner-url-input" value="${currentData.partners[id].url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة">
+                <button class="btn-red" onclick="deletePartner('${id}')" style="width:auto; padding:6px 12px;">حذف</button>
             </div>
         `).join('');
     }
+    
+    function addPartner() {
+        const url = document.getElementById('newPartnerUrl').value.trim();
+        if(!url) { showToast('أدخل رابط الشعار'); return; }
+        db.ref(DB_PATH+'/partners').push({url}).then(()=>{
+            showToast('تمت إضافة الشريك');
+            document.getElementById('newPartnerUrl').value = '';
+        });
+    }
+    
+    function deletePartner(partnerId) {
+        if(confirm('هل أنت متأكد من حذف هذا الشريك؟')) {
+            db.ref(DB_PATH+'/partners/'+partnerId).remove().then(()=>showToast('تم حذف الشريك'));
+        }
+    }
+    
+    function saveAllPartners() {
+        const items = document.querySelectorAll('#partnersAdminList .partner-item');
+        const updates = {};
+        items.forEach(item => {
+            const id = item.getAttribute('data-id');
+            const newUrl = item.querySelector('.partner-url-input').value.trim();
+            if(newUrl) {
+                updates[`partners/${id}/url`] = newUrl;
+            }
+        });
+        if(Object.keys(updates).length === 0) {
+            showToast('لا توجد تغييرات لحفظها');
+            return;
+        }
+        db.ref(DB_PATH).update(updates).then(()=>showToast('تم حفظ جميع تعديلات الشركاء'));
+    }
+    
     function renderPagesList() {
         const c = document.getElementById('pagesList');
         if(!c || !currentData.pages) return;
         c.innerHTML = Object.keys(currentData.pages).map(id => `
             <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-                <input value="${currentData.pages[id].title}" onchange="db.ref(DB_PATH+'/pages/${id}').update({title:this.value})" style="flex:1">
-                <button onclick="db.ref(DB_PATH+'/pages/${id}').remove()" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
+                <input value="${currentData.pages[id].title}" onchange="updatePageTitle('${id}', this.value)" style="flex:1">
+                <button onclick="deletePage('${id}')" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
             </div>
         `).join('');
+    }
+    function updatePageTitle(id, newTitle) {
+        db.ref(DB_PATH+'/pages/'+id).update({title: newTitle}).then(()=>showToast('تم تحديث اسم القسم'));
+    }
+    function deletePage(id) {
+        if(confirm('حذف هذا القسم سيؤدي إلى حذف جميع صوره، هل أنت متأكد؟'))
+            db.ref(DB_PATH+'/pages/'+id).remove().then(()=>showToast('تم حذف القسم'));
     }
     function addPage() {
         const name = document.getElementById('newPageName').value;
         if(name) db.ref(DB_PATH+'/pages').push({title:name}).then(()=>showToast('تمت إضافة القسم'));
         else showToast('أدخل اسم القسم');
     }
+    
     function renderAlbumsList() {
         const c = document.getElementById('albumsList');
         if(!c || !currentData.albums) return;
         c.innerHTML = Object.keys(currentData.albums).map(id => `
             <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-                <input value="${currentData.albums[id].name}" onchange="db.ref(DB_PATH+'/albums/${id}').update({name:this.value})" style="flex:1">
-                <button onclick="db.ref(DB_PATH+'/albums/${id}').remove()" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
+                <input value="${currentData.albums[id].name}" onchange="updateAlbumName('${id}', this.value)" style="flex:1">
+                <button onclick="deleteAlbum('${id}')" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
             </div>
         `).join('');
+    }
+    function updateAlbumName(id, newName) {
+        db.ref(DB_PATH+'/albums/'+id).update({name: newName}).then(()=>showToast('تم تحديث اسم الألبوم'));
+    }
+    function deleteAlbum(id) {
+        if(confirm('حذف هذا الألبوم سيؤدي إلى حذف جميع صوره، هل أنت متأكد؟'))
+            db.ref(DB_PATH+'/albums/'+id).remove().then(()=>showToast('تم حذف الألبوم'));
     }
     function addAlbum() {
         const name = document.getElementById('newAlbumName').value;
         if(name) db.ref(DB_PATH+'/albums').push({name}).then(()=>showToast('تمت إضافة الألبوم'));
         else showToast('أدخل اسم الألبوم');
     }
+    
     function renderCatalogsList() {
         const c = document.getElementById('catalogsList');
         if(!c || !currentData.catalogs) return;
         c.innerHTML = Object.keys(currentData.catalogs).map(id => `
             <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-                <input value="${currentData.catalogs[id].name}" onchange="db.ref(DB_PATH+'/catalogs/${id}').update({name:this.value})" style="flex:1">
-                <button onclick="db.ref(DB_PATH+'/catalogs/${id}').remove()" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
+                <input value="${currentData.catalogs[id].name}" onchange="updateCatalogName('${id}', this.value)" style="flex:1">
+                <button onclick="deleteCatalog('${id}')" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
             </div>
         `).join('');
+    }
+    function updateCatalogName(id, newName) {
+        db.ref(DB_PATH+'/catalogs/'+id).update({name: newName}).then(()=>showToast('تم تحديث اسم الكتالوج'));
+    }
+    function deleteCatalog(id) {
+        if(confirm('حذف هذا الكتالوج نهائياً؟'))
+            db.ref(DB_PATH+'/catalogs/'+id).remove().then(()=>showToast('تم حذف الكتالوج'));
     }
     function addCatalog() {
         const name = document.getElementById('newCatalogName').value;
@@ -369,6 +441,7 @@
         if(name && code) db.ref(DB_PATH+'/catalogs').push({name, code}).then(()=>showToast('تمت إضافة الكتالوج'));
         else showToast('املأ الحقول');
     }
+    
     function uploadPhotos() {
         const target = document.getElementById('uploadTarget').value;
         const urls = document.getElementById('imageUrls').value.split('\n').filter(u=>u.trim());
@@ -378,6 +451,7 @@
             document.getElementById('imageUrls').value = '';
         });
     }
+    
     function loadImagesForDelete() {
         const path = document.getElementById('deleteTarget').value;
         const grid = document.getElementById('imagesDeleteGrid');
@@ -398,12 +472,14 @@
             loadImagesForDelete();
         });
     }
+    
     function saveAbout() {
         db.ref(DB_PATH).update({
             about_text: document.getElementById('aboutEditor').value,
             about_active: document.getElementById('aboutActive').checked
         }).then(()=>showToast('تم حفظ نص "من نحن"'));
     }
+    
     function renderScheduleEditor() {
         const c = document.getElementById('scheduleEditor');
         const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
@@ -437,6 +513,7 @@
         }
         db.ref(DB_PATH+'/work_schedule').set(schedule).then(()=>showToast('تم حفظ مواعيد العمل'));
     }
+    
     function saveSocial() {
         db.ref(DB_PATH).update({
             insta_url: document.getElementById('instaInput').value,
@@ -445,6 +522,7 @@
             location_url: document.getElementById('locationInput').value
         }).then(()=>showToast('تم حفظ روابط التواصل'));
     }
+    
     function saveGeneral() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteNameInput').value,
@@ -453,6 +531,7 @@
             footer_text: document.getElementById('footerInput').value
         }).then(()=>showToast('تم حفظ الإعدادات العامة'));
     }
+    
     function renderReviewsAdmin() {
         const c = document.getElementById('reviewsAdminList');
         if(!c || !currentData.reviews) return;
@@ -460,18 +539,30 @@
             <div style="border-bottom:1px solid #e2e8f0; padding:12px; margin-bottom:8px;">
                 <b>${currentData.reviews[id].name}</b> ${'★'.repeat(currentData.reviews[id].rating)}
                 <p style="margin-top:5px;">${currentData.reviews[id].message}</p>
-                <button onclick="db.ref(DB_PATH+'/reviews/${id}').remove()" class="btn-red" style="width:auto; padding:4px 12px;">حذف</button>
+                <button onclick="deleteReview('${id}')" class="btn-red" style="width:auto; padding:4px 12px;">حذف</button>
             </div>
         `).join('');
     }
+    function deleteReview(id) {
+        db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>showToast('تم حذف التقييم'));
+    }
 
+    // ربط الدوال العامة
     window.toggleCollapse = toggleCollapse;
     window.savePopupSettings = savePopupSettings;
     window.saveMaintenance = saveMaintenance;
     window.addPartner = addPartner;
+    window.deletePartner = deletePartner;
+    window.saveAllPartners = saveAllPartners;
     window.addPage = addPage;
+    window.deletePage = deletePage;
+    window.updatePageTitle = updatePageTitle;
     window.addAlbum = addAlbum;
+    window.deleteAlbum = deleteAlbum;
+    window.updateAlbumName = updateAlbumName;
     window.addCatalog = addCatalog;
+    window.deleteCatalog = deleteCatalog;
+    window.updateCatalogName = updateCatalogName;
     window.uploadPhotos = uploadPhotos;
     window.loadImagesForDelete = loadImagesForDelete;
     window.deleteImage = deleteImage;
@@ -479,6 +570,7 @@
     window.saveSchedule = saveSchedule;
     window.saveSocial = saveSocial;
     window.saveGeneral = saveGeneral;
+    window.deleteReview = deleteReview;
     window.login = login;
     window.logout = logout;
 </script>
