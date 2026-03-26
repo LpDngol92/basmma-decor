@@ -150,9 +150,9 @@
             color: var(--text-secondary);
         }
 
-        /* ========== PARTNERS MARQUEE - GRAY BACKGROUND (عدلنا اللون إلى رمادي) ========== */
+        /* ========== PARTNERS MARQUEE - GRAY BACKGROUND (عدلنا إلى رمادي فاتح) ========== */
         .partners-marquee {
-            background: #2c2c2e;  /* رمادي غامق بدلاً من الأسود */
+            background: #4a4a4e;  /* رمادي متوسط واضح */
             padding: 16px 0;
             overflow: hidden;
             border-bottom: 1px solid rgba(0,0,0,0.1);
@@ -167,10 +167,8 @@
         .marquee-track {
             display: flex;
             width: fit-content;
-            /* السرعة أصبحت أسرع بكثير (20s بدلاً من 45s) */
             animation: marqueeInfinite 20s linear infinite;
         }
-        /* توقف مؤقت عند hover لسهولة النقر */
         .partners-marquee:hover .marquee-track {
             animation-play-state: paused;
         }
@@ -179,17 +177,15 @@
                 transform: translateX(0);
             }
             100% {
-                /* نحرك بمقدار ثلث المسافة الإجمالية لأننا كررنا 3 مرات */
                 transform: translateX(-33.333%);
             }
         }
-        /* تصميم الشعارات - خلفية بيضاء وحواف ناعمة لتبرز على الخلفية الرمادية */
         .partner-logo {
-            height: 80px;           /* ارتفاع ثابت مناسب */
-            width: auto;            /* عرض تلقائي حسب النسبة */
-            max-width: 180px;       /* حد أقصى للعرض */
-            margin: 0 24px;         /* مسافة مناسبة بين الشعارات */
-            object-fit: contain;    /* يحافظ على نسب الصورة دون تشويه */
+            height: 80px;
+            width: auto;
+            max-width: 180px;
+            margin: 0 24px;
+            object-fit: contain;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             filter: grayscale(0.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
@@ -206,7 +202,6 @@
             background: #ffffff;
             border-color: var(--accent-light);
         }
-        /* تحسين للشاشات الصغيرة */
         @media (max-width: 768px) {
             .partner-logo {
                 height: 65px;
@@ -867,7 +862,7 @@
         <button class="viewer-top-btn" id="viewerFavBtn" onclick="viewerToggleFavorite()"><i class="far fa-heart"></i></button>
         <button class="viewer-top-btn whatsapp-top" onclick="viewerWhatsapp()"><i class="fab fa-whatsapp"></i></button>
     </div>
-    <div class="viewer-container"><img id="viewerImg" class="viewer-img" src="" draggable="false"></div>
+    <div class="viewer-container"><img id="viewerImg" class="viewer-img" src="" draggable="false" onerror="this.src='https://via.placeholder.com/800?text=فشل+تحميل+الصورة'"></div>
     <div class="viewer-controls">
         <button onclick="viewerPrev()"><i class="fas fa-chevron-right"></i></button>
         <span class="viewer-counter" id="viewerCounter">1 / 1</span>
@@ -1058,6 +1053,7 @@
             const imgUrl = images[imgId].url;
             const fullId = `${parentId}_${imgId}`;
             const favClass = isFav(fullId) ? 'active' : '';
+            // نحتفظ بـ data-urls و data-index للتوافق، لكن الاعتماد سيكون على src الفعلي
             const urlsJson = JSON.stringify(allUrls).replace(/</g, '&lt;').replace(/>/g, '&gt;');
             html += `<div class="photo-item" data-urls='${urlsJson}' data-index='${originalIndex}' data-id='${fullId}' data-url='${imgUrl.replace(/'/g, "\\'")}'>
                         <img src="${imgUrl}" loading="lazy">
@@ -1189,15 +1185,13 @@
         const partners = currentData.partners ? Object.values(currentData.partners) : [];
         if (partners.length === 0) { container.style.display = 'none'; return; }
         container.style.display = 'block';
-        // تكرار المحتوى 3 مرات لضمان الحركة اللانهائية السلسة
         let content = '';
         for (let i = 0; i < 3; i++) {
             content += partners.map(p => `<img src="${p.url}" class="partner-logo" alt="شريك" onclick="window.open('${p.url}', '_blank')">`).join('');
         }
         track.innerHTML = content;
-        // إعادة تعيين الحركة لبدء جديدة مع سرعة أسرع (20 ثانية)
         track.style.animation = 'none';
-        track.offsetHeight; // force reflow
+        track.offsetHeight;
         track.style.animation = 'marqueeInfinite 20s linear infinite';
     }
 
@@ -1280,28 +1274,30 @@
 
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
 
-    // تحسين معالج النقر على الصور: استخدام الصورة الفعلية من العنصر <img>
+    // تحسين معالج النقر على الصور: استخراج جميع الصور من نفس الشبكة واستخدام المصدر الفعلي
     document.addEventListener('click', function(e) {
         const photoItem = e.target.closest('.photo-item');
         if (photoItem && !e.target.closest('.action-btn-icon')) {
-            // احصل على قائمة الروابط من data-urls
-            const urlsAttr = photoItem.getAttribute('data-urls');
-            if (!urlsAttr) return;
-            try {
-                const urls = JSON.parse(urlsAttr);
-                // استخدم الصورة المعروضة فعلياً (أكثر موثوقية)
-                const imgElement = photoItem.querySelector('img');
-                if (!imgElement) return;
-                const currentUrl = imgElement.src;  // المصدر الحقيقي للصورة
-                const index = parseInt(photoItem.getAttribute('data-index'));
-                // تحقق من أن currentUrl موجود في قائمة urls (قد يختلف ترتيب المعاينة)
-                let actualIndex = urls.findIndex(u => u === currentUrl);
-                if (actualIndex === -1) actualIndex = index; // fallback
-                const id = photoItem.getAttribute('data-id');
-                if (currentUrl && urls.length) {
-                    openViewer(currentUrl, urls, actualIndex, id);
-                }
-            } catch (err) { console.error(err); }
+            // العثور على الشبكة (photo-grid) التي تحتوي على هذه الصورة
+            const grid = photoItem.closest('.photo-grid');
+            if (!grid) return;
+            // الحصول على جميع عناصر الصور داخل الشبكة
+            const allImages = Array.from(grid.querySelectorAll('.photo-item img'));
+            if (allImages.length === 0) return;
+            // استخراج روابط الصور الفعلية
+            const urls = allImages.map(img => img.src);
+            // الصورة الحالية
+            const currentImg = photoItem.querySelector('img');
+            if (!currentImg) return;
+            const currentUrl = currentImg.src;
+            const index = urls.findIndex(u => u === currentUrl);
+            if (index !== -1) {
+                const id = photoItem.getAttribute('data-id') || `img_${Date.now()}`;
+                openViewer(currentUrl, urls, index, id);
+            } else {
+                // Fallback: استخدام أول صورة
+                openViewer(currentUrl, urls, 0, `img_${Date.now()}`);
+            }
         }
     });
 
