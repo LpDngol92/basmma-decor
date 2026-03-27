@@ -150,14 +150,13 @@
             color: var(--text-secondary);
         }
 
-        /* ========== PARTNERS MARQUEE ========== */
+        /* ========== PARTNERS MARQUEE - تحسين السلسلة اللانهائية بدون فجوات ========== */
         .partners-marquee {
-            background: #4a4a4e;  /* رمادي بدلاً من الأسود */
+            background: #4a4a4e;
             padding: 16px 0;
             overflow: hidden;
             border-bottom: 1px solid rgba(0,0,0,0.1);
             position: relative;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.05);
         }
         .marquee-wrapper {
             width: 100%;
@@ -167,14 +166,21 @@
         .marquee-track {
             display: flex;
             width: fit-content;
-            animation: marqueeInfinite 20s linear infinite; /* أسرع: 20s */
+            /* استخدام animation مع transform لتحريك المسار */
+            animation: scrollMarquee 30s linear infinite;
+            /* زيادة المدة قليلاً لضمان سلاسة الحركة */
         }
         .partners-marquee:hover .marquee-track {
             animation-play-state: paused;
         }
-        @keyframes marqueeInfinite {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-33.333%); }
+        @keyframes scrollMarquee {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                /* نحرك بمقدار ثلث المسافة الكلية لأن لدينا 3 نسخ */
+                transform: translateX(-33.333%);
+            }
         }
         .partner-logo {
             height: 80px;
@@ -190,6 +196,7 @@
             border-radius: 24px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             border: 1px solid rgba(255,255,255,0.3);
+            flex-shrink: 0; /* منع انكماش الصور */
         }
         .partner-logo:hover {
             transform: scale(1.08);
@@ -198,10 +205,16 @@
             border-color: var(--accent-light);
         }
         @media (max-width: 768px) {
-            .partner-logo { height: 65px; max-width: 140px; margin: 0 16px; padding: 6px 12px; border-radius: 20px; }
+            .partner-logo {
+                height: 65px;
+                max-width: 140px;
+                margin: 0 16px;
+                padding: 6px 12px;
+                border-radius: 20px;
+            }
         }
 
-        /* ========== TABS SECTION ========== */
+        /* ========== باقي الأنماط (محفوظة بالكامل) ========== */
         .tabs-wrapper {
             position: relative;
             border-bottom: 1px solid var(--border);
@@ -250,7 +263,6 @@
             transition: left 0.3s ease, width 0.3s ease;
         }
 
-        /* ========== POPUP BUBBLE ========== */
         .popup-bubble {
             position: fixed;
             bottom: 30px;
@@ -309,14 +321,12 @@
         }
         .bubble-close:hover { transform: rotate(90deg); color: var(--danger); }
 
-        /* ========== MAIN CONTENT ========== */
         .main-content {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px 16px 100px;
         }
 
-        /* ========== CARDS ========== */
         .info-card {
             background: var(--bg-card);
             border-radius: 24px;
@@ -343,7 +353,6 @@
             padding-right: 12px;
         }
 
-        /* ========== REVIEW SLIDER ========== */
         .star-rating {
             display: flex;
             gap: 8px;
@@ -378,7 +387,6 @@
             position: relative;
         }
 
-        /* ========== SCHEDULE ========== */
         .schedule-group {
             padding: 12px 0;
             border-bottom: 1px solid var(--border);
@@ -430,7 +438,6 @@
             animation: none;
         }
 
-        /* ========== BUTTONS ========== */
         .whatsapp-btn {
             background: var(--whatsapp);
             color: white;
@@ -485,7 +492,6 @@
             transform: translateY(-2px);
         }
 
-        /* ========== PHOTO GRID ========== */
         .photo-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -548,7 +554,6 @@
             color: var(--whatsapp);
         }
 
-        /* ========== ALBUM CARDS ========== */
         .album-card {
             background: var(--bg-card);
             border-radius: 20px;
@@ -623,7 +628,6 @@
             color: var(--whatsapp);
         }
 
-        /* ========== FOLDER CARDS ========== */
         .folder-card {
             background: var(--bg-card);
             border-radius: 20px;
@@ -639,7 +643,6 @@
             border-color: var(--accent);
         }
 
-        /* ========== VIEWER MODAL ========== */
         .viewer-modal {
             position: fixed;
             inset: 0;
@@ -759,7 +762,6 @@
             background: white;
         }
 
-        /* ========== UTILITIES ========== */
         .toast-msg {
             position: fixed;
             bottom: 100px;
@@ -1174,13 +1176,15 @@
         if (partners.length === 0) { container.style.display = 'none'; return; }
         container.style.display = 'block';
         let content = '';
+        // نكرر الشعارات 3 مرات لضمان عدم وجود فراغ في الحركة اللانهائية
         for (let i = 0; i < 3; i++) {
             content += partners.map(p => `<img src="${p.url}" class="partner-logo" alt="شريك" onclick="window.open('${p.url}', '_blank')">`).join('');
         }
         track.innerHTML = content;
+        // إعادة تعيين الحركة لضمان البدء من البداية
         track.style.animation = 'none';
-        track.offsetHeight;
-        track.style.animation = 'marqueeInfinite 20s linear infinite';
+        track.offsetHeight; // force reflow
+        track.style.animation = 'scrollMarquee 30s linear infinite';
     }
 
     function renderSocial() { const d = currentData, c = document.getElementById('socialLinks'); if (!c) return; let h = ''; if (d.insta_url) h += `<a href="${d.insta_url}" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>`; if (d.tiktok_url) h += `<a href="${d.tiktok_url}" target="_blank" class="social-link"><i class="fab fa-tiktok"></i></a>`; if (d.snap_url) h += `<a href="${d.snap_url}" target="_blank" class="social-link"><i class="fab fa-snapchat"></i></a>`; c.innerHTML = h; }
