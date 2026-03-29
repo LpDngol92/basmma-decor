@@ -150,12 +150,12 @@
             color: var(--text-secondary);
         }
 
-        /* ========== PARTNERS MARQUEE - ثابت مع تمرير يدوي (بدون حركة تلقائية) ========== */
+        /* ========== PARTNERS MARQUEE - تصميم جديد يدعم الشعارات الفاتحة والغامقة ========== */
         .partners-marquee {
-            background: #4a4a4e;
-            padding: 16px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.1);
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.05);
+            background: #2c2c30;  /* خلفية داكنة قليلاً لإبراز الشعارات الفاتحة */
+            padding: 20px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.2);
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.3), 0 4px 12px rgba(0,0,0,0.1);
             position: relative;
         }
         .marquee-wrapper {
@@ -164,7 +164,7 @@
             overflow-y: hidden;
             white-space: nowrap;
             scrollbar-width: thin;
-            scrollbar-color: var(--accent) #333;
+            scrollbar-color: var(--accent) #1e1e22;
             cursor: grab;
             user-select: none;
             scroll-behavior: smooth;
@@ -177,7 +177,7 @@
             height: 6px;
         }
         .marquee-wrapper::-webkit-scrollbar-track {
-            background: #2c2c2e;
+            background: #1e1e22;
             border-radius: 10px;
         }
         .marquee-wrapper::-webkit-scrollbar-thumb {
@@ -186,42 +186,51 @@
         }
         .marquee-track {
             display: inline-flex;
-            gap: 12px;
+            gap: 20px;
             align-items: center;
             white-space: nowrap;
-            /* لا توجد أنيميشن، ثابت تماماً */
+            padding: 0 20px;
         }
         .partner-item {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            margin: 0 10px;
             flex-shrink: 0;
-            transition: transform 0.2s ease;
+            transition: transform 0.25s ease, filter 0.2s ease;
             cursor: pointer;
+            /* خلفية شفافة داكنة مع تمويه خفيف لإبراز أي شعار */
+            background: rgba(20, 20, 25, 0.65);
+            backdrop-filter: blur(2px);
+            border-radius: 28px;
+            padding: 8px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+        }
+        .partner-item:hover {
+            transform: scale(1.05);
+            background: rgba(30, 30, 35, 0.85);
+            border-color: var(--accent-light);
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.4);
         }
         .partner-logo {
-            height: 80px;
+            height: 70px;
             width: auto;
-            max-width: 180px;
+            max-width: 160px;
             object-fit: contain;
-            background: #ffffff;
-            padding: 8px 16px;
-            border-radius: 24px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
-            transition: all 0.3s cubic-bezier(0.2,0.9,0.4,1.1);
-            filter: grayscale(0.1) drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+            /* لا خلفية بيضاء ثابتة، الشفافية تسمح بظهور الشعار بألوانه الحقيقية */
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+            transition: all 0.2s;
+            /* لتحسين تباين الشعارات الفاتحة: إضافة توهج خفيف */
+            image-rendering: crisp-edges;
         }
+        /* دعم للشعارات الفاتحة جداً: إضافة ظل نصي و تحسين */
         .partner-item:hover .partner-logo {
-            transform: scale(1.05);
-            filter: grayscale(0);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            border-color: var(--accent-light);
+            filter: drop-shadow(0 0 6px rgba(255,215,150,0.5));
         }
         @media (max-width: 768px) {
-            .partner-logo { height: 65px; max-width: 140px; padding: 6px 12px; border-radius: 20px; }
-            .partner-item { margin: 0 8px; }
+            .partner-logo { height: 55px; max-width: 130px; }
+            .partner-item { padding: 5px 14px; gap: 12px; }
+            .marquee-track { gap: 12px; }
         }
 
         /* ========== TABS SECTION ========== */
@@ -1190,7 +1199,7 @@
         startTabAutoScroll();
     }
 
-    // ========== شريط الشركاء: ثابت، قابل للتمرير اليدوي (بدون حركة تلقائية) ==========
+    // ========== شريط الشركاء: تصميم جديد يدعم الشعارات الفاتحة والغامقة ==========
     function renderPartnersMarquee() {
         const container = document.getElementById('partnersMarquee');
         const track = document.getElementById('marqueeTrack');
@@ -1202,7 +1211,7 @@
         }
         container.style.display = 'block';
         
-        // عرض جميع الشعارات مرة واحدة فقط (بدون تكرار)
+        // بناء المحتوى بدون خلفيات بيضاء، مع إضافة تأثيرات تجعل الشعارات الفاتحة تظهر بوضوح
         let content = '';
         partners.forEach(p => {
             const link = p.link || '#';
@@ -1214,10 +1223,7 @@
         });
         track.innerHTML = content;
         
-        // إزالة أي أنيميشن سابقة
-        track.style.animation = 'none';
-        
-        // إضافة دعم السحب بالماوس للتمرير (اختياري لتحسين تجربة المستخدم)
+        // دعم السحب بالماوس للتمرير الأفقي
         const wrapper = document.getElementById('marqueeWrapper');
         if (wrapper) {
             let isDown = false;
