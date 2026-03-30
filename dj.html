@@ -10,14 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { 
-            background: #f0f2f5; 
-            padding: 20px; 
-            color: #1e2a3a;
-        }
+        body { background: #f0f2f5; padding: 20px; color: #1e2a3a; }
         .container { max-width: 800px; margin: 0 auto; }
-        
-        /* صندوق تسجيل الدخول */
         .login-box, .admin-panel {
             background: white;
             border-radius: 28px;
@@ -25,12 +19,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             margin-top: 30px;
         }
-        .login-box h2, .admin-header h1 {
-            color: #c9a96e;
-            margin-bottom: 20px;
-        }
-        
-        /* عناصر النموذج */
+        .login-box h2, .admin-header h1 { color: #c9a96e; margin-bottom: 20px; }
         input, textarea, select, button {
             width: 100%;
             padding: 12px;
@@ -59,8 +48,6 @@
         .btn-red { background: #dc3545; }
         .btn-green { background: #28a745; }
         .btn-gold { background: #c9a96e; }
-        
-        /* أقسام الانهيار (collapse) */
         .collapse-section {
             background: #ffffff;
             border-radius: 20px;
@@ -84,9 +71,7 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .collapse-btn:hover {
-            background: #f1f5f9;
-        }
+        .collapse-btn:hover { background: #f1f5f9; }
         .collapse-content {
             display: none;
             padding: 20px;
@@ -101,12 +86,7 @@
             margin-bottom: 12px;
             color: #1e2a3a;
         }
-        .collapse-content input[type="checkbox"] {
-            width: auto;
-            margin-bottom: 0;
-        }
-        
-        /* عناصر إضافية */
+        .collapse-content input[type="checkbox"] { width: auto; margin-bottom: 0; }
         .partner-item, .image-item {
             display: flex;
             gap: 12px;
@@ -126,11 +106,7 @@
             border-radius: 12px;
             border: 1px solid #ddd;
         }
-        .partner-item input {
-            flex: 2;
-            margin: 0;
-            font-size: 0.85rem;
-        }
+        .partner-item input { flex: 2; margin: 0; font-size: 0.85rem; }
         .admin-header {
             display: flex;
             justify-content: space-between;
@@ -139,9 +115,7 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        .admin-header h1 {
-            margin: 0;
-        }
+        .admin-header h1 { margin: 0; }
         .toast {
             position: fixed;
             bottom: 30px;
@@ -169,35 +143,20 @@
             border-radius: 12px;
             border: 1px solid #ddd;
         }
-        hr {
-            margin: 15px 0;
-            border-color: #e2e8f0;
-        }
-        /* تحسين النصوص داخل المحتوى */
-        .collapse-content p, .collapse-content div, .collapse-content span {
-            color: #1e2a3a;
-        }
-        .collapse-content input, .collapse-content textarea, .collapse-content select {
-            color: #1e2a3a;
-            background: white;
-        }
-        /* زر الخروج */
-        .logout-btn {
-            background: #dc3545;
-            width: auto;
-            padding: 8px 20px;
-            margin: 0;
-        }
-        .button-group {
+        hr { margin: 15px 0; border-color: #e2e8f0; }
+        .collapse-content p, .collapse-content div, .collapse-content span { color: #1e2a3a; }
+        .collapse-content input, .collapse-content textarea, .collapse-content select { color: #1e2a3a; background: white; }
+        .logout-btn { background: #dc3545; width: auto; padding: 8px 20px; margin: 0; }
+        .button-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .button-group button { flex: 1; margin-bottom: 0; }
+        .list-item-row {
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
         }
-        .button-group button {
-            flex: 1;
-            margin-bottom: 0;
-        }
+        .list-item-row input { flex: 1; margin: 0; }
+        .list-item-row button { width: auto; padding: 6px 12px; margin: 0; }
     </style>
 </head>
 <body>
@@ -233,6 +192,7 @@
 
     let currentData = {};
     let loggedIn = false;
+    let openSections = {}; // تخزين حالة الفتح لكل قسم
 
     function showToast(msg) {
         const t = document.getElementById('toast');
@@ -261,16 +221,46 @@
         document.getElementById('loginBox').style.display = 'block';
         document.getElementById('adminPanel').style.display = 'none';
         currentData = {};
+        openSections = {};
     }
 
     function loadData() {
         db.ref(DB_PATH).on('value', snap => {
             currentData = snap.val() || {};
             buildAdminSections();
+            restoreOpenStates(); // إعادة فتح الأقسام التي كانت مفتوحة
         });
     }
 
-    // ----- بناء أقسام الإدارة -----
+    // حفظ حالة الفتح عند النقر على زر القسم
+    function toggleCollapse(btn, sectionId) {
+        const content = btn.nextElementSibling;
+        const isOpen = content.style.display === 'block';
+        content.style.display = isOpen ? 'none' : 'block';
+        openSections[sectionId] = !isOpen;
+        // تحديث السهم (اختياري)
+        const arrowSpan = btn.querySelector('span');
+        if (arrowSpan) arrowSpan.innerHTML = isOpen ? '▾' : '▴';
+    }
+
+    // استعادة حالة الفتح بعد إعادة بناء الواجهة
+    function restoreOpenStates() {
+        document.querySelectorAll('.collapse-section').forEach(section => {
+            const btn = section.querySelector('.collapse-btn');
+            const content = section.querySelector('.collapse-content');
+            const sectionId = section.getAttribute('data-section-id');
+            if (sectionId && openSections[sectionId] === true) {
+                content.style.display = 'block';
+                const arrowSpan = btn.querySelector('span');
+                if (arrowSpan) arrowSpan.innerHTML = '▴';
+            } else {
+                content.style.display = 'none';
+                const arrowSpan = btn.querySelector('span');
+                if (arrowSpan) arrowSpan.innerHTML = '▾';
+            }
+        });
+    }
+
     function buildAdminSections() {
         const d = currentData;
         const targetOpts = () => {
@@ -280,19 +270,19 @@
             return o;
         };
         document.getElementById('adminSections').innerHTML = `
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">💬 فقاعة الترحيب <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="popupEnabled" ${d.popup_enabled?'checked':''}> تفعيل الفقاعة</label><input id="popupMessageInput" placeholder="نص الرسالة" value="${(d.popup_message||'مرحباً بكم في عالم التصميم والأناقة ✨').replace(/"/g, '&quot;')}"><input id="popupDuration" type="number" placeholder="مدة الظهور (ثواني)" value="${d.popup_duration||8}"><button class="btn-gold" onclick="savePopupSettings()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🛡️ وضع الصيانة <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode?'checked':''}> تفعيل</label><input id="maintenanceTitle" placeholder="العنوان" value="${d.maintenance_title||'الموقع في صيانة'}"><textarea id="maintenanceMsg" placeholder="الرسالة">${d.maintenance_message||'نعمل على تحسين تجربتك'}</textarea><button class="btn-gold" onclick="saveMaintenance()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🤝 شركاء النجاح <span>▾</span></button><div class="collapse-content"><div id="partnersAdminList"></div><div style="margin: 15px 0 10px;"><input id="newPartnerUrl" placeholder="رابط الشعار (صورة)"><button class="btn-green" onclick="addPartner()">إضافة شريك</button></div><button class="btn-gold" onclick="saveAllPartners()">حفظ جميع التعديلات</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 الأقسام (الصفحات) <span>▾</span></button><div class="collapse-content"><div id="pagesList"></div><div style="display:flex; gap:8px; flex-wrap:wrap;"><input id="newPageName" placeholder="اسم القسم الجديد" style="flex:1"><button class="btn-green" onclick="addPage()">إضافة</button></div></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📁 الألبومات <span>▾</span></button><div class="collapse-content"><div id="albumsList"></div><div style="display:flex; gap:8px; flex-wrap:wrap;"><input id="newAlbumName" placeholder="اسم الألبوم" style="flex:1"><button class="btn-green" onclick="addAlbum()">إضافة</button></div></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📚 الكتالوجات <span>▾</span></button><div class="collapse-content"><div id="catalogsList"></div><div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" placeholder="كود iFrame" rows="3"></textarea><button class="btn-green" onclick="addCatalog()">إضافة</button></div></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📸 رفع صور متعددة <span>▾</span></button><div class="collapse-content"><select id="uploadTarget">${targetOpts()}</select><textarea id="imageUrls" placeholder="روابط الصور (كل رابط في سطر)" rows="4"></textarea><button class="btn-green" onclick="uploadPhotos()">نشر الصور</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🗑️ حذف الصور <span>▾</span></button><div class="collapse-content"><select id="deleteTarget" onchange="loadImagesForDelete()">${targetOpts()}</select><div id="imagesDeleteGrid" class="image-delete-grid"></div></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">📖 من نحن <span>▾</span></button><div class="collapse-content"><textarea id="aboutEditor" rows="5">${d.about_text||''}</textarea><label><input type="checkbox" id="aboutActive" ${d.about_active!==false?'checked':''}> تفعيل القسم</label><button class="btn-gold" onclick="saveAbout()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🕒 مواعيد العمل <span>▾</span></button><div class="collapse-content"><div id="scheduleEditor"></div><button class="btn-gold" onclick="saveSchedule()">حفظ المواعيد</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">🔗 روابط التواصل <span>▾</span></button><div class="collapse-content"><input id="instaInput" placeholder="انستقرام" value="${d.insta_url||''}"><input id="tiktokInput" placeholder="تيك توك" value="${d.tiktok_url||''}"><input id="snapInput" placeholder="سناب شات" value="${d.snap_url||''}"><input id="locationInput" placeholder="رابط موقع الخريطة (Google Maps)" value="${d.location_url||''}"><button class="btn-gold" onclick="saveSocial()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">⚙️ الإعدادات العامة <span>▾</span></button><div class="collapse-content"><input id="siteNameInput" placeholder="اسم الموقع" value="${d.site_name||''}"><input id="whatsappInput" placeholder="رقم واتساب (بدون +)" value="${d.whatsapp_num||''}"><input id="wmInput" placeholder="نص العلامة المائية" value="${d.wm_text||''}"><input id="footerInput" placeholder="حقوق الملكية" value="${d.footer_text||''}"><button class="btn-gold" onclick="saveGeneral()">حفظ</button></div></div>
-            <div class="collapse-section"><button class="collapse-btn" onclick="toggleCollapse(this)">⭐ إدارة التقييمات <span>▾</span></button><div class="collapse-content"><div id="reviewsAdminList"></div></div></div>
+            <div class="collapse-section" data-section-id="popup"><button class="collapse-btn" onclick="toggleCollapse(this,'popup')">💬 فقاعة الترحيب <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="popupEnabled" ${d.popup_enabled?'checked':''}> تفعيل الفقاعة</label><input id="popupMessageInput" placeholder="نص الرسالة" value="${(d.popup_message||'مرحباً بكم في عالم التصميم والأناقة ✨').replace(/"/g, '&quot;')}"><input id="popupDuration" type="number" placeholder="مدة الظهور (ثواني)" value="${d.popup_duration||8}"><button class="btn-gold" onclick="savePopupSettings()">حفظ</button></div></div>
+            <div class="collapse-section" data-section-id="maintenance"><button class="collapse-btn" onclick="toggleCollapse(this,'maintenance')">🛡️ وضع الصيانة <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode?'checked':''}> تفعيل</label><input id="maintenanceTitle" placeholder="العنوان" value="${d.maintenance_title||'الموقع في صيانة'}"><textarea id="maintenanceMsg" placeholder="الرسالة">${d.maintenance_message||'نعمل على تحسين تجربتك'}</textarea><button class="btn-gold" onclick="saveMaintenance()">حفظ</button></div></div>
+            <div class="collapse-section" data-section-id="partners"><button class="collapse-btn" onclick="toggleCollapse(this,'partners')">🤝 شركاء النجاح <span>▾</span></button><div class="collapse-content"><div id="partnersAdminList"></div><div style="margin: 15px 0 10px;"><input id="newPartnerUrl" placeholder="رابط الشعار (صورة)"><button class="btn-green" onclick="addPartnerLocally()">إضافة شريك (محلياً)</button></div><button class="btn-gold" onclick="saveAllPartners()">حفظ جميع التعديلات</button></div></div>
+            <div class="collapse-section" data-section-id="pages"><button class="collapse-btn" onclick="toggleCollapse(this,'pages')">📁 الأقسام (الصفحات) <span>▾</span></button><div class="collapse-content"><div id="pagesList"></div><div style="display:flex; gap:8px; flex-wrap:wrap;"><input id="newPageName" placeholder="اسم القسم الجديد" style="flex:1"><button class="btn-green" onclick="addPageLocally()">إضافة محلياً</button></div><button class="btn-gold" style="margin-top:12px;" onclick="saveAllPages()">حفظ جميع التعديلات</button></div></div>
+            <div class="collapse-section" data-section-id="albums"><button class="collapse-btn" onclick="toggleCollapse(this,'albums')">📁 الألبومات <span>▾</span></button><div class="collapse-content"><div id="albumsList"></div><div style="display:flex; gap:8px; flex-wrap:wrap;"><input id="newAlbumName" placeholder="اسم الألبوم" style="flex:1"><button class="btn-green" onclick="addAlbumLocally()">إضافة محلياً</button></div><button class="btn-gold" style="margin-top:12px;" onclick="saveAllAlbums()">حفظ جميع التعديلات</button></div></div>
+            <div class="collapse-section" data-section-id="catalogs"><button class="collapse-btn" onclick="toggleCollapse(this,'catalogs')">📚 الكتالوجات <span>▾</span></button><div class="collapse-content"><div id="catalogsList"></div><div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" placeholder="كود iFrame" rows="3"></textarea><button class="btn-green" onclick="addCatalogLocally()">إضافة محلياً</button></div><button class="btn-gold" style="margin-top:12px;" onclick="saveAllCatalogs()">حفظ جميع التعديلات</button></div></div>
+            <div class="collapse-section" data-section-id="upload"><button class="collapse-btn" onclick="toggleCollapse(this,'upload')">📸 رفع صور متعددة <span>▾</span></button><div class="collapse-content"><select id="uploadTarget">${targetOpts()}</select><textarea id="imageUrls" placeholder="روابط الصور (كل رابط في سطر)" rows="4"></textarea><button class="btn-green" onclick="uploadPhotos()">نشر الصور</button></div></div>
+            <div class="collapse-section" data-section-id="delete"><button class="collapse-btn" onclick="toggleCollapse(this,'delete')">🗑️ حذف الصور <span>▾</span></button><div class="collapse-content"><select id="deleteTarget" onchange="loadImagesForDelete()">${targetOpts()}</select><div id="imagesDeleteGrid" class="image-delete-grid"></div></div></div>
+            <div class="collapse-section" data-section-id="about"><button class="collapse-btn" onclick="toggleCollapse(this,'about')">📖 من نحن <span>▾</span></button><div class="collapse-content"><textarea id="aboutEditor" rows="5">${d.about_text||''}</textarea><label><input type="checkbox" id="aboutActive" ${d.about_active!==false?'checked':''}> تفعيل القسم</label><button class="btn-gold" onclick="saveAbout()">حفظ</button></div></div>
+            <div class="collapse-section" data-section-id="schedule"><button class="collapse-btn" onclick="toggleCollapse(this,'schedule')">🕒 مواعيد العمل <span>▾</span></button><div class="collapse-content"><div id="scheduleEditor"></div><button class="btn-gold" onclick="saveSchedule()">حفظ المواعيد</button></div></div>
+            <div class="collapse-section" data-section-id="social"><button class="collapse-btn" onclick="toggleCollapse(this,'social')">🔗 روابط التواصل <span>▾</span></button><div class="collapse-content"><input id="instaInput" placeholder="انستقرام" value="${d.insta_url||''}"><input id="tiktokInput" placeholder="تيك توك" value="${d.tiktok_url||''}"><input id="snapInput" placeholder="سناب شات" value="${d.snap_url||''}"><input id="locationInput" placeholder="رابط موقع الخريطة (Google Maps)" value="${d.location_url||''}"><button class="btn-gold" onclick="saveSocial()">حفظ</button></div></div>
+            <div class="collapse-section" data-section-id="general"><button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ الإعدادات العامة <span>▾</span></button><div class="collapse-content"><input id="siteNameInput" placeholder="اسم الموقع" value="${d.site_name||''}"><input id="whatsappInput" placeholder="رقم واتساب (بدون +)" value="${d.whatsapp_num||''}"><input id="wmInput" placeholder="نص العلامة المائية" value="${d.wm_text||''}"><input id="footerInput" placeholder="حقوق الملكية" value="${d.footer_text||''}"><button class="btn-gold" onclick="saveGeneral()">حفظ</button></div></div>
+            <div class="collapse-section" data-section-id="reviews"><button class="collapse-btn" onclick="toggleCollapse(this,'reviews')">⭐ إدارة التقييمات <span>▾</span></button><div class="collapse-content"><div id="reviewsAdminList"></div></div></div>
         `;
         renderPagesList();
         renderAlbumsList();
@@ -302,12 +292,7 @@
         renderScheduleEditor();
     }
 
-    function toggleCollapse(btn) {
-        const content = btn.nextElementSibling;
-        content.style.display = content.style.display === 'block' ? 'none' : 'block';
-    }
-
-    // ---- دوال الحفظ والإضافة ----
+    // ---- دوال الحفظ والإضافة المعدلة ----
     function savePopupSettings() {
         db.ref(DB_PATH).update({
             popup_enabled: document.getElementById('popupEnabled').checked,
@@ -322,8 +307,8 @@
             maintenance_message: document.getElementById('maintenanceMsg').value
         }).then(()=>showToast('تم حفظ وضع الصيانة'));
     }
-    
-    // قسم الشركاء المحسن
+
+    // ---------- الشركاء (تعديل محلي ثم حفظ) ----------
     function renderPartnersAdmin() {
         const c = document.getElementById('partnersAdminList');
         if(!c) return;
@@ -335,113 +320,224 @@
             <div class="partner-item" data-id="${id}">
                 <img src="${currentData.partners[id].url}" onerror="this.style.display='none'">
                 <input type="text" class="partner-url-input" value="${currentData.partners[id].url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة">
-                <button class="btn-red" onclick="deletePartner('${id}')" style="width:auto; padding:6px 12px;">حذف</button>
+                <button class="btn-red" onclick="deletePartnerLocally(this)" style="width:auto; padding:6px 12px;">حذف</button>
             </div>
         `).join('');
     }
-    
-    function addPartner() {
+
+    function addPartnerLocally() {
         const url = document.getElementById('newPartnerUrl').value.trim();
         if(!url) { showToast('أدخل رابط الشعار'); return; }
-        db.ref(DB_PATH+'/partners').push({url}).then(()=>{
-            showToast('تمت إضافة الشريك');
-            document.getElementById('newPartnerUrl').value = '';
-        });
+        const container = document.getElementById('partnersAdminList');
+        const newId = 'temp_' + Date.now();
+        const div = document.createElement('div');
+        div.className = 'partner-item';
+        div.setAttribute('data-id', newId);
+        div.innerHTML = `
+            <img src="${url}" onerror="this.style.display='none'">
+            <input type="text" class="partner-url-input" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة">
+            <button class="btn-red" onclick="deletePartnerLocally(this)" style="width:auto; padding:6px 12px;">حذف</button>
+        `;
+        container.appendChild(div);
+        document.getElementById('newPartnerUrl').value = '';
+        showToast('تمت إضافة الشريك محلياً، اضغط حفظ لتأكيد التغييرات');
     }
-    
-    function deletePartner(partnerId) {
-        if(confirm('هل أنت متأكد من حذف هذا الشريك؟')) {
-            db.ref(DB_PATH+'/partners/'+partnerId).remove().then(()=>showToast('تم حذف الشريك'));
-        }
+
+    function deletePartnerLocally(btn) {
+        btn.closest('.partner-item').remove();
+        showToast('تم حذف الشريك محلياً، اضغط حفظ لتأكيد التغييرات');
     }
-    
+
     function saveAllPartners() {
         const items = document.querySelectorAll('#partnersAdminList .partner-item');
         const updates = {};
+        const toRemove = [];
         items.forEach(item => {
             const id = item.getAttribute('data-id');
             const newUrl = item.querySelector('.partner-url-input').value.trim();
             if(newUrl) {
-                updates[`partners/${id}/url`] = newUrl;
+                if(!id.startsWith('temp_')) {
+                    updates[`partners/${id}/url`] = newUrl;
+                } else {
+                    // إضافة جديدة
+                    updates[`partners/${id}`] = { url: newUrl };
+                }
+            } else {
+                if(!id.startsWith('temp_')) toRemove.push(id);
             }
         });
-        if(Object.keys(updates).length === 0) {
-            showToast('لا توجد تغييرات لحفظها');
-            return;
-        }
-        db.ref(DB_PATH).update(updates).then(()=>showToast('تم حفظ جميع تعديلات الشركاء'));
+        // حذف الشركاء الذين تم إزالتهم
+        const removePromises = toRemove.map(id => db.ref(DB_PATH+'/partners/'+id).remove());
+        const updatePromises = Object.keys(updates).map(path => db.ref(DB_PATH).child(path).set(updates[path]));
+        Promise.all([...removePromises, ...updatePromises]).then(() => {
+            showToast('تم حفظ جميع تعديلات الشركاء');
+        }).catch(err => showToast('خطأ: '+err.message));
     }
-    
+
+    // ---------- الأقسام (تعديل محلي) ----------
     function renderPagesList() {
         const c = document.getElementById('pagesList');
         if(!c || !currentData.pages) return;
         c.innerHTML = Object.keys(currentData.pages).map(id => `
-            <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-                <input value="${currentData.pages[id].title}" onchange="updatePageTitle('${id}', this.value)" style="flex:1">
-                <button onclick="deletePage('${id}')" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
+            <div class="list-item-row" data-id="${id}">
+                <input type="text" value="${currentData.pages[id].title.replace(/"/g, '&quot;')}" class="page-title-input">
+                <button onclick="deletePageLocally(this)" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
             </div>
         `).join('');
     }
-    function updatePageTitle(id, newTitle) {
-        db.ref(DB_PATH+'/pages/'+id).update({title: newTitle}).then(()=>showToast('تم تحديث اسم القسم'));
+    function addPageLocally() {
+        const name = document.getElementById('newPageName').value.trim();
+        if(!name) { showToast('أدخل اسم القسم'); return; }
+        const container = document.getElementById('pagesList');
+        const newId = 'temp_page_' + Date.now();
+        const div = document.createElement('div');
+        div.className = 'list-item-row';
+        div.setAttribute('data-id', newId);
+        div.innerHTML = `<input type="text" value="${name.replace(/"/g, '&quot;')}" class="page-title-input"><button onclick="deletePageLocally(this)" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>`;
+        container.appendChild(div);
+        document.getElementById('newPageName').value = '';
+        showToast('تمت إضافة القسم محلياً، اضغط حفظ للتأكيد');
     }
-    function deletePage(id) {
-        if(confirm('حذف هذا القسم سيؤدي إلى حذف جميع صوره، هل أنت متأكد؟'))
-            db.ref(DB_PATH+'/pages/'+id).remove().then(()=>showToast('تم حذف القسم'));
+    function deletePageLocally(btn) {
+        btn.closest('.list-item-row').remove();
+        showToast('تم حذف القسم محلياً، اضغط حفظ للتأكيد');
     }
-    function addPage() {
-        const name = document.getElementById('newPageName').value;
-        if(name) db.ref(DB_PATH+'/pages').push({title:name}).then(()=>showToast('تمت إضافة القسم'));
-        else showToast('أدخل اسم القسم');
+    function saveAllPages() {
+        const rows = document.querySelectorAll('#pagesList .list-item-row');
+        const updates = {};
+        const toRemove = [];
+        rows.forEach(row => {
+            const id = row.getAttribute('data-id');
+            const title = row.querySelector('.page-title-input').value.trim();
+            if(title) {
+                if(!id.startsWith('temp_page_')) updates[`pages/${id}/title`] = title;
+                else updates[`pages/${id}`] = { title };
+            } else {
+                if(!id.startsWith('temp_page_')) toRemove.push(id);
+            }
+        });
+        const removePromises = toRemove.map(id => db.ref(DB_PATH+'/pages/'+id).remove());
+        const updatePromises = Object.keys(updates).map(path => db.ref(DB_PATH).child(path).set(updates[path]));
+        Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الأقسام'));
     }
-    
+
+    // ---------- الألبومات ----------
     function renderAlbumsList() {
         const c = document.getElementById('albumsList');
         if(!c || !currentData.albums) return;
         c.innerHTML = Object.keys(currentData.albums).map(id => `
-            <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-                <input value="${currentData.albums[id].name}" onchange="updateAlbumName('${id}', this.value)" style="flex:1">
-                <button onclick="deleteAlbum('${id}')" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
+            <div class="list-item-row" data-id="${id}">
+                <input type="text" value="${currentData.albums[id].name.replace(/"/g, '&quot;')}" class="album-name-input">
+                <button onclick="deleteAlbumLocally(this)" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
             </div>
         `).join('');
     }
-    function updateAlbumName(id, newName) {
-        db.ref(DB_PATH+'/albums/'+id).update({name: newName}).then(()=>showToast('تم تحديث اسم الألبوم'));
+    function addAlbumLocally() {
+        const name = document.getElementById('newAlbumName').value.trim();
+        if(!name) { showToast('أدخل اسم الألبوم'); return; }
+        const container = document.getElementById('albumsList');
+        const newId = 'temp_album_' + Date.now();
+        const div = document.createElement('div');
+        div.className = 'list-item-row';
+        div.setAttribute('data-id', newId);
+        div.innerHTML = `<input type="text" value="${name.replace(/"/g, '&quot;')}" class="album-name-input"><button onclick="deleteAlbumLocally(this)" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>`;
+        container.appendChild(div);
+        document.getElementById('newAlbumName').value = '';
+        showToast('تمت إضافة الألبوم محلياً، اضغط حفظ للتأكيد');
     }
-    function deleteAlbum(id) {
-        if(confirm('حذف هذا الألبوم سيؤدي إلى حذف جميع صوره، هل أنت متأكد؟'))
-            db.ref(DB_PATH+'/albums/'+id).remove().then(()=>showToast('تم حذف الألبوم'));
+    function deleteAlbumLocally(btn) {
+        btn.closest('.list-item-row').remove();
+        showToast('تم حذف الألبوم محلياً، اضغط حفظ للتأكيد');
     }
-    function addAlbum() {
-        const name = document.getElementById('newAlbumName').value;
-        if(name) db.ref(DB_PATH+'/albums').push({name}).then(()=>showToast('تمت إضافة الألبوم'));
-        else showToast('أدخل اسم الألبوم');
+    function saveAllAlbums() {
+        const rows = document.querySelectorAll('#albumsList .list-item-row');
+        const updates = {};
+        const toRemove = [];
+        rows.forEach(row => {
+            const id = row.getAttribute('data-id');
+            const name = row.querySelector('.album-name-input').value.trim();
+            if(name) {
+                if(!id.startsWith('temp_album_')) updates[`albums/${id}/name`] = name;
+                else updates[`albums/${id}`] = { name };
+            } else {
+                if(!id.startsWith('temp_album_')) toRemove.push(id);
+            }
+        });
+        const removePromises = toRemove.map(id => db.ref(DB_PATH+'/albums/'+id).remove());
+        const updatePromises = Object.keys(updates).map(path => db.ref(DB_PATH).child(path).set(updates[path]));
+        Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الألبومات'));
     }
-    
+
+    // ---------- الكتالوجات ----------
     function renderCatalogsList() {
         const c = document.getElementById('catalogsList');
         if(!c || !currentData.catalogs) return;
         c.innerHTML = Object.keys(currentData.catalogs).map(id => `
-            <div style="display:flex; gap:8px; margin-bottom:8px; align-items:center;">
-                <input value="${currentData.catalogs[id].name}" onchange="updateCatalogName('${id}', this.value)" style="flex:1">
-                <button onclick="deleteCatalog('${id}')" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
+            <div class="list-item-row" data-id="${id}">
+                <input type="text" value="${currentData.catalogs[id].name.replace(/"/g, '&quot;')}" class="catalog-name-input" style="flex:2;">
+                <button onclick="deleteCatalogLocally(this)" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>
+            </div>
+            <div class="list-item-row" style="margin-top:-8px; margin-bottom:12px;">
+                <textarea class="catalog-code-input" rows="2" style="flex:2;">${(currentData.catalogs[id].code||'').replace(/"/g, '&quot;')}</textarea>
             </div>
         `).join('');
     }
-    function updateCatalogName(id, newName) {
-        db.ref(DB_PATH+'/catalogs/'+id).update({name: newName}).then(()=>showToast('تم تحديث اسم الكتالوج'));
+    function addCatalogLocally() {
+        const name = document.getElementById('newCatalogName').value.trim();
+        const code = document.getElementById('newCatalogCode').value.trim();
+        if(!name || !code) { showToast('املأ الاسم والكود'); return; }
+        const container = document.getElementById('catalogsList');
+        const newId = 'temp_catalog_' + Date.now();
+        const divName = document.createElement('div');
+        divName.className = 'list-item-row';
+        divName.setAttribute('data-id', newId);
+        divName.innerHTML = `<input type="text" value="${name.replace(/"/g, '&quot;')}" class="catalog-name-input" style="flex:2;"><button onclick="deleteCatalogLocally(this)" class="btn-red" style="width:auto; padding:6px 12px;">حذف</button>`;
+        const divCode = document.createElement('div');
+        divCode.className = 'list-item-row';
+        divCode.style.marginTop = '-8px';
+        divCode.style.marginBottom = '12px';
+        divCode.innerHTML = `<textarea class="catalog-code-input" rows="2" style="flex:2;">${code.replace(/"/g, '&quot;')}</textarea>`;
+        container.appendChild(divName);
+        container.appendChild(divCode);
+        document.getElementById('newCatalogName').value = '';
+        document.getElementById('newCatalogCode').value = '';
+        showToast('تمت إضافة الكتالوج محلياً، اضغط حفظ للتأكيد');
     }
-    function deleteCatalog(id) {
-        if(confirm('حذف هذا الكتالوج نهائياً؟'))
-            db.ref(DB_PATH+'/catalogs/'+id).remove().then(()=>showToast('تم حذف الكتالوج'));
+    function deleteCatalogLocally(btn) {
+        const row = btn.closest('.list-item-row');
+        const nextRow = row.nextElementSibling;
+        if(nextRow && nextRow.classList.contains('list-item-row') && nextRow.querySelector('.catalog-code-input')) {
+            nextRow.remove();
+        }
+        row.remove();
+        showToast('تم حذف الكتالوج محلياً، اضغط حفظ للتأكيد');
     }
-    function addCatalog() {
-        const name = document.getElementById('newCatalogName').value;
-        const code = document.getElementById('newCatalogCode').value;
-        if(name && code) db.ref(DB_PATH+'/catalogs').push({name, code}).then(()=>showToast('تمت إضافة الكتالوج'));
-        else showToast('املأ الحقول');
+    function saveAllCatalogs() {
+        const nameRows = document.querySelectorAll('#catalogsList .list-item-row:has(.catalog-name-input)');
+        const updates = {};
+        const toRemove = [];
+        nameRows.forEach(nameRow => {
+            const id = nameRow.getAttribute('data-id');
+            const name = nameRow.querySelector('.catalog-name-input').value.trim();
+            const codeRow = nameRow.nextElementSibling;
+            const code = codeRow ? codeRow.querySelector('.catalog-code-input').value.trim() : '';
+            if(name && code) {
+                if(!id.startsWith('temp_catalog_')) {
+                    updates[`catalogs/${id}/name`] = name;
+                    updates[`catalogs/${id}/code`] = code;
+                } else {
+                    updates[`catalogs/${id}`] = { name, code };
+                }
+            } else {
+                if(!id.startsWith('temp_catalog_')) toRemove.push(id);
+            }
+        });
+        const removePromises = toRemove.map(id => db.ref(DB_PATH+'/catalogs/'+id).remove());
+        const updatePromises = Object.keys(updates).map(path => db.ref(DB_PATH).child(path).set(updates[path]));
+        Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الكتالوجات'));
     }
-    
+
+    // دوال رفع الصور وحذفها كما هي
     function uploadPhotos() {
         const target = document.getElementById('uploadTarget').value;
         const urls = document.getElementById('imageUrls').value.split('\n').filter(u=>u.trim());
@@ -451,7 +547,6 @@
             document.getElementById('imageUrls').value = '';
         });
     }
-    
     function loadImagesForDelete() {
         const path = document.getElementById('deleteTarget').value;
         const grid = document.getElementById('imagesDeleteGrid');
@@ -472,14 +567,12 @@
             loadImagesForDelete();
         });
     }
-    
     function saveAbout() {
         db.ref(DB_PATH).update({
             about_text: document.getElementById('aboutEditor').value,
             about_active: document.getElementById('aboutActive').checked
         }).then(()=>showToast('تم حفظ نص "من نحن"'));
     }
-    
     function renderScheduleEditor() {
         const c = document.getElementById('scheduleEditor');
         const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
@@ -513,7 +606,6 @@
         }
         db.ref(DB_PATH+'/work_schedule').set(schedule).then(()=>showToast('تم حفظ مواعيد العمل'));
     }
-    
     function saveSocial() {
         db.ref(DB_PATH).update({
             insta_url: document.getElementById('instaInput').value,
@@ -522,7 +614,6 @@
             location_url: document.getElementById('locationInput').value
         }).then(()=>showToast('تم حفظ روابط التواصل'));
     }
-    
     function saveGeneral() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteNameInput').value,
@@ -531,7 +622,6 @@
             footer_text: document.getElementById('footerInput').value
         }).then(()=>showToast('تم حفظ الإعدادات العامة'));
     }
-    
     function renderReviewsAdmin() {
         const c = document.getElementById('reviewsAdminList');
         if(!c || !currentData.reviews) return;
@@ -551,18 +641,18 @@
     window.toggleCollapse = toggleCollapse;
     window.savePopupSettings = savePopupSettings;
     window.saveMaintenance = saveMaintenance;
-    window.addPartner = addPartner;
-    window.deletePartner = deletePartner;
+    window.addPartnerLocally = addPartnerLocally;
+    window.deletePartnerLocally = deletePartnerLocally;
     window.saveAllPartners = saveAllPartners;
-    window.addPage = addPage;
-    window.deletePage = deletePage;
-    window.updatePageTitle = updatePageTitle;
-    window.addAlbum = addAlbum;
-    window.deleteAlbum = deleteAlbum;
-    window.updateAlbumName = updateAlbumName;
-    window.addCatalog = addCatalog;
-    window.deleteCatalog = deleteCatalog;
-    window.updateCatalogName = updateCatalogName;
+    window.addPageLocally = addPageLocally;
+    window.deletePageLocally = deletePageLocally;
+    window.saveAllPages = saveAllPages;
+    window.addAlbumLocally = addAlbumLocally;
+    window.deleteAlbumLocally = deleteAlbumLocally;
+    window.saveAllAlbums = saveAllAlbums;
+    window.addCatalogLocally = addCatalogLocally;
+    window.deleteCatalogLocally = deleteCatalogLocally;
+    window.saveAllCatalogs = saveAllCatalogs;
     window.uploadPhotos = uploadPhotos;
     window.loadImagesForDelete = loadImagesForDelete;
     window.deleteImage = deleteImage;
