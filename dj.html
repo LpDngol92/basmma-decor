@@ -180,6 +180,19 @@
             background: #28a745;
             transition: width 0.2s;
         }
+        .upload-status-text {
+            font-size: 0.9rem;
+            margin-top: 8px;
+            text-align: center;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .upload-error {
+            color: #dc3545;
+            font-size: 0.85rem;
+            margin-top: 8px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -218,11 +231,15 @@
     let loggedIn = false;
     let openSections = {};
 
-    function showToast(msg) {
+    function showToast(msg, isError = false) {
         const t = document.getElementById('toast');
         t.innerText = msg;
+        t.style.backgroundColor = isError ? '#dc3545' : '#1e2a3a';
         t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 3000);
+        setTimeout(() => {
+            t.style.display = 'none';
+            t.style.backgroundColor = '#1e2a3a';
+        }, 4000);
     }
 
     function login() {
@@ -290,12 +307,32 @@
         return await storageRef.getDownloadURL();
     }
 
+    /**
+     * رفع عدة ملفات مع تحديث شريط التقدم ونص توضيحي
+     * @param {FileList|Array} files 
+     * @param {string} folder 
+     * @param {Function} progressCallback (current, total, fileName) 
+     * @returns {Promise<string[]>} قائمة روابط الصور المرفوعة
+     */
     async function uploadMultipleFiles(files, folder, progressCallback) {
         const urls = [];
-        for (let i = 0; i < files.length; i++) {
-            const url = await uploadFileToStorage(files[i], folder);
-            urls.push(url);
-            if (progressCallback) progressCallback(i+1, files.length);
+        const total = files.length;
+        let failedCount = 0;
+        for (let i = 0; i < total; i++) {
+            const file = files[i];
+            try {
+                const url = await uploadFileToStorage(file, folder);
+                urls.push(url);
+                if (progressCallback) progressCallback(i + 1, total, file.name, null);
+            } catch (err) {
+                console.error(`فشل رفع الملف: ${file.name}`, err);
+                failedCount++;
+                if (progressCallback) progressCallback(i + 1, total, file.name, err.message);
+                // نستمر في رفع باقي الملفات بدلاً من التوقف الكامل
+            }
+        }
+        if (failedCount > 0) {
+            showToast(`تم رفع ${urls.length} من ${total} صورة. فشل ${failedCount} صورة.`, true);
         }
         return urls;
     }
@@ -305,17 +342,43 @@
         let imageUrls = [];
         if (isFiles) {
             if (!urlsOrFiles.length) { showToast('لم تختر أي ملف'); return false; }
-            showToast(`جاري رفع ${urlsOrFiles.length} صورة... قد يستغرق بعض الوقت`);
+            const total = urlsOrFiles.length;
+            showToast(`جاري رفع ${total} صورة... قد يستغرق بعض الوقت`);
             try {
-                imageUrls = await uploadMultipleFiles(urlsOrFiles, 'images', (done, total) => {
-                    const progDiv = document.getElementById('uploadProgress');
+                // نستخدم uploadMultipleFiles المحسن مع callback لتحديث الواجهة
+                const progDiv = document.getElementById('uploadProgress');
+                const statusSpan = document.getElementById('uploadStatusText');
+                if (progDiv) progDiv.style.display = 'block';
+                
+                imageUrls = await uploadMultipleFiles(urlsOrFiles, 'images', (done, total, fileName, error) => {
                     if (progDiv) {
-                        progDiv.style.display = 'block';
-                        progDiv.querySelector('.progress-fill').style.width = `${(done/total)*100}%`;
+                        const percent = (done / total) * 100;
+                        progDiv.querySelector('.progress-fill').style.width = `${percent}%`;
+                    }
+                    if (statusSpan) {
+                        if (error) {
+                            statusSpan.innerHTML = `⚠️ فشل رفع "${fileName}" (${error}) - متابعة الباقي...`;
+                            statusSpan.style.color = '#dc3545';
+                        } else {
+                            statusSpan.innerHTML = `📸 رفع الصورة ${done} من ${total} : ${fileName}`;
+                            statusSpan.style.color = '#2c3e50';
+                        }
                     }
                 });
+                
+                if (progDiv) progDiv.style.display = 'none';
+                if (statusSpan) statusSpan.innerHTML = '';
+                if (imageUrls.length === 0) {
+                    showToast('فشل رفع جميع الصور. تأكد من اتصال الإنترنت وصلاحيات التخزين.', true);
+                    return false;
+                }
                 showToast(`تم رفع ${imageUrls.length} صورة بنجاح`);
-            } catch(e) { showToast('حدث خطأ أثناء الرفع'); return false; }
+            } catch(e) {
+                showToast('حدث خطأ أثناء الرفع: ' + e.message, true);
+                const progDiv = document.getElementById('uploadProgress');
+                if (progDiv) progDiv.style.display = 'none';
+                return false;
+            }
         } else {
             imageUrls = urlsOrFiles.filter(u => u.trim());
             if (!imageUrls.length) { showToast('أدخل روابط الصور'); return false; }
@@ -400,7 +463,10 @@
                     <label for="imageFiles" style="cursor:pointer; display:block;">📂 اختر صوراً من جهازك</label>
                     <input type="file" id="imageFiles" multiple accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
                     <button class="btn-green" style="margin-top:10px;" onclick="document.getElementById('imageFiles').click()">استعراض الملفات</button>
-                    <div id="uploadProgress" style="display:none; margin-top:10px;"><div class="progress-bar"><div class="progress-fill"></div></div><span>جاري الرفع...</span></div>
+                    <div id="uploadProgress" style="display:none; margin-top:10px;">
+                        <div class="progress-bar"><div class="progress-fill"></div></div>
+                        <div id="uploadStatusText" class="upload-status-text"></div>
+                    </div>
                 </div>
                 <textarea id="imageUrls" placeholder="أو أدخل روابط الصور (كل رابط في سطر)" rows="4"></textarea>
                 <div class="button-group">
@@ -427,7 +493,7 @@
         renderScheduleEditor();
     }
 
-    // دوال الحفظ الأساسية
+    // دوال الحفظ الأساسية (نفس السابق مع إبقاء الوظائف)
     function savePopupSettings() {
         db.ref(DB_PATH).update({
             popup_enabled: document.getElementById('popupEnabled').checked,
@@ -443,7 +509,7 @@
         }).then(()=>showToast('تم حفظ وضع الصيانة'));
     }
 
-    // الشركاء
+    // الشركاء (نفس السابق)
     function renderPartnersAdmin() {
         const c = document.getElementById('partnersAdminList');
         if(!c) return;
@@ -504,7 +570,7 @@
         }).catch(err => showToast('خطأ: '+err.message));
     }
 
-    // الأقسام
+    // الأقسام (نفس السابق)
     function renderPagesList() {
         const c = document.getElementById('pagesList');
         if(!c || !currentData.pages) return;
@@ -551,7 +617,7 @@
         Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الأقسام'));
     }
 
-    // الألبومات
+    // الألبومات (نفس السابق)
     function renderAlbumsList() {
         const c = document.getElementById('albumsList');
         if(!c || !currentData.albums) return;
@@ -598,7 +664,7 @@
         Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الألبومات'));
     }
 
-    // الكتالوجات
+    // الكتالوجات (نفس السابق)
     function renderCatalogsList() {
         const c = document.getElementById('catalogsList');
         if(!c || !currentData.catalogs) return;
@@ -667,7 +733,7 @@
         Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الكتالوجات'));
     }
 
-    // رفع الصور
+    // رفع الصور (معدل)
     let selectedFiles = [];
     function handleFileSelect(event) {
         selectedFiles = Array.from(event.target.files);
@@ -679,18 +745,35 @@
         if (!target) { showToast('اختر الوجهة أولاً'); return; }
         if (!selectedFiles.length) { showToast('لم تختر أي صورة بعد'); return; }
         const progDiv = document.getElementById('uploadProgress');
+        const statusSpan = document.getElementById('uploadStatusText');
         progDiv.style.display = 'block';
         progDiv.querySelector('.progress-fill').style.width = '0%';
+        if (statusSpan) statusSpan.innerHTML = 'بدء الرفع...';
         try {
-            const urls = await uploadMultipleFiles(selectedFiles, 'images', (done, total) => {
-                progDiv.querySelector('.progress-fill').style.width = `${(done/total)*100}%`;
+            const urls = await uploadMultipleFiles(selectedFiles, 'images', (done, total, fileName, error) => {
+                const percent = (done / total) * 100;
+                progDiv.querySelector('.progress-fill').style.width = `${percent}%`;
+                if (error) {
+                    statusSpan.innerHTML = `⚠️ فشل رفع "${fileName}" - متابعة الباقي...`;
+                    statusSpan.style.color = '#dc3545';
+                } else {
+                    statusSpan.innerHTML = `📸 رفع الصورة ${done} من ${total} : ${fileName}`;
+                    statusSpan.style.color = '#2c3e50';
+                }
             });
+            if (urls.length === 0) {
+                progDiv.style.display = 'none';
+                showToast('فشل رفع جميع الصور. تأكد من الاتصال بالإنترنت.', true);
+                return;
+            }
             await saveImagesToDB(target, urls, false);
             selectedFiles = [];
             document.getElementById('imageFiles').value = '';
             progDiv.style.display = 'none';
+            if (statusSpan) statusSpan.innerHTML = '';
         } catch (err) {
             progDiv.style.display = 'none';
+            showToast('خطأ غير متوقع: ' + err.message, true);
         }
     }
     async function uploadPhotosFromUrls() {
@@ -702,7 +785,7 @@
         document.getElementById('imageUrls').value = '';
     }
 
-    // حذف الصور
+    // حذف الصور (نفس السابق)
     function loadImagesForDelete() {
         const path = document.getElementById('deleteTarget').value;
         const grid = document.getElementById('imagesDeleteGrid');
@@ -732,7 +815,7 @@
         }).then(()=>showToast('تم حفظ نص "من نحن"'));
     }
 
-    // مواعيد العمل
+    // مواعيد العمل (نفس السابق)
     function renderScheduleEditor() {
         const c = document.getElementById('scheduleEditor');
         const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
