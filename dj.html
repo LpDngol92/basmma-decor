@@ -184,10 +184,9 @@
             font-size: 0.9rem;
             margin-top: 8px;
             text-align: center;
-            color: #2c3e50;
             font-weight: 500;
         }
-        .upload-error {
+        .error-text {
             color: #dc3545;
             font-size: 0.85rem;
             margin-top: 8px;
@@ -239,18 +238,35 @@
         setTimeout(() => {
             t.style.display = 'none';
             t.style.backgroundColor = '#1e2a3a';
-        }, 4000);
+        }, 5000);
+    }
+
+    // اختبار الاتصال بـ Storage
+    async function testStorageConnection() {
+        try {
+            const testRef = storage.ref('test.txt');
+            await testRef.put(new Blob(['test'], {type: 'text/plain'}));
+            await testRef.delete();
+            console.log("✅ Storage connection successful");
+            return true;
+        } catch (err) {
+            console.error("❌ Storage connection failed:", err);
+            showToast(`خطأ في الاتصال بـ Firebase Storage: ${err.message}`, true);
+            return false;
+        }
     }
 
     function login() {
         const pwd = document.getElementById('adminPassword').value;
-        db.ref(DB_PATH+'/in').once('value').then(snap => {
+        db.ref(DB_PATH+'/in').once('value').then(async snap => {
             const stored = snap.val();
             if (stored && stored.toString() === pwd) {
                 loggedIn = true;
                 document.getElementById('loginBox').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
                 loadData();
+                // اختبار الاتصال بـ Storage
+                await testStorageConnection();
             } else {
                 showToast('كلمة المرور غير صحيحة');
             }
@@ -303,36 +319,33 @@
         const ext = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
         const storageRef = storage.ref(`${folder}/${fileName}`);
-        await storageRef.put(file);
-        return await storageRef.getDownloadURL();
+        console.log(`بدء رفع ${file.name} (${(file.size/1024).toFixed(2)} KB)`);
+        const uploadTask = storageRef.put(file);
+        // يمكننا متابعة التقدم هنا إذا أردنا
+        await uploadTask;
+        const url = await storageRef.getDownloadURL();
+        console.log(`تم رفع ${file.name} -> ${url}`);
+        return url;
     }
 
-    /**
-     * رفع عدة ملفات مع تحديث شريط التقدم ونص توضيحي
-     * @param {FileList|Array} files 
-     * @param {string} folder 
-     * @param {Function} progressCallback (current, total, fileName) 
-     * @returns {Promise<string[]>} قائمة روابط الصور المرفوعة
-     */
-    async function uploadMultipleFiles(files, folder, progressCallback) {
+    async function uploadMultipleFiles(files, folder, onProgress) {
         const urls = [];
         const total = files.length;
-        let failedCount = 0;
+        let failed = 0;
         for (let i = 0; i < total; i++) {
             const file = files[i];
             try {
                 const url = await uploadFileToStorage(file, folder);
                 urls.push(url);
-                if (progressCallback) progressCallback(i + 1, total, file.name, null);
+                if (onProgress) onProgress(i+1, total, file.name, null);
             } catch (err) {
-                console.error(`فشل رفع الملف: ${file.name}`, err);
-                failedCount++;
-                if (progressCallback) progressCallback(i + 1, total, file.name, err.message);
-                // نستمر في رفع باقي الملفات بدلاً من التوقف الكامل
+                console.error(`فشل رفع ${file.name}:`, err);
+                failed++;
+                if (onProgress) onProgress(i+1, total, file.name, err.message);
             }
         }
-        if (failedCount > 0) {
-            showToast(`تم رفع ${urls.length} من ${total} صورة. فشل ${failedCount} صورة.`, true);
+        if (failed > 0) {
+            showToast(`فشل رفع ${failed} من ${total} صورة. تحقق من الأخطاء في وحدة التحكم (F12).`, true);
         }
         return urls;
     }
@@ -342,56 +355,48 @@
         let imageUrls = [];
         if (isFiles) {
             if (!urlsOrFiles.length) { showToast('لم تختر أي ملف'); return false; }
-            const total = urlsOrFiles.length;
-            showToast(`جاري رفع ${total} صورة... قد يستغرق بعض الوقت`);
-            try {
-                // نستخدم uploadMultipleFiles المحسن مع callback لتحديث الواجهة
-                const progDiv = document.getElementById('uploadProgress');
-                const statusSpan = document.getElementById('uploadStatusText');
-                if (progDiv) progDiv.style.display = 'block';
-                
-                imageUrls = await uploadMultipleFiles(urlsOrFiles, 'images', (done, total, fileName, error) => {
-                    if (progDiv) {
-                        const percent = (done / total) * 100;
-                        progDiv.querySelector('.progress-fill').style.width = `${percent}%`;
+            const progDiv = document.getElementById('uploadProgress');
+            const statusSpan = document.getElementById('uploadStatusText');
+            if (progDiv) progDiv.style.display = 'block';
+            if (statusSpan) statusSpan.innerHTML = 'بدء الرفع...';
+            
+            imageUrls = await uploadMultipleFiles(urlsOrFiles, 'images', (done, total, fileName, error) => {
+                const percent = (done / total) * 100;
+                if (progDiv) progDiv.querySelector('.progress-fill').style.width = `${percent}%`;
+                if (statusSpan) {
+                    if (error) {
+                        statusSpan.innerHTML = `⚠️ فشل رفع "${fileName}" - ${error}`;
+                        statusSpan.style.color = '#dc3545';
+                    } else {
+                        statusSpan.innerHTML = `📸 رفع الصورة ${done} من ${total} : ${fileName}`;
+                        statusSpan.style.color = '#2c3e50';
                     }
-                    if (statusSpan) {
-                        if (error) {
-                            statusSpan.innerHTML = `⚠️ فشل رفع "${fileName}" (${error}) - متابعة الباقي...`;
-                            statusSpan.style.color = '#dc3545';
-                        } else {
-                            statusSpan.innerHTML = `📸 رفع الصورة ${done} من ${total} : ${fileName}`;
-                            statusSpan.style.color = '#2c3e50';
-                        }
-                    }
-                });
-                
-                if (progDiv) progDiv.style.display = 'none';
-                if (statusSpan) statusSpan.innerHTML = '';
-                if (imageUrls.length === 0) {
-                    showToast('فشل رفع جميع الصور. تأكد من اتصال الإنترنت وصلاحيات التخزين.', true);
-                    return false;
                 }
-                showToast(`تم رفع ${imageUrls.length} صورة بنجاح`);
-            } catch(e) {
-                showToast('حدث خطأ أثناء الرفع: ' + e.message, true);
-                const progDiv = document.getElementById('uploadProgress');
-                if (progDiv) progDiv.style.display = 'none';
+            });
+            
+            if (progDiv) progDiv.style.display = 'none';
+            if (statusSpan) statusSpan.innerHTML = '';
+            if (imageUrls.length === 0) {
+                showToast('فشل رفع جميع الصور. تأكد من اتصال الإنترنت وقواعد التخزين.', true);
                 return false;
             }
+            showToast(`تم رفع ${imageUrls.length} صورة بنجاح`);
         } else {
             imageUrls = urlsOrFiles.filter(u => u.trim());
             if (!imageUrls.length) { showToast('أدخل روابط الصور'); return false; }
         }
+        // حفظ الروابط في قاعدة البيانات
         const promises = imageUrls.map(url => db.ref(DB_PATH+'/'+target+'/imgs').push({ url }));
         await Promise.all(promises);
         showToast(`تم نشر ${imageUrls.length} صورة`);
         return true;
     }
 
+    // دالة ترحيل محسنة مع عرض أخطاء مفصلة
     async function migrateSingleImage(oldUrl, newPathInDB) {
         if (oldUrl.includes('firebasestorage.googleapis.com')) return null;
         try {
+            console.log(`محاولة ترحيل: ${oldUrl}`);
             const response = await fetch(oldUrl, { mode: 'cors' });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const blob = await response.blob();
@@ -400,7 +405,7 @@
             await db.ref(DB_PATH + '/' + newPathInDB).update({ url: newUrl });
             return newUrl;
         } catch (err) {
-            console.warn(`فشل ترحيل الصورة: ${oldUrl}`, err);
+            console.error(`فشل ترحيل الصورة: ${oldUrl}`, err);
             return null;
         }
     }
@@ -493,7 +498,7 @@
         renderScheduleEditor();
     }
 
-    // دوال الحفظ الأساسية (نفس السابق مع إبقاء الوظائف)
+    // دوال الحفظ الأساسية (كما هي)
     function savePopupSettings() {
         db.ref(DB_PATH).update({
             popup_enabled: document.getElementById('popupEnabled').checked,
@@ -509,7 +514,7 @@
         }).then(()=>showToast('تم حفظ وضع الصيانة'));
     }
 
-    // الشركاء (نفس السابق)
+    // الشركاء
     function renderPartnersAdmin() {
         const c = document.getElementById('partnersAdminList');
         if(!c) return;
@@ -570,7 +575,7 @@
         }).catch(err => showToast('خطأ: '+err.message));
     }
 
-    // الأقسام (نفس السابق)
+    // الأقسام
     function renderPagesList() {
         const c = document.getElementById('pagesList');
         if(!c || !currentData.pages) return;
@@ -617,7 +622,7 @@
         Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الأقسام'));
     }
 
-    // الألبومات (نفس السابق)
+    // الألبومات
     function renderAlbumsList() {
         const c = document.getElementById('albumsList');
         if(!c || !currentData.albums) return;
@@ -664,7 +669,7 @@
         Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الألبومات'));
     }
 
-    // الكتالوجات (نفس السابق)
+    // الكتالوجات
     function renderCatalogsList() {
         const c = document.getElementById('catalogsList');
         if(!c || !currentData.catalogs) return;
@@ -733,47 +738,32 @@
         Promise.all([...removePromises, ...updatePromises]).then(() => showToast('تم حفظ جميع الكتالوجات'));
     }
 
-    // رفع الصور (معدل)
+    // رفع الصور
     let selectedFiles = [];
     function handleFileSelect(event) {
         selectedFiles = Array.from(event.target.files);
         const count = selectedFiles.length;
         if (count) showToast(`تم اختيار ${count} صورة`);
+        else showToast('لم تختر أي ملف');
     }
     async function uploadPhotosFromFiles() {
         const target = document.getElementById('uploadTarget').value;
         if (!target) { showToast('اختر الوجهة أولاً'); return; }
         if (!selectedFiles.length) { showToast('لم تختر أي صورة بعد'); return; }
         const progDiv = document.getElementById('uploadProgress');
-        const statusSpan = document.getElementById('uploadStatusText');
         progDiv.style.display = 'block';
         progDiv.querySelector('.progress-fill').style.width = '0%';
-        if (statusSpan) statusSpan.innerHTML = 'بدء الرفع...';
         try {
-            const urls = await uploadMultipleFiles(selectedFiles, 'images', (done, total, fileName, error) => {
-                const percent = (done / total) * 100;
-                progDiv.querySelector('.progress-fill').style.width = `${percent}%`;
-                if (error) {
-                    statusSpan.innerHTML = `⚠️ فشل رفع "${fileName}" - متابعة الباقي...`;
-                    statusSpan.style.color = '#dc3545';
-                } else {
-                    statusSpan.innerHTML = `📸 رفع الصورة ${done} من ${total} : ${fileName}`;
-                    statusSpan.style.color = '#2c3e50';
-                }
-            });
-            if (urls.length === 0) {
-                progDiv.style.display = 'none';
-                showToast('فشل رفع جميع الصور. تأكد من الاتصال بالإنترنت.', true);
-                return;
+            const success = await saveImagesToDB(target, selectedFiles, true);
+            if (success) {
+                selectedFiles = [];
+                document.getElementById('imageFiles').value = '';
             }
-            await saveImagesToDB(target, urls, false);
-            selectedFiles = [];
-            document.getElementById('imageFiles').value = '';
-            progDiv.style.display = 'none';
-            if (statusSpan) statusSpan.innerHTML = '';
         } catch (err) {
+            console.error(err);
+            showToast('حدث خطأ أثناء الرفع: ' + err.message, true);
+        } finally {
             progDiv.style.display = 'none';
-            showToast('خطأ غير متوقع: ' + err.message, true);
         }
     }
     async function uploadPhotosFromUrls() {
@@ -785,7 +775,7 @@
         document.getElementById('imageUrls').value = '';
     }
 
-    // حذف الصور (نفس السابق)
+    // حذف الصور
     function loadImagesForDelete() {
         const path = document.getElementById('deleteTarget').value;
         const grid = document.getElementById('imagesDeleteGrid');
@@ -815,7 +805,7 @@
         }).then(()=>showToast('تم حفظ نص "من نحن"'));
     }
 
-    // مواعيد العمل (نفس السابق)
+    // مواعيد العمل
     function renderScheduleEditor() {
         const c = document.getElementById('scheduleEditor');
         const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
