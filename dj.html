@@ -180,18 +180,6 @@
             background: #28a745;
             transition: width 0.2s;
         }
-        .upload-status-text {
-            font-size: 0.9rem;
-            margin-top: 8px;
-            text-align: center;
-            font-weight: 500;
-        }
-        .error-text {
-            color: #dc3545;
-            font-size: 0.85rem;
-            margin-top: 8px;
-            text-align: center;
-        }
     </style>
 </head>
 <body>
@@ -230,43 +218,22 @@
     let loggedIn = false;
     let openSections = {};
 
-    function showToast(msg, isError = false) {
+    function showToast(msg) {
         const t = document.getElementById('toast');
         t.innerText = msg;
-        t.style.backgroundColor = isError ? '#dc3545' : '#1e2a3a';
         t.style.display = 'block';
-        setTimeout(() => {
-            t.style.display = 'none';
-            t.style.backgroundColor = '#1e2a3a';
-        }, 5000);
-    }
-
-    // اختبار الاتصال بـ Storage
-    async function testStorageConnection() {
-        try {
-            const testRef = storage.ref('test.txt');
-            await testRef.put(new Blob(['test'], {type: 'text/plain'}));
-            await testRef.delete();
-            console.log("✅ Storage connection successful");
-            return true;
-        } catch (err) {
-            console.error("❌ Storage connection failed:", err);
-            showToast(`خطأ في الاتصال بـ Firebase Storage: ${err.message}`, true);
-            return false;
-        }
+        setTimeout(() => t.style.display = 'none', 3000);
     }
 
     function login() {
         const pwd = document.getElementById('adminPassword').value;
-        db.ref(DB_PATH+'/in').once('value').then(async snap => {
+        db.ref(DB_PATH+'/in').once('value').then(snap => {
             const stored = snap.val();
             if (stored && stored.toString() === pwd) {
                 loggedIn = true;
                 document.getElementById('loginBox').style.display = 'none';
                 document.getElementById('adminPanel').style.display = 'block';
                 loadData();
-                // اختبار الاتصال بـ Storage
-                await testStorageConnection();
             } else {
                 showToast('كلمة المرور غير صحيحة');
             }
@@ -319,33 +286,16 @@
         const ext = file.name.split('.').pop();
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
         const storageRef = storage.ref(`${folder}/${fileName}`);
-        console.log(`بدء رفع ${file.name} (${(file.size/1024).toFixed(2)} KB)`);
-        const uploadTask = storageRef.put(file);
-        // يمكننا متابعة التقدم هنا إذا أردنا
-        await uploadTask;
-        const url = await storageRef.getDownloadURL();
-        console.log(`تم رفع ${file.name} -> ${url}`);
-        return url;
+        await storageRef.put(file);
+        return await storageRef.getDownloadURL();
     }
 
-    async function uploadMultipleFiles(files, folder, onProgress) {
+    async function uploadMultipleFiles(files, folder, progressCallback) {
         const urls = [];
-        const total = files.length;
-        let failed = 0;
-        for (let i = 0; i < total; i++) {
-            const file = files[i];
-            try {
-                const url = await uploadFileToStorage(file, folder);
-                urls.push(url);
-                if (onProgress) onProgress(i+1, total, file.name, null);
-            } catch (err) {
-                console.error(`فشل رفع ${file.name}:`, err);
-                failed++;
-                if (onProgress) onProgress(i+1, total, file.name, err.message);
-            }
-        }
-        if (failed > 0) {
-            showToast(`فشل رفع ${failed} من ${total} صورة. تحقق من الأخطاء في وحدة التحكم (F12).`, true);
+        for (let i = 0; i < files.length; i++) {
+            const url = await uploadFileToStorage(files[i], folder);
+            urls.push(url);
+            if (progressCallback) progressCallback(i+1, files.length);
         }
         return urls;
     }
@@ -355,48 +305,30 @@
         let imageUrls = [];
         if (isFiles) {
             if (!urlsOrFiles.length) { showToast('لم تختر أي ملف'); return false; }
-            const progDiv = document.getElementById('uploadProgress');
-            const statusSpan = document.getElementById('uploadStatusText');
-            if (progDiv) progDiv.style.display = 'block';
-            if (statusSpan) statusSpan.innerHTML = 'بدء الرفع...';
-            
-            imageUrls = await uploadMultipleFiles(urlsOrFiles, 'images', (done, total, fileName, error) => {
-                const percent = (done / total) * 100;
-                if (progDiv) progDiv.querySelector('.progress-fill').style.width = `${percent}%`;
-                if (statusSpan) {
-                    if (error) {
-                        statusSpan.innerHTML = `⚠️ فشل رفع "${fileName}" - ${error}`;
-                        statusSpan.style.color = '#dc3545';
-                    } else {
-                        statusSpan.innerHTML = `📸 رفع الصورة ${done} من ${total} : ${fileName}`;
-                        statusSpan.style.color = '#2c3e50';
+            showToast(`جاري رفع ${urlsOrFiles.length} صورة... قد يستغرق بعض الوقت`);
+            try {
+                imageUrls = await uploadMultipleFiles(urlsOrFiles, 'images', (done, total) => {
+                    const progDiv = document.getElementById('uploadProgress');
+                    if (progDiv) {
+                        progDiv.style.display = 'block';
+                        progDiv.querySelector('.progress-fill').style.width = `${(done/total)*100}%`;
                     }
-                }
-            });
-            
-            if (progDiv) progDiv.style.display = 'none';
-            if (statusSpan) statusSpan.innerHTML = '';
-            if (imageUrls.length === 0) {
-                showToast('فشل رفع جميع الصور. تأكد من اتصال الإنترنت وقواعد التخزين.', true);
-                return false;
-            }
-            showToast(`تم رفع ${imageUrls.length} صورة بنجاح`);
+                });
+                showToast(`تم رفع ${imageUrls.length} صورة بنجاح`);
+            } catch(e) { showToast('حدث خطأ أثناء الرفع'); return false; }
         } else {
             imageUrls = urlsOrFiles.filter(u => u.trim());
             if (!imageUrls.length) { showToast('أدخل روابط الصور'); return false; }
         }
-        // حفظ الروابط في قاعدة البيانات
         const promises = imageUrls.map(url => db.ref(DB_PATH+'/'+target+'/imgs').push({ url }));
         await Promise.all(promises);
         showToast(`تم نشر ${imageUrls.length} صورة`);
         return true;
     }
 
-    // دالة ترحيل محسنة مع عرض أخطاء مفصلة
     async function migrateSingleImage(oldUrl, newPathInDB) {
         if (oldUrl.includes('firebasestorage.googleapis.com')) return null;
         try {
-            console.log(`محاولة ترحيل: ${oldUrl}`);
             const response = await fetch(oldUrl, { mode: 'cors' });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const blob = await response.blob();
@@ -405,7 +337,7 @@
             await db.ref(DB_PATH + '/' + newPathInDB).update({ url: newUrl });
             return newUrl;
         } catch (err) {
-            console.error(`فشل ترحيل الصورة: ${oldUrl}`, err);
+            console.warn(`فشل ترحيل الصورة: ${oldUrl}`, err);
             return null;
         }
     }
@@ -468,10 +400,7 @@
                     <label for="imageFiles" style="cursor:pointer; display:block;">📂 اختر صوراً من جهازك</label>
                     <input type="file" id="imageFiles" multiple accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
                     <button class="btn-green" style="margin-top:10px;" onclick="document.getElementById('imageFiles').click()">استعراض الملفات</button>
-                    <div id="uploadProgress" style="display:none; margin-top:10px;">
-                        <div class="progress-bar"><div class="progress-fill"></div></div>
-                        <div id="uploadStatusText" class="upload-status-text"></div>
-                    </div>
+                    <div id="uploadProgress" style="display:none; margin-top:10px;"><div class="progress-bar"><div class="progress-fill"></div></div><span>جاري الرفع...</span></div>
                 </div>
                 <textarea id="imageUrls" placeholder="أو أدخل روابط الصور (كل رابط في سطر)" rows="4"></textarea>
                 <div class="button-group">
@@ -498,7 +427,7 @@
         renderScheduleEditor();
     }
 
-    // دوال الحفظ الأساسية (كما هي)
+    // دوال الحفظ الأساسية
     function savePopupSettings() {
         db.ref(DB_PATH).update({
             popup_enabled: document.getElementById('popupEnabled').checked,
@@ -744,7 +673,6 @@
         selectedFiles = Array.from(event.target.files);
         const count = selectedFiles.length;
         if (count) showToast(`تم اختيار ${count} صورة`);
-        else showToast('لم تختر أي ملف');
     }
     async function uploadPhotosFromFiles() {
         const target = document.getElementById('uploadTarget').value;
@@ -754,15 +682,14 @@
         progDiv.style.display = 'block';
         progDiv.querySelector('.progress-fill').style.width = '0%';
         try {
-            const success = await saveImagesToDB(target, selectedFiles, true);
-            if (success) {
-                selectedFiles = [];
-                document.getElementById('imageFiles').value = '';
-            }
+            const urls = await uploadMultipleFiles(selectedFiles, 'images', (done, total) => {
+                progDiv.querySelector('.progress-fill').style.width = `${(done/total)*100}%`;
+            });
+            await saveImagesToDB(target, urls, false);
+            selectedFiles = [];
+            document.getElementById('imageFiles').value = '';
+            progDiv.style.display = 'none';
         } catch (err) {
-            console.error(err);
-            showToast('حدث خطأ أثناء الرفع: ' + err.message, true);
-        } finally {
             progDiv.style.display = 'none';
         }
     }
@@ -907,3 +834,4 @@
 </script>
 </body>
 </html>
+
