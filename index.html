@@ -196,7 +196,6 @@
             background: var(--bg-primary);
             overflow: hidden;
         }
-        /* تأثيرات زجاجية متدرجة على الحواف للإيحاء بوجود أقسام إضافية */
         .tabs-wrapper::before,
         .tabs-wrapper::after {
             content: '';
@@ -216,7 +215,6 @@
             left: 0;
             background: linear-gradient(to right, rgba(255,255,255,0.95), rgba(255,255,255,0));
         }
-        /* عندما يكون التمرير في أقصى اليمين أو اليسار نخفي التظليل المناسب */
         .tabs-wrapper.scroll-start::after {
             opacity: 0;
         }
@@ -752,7 +750,10 @@
 
     // Viewer with Zoom (محسّن)
     function openViewer(url, imageList, index, imgId) {
-        if (!imageList || imageList.length === 0) return;
+        if (!imageList || imageList.length === 0) { showToast("لا توجد صور لعرضها"); return; }
+        // التأكد من أن url صالح
+        if (!url) url = imageList[0];
+        if (!url) { showToast("رابط الصورة غير صالح"); return; }
         currentImageList = imageList;
         currentImageIndex = index;
         currentImageId = imgId || `img_${Date.now()}_${index}`;
@@ -991,12 +992,15 @@
         let html = '<div style="display:grid; grid-template-columns:repeat(2,1fr); gap:12px;">';
         Object.keys(d.albums).forEach(id => {
             const album = d.albums[id];
-            let cover = album.imgs && Object.keys(album.imgs).length ? Object.values(album.imgs)[0].url : '';
+            let cover = '';
+            if (album.imgs && Object.keys(album.imgs).length) {
+                cover = Object.values(album.imgs)[0].url;
+            }
             const coverId = `album_${id}_cover`;
             const isFavCover = isFav(coverId);
             html += `<div class="album-card" data-album-id="${id}">
                         ${cover ? `<img src="${cover}" loading="lazy" onerror="this.style.display='none'">` : '<i class="fas fa-folder-open fa-3x"></i>'}
-                        <h4>${album.name}</h4>
+                        <h4>${album.name || 'بدون عنوان'}</h4>
                         <div class="album-overlay">
                             <button class="album-icon-btn fav-album-btn ${isFavCover ? 'active' : ''}" onclick="event.stopPropagation(); toggleFavorite('${coverId}', '${cover}')"><i class="fas fa-heart"></i></button>
                             <button class="album-icon-btn whatsapp-album-btn" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+cover)}', '_blank')"><i class="fab fa-whatsapp"></i></button>
@@ -1007,22 +1011,40 @@
         return html;
     }
 
+    // استخدام Event Delegation لضمان استجابة الألبومات حتى بعد إعادة الرندر
     function attachAlbumListeners() {
-        document.querySelectorAll('.album-card').forEach(card => {
-            card.addEventListener('click', (e) => {
-                if (e.target.closest('.album-icon-btn')) return;
-                const albumId = card.getAttribute('data-album-id');
-                if (albumId) openAlbum(albumId);
-            });
-        });
+        const mainContainer = document.getElementById('mainContent');
+        if (!mainContainer) return;
+        // إزالة المستمع القديم إن وجد
+        mainContainer.removeEventListener('click', albumClickHandler);
+        mainContainer.addEventListener('click', albumClickHandler);
+    }
+    
+    function albumClickHandler(e) {
+        const albumCard = e.target.closest('.album-card');
+        if (!albumCard) return;
+        // منع التنفيذ إذا تم النقر على أيقونة داخل الـ overlay
+        if (e.target.closest('.album-icon-btn')) return;
+        const albumId = albumCard.getAttribute('data-album-id');
+        if (albumId) openAlbum(albumId);
     }
 
     function openAlbum(albumId) {
-        const album = currentData.albums[albumId];
-        if (album && album.imgs) {
-            const urls = Object.values(album.imgs).map(img => img.url);
-            if (urls.length) openViewer(urls[0], urls, 0, `album_${albumId}_0`);
+        const album = currentData.albums && currentData.albums[albumId];
+        if (!album) {
+            showToast("الألبوم غير موجود");
+            return;
         }
+        if (!album.imgs || Object.keys(album.imgs).length === 0) {
+            showToast("لا توجد صور في هذا الألبوم");
+            return;
+        }
+        const urls = Object.values(album.imgs).map(img => img.url).filter(url => url && url.trim() !== "");
+        if (urls.length === 0) {
+            showToast("لا توجد صور صالحة في هذا الألبوم");
+            return;
+        }
+        openViewer(urls[0], urls, 0, `album_${albumId}_0`);
     }
 
     function renderCatalogs() {
@@ -1176,7 +1198,7 @@
         setTimeout(() => { startReviewSlider(); setupStarRating(); }, 100);
         startTabAutoScroll();
         if (currentPage === 'home') setTimeout(showPopup, 1500);
-        attachAlbumListeners();
+        attachAlbumListeners(); // ربط الألبومات بعد كل تحديث
         bindPhotoGridClick();
         setTimeout(updateTabIndicator, 100);
     }
