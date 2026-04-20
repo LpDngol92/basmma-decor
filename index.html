@@ -10,7 +10,7 @@
     <link rel="canonical" href="https://basmmaghyrdecor.com/">
     <meta name="robots" content="index, follow">
 
-    <!-- أيقونة الموقع (Favicon) -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/CsmG3G7r/1.png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co/CsmG3G7r/1.png">
     <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/CsmG3G7r/1.png">
@@ -723,64 +723,66 @@
     let tabStartX = 0, tabScrollLeft = 0;
     let popupTimeout = null;
 
-    // ---------- START: تحويل أسماء التبويبات إلى عربية (حل الرابط المعبر) ----------
-    // خريطة تحويل المعرف الداخلي -> الاسم العربي المعروض في الرابط
-    function getPageKeyFromArabic(arabicName) {
-        const map = {
-            'الرئيسية': 'home',
-            'أعمالنا': 'works',
-            'الكــتالوجات': 'catalogs',   // تم تقليل عدد الشرطات لتجنب مشاكل
-            'المفضلة': 'favorites'
-        };
-        // أسماء الصفحات المخصصة (من Firebase) يتم التعامل معها بشكل منفصل لاحقاً
-        if (map[arabicName]) return map[arabicName];
-        // إذا كان الاسم يبدأ بـ 'صفحة_'، نستخرج المعرف الفعلي (للمستخدمين المتقدمين)
-        if (arabicName.startsWith('صفحة_')) {
-            return 'page_' + arabicName.substring(5);
-        }
-        return null;
-    }
-
-    function getArabicFromPageKey(pageKey) {
+    // ========== START: نظام الروابط العربية (بسيط ومضمون) ==========
+    // تحويل الصفحة إلى اسم عربي للرابط
+    function getPageArabicName(pageKey) {
         if (pageKey === 'home') return 'الرئيسية';
         if (pageKey === 'works') return 'أعمالنا';
         if (pageKey === 'catalogs') return 'الكــتالوجات';
         if (pageKey === 'favorites') return 'المفضلة';
         if (pageKey.startsWith('page_')) {
             const pageId = pageKey.substring(5);
-            // محاولة جلب اسم الصفحة من البيانات الحية (إذا كانت متوفرة)
             if (currentData.pages && currentData.pages[pageId] && currentData.pages[pageId].title) {
                 return currentData.pages[pageId].title;
             }
-            return 'صفحة_' + pageId; // اسم احتياطي
+            return 'صفحة_' + pageId;
         }
         return pageKey;
     }
-
-    // تحويل الهاش من عربي إلى معرف داخلي (مع دعم الروابط القديمة مثل #home)
-    function resolveHashToPageKey(hash) {
-        if (!hash || hash === '#') return 'home';
-        let raw = hash.substring(1); // إزالة #
-        // إذا كان الرابط قديماً (home, works, catalogs, favorites) أو يبدأ بـ page_
-        if (['home', 'works', 'catalogs', 'favorites'].includes(raw) || raw.startsWith('page_')) {
-            return raw;
-        }
-        // حاول الترجمة من العربية
-        let mapped = getPageKeyFromArabic(raw);
-        if (mapped) return mapped;
-        // إذا كان الرابط يمثل صفحة مخصصة بالعربية (مثل #ديكورات_مكاتب)
-        // نبحث في صفحات Firebase عن عنوان مطابق
+    // تحويل الاسم العربي إلى معرف الصفحة (المفتاح الداخلي)
+    function getPageKeyFromArabic(arabicName) {
+        if (arabicName === 'الرئيسية') return 'home';
+        if (arabicName === 'أعمالنا') return 'works';
+        if (arabicName === 'الكــتالوجات') return 'catalogs';
+        if (arabicName === 'المفضلة') return 'favorites';
+        // البحث في الصفحات المخصصة
         if (currentData.pages) {
             for (let pid in currentData.pages) {
-                if (currentData.pages[pid].title === raw) {
+                if (currentData.pages[pid].title === arabicName) {
                     return 'page_' + pid;
                 }
             }
         }
-        // غير معروف -> الرئيسية
-        return 'home';
+        return null; // غير معروف
     }
-    // ---------- END: تحويل أسماء التبويبات ----------
+    // تحديث الرابط في شريط العناوين (بدون إعادة تحميل الصفحة)
+    function updateHashFromPage(pageKey) {
+        const newHash = getPageArabicName(pageKey);
+        if (window.location.hash !== '#' + newHash) {
+            history.pushState(null, '', '#' + newHash);
+        }
+    }
+    // قراءة الرابط عند تحميل الصفحة أو تغييرها يدوياً
+    function loadPageFromHash() {
+        let hash = window.location.hash.substring(1);
+        if (!hash) {
+            currentPage = 'home';
+            updateHashFromPage('home');
+        } else {
+            let pageKey = getPageKeyFromArabic(hash);
+            if (pageKey && (pageKey === 'home' || pageKey === 'works' || pageKey === 'catalogs' || pageKey === 'favorites' || (pageKey.startsWith('page_') && currentData.pages && currentData.pages[pageKey.substring(5)]))) {
+                currentPage = pageKey;
+            } else {
+                // لو الرابط غير معروف نذهب للرئيسية
+                currentPage = 'home';
+                updateHashFromPage('home');
+            }
+        }
+        renderTabs();
+        renderCurrentPage();
+        setTimeout(updateTabIndicator, 100);
+    }
+    // ========== END: نظام الروابط العربية ==========
 
     // Helper Functions
     function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
@@ -1135,41 +1137,39 @@
         return renderImageGallery(page.imgs, `page_${pageId}`);
     }
 
-    // تعديل دالة renderTabs لجعل الرابط يحمل الاسم العربي المعبر
+    // تعديل دالة renderTabs بحيث تعمل مع النظام الجديد للروابط العربية
     function renderTabs() {
         const container = document.getElementById('tabsSection');
-        // قائمة التبويبات الثابتة مع أسمائها العربية
-        const staticTabs = [
-            { key: 'home', name: 'الرئيسية' },
-            { key: 'works', name: 'أعمالنا' },
-            { key: 'catalogs', name: 'الكــتالوجات' },
-            { key: 'favorites', name: 'المفضلة' }
+        const tabs = [
+            { key: 'home', name: 'الرئيسية', icon: 'fa-home' },
+            { key: 'works', name: 'أعمالنا', icon: 'fa-images' },
+            { key: 'catalogs', name: 'الكــتالوجات', icon: 'fa-book-open' },
+            { key: 'favorites', name: 'المفضلة', icon: 'fa-heart' }
         ];
         let html = '';
-        staticTabs.forEach(tab => {
+        tabs.forEach(tab => {
             const activeClass = (currentPage === tab.key) ? 'active' : '';
-            html += `<button class="tab-btn ${activeClass}" data-page-key="${tab.key}" data-page-name="${tab.name}"><i class="fas ${tab.key === 'home' ? 'fa-home' : (tab.key === 'works' ? 'fa-images' : (tab.key === 'catalogs' ? 'fa-book-open' : 'fa-heart'))}"></i> ${tab.name}</button>`;
+            html += `<button class="tab-btn ${activeClass}" data-page-key="${tab.key}"><i class="fas ${tab.icon}"></i> ${tab.name}</button>`;
         });
-        // الصفحات المخصصة من Firebase
         if (currentData.pages) {
             Object.keys(currentData.pages).forEach(pageId => {
                 const pageTitle = currentData.pages[pageId].title || 'صفحة';
                 const pageKey = 'page_' + pageId;
                 const activeClass = (currentPage === pageKey) ? 'active' : '';
-                html += `<button class="tab-btn ${activeClass}" data-page-key="${pageKey}" data-page-name="${pageTitle}"><i class="fas fa-file-alt"></i> ${pageTitle}</button>`;
+                html += `<button class="tab-btn ${activeClass}" data-page-key="${pageKey}"><i class="fas fa-file-alt"></i> ${pageTitle}</button>`;
             });
         }
         container.innerHTML = html;
-        // ربط الأحداث: عند النقر نضع الهاش بالاسم العربي
+        // ربط الأحداث: عند النقر نغير currentPage ونحدث الرابط
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const pageKey = btn.getAttribute('data-page-key');
-                const pageName = btn.getAttribute('data-page-name');
-                if (pageKey) {
-                    // الهاش يصبح الاسم العربي (أو المعرف إذا لم يوجد اسم)
-                    let hashValue = pageName;
-                    if (!hashValue || hashValue === 'صفحة') hashValue = pageKey; // احتياطي
-                    window.location.hash = hashValue;
+                if (pageKey && pageKey !== currentPage) {
+                    currentPage = pageKey;
+                    updateHashFromPage(currentPage);
+                    renderCurrentPage();
+                    renderTabs(); // لإعادة تحديث الـ active class
+                    setTimeout(updateTabIndicator, 100);
                 }
             });
         });
@@ -1280,37 +1280,18 @@
         setTimeout(updateTabIndicator, 100);
     }
 
-    // تعديل loadPageFromHash لاستخدام الترجمة العربية
-    function loadPageFromHash() {
-        const hash = window.location.hash;
-        let newPageKey = resolveHashToPageKey(hash);
-        // التحقق من صحة الصفحة المخصصة
-        if (newPageKey.startsWith('page_')) {
-            const pageId = newPageKey.substring(5);
-            if (!currentData.pages || !currentData.pages[pageId]) {
-                newPageKey = 'home';
-            }
-        }
-        if (newPageKey !== currentPage) {
-            currentPage = newPageKey;
-            renderTabs();
-            renderCurrentPage();
-        } else {
-            // فقط نعيد تنشيط التبويب النشط
-            renderTabs();
-            renderCurrentPage();
-        }
-        setTimeout(updateTabIndicator, 100);
-    }
-
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود التواصل مع بصمة غير للديكور.')}`, '_blank'); }
     function checkMaintenance() { if(currentData.maintenance_mode) document.getElementById('maintenance-screen').style.display='flex'; else document.getElementById('maintenance-screen').style.display='none'; }
 
-    window.addEventListener('hashchange', loadPageFromHash);
+    window.addEventListener('hashchange', () => {
+        loadPageFromHash();
+    });
+
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
         if (!window.location.hash || window.location.hash === '#') {
-            window.location.hash = 'الرئيسية';
+            currentPage = 'home';
+            updateHashFromPage('home');
         } else {
             loadPageFromHash();
         }
