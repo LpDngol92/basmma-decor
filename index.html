@@ -189,7 +189,7 @@
             .marquee-track { gap: 16px; }
         }
 
-        /* ========== TABS SECTION - مع سحب وتأثير زجاجي ========== */
+        /* ========== TABS SECTION ========== */
         .tabs-wrapper {
             position: relative;
             border-bottom: 1px solid var(--border);
@@ -723,6 +723,65 @@
     let tabStartX = 0, tabScrollLeft = 0;
     let popupTimeout = null;
 
+    // ---------- START: تحويل أسماء التبويبات إلى عربية (حل الرابط المعبر) ----------
+    // خريطة تحويل المعرف الداخلي -> الاسم العربي المعروض في الرابط
+    function getPageKeyFromArabic(arabicName) {
+        const map = {
+            'الرئيسية': 'home',
+            'أعمالنا': 'works',
+            'الكــتالوجات': 'catalogs',   // تم تقليل عدد الشرطات لتجنب مشاكل
+            'المفضلة': 'favorites'
+        };
+        // أسماء الصفحات المخصصة (من Firebase) يتم التعامل معها بشكل منفصل لاحقاً
+        if (map[arabicName]) return map[arabicName];
+        // إذا كان الاسم يبدأ بـ 'صفحة_'، نستخرج المعرف الفعلي (للمستخدمين المتقدمين)
+        if (arabicName.startsWith('صفحة_')) {
+            return 'page_' + arabicName.substring(5);
+        }
+        return null;
+    }
+
+    function getArabicFromPageKey(pageKey) {
+        if (pageKey === 'home') return 'الرئيسية';
+        if (pageKey === 'works') return 'أعمالنا';
+        if (pageKey === 'catalogs') return 'الكــتالوجات';
+        if (pageKey === 'favorites') return 'المفضلة';
+        if (pageKey.startsWith('page_')) {
+            const pageId = pageKey.substring(5);
+            // محاولة جلب اسم الصفحة من البيانات الحية (إذا كانت متوفرة)
+            if (currentData.pages && currentData.pages[pageId] && currentData.pages[pageId].title) {
+                return currentData.pages[pageId].title;
+            }
+            return 'صفحة_' + pageId; // اسم احتياطي
+        }
+        return pageKey;
+    }
+
+    // تحويل الهاش من عربي إلى معرف داخلي (مع دعم الروابط القديمة مثل #home)
+    function resolveHashToPageKey(hash) {
+        if (!hash || hash === '#') return 'home';
+        let raw = hash.substring(1); // إزالة #
+        // إذا كان الرابط قديماً (home, works, catalogs, favorites) أو يبدأ بـ page_
+        if (['home', 'works', 'catalogs', 'favorites'].includes(raw) || raw.startsWith('page_')) {
+            return raw;
+        }
+        // حاول الترجمة من العربية
+        let mapped = getPageKeyFromArabic(raw);
+        if (mapped) return mapped;
+        // إذا كان الرابط يمثل صفحة مخصصة بالعربية (مثل #ديكورات_مكاتب)
+        // نبحث في صفحات Firebase عن عنوان مطابق
+        if (currentData.pages) {
+            for (let pid in currentData.pages) {
+                if (currentData.pages[pid].title === raw) {
+                    return 'page_' + pid;
+                }
+            }
+        }
+        // غير معروف -> الرئيسية
+        return 'home';
+    }
+    // ---------- END: تحويل أسماء التبويبات ----------
+
     // Helper Functions
     function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2000); }
     window.addEventListener('load', () => { setTimeout(() => { document.getElementById('splash').style.opacity = '0'; setTimeout(() => document.getElementById('splash').style.display = 'none', 500); document.body.classList.add('loaded'); }, 1000); });
@@ -748,10 +807,9 @@
     function viewerToggleFavorite() { if (currentImageId && currentImageList[currentImageIndex]) toggleFavorite(currentImageId, currentImageList[currentImageIndex]); }
     function viewerWhatsapp() { if (currentImageList[currentImageIndex]) window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+currentImageList[currentImageIndex])}`, '_blank'); }
 
-    // Viewer with Zoom (محسّن)
+    // Viewer with Zoom
     function openViewer(url, imageList, index, imgId) {
         if (!imageList || imageList.length === 0) { showToast("لا توجد صور لعرضها"); return; }
-        // التأكد من أن url صالح
         if (!url) url = imageList[0];
         if (!url) { showToast("رابط الصورة غير صالح"); return; }
         currentImageList = imageList;
@@ -1011,11 +1069,9 @@
         return html;
     }
 
-    // استخدام Event Delegation لضمان استجابة الألبومات حتى بعد إعادة الرندر
     function attachAlbumListeners() {
         const mainContainer = document.getElementById('mainContent');
         if (!mainContainer) return;
-        // إزالة المستمع القديم إن وجد
         mainContainer.removeEventListener('click', albumClickHandler);
         mainContainer.addEventListener('click', albumClickHandler);
     }
@@ -1023,7 +1079,6 @@
     function albumClickHandler(e) {
         const albumCard = e.target.closest('.album-card');
         if (!albumCard) return;
-        // منع التنفيذ إذا تم النقر على أيقونة داخل الـ overlay
         if (e.target.closest('.album-icon-btn')) return;
         const albumId = albumCard.getAttribute('data-album-id');
         if (albumId) openAlbum(albumId);
@@ -1080,19 +1135,41 @@
         return renderImageGallery(page.imgs, `page_${pageId}`);
     }
 
+    // تعديل دالة renderTabs لجعل الرابط يحمل الاسم العربي المعبر
     function renderTabs() {
         const container = document.getElementById('tabsSection');
-        let html = `<button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button>`;
-        html += `<button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button>`;
-        html += `<button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button>`;
-        html += `<button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
-        if (currentData.pages) Object.keys(currentData.pages).forEach(id => { html += `<button class="tab-btn ${currentPage === `page_${id}` ? 'active' : ''}" data-page="page_${id}">${currentData.pages[id].title}</button>`; });
+        // قائمة التبويبات الثابتة مع أسمائها العربية
+        const staticTabs = [
+            { key: 'home', name: 'الرئيسية' },
+            { key: 'works', name: 'أعمالنا' },
+            { key: 'catalogs', name: 'الكــتالوجات' },
+            { key: 'favorites', name: 'المفضلة' }
+        ];
+        let html = '';
+        staticTabs.forEach(tab => {
+            const activeClass = (currentPage === tab.key) ? 'active' : '';
+            html += `<button class="tab-btn ${activeClass}" data-page-key="${tab.key}" data-page-name="${tab.name}"><i class="fas ${tab.key === 'home' ? 'fa-home' : (tab.key === 'works' ? 'fa-images' : (tab.key === 'catalogs' ? 'fa-book-open' : 'fa-heart'))}"></i> ${tab.name}</button>`;
+        });
+        // الصفحات المخصصة من Firebase
+        if (currentData.pages) {
+            Object.keys(currentData.pages).forEach(pageId => {
+                const pageTitle = currentData.pages[pageId].title || 'صفحة';
+                const pageKey = 'page_' + pageId;
+                const activeClass = (currentPage === pageKey) ? 'active' : '';
+                html += `<button class="tab-btn ${activeClass}" data-page-key="${pageKey}" data-page-name="${pageTitle}"><i class="fas fa-file-alt"></i> ${pageTitle}</button>`;
+            });
+        }
         container.innerHTML = html;
+        // ربط الأحداث: عند النقر نضع الهاش بالاسم العربي
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const page = btn.dataset.page;
-                if (window.location.hash !== `#${page}`) {
-                    window.location.hash = page;
+                const pageKey = btn.getAttribute('data-page-key');
+                const pageName = btn.getAttribute('data-page-name');
+                if (pageKey) {
+                    // الهاش يصبح الاسم العربي (أو المعرف إذا لم يوجد اسم)
+                    let hashValue = pageName;
+                    if (!hashValue || hashValue === 'صفحة') hashValue = pageKey; // احتياطي
+                    window.location.hash = hashValue;
                 }
             });
         });
@@ -1198,24 +1275,31 @@
         setTimeout(() => { startReviewSlider(); setupStarRating(); }, 100);
         startTabAutoScroll();
         if (currentPage === 'home') setTimeout(showPopup, 1500);
-        attachAlbumListeners(); // ربط الألبومات بعد كل تحديث
+        attachAlbumListeners();
         bindPhotoGridClick();
         setTimeout(updateTabIndicator, 100);
     }
 
+    // تعديل loadPageFromHash لاستخدام الترجمة العربية
     function loadPageFromHash() {
-        const hash = window.location.hash.substring(1);
-        if (hash === 'home') currentPage = 'home';
-        else if (hash === 'works') currentPage = 'works';
-        else if (hash === 'catalogs') currentPage = 'catalogs';
-        else if (hash === 'favorites') currentPage = 'favorites';
-        else if (hash.startsWith('page_')) {
-            const pageId = hash.replace('page_', '');
-            if (currentData.pages && currentData.pages[pageId]) currentPage = `page_${pageId}`;
-            else { currentPage = 'home'; window.location.hash = 'home'; }
-        } else { currentPage = 'home'; window.location.hash = 'home'; }
-        renderTabs();
-        renderCurrentPage();
+        const hash = window.location.hash;
+        let newPageKey = resolveHashToPageKey(hash);
+        // التحقق من صحة الصفحة المخصصة
+        if (newPageKey.startsWith('page_')) {
+            const pageId = newPageKey.substring(5);
+            if (!currentData.pages || !currentData.pages[pageId]) {
+                newPageKey = 'home';
+            }
+        }
+        if (newPageKey !== currentPage) {
+            currentPage = newPageKey;
+            renderTabs();
+            renderCurrentPage();
+        } else {
+            // فقط نعيد تنشيط التبويب النشط
+            renderTabs();
+            renderCurrentPage();
+        }
         setTimeout(updateTabIndicator, 100);
     }
 
@@ -1225,8 +1309,11 @@
     window.addEventListener('hashchange', loadPageFromHash);
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
-        if (!window.location.hash || window.location.hash === '#') window.location.hash = 'home';
-        else loadPageFromHash();
+        if (!window.location.hash || window.location.hash === '#') {
+            window.location.hash = 'الرئيسية';
+        } else {
+            loadPageFromHash();
+        }
         renderPartnersMarquee();
         checkMaintenance();
     });
