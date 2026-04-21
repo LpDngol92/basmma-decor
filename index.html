@@ -186,7 +186,7 @@
             background: var(--gold);
             color: white;
             border-color: var(--gold);
-            box-shadow: 0 8px 25px rgba(212, 175, 122, 0.35);
+            box-shadow: 0 8px 25px rgba(212,175,122,0.35);
             animation: pulseActive 1.2s ease-in-out infinite;
         }
         
@@ -505,10 +505,8 @@
         @media (max-width: 600px) { .toast-msg { white-space: normal; text-align: center; width: 80%; } }
         .ad-container { margin: 20px 0; text-align: center; min-height: 90px; }
         
-        /* شاشة الصيانة المحسّنة مع العداد */
         .maintenance-screen {
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             background: rgba(0,0,0,0.95);
             backdrop-filter: blur(8px);
             z-index: 999999;
@@ -528,21 +526,9 @@
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
             animation: fadeInUp 0.5s ease;
         }
-        .maintenance-card i {
-            font-size: 4rem;
-            color: var(--gold);
-            margin-bottom: 20px;
-        }
-        .maintenance-card h2 {
-            font-size: 1.8rem;
-            color: var(--gold-dark);
-            margin-bottom: 15px;
-        }
-        .maintenance-card p {
-            color: #4a4a4a;
-            line-height: 1.6;
-            margin-bottom: 25px;
-        }
+        .maintenance-card i { font-size: 4rem; color: var(--gold); margin-bottom: 20px; }
+        .maintenance-card h2 { font-size: 1.8rem; color: var(--gold-dark); margin-bottom: 15px; }
+        .maintenance-card p { color: #4a4a4a; line-height: 1.6; margin-bottom: 25px; }
         .countdown-timer {
             font-size: 2.5rem;
             font-weight: 800;
@@ -564,7 +550,6 @@
     <div class="splash-line"></div>
 </div>
 
-<!-- شاشة الصيانة المتطورة -->
 <div id="maintenanceScreen" class="maintenance-screen">
     <div class="maintenance-card">
         <i class="fas fa-tools"></i>
@@ -642,27 +627,23 @@
 
     try { const saved = localStorage.getItem('site_favorites_v8'); if (saved) favorites = JSON.parse(saved); } catch(e) {}
 
-    // ========== دوال الصيانة المتطورة ==========
+    // ========== دوال الصيانة ==========
     function showMaintenanceScreen(untilTimestamp, title, message) {
         const screen = document.getElementById('maintenanceScreen');
         const titleEl = document.getElementById('maintenanceTitle');
         const msgEl = document.getElementById('maintenanceMessage');
         const countdownEl = document.getElementById('countdownDisplay');
-        
         titleEl.innerText = title || 'الموقع في صيانة';
         msgEl.innerText = message || 'نعمل على تحسين تجربتك، سنعود قريباً';
-        
         if (untilTimestamp && untilTimestamp > Date.now()) {
             countdownEl.style.display = 'inline-block';
             if (maintenanceCountdownInterval) clearInterval(maintenanceCountdownInterval);
-            
             const updateCountdown = () => {
                 const now = Date.now();
                 let diff = untilTimestamp - now;
                 if (diff <= 0) {
                     clearInterval(maintenanceCountdownInterval);
                     countdownEl.style.display = 'none';
-                    // إعادة تحميل الصفحة لإلغاء وضع الصيانة
                     window.location.reload();
                     return;
                 }
@@ -696,27 +677,13 @@
         const untilTime = currentData.maintenance_until || null;
         const title = currentData.maintenance_title || 'الموقع في صيانة';
         const message = currentData.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً';
-        
-        // إذا كان هناك وقت انتهاء محدد وانتهى، نقوم بإلغاء وضع الصيانة تلقائياً
         if (untilTime && untilTime <= Date.now()) {
-            // إلغاء وضع الصيانة في قاعدة البيانات
-            db.ref(DB_PATH).update({
-                maintenance_mode: false,
-                maintenance_until: null
-            }).then(() => {
+            db.ref(DB_PATH).update({ maintenance_mode: false, maintenance_until: null }).then(() => {
                 hideMaintenanceScreen();
-                // إعادة تحميل البيانات
-                db.ref(DB_PATH).once('value').then(snap => {
-                    currentData = snap.val() || {};
-                    if (!currentData.maintenance_mode) {
-                        // إعادة تحميل الصفحة لاستعادة المحتوى الطبيعي
-                        window.location.reload();
-                    }
-                });
+                window.location.reload();
             });
             return false;
         }
-        
         showMaintenanceScreen(untilTime, title, message);
         return true;
     }
@@ -1040,33 +1007,91 @@
         };
     }
 
+    // ========== دوال التبويبات مع الروابط المستقلة ==========
+    function getPageKeyFromHash() {
+        let hash = window.location.hash.substring(1);
+        if (!hash) return 'home';
+        // التعرف على الأسماء العربية للتبويبات الأساسية
+        if (hash === 'الرئيسية') return 'home';
+        if (hash === 'أعمالنا') return 'works';
+        if (hash === 'الكــتالوجات') return 'catalogs';
+        if (hash === 'المفضلة') return 'favorites';
+        // البحث في الصفحات المخصصة
+        if (currentData.pages) {
+            for (let pid in currentData.pages) {
+                if (currentData.pages[pid].title === hash) {
+                    return 'page_' + pid;
+                }
+            }
+        }
+        // إذا كان الرابط بصيغة page_xxx مباشرة
+        if (hash.startsWith('page_')) return hash;
+        return 'home';
+    }
+
+    function updateHashFromPage(pageKey) {
+        let hash = '';
+        if (pageKey === 'home') hash = 'الرئيسية';
+        else if (pageKey === 'works') hash = 'أعمالنا';
+        else if (pageKey === 'catalogs') hash = 'الكــتالوجات';
+        else if (pageKey === 'favorites') hash = 'المفضلة';
+        else if (pageKey.startsWith('page_')) {
+            const pid = pageKey.replace('page_', '');
+            if (currentData.pages && currentData.pages[pid] && currentData.pages[pid].title) {
+                hash = currentData.pages[pid].title;
+            } else {
+                hash = pageKey;
+            }
+        }
+        if (window.location.hash !== '#' + hash) {
+            history.pushState(null, '', '#' + hash);
+        }
+    }
+
     function renderTabs() {
         const container = document.getElementById('tabsSection');
         if (!container) return;
-        let html = `<button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button><button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button><button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button><button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
-        if (currentData.pages) { Object.keys(currentData.pages).forEach(pid => { const title = currentData.pages[pid].title || 'صفحة'; const key = `page_${pid}`; html += `<button class="tab-btn ${currentPage === key ? 'active' : ''}" data-page="${key}"><i class="fas fa-file-alt"></i> ${title}</button>`; }); }
+        let html = `
+            <button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button>
+            <button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button>
+            <button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button>
+            <button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>
+        `;
+        if (currentData.pages) {
+            Object.keys(currentData.pages).forEach(pid => {
+                const title = currentData.pages[pid].title || 'صفحة';
+                const pageKey = 'page_' + pid;
+                html += `<button class="tab-btn ${currentPage === pageKey ? 'active' : ''}" data-page="${pageKey}"><i class="fas fa-file-alt"></i> ${title}</button>`;
+            });
+        }
         container.innerHTML = html;
         
+        // إضافة أحداث النقر للتبويبات
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                e.stopPropagation();
                 const page = btn.dataset.page;
                 if (page && page !== currentPage) {
                     currentPage = page;
-                    let hash = (page === 'home' ? 'الرئيسية' : (page === 'works' ? 'أعمالنا' : (page === 'catalogs' ? 'الكــتالوجات' : (page === 'favorites' ? 'المفضلة' : (currentData.pages?.[page.replace('page_','')]?.title || page)))));
-                    history.pushState(null, '', '#' + hash);
+                    updateHashFromPage(currentPage);
                     renderCurrentPage();
-                    renderTabs();
+                    renderTabs(); // إعادة رسم الأزرار لتحديث الصنف active
+                    // تمرير التبويب النشط للرؤية
                     setTimeout(() => {
                         const activeBtn = document.querySelector('.tab-btn.active');
-                        if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        if (activeBtn) {
+                            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                        }
                     }, 100);
                 }
             });
         });
+        
+        // تمرير إلى التبويب النشط عند التحميل
         setTimeout(() => {
             const activeBtn = document.querySelector('.tab-btn.active');
-            if (activeBtn) activeBtn.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+            if (activeBtn) {
+                activeBtn.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+            }
         }, 100);
     }
     
@@ -1087,16 +1112,27 @@
     window.viewerToggleFavorite = viewerToggleFavorite; window.viewerWhatsapp = viewerWhatsapp; window.viewerPrev = viewerPrev; window.viewerNext = viewerNext; window.closeViewer = closeViewer; window.openViewer = openViewer;
 
     window.addEventListener('load', () => { setTimeout(() => { const splash = document.getElementById('splash'); if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); } }, 900); });
+    
+    // الاستماع لتغير الرابط (hash) من زر الرجوع/التقديم في المتصفح
+    window.addEventListener('hashchange', () => {
+        if (!currentData || Object.keys(currentData).length === 0) return;
+        const newPage = getPageKeyFromHash();
+        if (newPage !== currentPage) {
+            currentPage = newPage;
+            renderCurrentPage();
+            renderTabs();
+        }
+    });
+    
     db.ref(DB_PATH).on('value', (snap) => {
         currentData = snap.val() || {};
-        // أولاً التحقق من وضع الصيانة وإظهار الشاشة المناسبة
-        if (checkMaintenanceAndShow()) {
-            // في وضع الصيانة، لا نعرض المحتوى الطبيعي
-            return;
-        }
-        if (!window.location.hash || window.location.hash === '#') currentPage = 'home';
-        else { const hash = window.location.hash.substring(1); if (hash === 'الرئيسية') currentPage = 'home'; else if (hash === 'أعمالنا') currentPage = 'works'; else if (hash === 'الكــتالوجات') currentPage = 'catalogs'; else if (hash === 'المفضلة') currentPage = 'favorites'; else { let found = false; if (currentData.pages) { for (let pid in currentData.pages) { if (currentData.pages[pid].title === hash) { currentPage = 'page_'+pid; found=true; break; } } } if (!found) currentPage = 'home'; } }
-        renderTabs(); renderCurrentPage(); renderPartnersMarquee(); setTimeout(showPopupIfNeeded, 1500);
+        if (checkMaintenanceAndShow()) return;
+        // تعيين الصفحة الحالية بناءً على الرابط
+        currentPage = getPageKeyFromHash();
+        renderTabs();
+        renderCurrentPage();
+        renderPartnersMarquee();
+        setTimeout(showPopupIfNeeded, 1500);
     });
 </script>
 </body>
