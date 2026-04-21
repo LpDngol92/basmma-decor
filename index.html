@@ -160,12 +160,12 @@
             .scroll-top-text { font-size: 0.6rem; padding: 2px 6px; }
         }
         
-        /* ========== أزرار التبويبات مع تأثيرات جذابة ========== */
+        /* ========== شريط التبويبات مع سحب أفقي سلس ========== */
         .tabs-wrapper {
             position: relative;
             background: white;
             border-bottom: 1px solid var(--border-light);
-            overflow-x: auto;
+            overflow-x: hidden;
         }
         .tabs-section {
             display: flex;
@@ -175,8 +175,15 @@
             scrollbar-width: none;
             scroll-behavior: smooth;
             cursor: grab;
+            user-select: none;
+            -webkit-overflow-scrolling: touch;
         }
-        .tabs-section::-webkit-scrollbar { display: none; }
+        .tabs-section:active {
+            cursor: grabbing;
+        }
+        .tabs-section::-webkit-scrollbar {
+            display: none;
+        }
         .tab-btn {
             padding: 10px 22px;
             background: #fef7ef;
@@ -193,8 +200,8 @@
             gap: 8px;
             position: relative;
             overflow: hidden;
+            flex-shrink: 0;
         }
-        /* تأثير hover للتبويب */
         .tab-btn:hover {
             background: var(--gold-light);
             border-color: var(--gold);
@@ -202,21 +209,17 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(212, 175, 122, 0.15);
         }
-        /* تأثير للأيقونة داخل التبويب عند hover */
         .tab-btn:hover i {
             transform: scale(1.1) rotate(5deg);
             transition: transform 0.2s;
         }
-        /* تأثير للتبويب النشط */
         .tab-btn.active {
             background: var(--gold);
             color: white;
             border-color: var(--gold);
             box-shadow: 0 8px 25px rgba(212, 175, 122, 0.35);
             animation: pulseActive 1.2s ease-in-out infinite;
-            position: relative;
         }
-        /* تأثير نبض خلفي للتبويب النشط */
         .tab-btn.active::before {
             content: '';
             position: absolute;
@@ -229,11 +232,6 @@
             opacity: 0;
             animation: softGlow 1.5s ease-out infinite;
         }
-        @keyframes softGlow {
-            0% { opacity: 0.4; transform: scale(0.9); }
-            100% { opacity: 0; transform: scale(1.5); }
-        }
-        /* مؤشر التبويب المتحرك */
         .tab-indicator {
             position: absolute;
             bottom: -1px;
@@ -242,6 +240,7 @@
             border-radius: 3px;
             transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), width 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             box-shadow: 0 0 6px rgba(212,175,122,0.6);
+            pointer-events: none;
         }
         
         .main-content { max-width: 1300px; margin: 0 auto; padding: 40px 20px 80px; }
@@ -268,7 +267,7 @@
             padding-right: 18px;
         }
         
-        /* قسم من نحن المحسن (مع أزرار التواصل والسوشال ميديا) */
+        /* قسم من نحن المحسن */
         .about-section {
             background: linear-gradient(145deg, #ffffff, #fef9f0);
             border-radius: 32px;
@@ -396,7 +395,7 @@
             .about-highlights { width: 100%; }
         }
         
-        /* تنسيق العمودين للصفحة الرئيسية */
+        /* تنسيق العمودين */
         .two-columns-home {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -864,7 +863,7 @@
         return html;
     }
 
-    // عرض آراء العملاء + نموذج إضافة تقييم في كرت واحد
+    // عرض آراء العملاء + نموذج إضافة تقييم
     function renderReviewsAndForm(d) {
         let reviewsHtml = '';
         if (d.reviews && Object.keys(d.reviews).length > 0) {
@@ -933,7 +932,7 @@
         `;
     }
 
-    // قسم من نحن المحسن (مع جميع أزرار التواصل والسوشال ميديا)
+    // قسم من نحن المحسن
     function renderAboutSection(d) {
         const aboutText = d.about_text || 'نحن في بصمة غير للديكور نخلق مساحات تعكس شخصيتك. نفخر بتقديم تصاميم داخلية وخارجية فاخرة للمحلات والمكاتب في جدة. نستخدم أحدث الأساليب وأجود الخامات لتحويل رؤيتك إلى واقع مبهر.';
         let socialIcons = '';
@@ -1057,10 +1056,70 @@
         let html = `<button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button><button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button><button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button><button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
         if (currentData.pages) { Object.keys(currentData.pages).forEach(pid => { const title = currentData.pages[pid].title || 'صفحة'; const key = `page_${pid}`; html += `<button class="tab-btn ${currentPage === key ? 'active' : ''}" data-page="${key}"><i class="fas fa-file-alt"></i> ${title}</button>`; }); }
         container.innerHTML = html;
-        document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { const page = btn.dataset.page; if (page && page !== currentPage) { currentPage = page; history.pushState(null, '', '#' + (page === 'home' ? 'الرئيسية' : (page === 'works' ? 'أعمالنا' : (page === 'catalogs' ? 'الكــتالوجات' : (page === 'favorites' ? 'المفضلة' : (currentData.pages?.[page.replace('page_','')]?.title || page)))))); renderCurrentPage(); renderTabs(); setTimeout(updateTabIndicator, 80); } }); });
+        
+        // إضافة أحداث السحب للتبويبات
+        const tabsContainer = document.getElementById('tabsSection');
+        let isDragging = false;
+        let startX;
+        let scrollLeftStart;
+        
+        const startDrag = (e) => {
+            isDragging = true;
+            startX = (e.pageX || e.touches[0].pageX) - tabsContainer.offsetLeft;
+            scrollLeftStart = tabsContainer.scrollLeft;
+            tabsContainer.style.cursor = 'grabbing';
+            tabsContainer.style.scrollBehavior = 'auto';
+            e.preventDefault();
+        };
+        
+        const onDrag = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = (e.pageX || e.touches[0].pageX) - tabsContainer.offsetLeft;
+            const walk = (x - startX) * 1.5;
+            tabsContainer.scrollLeft = scrollLeftStart - walk;
+        };
+        
+        const stopDrag = () => {
+            isDragging = false;
+            tabsContainer.style.cursor = 'grab';
+            tabsContainer.style.scrollBehavior = 'smooth';
+        };
+        
+        tabsContainer.addEventListener('mousedown', startDrag);
+        window.addEventListener('mousemove', onDrag);
+        window.addEventListener('mouseup', stopDrag);
+        tabsContainer.addEventListener('touchstart', startDrag, { passive: false });
+        window.addEventListener('touchmove', onDrag, { passive: false });
+        window.addEventListener('touchend', stopDrag);
+        tabsContainer.style.cursor = 'grab';
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => { 
+            btn.addEventListener('click', (e) => {
+                // منع النقر أثناء السحب
+                if (isDragging) return;
+                const page = btn.dataset.page; 
+                if (page && page !== currentPage) { 
+                    currentPage = page; 
+                    history.pushState(null, '', '#' + (page === 'home' ? 'الرئيسية' : (page === 'works' ? 'أعمالنا' : (page === 'catalogs' ? 'الكــتالوجات' : (page === 'favorites' ? 'المفضلة' : (currentData.pages?.[page.replace('page_','')]?.title || page)))))); 
+                    renderCurrentPage(); 
+                    renderTabs(); 
+                    setTimeout(updateTabIndicator, 80); 
+                } 
+            }); 
+        });
         setTimeout(updateTabIndicator, 100);
     }
-    function updateTabIndicator() { const active = document.querySelector('.tab-btn.active'); const indicator = document.querySelector('.tab-indicator'); const wrapper = document.querySelector('.tabs-wrapper'); if (active && indicator && wrapper) { indicator.style.width = active.offsetWidth + 'px'; indicator.style.left = (active.offsetLeft) + 'px'; } }
+    
+    function updateTabIndicator() { 
+        const active = document.querySelector('.tab-btn.active'); 
+        const indicator = document.querySelector('.tab-indicator'); 
+        const wrapper = document.querySelector('.tabs-wrapper'); 
+        if (active && indicator && wrapper) { 
+            indicator.style.width = active.offsetWidth + 'px'; 
+            indicator.style.left = (active.offsetLeft) + 'px'; 
+        } 
+    }
     
     function renderPartnersMarquee() {
         const container = document.getElementById('partnersMarquee');
