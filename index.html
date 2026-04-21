@@ -51,13 +51,12 @@
         .splash-line { width: 70px; height: 3px; background: var(--gold); border-radius: 4px; animation: lineGlow 1s infinite alternate; }
         @keyframes lineGlow { 0% { width: 40px; opacity: 0.4;} 100% { width: 120px; opacity: 1;} }
         
-        /* Header & Logo */
+        /* Header - non sticky now */
         .top-nav {
-            position: sticky; top: 0;
             background: rgba(255,255,255,0.96);
             backdrop-filter: blur(15px);
             border-bottom: 1px solid var(--border-light);
-            z-index: 1000;
+            width: 100%;
         }
         .logo-section {
             padding: 20px 16px;
@@ -71,7 +70,7 @@
         }
         .logo-section p { font-size: 0.8rem; color: var(--gray); margin-top: 5px; }
         
-        /* شريط الشركاء - حركة لا نهائية سلسة */
+        /* شريط الشركاء - حركة لا نهائية */
         .partners-marquee {
             background: #fdf7ef;
             padding: 15px 0;
@@ -108,7 +107,7 @@
         }
         .partner-logo { height: 55px; width: auto; max-width: 140px; object-fit: contain; }
         
-        /* شريط أزرار التواصل (تحت الشعارات) */
+        /* شريط أزرار التواصل (غير ثابت) مع نص أنيق */
         .contact-bar {
             background: #fefaf5;
             padding: 12px 20px;
@@ -142,28 +141,48 @@
             background: var(--gold-light);
             border-color: var(--gold);
         }
-        .social-group {
-            display: flex;
+        /* مجموعة السوشال ميديا مع النص */
+        .social-group-wrapper {
+            display: inline-flex;
+            align-items: center;
             gap: 12px;
             background: #f8f2ea;
             padding: 6px 18px;
             border-radius: 60px;
+            transition: all 0.3s ease;
+        }
+        .social-group-wrapper:hover {
+            background: var(--gold-light);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+        .social-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gold-dark);
+            letter-spacing: -0.2px;
+            transition: 0.2s;
+        }
+        .social-group {
+            display: flex;
+            gap: 8px;
         }
         .social-group a {
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
             color: var(--gray);
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             transition: 0.2s;
+            background: white;
         }
         .social-group a:hover {
             background: var(--gold);
             color: white;
-            transform: translateY(-3px);
+            transform: translateY(-3px) scale(1.05);
         }
         .scroll-top-circle {
             background: var(--gold-dark);
@@ -171,10 +190,11 @@
             border: none;
         }
         @media (max-width: 700px) {
-            .contact-bar { gap: 12px; padding: 10px 16px; }
+            .contact-bar { gap: 12px; padding: 10px 16px; flex-wrap: wrap; }
             .contact-circle { width: 44px; height: 44px; font-size: 1.3rem; }
-            .social-group a { width: 38px; height: 38px; font-size: 1.1rem; }
-            .social-group { padding: 4px 12px; gap: 8px; }
+            .social-group-wrapper { padding: 4px 12px; gap: 8px; }
+            .social-label { font-size: 0.7rem; }
+            .social-group a { width: 34px; height: 34px; font-size: 1rem; }
         }
         
         /* Tabs */
@@ -318,11 +338,17 @@
         <div class="marquee-track" id="marqueeTrack"></div>
     </div>
     
-    <!-- شريط أزرار التواصل أسفل الشعارات مباشرة -->
+    <!-- شريط أزرار التواصل (غير ثابت) مع نص أنيق بجانب السوشال ميديا -->
     <div class="contact-bar" id="contactBar">
         <div class="contact-circle whatsapp" onclick="whatsappGlobal()"><i class="fab fa-whatsapp"></i></div>
         <div class="contact-circle location" onclick="window.open(currentData.location_url || 'https://maps.app.goo.gl/example', '_blank')"><i class="fas fa-map-marker-alt"></i></div>
-        <div class="social-group" id="socialIconsBar"></div>
+        
+        <!-- مجموعة السوشال ميديا مع النص -->
+        <div class="social-group-wrapper">
+            <span class="social-label">✨ لزيارة صفحاتنا والتواصل</span>
+            <div class="social-group" id="socialIconsBar"></div>
+        </div>
+        
         <div class="contact-circle scroll-top-circle" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i class="fas fa-arrow-up"></i></div>
     </div>
     
@@ -514,7 +540,7 @@
         else content = '<div class="empty-state">صفحة غير موجودة</div>';
         main.innerHTML = adHtml + content + adHtml;
         document.getElementById('siteTitle').innerText = currentData.site_name || 'بصمة غير';
-        // تحديث أيقونات السوشال ميديا في شريط التواصل
+        // تحديث أيقونات السوشال ميديا في مجموعة النص
         const socialContainer = document.getElementById('socialIconsBar');
         if (socialContainer) {
             let socialHtml = '';
