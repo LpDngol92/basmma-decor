@@ -12,12 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8835744121215847" crossorigin="anonymous"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Cairo', sans-serif;
             background: #fefaf5;
@@ -150,7 +145,6 @@
             .scroll-top-text { font-size: 0.6rem; padding: 2px 6px; }
         }
         
-        /* Tabs - responsive with native scroll + enhanced touch */
         .tabs-wrapper {
             position: relative;
             background: white;
@@ -160,16 +154,9 @@
             -webkit-overflow-scrolling: touch;
             scrollbar-width: thin;
         }
-        .tabs-wrapper::-webkit-scrollbar {
-            height: 3px;
-        }
-        .tabs-wrapper::-webkit-scrollbar-track {
-            background: var(--border-light);
-        }
-        .tabs-wrapper::-webkit-scrollbar-thumb {
-            background: var(--gold);
-            border-radius: 3px;
-        }
+        .tabs-wrapper::-webkit-scrollbar { height: 3px; }
+        .tabs-wrapper::-webkit-scrollbar-track { background: var(--border-light); }
+        .tabs-wrapper::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
         .tabs-section {
             display: flex;
             gap: 12px;
@@ -201,9 +188,6 @@
             border-color: var(--gold);
             box-shadow: 0 8px 25px rgba(212, 175, 122, 0.35);
             animation: pulseActive 1.2s ease-in-out infinite;
-        }
-        .tab-indicator {
-            display: none; /* سنعتمد على التمرير الطبيعي والمؤشر المرئي عبر التبويب النشط */
         }
         
         .main-content {
@@ -520,6 +504,57 @@
         }
         @media (max-width: 600px) { .toast-msg { white-space: normal; text-align: center; width: 80%; } }
         .ad-container { margin: 20px 0; text-align: center; min-height: 90px; }
+        
+        /* شاشة الصيانة المحسّنة مع العداد */
+        .maintenance-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(8px);
+            z-index: 999999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 20px;
+        }
+        .maintenance-card {
+            background: white;
+            border-radius: 48px;
+            padding: 40px 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.5s ease;
+        }
+        .maintenance-card i {
+            font-size: 4rem;
+            color: var(--gold);
+            margin-bottom: 20px;
+        }
+        .maintenance-card h2 {
+            font-size: 1.8rem;
+            color: var(--gold-dark);
+            margin-bottom: 15px;
+        }
+        .maintenance-card p {
+            color: #4a4a4a;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        .countdown-timer {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gold-light);
+            display: inline-block;
+            padding: 15px 30px;
+            border-radius: 60px;
+            color: var(--gold-dark);
+            font-family: monospace;
+            letter-spacing: 5px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -528,8 +563,15 @@
     <div class="splash-logo">بصمة غير</div>
     <div class="splash-line"></div>
 </div>
-<div id="maintenance-screen" style="position:fixed; inset:0; background:white; z-index:999998; display:none; align-items:center; justify-content:center;">
-    <div style="background:white; border-radius:40px; padding:40px; text-align:center;"><i class="fas fa-tools" style="font-size:3rem; color:var(--gold);"></i><h2>الصيانة</h2><p>نعمل على تحسين الموقع، عودة قريبة</p></div>
+
+<!-- شاشة الصيانة المتطورة -->
+<div id="maintenanceScreen" class="maintenance-screen">
+    <div class="maintenance-card">
+        <i class="fas fa-tools"></i>
+        <h2 id="maintenanceTitle">الموقع في صيانة</h2>
+        <p id="maintenanceMessage">نعمل على تحسين تجربتك، سنعود قريباً</p>
+        <div id="countdownDisplay" class="countdown-timer" style="display: none;">--:--:--</div>
+    </div>
 </div>
 
 <div class="top-nav">
@@ -596,8 +638,88 @@
     let currentImageIndex = 0;
     let currentImageId = '';
     let clockInterval = null;
+    let maintenanceCountdownInterval = null;
 
     try { const saved = localStorage.getItem('site_favorites_v8'); if (saved) favorites = JSON.parse(saved); } catch(e) {}
+
+    // ========== دوال الصيانة المتطورة ==========
+    function showMaintenanceScreen(untilTimestamp, title, message) {
+        const screen = document.getElementById('maintenanceScreen');
+        const titleEl = document.getElementById('maintenanceTitle');
+        const msgEl = document.getElementById('maintenanceMessage');
+        const countdownEl = document.getElementById('countdownDisplay');
+        
+        titleEl.innerText = title || 'الموقع في صيانة';
+        msgEl.innerText = message || 'نعمل على تحسين تجربتك، سنعود قريباً';
+        
+        if (untilTimestamp && untilTimestamp > Date.now()) {
+            countdownEl.style.display = 'inline-block';
+            if (maintenanceCountdownInterval) clearInterval(maintenanceCountdownInterval);
+            
+            const updateCountdown = () => {
+                const now = Date.now();
+                let diff = untilTimestamp - now;
+                if (diff <= 0) {
+                    clearInterval(maintenanceCountdownInterval);
+                    countdownEl.style.display = 'none';
+                    // إعادة تحميل الصفحة لإلغاء وضع الصيانة
+                    window.location.reload();
+                    return;
+                }
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const minutes = Math.floor((diff % (3600000)) / (1000 * 60));
+                const seconds = Math.floor((diff % 60000) / 1000);
+                countdownEl.innerText = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+            };
+            updateCountdown();
+            maintenanceCountdownInterval = setInterval(updateCountdown, 1000);
+        } else {
+            countdownEl.style.display = 'none';
+            if (maintenanceCountdownInterval) clearInterval(maintenanceCountdownInterval);
+        }
+        screen.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    
+    function hideMaintenanceScreen() {
+        const screen = document.getElementById('maintenanceScreen');
+        screen.style.display = 'none';
+        document.body.style.overflow = '';
+        if (maintenanceCountdownInterval) clearInterval(maintenanceCountdownInterval);
+    }
+    
+    function checkMaintenanceAndShow() {
+        if (!currentData.maintenance_mode) {
+            hideMaintenanceScreen();
+            return false;
+        }
+        const untilTime = currentData.maintenance_until || null;
+        const title = currentData.maintenance_title || 'الموقع في صيانة';
+        const message = currentData.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً';
+        
+        // إذا كان هناك وقت انتهاء محدد وانتهى، نقوم بإلغاء وضع الصيانة تلقائياً
+        if (untilTime && untilTime <= Date.now()) {
+            // إلغاء وضع الصيانة في قاعدة البيانات
+            db.ref(DB_PATH).update({
+                maintenance_mode: false,
+                maintenance_until: null
+            }).then(() => {
+                hideMaintenanceScreen();
+                // إعادة تحميل البيانات
+                db.ref(DB_PATH).once('value').then(snap => {
+                    currentData = snap.val() || {};
+                    if (!currentData.maintenance_mode) {
+                        // إعادة تحميل الصفحة لاستعادة المحتوى الطبيعي
+                        window.location.reload();
+                    }
+                });
+            });
+            return false;
+        }
+        
+        showMaintenanceScreen(untilTime, title, message);
+        return true;
+    }
 
     function showToast(msg) { const toast = document.getElementById('toastMsg'); if(toast){ toast.innerText = msg; toast.style.display = 'block'; setTimeout(() => toast.style.display = 'none', 2200); } }
     function saveFav() { localStorage.setItem('site_favorites_v8', JSON.stringify(favorites)); }
@@ -925,7 +1047,6 @@
         if (currentData.pages) { Object.keys(currentData.pages).forEach(pid => { const title = currentData.pages[pid].title || 'صفحة'; const key = `page_${pid}`; html += `<button class="tab-btn ${currentPage === key ? 'active' : ''}" data-page="${key}"><i class="fas fa-file-alt"></i> ${title}</button>`; }); }
         container.innerHTML = html;
         
-        // إضافة مستمعي الأحداث للتبويبات
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -935,24 +1056,17 @@
                     let hash = (page === 'home' ? 'الرئيسية' : (page === 'works' ? 'أعمالنا' : (page === 'catalogs' ? 'الكــتالوجات' : (page === 'favorites' ? 'المفضلة' : (currentData.pages?.[page.replace('page_','')]?.title || page)))));
                     history.pushState(null, '', '#' + hash);
                     renderCurrentPage();
-                    renderTabs(); // إعادة رسم الأزرار مع الحفاظ على الفعالية
-                    // تمرير الشريط لجعل التبويب النشط مرئياً
+                    renderTabs();
                     setTimeout(() => {
                         const activeBtn = document.querySelector('.tab-btn.active');
-                        if (activeBtn) {
-                            activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                        }
+                        if (activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
                     }, 100);
                 }
             });
         });
-        
-        // تمرير تلقائي للتبويب النشط عند التحميل
         setTimeout(() => {
             const activeBtn = document.querySelector('.tab-btn.active');
-            if (activeBtn) {
-                activeBtn.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
-            }
+            if (activeBtn) activeBtn.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
         }, 100);
     }
     
@@ -967,7 +1081,6 @@
         } else container.style.display = 'none';
     }
     
-    function checkMaintenance() { const maintDiv = document.getElementById('maintenance-screen'); if (maintDiv) maintDiv.style.display = currentData.maintenance_mode ? 'flex' : 'none'; }
     function showPopupIfNeeded() { if (currentPage === 'home' && currentData.popup_enabled && currentData.popup_message) { const bubble = document.getElementById('popupBubble'); document.getElementById('popupMessage').innerText = currentData.popup_message; bubble.style.display = 'block'; setTimeout(() => closePopup(), (currentData.popup_duration || 7) * 1000); } }
 
     window.toggleFavorite = toggleFavorite; window.openAlbum = openAlbum; window.openCatalog = openCatalog; window.whatsappGlobal = whatsappGlobal; window.closePopup = closePopup;
@@ -976,9 +1089,14 @@
     window.addEventListener('load', () => { setTimeout(() => { const splash = document.getElementById('splash'); if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); } }, 900); });
     db.ref(DB_PATH).on('value', (snap) => {
         currentData = snap.val() || {};
+        // أولاً التحقق من وضع الصيانة وإظهار الشاشة المناسبة
+        if (checkMaintenanceAndShow()) {
+            // في وضع الصيانة، لا نعرض المحتوى الطبيعي
+            return;
+        }
         if (!window.location.hash || window.location.hash === '#') currentPage = 'home';
         else { const hash = window.location.hash.substring(1); if (hash === 'الرئيسية') currentPage = 'home'; else if (hash === 'أعمالنا') currentPage = 'works'; else if (hash === 'الكــتالوجات') currentPage = 'catalogs'; else if (hash === 'المفضلة') currentPage = 'favorites'; else { let found = false; if (currentData.pages) { for (let pid in currentData.pages) { if (currentData.pages[pid].title === hash) { currentPage = 'page_'+pid; found=true; break; } } } if (!found) currentPage = 'home'; } }
-        renderTabs(); renderCurrentPage(); renderPartnersMarquee(); checkMaintenance(); setTimeout(showPopupIfNeeded, 1500);
+        renderTabs(); renderCurrentPage(); renderPartnersMarquee(); setTimeout(showPopupIfNeeded, 1500);
     });
 </script>
 </body>
