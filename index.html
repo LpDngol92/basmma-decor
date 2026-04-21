@@ -40,6 +40,11 @@
             0% { box-shadow: 0 0 0 0 rgba(212, 175, 122, 0.2); }
             100% { box-shadow: 0 0 0 8px rgba(212, 175, 122, 0); }
         }
+        @keyframes pulseActive {
+            0% { transform: scale(1); box-shadow: 0 5px 15px rgba(212,175,122,0.3); }
+            50% { transform: scale(1.02); box-shadow: 0 8px 25px rgba(212,175,122,0.5); }
+            100% { transform: scale(1); box-shadow: 0 5px 15px rgba(212,175,122,0.3); }
+        }
         .glass-card, .album-card, .folder-card, .photo-item, .review-card {
             animation: fadeInUp 0.6s ease forwards;
         }
@@ -109,8 +114,6 @@
         }
         .partner-logo { height: 55px; width: auto; max-width: 140px; object-fit: contain; }
         
-        /* أزرار التواصل العلوية تم حذفها بالكامل */
-        
         .scroll-top-fixed {
             position: fixed;
             bottom: 25px;
@@ -157,20 +160,89 @@
             .scroll-top-text { font-size: 0.6rem; padding: 2px 6px; }
         }
         
-        .tabs-wrapper { position: relative; background: white; border-bottom: 1px solid var(--border-light); }
+        /* ========== أزرار التبويبات مع تأثيرات جذابة ========== */
+        .tabs-wrapper {
+            position: relative;
+            background: white;
+            border-bottom: 1px solid var(--border-light);
+            overflow-x: auto;
+        }
         .tabs-section {
-            display: flex; gap: 12px; overflow-x: auto; padding: 12px 20px;
-            scrollbar-width: none; scroll-behavior: smooth; cursor: grab;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding: 12px 20px;
+            scrollbar-width: none;
+            scroll-behavior: smooth;
+            cursor: grab;
         }
         .tabs-section::-webkit-scrollbar { display: none; }
         .tab-btn {
-            padding: 10px 22px; background: #fef7ef; border: 1px solid #e5d9cd;
-            font-weight: 600; font-size: 0.9rem; color: var(--gray); border-radius: 50px;
-            cursor: pointer; white-space: nowrap; transition: 0.2s;
-            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 22px;
+            background: #fef7ef;
+            border: 1px solid #e5d9cd;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--gray);
+            border-radius: 50px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.25s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
         }
-        .tab-btn.active { background: var(--gold); color: white; border-color: var(--gold); box-shadow: 0 10px 20px rgba(212,175,122,0.25); }
-        .tab-indicator { position: absolute; bottom: -1px; height: 3px; background: var(--gold); border-radius: 3px; transition: 0.25s ease; }
+        /* تأثير hover للتبويب */
+        .tab-btn:hover {
+            background: var(--gold-light);
+            border-color: var(--gold);
+            color: var(--gold-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(212, 175, 122, 0.15);
+        }
+        /* تأثير للأيقونة داخل التبويب عند hover */
+        .tab-btn:hover i {
+            transform: scale(1.1) rotate(5deg);
+            transition: transform 0.2s;
+        }
+        /* تأثير للتبويب النشط */
+        .tab-btn.active {
+            background: var(--gold);
+            color: white;
+            border-color: var(--gold);
+            box-shadow: 0 8px 25px rgba(212, 175, 122, 0.35);
+            animation: pulseActive 1.2s ease-in-out infinite;
+            position: relative;
+        }
+        /* تأثير نبض خلفي للتبويب النشط */
+        .tab-btn.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 50px;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 80%);
+            opacity: 0;
+            animation: softGlow 1.5s ease-out infinite;
+        }
+        @keyframes softGlow {
+            0% { opacity: 0.4; transform: scale(0.9); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+        /* مؤشر التبويب المتحرك */
+        .tab-indicator {
+            position: absolute;
+            bottom: -1px;
+            height: 3px;
+            background: linear-gradient(90deg, var(--gold), var(--gold-dark));
+            border-radius: 3px;
+            transition: left 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1), width 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            box-shadow: 0 0 6px rgba(212,175,122,0.6);
+        }
         
         .main-content { max-width: 1300px; margin: 0 auto; padding: 40px 20px 80px; }
         
@@ -576,7 +648,6 @@
     <div class="partners-marquee" id="partnersMarquee" style="display:none;">
         <div class="marquee-track" id="marqueeTrack"></div>
     </div>
-    <!-- تم إزالة شريط أزرار التواصل العلوي بالكامل -->
     <div class="tabs-wrapper">
         <div class="tabs-section" id="tabsSection"></div>
         <div class="tab-indicator"></div>
@@ -865,7 +936,6 @@
     // قسم من نحن المحسن (مع جميع أزرار التواصل والسوشال ميديا)
     function renderAboutSection(d) {
         const aboutText = d.about_text || 'نحن في بصمة غير للديكور نخلق مساحات تعكس شخصيتك. نفخر بتقديم تصاميم داخلية وخارجية فاخرة للمحلات والمكاتب في جدة. نستخدم أحدث الأساليب وأجود الخامات لتحويل رؤيتك إلى واقع مبهر.';
-        // بناء روابط السوشال ميديا من قاعدة البيانات
         let socialIcons = '';
         if (d.insta_url) socialIcons += `<div class="social-round" onclick="window.open('${d.insta_url}', '_blank')"><i class="fab fa-instagram"></i></div>`;
         if (d.tiktok_url) socialIcons += `<div class="social-round" onclick="window.open('${d.tiktok_url}', '_blank')"><i class="fab fa-tiktok"></i></div>`;
