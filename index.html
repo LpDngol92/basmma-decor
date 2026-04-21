@@ -48,6 +48,22 @@
             --whatsapp: #25D366;
         }
 
+        /* تأثيرات التمرير والظهور */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-card, .album-card, .folder-card, .photo-item, .review-item {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
         /* splash screen */
         #splash {
             position: fixed;
@@ -83,7 +99,7 @@
             100% { width: 120px; opacity: 1;}
         }
 
-        /* header */
+        /* header مع تأثيرات جديدة */
         .top-nav {
             position: sticky;
             top: 0;
@@ -91,17 +107,28 @@
             backdrop-filter: blur(15px);
             border-bottom: 1px solid var(--border-light);
             z-index: 1000;
+            transition: all 0.3s;
         }
         .logo-section {
             padding: 20px 16px;
             text-align: center;
             border-bottom: 1px solid var(--border-light);
+            transition: transform 0.3s;
         }
         .logo-section h1 {
             font-size: 2rem;
             font-weight: 800;
-            color: var(--gold-dark);
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
             letter-spacing: -0.5px;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+        .logo-section h1:hover {
+            transform: scale(1.02);
+            filter: drop-shadow(0 2px 5px rgba(0,0,0,0.1));
         }
         .logo-section p {
             font-size: 0.8rem;
@@ -109,11 +136,12 @@
             margin-top: 5px;
         }
 
-        /* partners marquee */
+        /* شريط الشركاء مع تأثيرات */
         .partners-marquee {
             background: #fdf7ef;
             padding: 15px 0;
             border-bottom: 1px solid var(--border-light);
+            overflow: hidden;
         }
         .marquee-wrapper {
             width: 100%;
@@ -123,12 +151,21 @@
             cursor: grab;
             user-select: none;
             scroll-behavior: smooth;
+            transition: all 0.2s;
         }
         .marquee-wrapper:active { cursor: grabbing; }
         .marquee-track {
             display: inline-flex;
             gap: 30px;
             padding: 0 20px;
+            animation: marqueeScroll 20s linear infinite;
+        }
+        .partners-marquee:hover .marquee-track {
+            animation-play-state: paused;
+        }
+        @keyframes marqueeScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
         }
         .partner-item {
             background: white;
@@ -136,12 +173,14 @@
             padding: 6px 28px;
             box-shadow: var(--shadow-sm);
             border: 1px solid #e6d9cb;
-            transition: 0.2s;
+            transition: 0.3s ease;
             cursor: pointer;
+            backdrop-filter: blur(4px);
         }
         .partner-item:hover {
-            transform: translateY(-3px);
+            transform: translateY(-5px) scale(1.05);
             border-color: var(--gold);
+            box-shadow: var(--shadow-md);
         }
         .partner-logo {
             height: 55px;
@@ -150,7 +189,7 @@
             object-fit: contain;
         }
 
-        /* tabs modern */
+        /* tabs مع تأثيرات hover */
         .tabs-wrapper {
             position: relative;
             background: white;
@@ -181,7 +220,8 @@
             align-items: center;
             gap: 8px;
         }
-        .tab-btn i { font-size: 1rem; }
+        .tab-btn i { font-size: 1rem; transition: transform 0.2s; }
+        .tab-btn:hover i { transform: translateY(-2px); }
         .tab-btn.active {
             background: var(--gold);
             color: white;
@@ -201,7 +241,7 @@
         .main-content {
             max-width: 1300px;
             margin: 0 auto;
-            padding: 40px 20px 100px;
+            padding: 40px 20px 120px; /* padding-bottom موسع للأزرار الثابتة */
         }
 
         /* cards */
@@ -212,7 +252,7 @@
             margin-bottom: 32px;
             border: 1px solid var(--border-light);
             box-shadow: var(--shadow-sm);
-            transition: 0.25s;
+            transition: 0.3s;
         }
         .glass-card:hover {
             transform: translateY(-4px);
@@ -231,110 +271,115 @@
             padding-right: 18px;
         }
 
-        .grid-2cols {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 28px;
+        /* منطقة الأزرار الثابتة في الأسفل */
+        .fixed-contact-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border-light);
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            z-index: 999;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            flex-wrap: wrap;
         }
-
-        /* star rating */
-        .star-rating {
+        .contact-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 12px 0;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            color: white;
+        }
+        .btn-whatsapp {
+            background: var(--whatsapp);
+            box-shadow: 0 4px 12px rgba(37,211,102,0.2);
+        }
+        .btn-location {
+            background: var(--gold);
+            box-shadow: 0 4px 12px rgba(212,175,122,0.2);
+        }
+        .contact-btn:hover {
+            transform: translateY(-3px);
+            filter: brightness(0.96);
+        }
+        .social-icons-bar {
             display: flex;
             gap: 12px;
-            justify-content: center;
-            margin: 15px 0;
-            flex-direction: row-reverse;
-        }
-        .star-rating i {
-            font-size: 2rem;
-            color: #ddd;
-            cursor: pointer;
-            transition: 0.1s;
-        }
-        .star-rating i.active, .star-rating i:hover {
-            color: var(--gold);
-            transform: scale(1.08);
-        }
-
-        /* review slider */
-        .review-slider {
-            position: relative;
-            min-height: 190px;
-        }
-        .review-item {
-            position: absolute;
-            width: 100%;
-            opacity: 0;
-            transition: opacity 0.5s;
-            text-align: center;
-            background: #fef8f0;
-            padding: 20px;
-            border-radius: 28px;
-        }
-        .review-item.active {
-            opacity: 1;
-            position: relative;
-        }
-        .review-stars { color: var(--gold); margin-bottom: 10px; font-size: 1.2rem; }
-        .review-text { font-size: 1rem; color: #3e3a36; margin-bottom: 12px; font-style: italic; }
-        .review-name { font-weight: 700; color: var(--gold-dark); }
-
-        /* schedule */
-        .schedule-group {
-            padding: 12px 0;
-            border-bottom: 1px dashed var(--border-light);
-        }
-        .schedule-days { font-weight: 800; color: var(--gold-dark); margin-bottom: 6px; }
-        .time-period { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
-        .time-text { background: #f3ede5; padding: 5px 18px; border-radius: 40px; font-size: 0.85rem; font-weight: 500; }
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 24px;
+            background: #f8f2ea;
+            padding: 6px 12px;
             border-radius: 60px;
-            font-weight: 700;
         }
-        .status-open { background: #e4f3e7; color: #2e6b3e; }
-        .status-closed { background: #ffe5e2; color: #bc3f2e; }
-        .whatsapp-btn, .location-btn {
-            background: var(--whatsapp);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 60px;
-            font-weight: 700;
-            width: 100%;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 1rem;
-        }
-        .location-btn { background: var(--gold); margin-top: 14px; }
-        .whatsapp-btn:hover, .location-btn:hover { filter: brightness(0.96); transform: scale(1.01); }
-
-        .social-links {
-            display: flex;
-            justify-content: center;
-            gap: 24px;
-            margin-top: 28px;
-        }
-        .social-link {
-            width: 52px;
-            height: 52px;
-            background: #f5ede3;
-            border-radius: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .social-icons-bar a {
             color: var(--gray);
             font-size: 1.4rem;
             transition: 0.2s;
-            text-decoration: none;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: white;
         }
-        .social-link:hover {
+        .social-icons-bar a:hover {
             background: var(--gold);
             color: white;
-            transform: translateY(-5px);
+            transform: translateY(-3px);
+        }
+        .scroll-top-btn {
+            background: var(--gold-dark);
+            color: white;
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 60px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .scroll-top-btn:hover {
+            transform: scale(1.05);
+            background: var(--gold);
+        }
+
+        @media (max-width: 700px) {
+            .fixed-contact-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+                padding: 12px;
+            }
+            .social-icons-bar {
+                justify-content: center;
+                order: 2;
+            }
+            .scroll-top-btn {
+                position: absolute;
+                left: 15px;
+                bottom: 80px;
+                width: 44px;
+                height: 44px;
+            }
+            .main-content {
+                padding-bottom: 200px;
+            }
         }
 
         /* photo grid */
@@ -471,7 +516,7 @@
         }
         .toast-msg {
             position: fixed;
-            bottom: 30px;
+            bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             background: #1e1e1e;
@@ -482,10 +527,62 @@
             display: none;
             font-size: 0.9rem;
         }
-        @media (max-width: 700px) {
-            .main-content { padding: 24px 16px 80px; }
-            .photo-grid { gap: 12px; grid-template-columns: repeat(2, 1fr); }
+        /* بقية العناصر مثل stars, schedule, review slider كما هي ولكن محسنة */
+        .star-rating {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 15px 0;
+            flex-direction: row-reverse;
         }
+        .star-rating i {
+            font-size: 2rem;
+            color: #ddd;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .star-rating i.active, .star-rating i:hover {
+            color: var(--gold);
+            transform: scale(1.08);
+        }
+        .review-slider {
+            position: relative;
+            min-height: 190px;
+        }
+        .review-item {
+            position: absolute;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-align: center;
+            background: #fef8f0;
+            padding: 20px;
+            border-radius: 28px;
+        }
+        .review-item.active {
+            opacity: 1;
+            position: relative;
+        }
+        .review-stars { color: var(--gold); margin-bottom: 10px; font-size: 1.2rem; }
+        .review-text { font-size: 1rem; color: #3e3a36; margin-bottom: 12px; font-style: italic; }
+        .review-name { font-weight: 700; color: var(--gold-dark); }
+        .schedule-group {
+            padding: 12px 0;
+            border-bottom: 1px dashed var(--border-light);
+        }
+        .schedule-days { font-weight: 800; color: var(--gold-dark); margin-bottom: 6px; }
+        .time-period { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+        .time-text { background: #f3ede5; padding: 5px 18px; border-radius: 40px; font-size: 0.85rem; font-weight: 500; }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 24px;
+            border-radius: 60px;
+            font-weight: 700;
+        }
+        .status-open { background: #e4f3e7; color: #2e6b3e; }
+        .status-closed { background: #ffe5e2; color: #bc3f2e; }
     </style>
 </head>
 <body>
@@ -514,6 +611,7 @@
     </div>
 </div>
 
+<!-- popup الرسائل -->
 <div id="popupBubble" class="popup-bubble" style="position:fixed; bottom:25px; right:20px; max-width:320px; background:white; border-radius:32px; box-shadow:0 20px 35px rgba(0,0,0,0.15); display:none; z-index:10000; border-right:5px solid var(--gold);">
     <div style="padding:16px; display:flex; gap:12px; align-items:center;">
         <div style="background:var(--gold); border-radius:50%; width:44px; height:44px; display:flex; align-items:center; justify-content:center; color:white;"><i class="fas fa-gift"></i></div>
@@ -523,6 +621,20 @@
 </div>
 
 <div class="main-content" id="mainContent"></div>
+
+<!-- شريط التواصل الثابت في الأسفل (مرتب وواضح) -->
+<div class="fixed-contact-bar">
+    <button class="contact-btn btn-whatsapp" onclick="whatsappGlobal()">
+        <i class="fab fa-whatsapp"></i> واتساب
+    </button>
+    <button class="contact-btn btn-location" onclick="window.open(currentData.location_url || 'https://maps.app.goo.gl/example', '_blank')">
+        <i class="fas fa-map-marker-alt"></i> موقعنا
+    </button>
+    <div class="social-icons-bar" id="socialIconsBar"></div>
+    <button class="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+</div>
 
 <div id="viewerModal" class="viewer-modal">
     <button class="viewer-close" style="position:fixed; top:20px; right:20px; background:rgba(0,0,0,0.6); border:none; color:white; width:48px; height:48px; border-radius:50%; font-size:1.5rem; cursor:pointer;" onclick="closeViewer()"><i class="fas fa-times"></i></button>
@@ -562,13 +674,12 @@
     let currentImageIndex = 0;
     let currentImageId = '';
 
-    // Load favorites from local storage
     try {
         const saved = localStorage.getItem('site_favorites_v8');
         if (saved) favorites = JSON.parse(saved);
     } catch(e) { favorites = []; }
 
-    // Helper functions
+    // Helper functions (محفوظة كما هي ولكن مع تحسينات بسيطة)
     function showToast(msg) {
         const toast = document.getElementById('toastMsg');
         if (!toast) return;
@@ -623,30 +734,7 @@
     }
 
     function formatTime12(t) { if(!t) return ""; let [h,m]=t.split(':'); h=parseInt(h); return `${h%12||12}:${m} ${h>=12?'م':'ص'}`; }
-    function getGroupedScheduleHtml(d) {
-        if (!d.work_schedule) return '<p>لم تحدد المواعيد بعد</p>';
-        const dayNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-        const daysOrder = [6,0,1,2,3,4,5];
-        let groups = [], offDays = [];
-        daysOrder.forEach(jsDay => {
-            const s = d.work_schedule[jsDay];
-            if (s && s.active) {
-                const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}`;
-                let g = groups.find(g => g.key === key);
-                if (g) g.days.push(dayNames[jsDay]);
-                else groups.push({ key, days: [dayNames[jsDay]], data: s });
-            } else offDays.push(dayNames[jsDay]);
-        });
-        let html = '';
-        groups.forEach(g => {
-            const dText = g.days.length === 1 ? g.days[0] : `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
-            html += `<div class="schedule-group"><div class="schedule-days">${dText}</div><div class="time-period"><span class="time-text">${formatTime12(g.data.s1_s||'09:00')}</span> — <span class="time-text">${formatTime12(g.data.s1_e||'17:00')}</span></div>`;
-            if (g.data.s2_a) html += `<div class="time-period"><span class="time-text">${formatTime12(g.data.s2_s)}</span> — <span class="time-text">${formatTime12(g.data.s2_e)}</span></div>`;
-            html += `</div>`;
-        });
-        if (offDays.length) html += `<div class="holiday-text" style="background:#fff0ea; padding:12px; border-radius:24px; margin-top:12px;"><i class="fas fa-moon"></i> عطلة: ${offDays.join('، ')}</div>`;
-        return html;
-    }
+    function getGroupedScheduleHtml(d) { /* مختصر لكن يعمل */ if (!d.work_schedule) return '<p>لم تحدد المواعيد</p>'; const dayNames = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"]; const daysOrder = [6,0,1,2,3,4,5]; let groups = [], offDays = []; daysOrder.forEach(jsDay => { const s = d.work_schedule[jsDay]; if (s && s.active) { const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}`; let g = groups.find(g => g.key === key); if (g) g.days.push(dayNames[jsDay]); else groups.push({ key, days: [dayNames[jsDay]], data: s }); } else offDays.push(dayNames[jsDay]); }); let html = ''; groups.forEach(g => { const dText = g.days.length === 1 ? g.days[0] : `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`; html += `<div class="schedule-group"><div class="schedule-days">${dText}</div><div class="time-period"><span class="time-text">${formatTime12(g.data.s1_s||'09:00')}</span> — <span class="time-text">${formatTime12(g.data.s1_e||'17:00')}</span></div>`; if (g.data.s2_a) html += `<div class="time-period"><span class="time-text">${formatTime12(g.data.s2_s)}</span> — <span class="time-text">${formatTime12(g.data.s2_e)}</span></div>`; html += `</div>`; }); if (offDays.length) html += `<div class="holiday-text" style="background:#fff0ea; padding:12px; border-radius:24px; margin-top:12px;"><i class="fas fa-moon"></i> عطلة: ${offDays.join('، ')}</div>`; return html; }
     function updateWorkStatus() {
         const c = document.getElementById('statusContainer');
         if (!c || !currentData.work_schedule) return;
@@ -657,91 +745,23 @@
             const cur = now.getHours()*60+now.getMinutes();
             const s1 = toMins(s.s1_s), e1 = toMins(s.s1_e);
             if (cur >= s1 && cur < e1) open = true;
-            if (!open && s.s2_a && s.s2_s && s.s2_e) {
-                const s2 = toMins(s.s2_s), e2 = toMins(s.s2_e);
-                if ((e2 < s2 && (cur >= s2 || cur < e2)) || (cur >= s2 && cur < e2)) open = true;
-            }
+            if (!open && s.s2_a && s.s2_s && s.s2_e) { const s2 = toMins(s.s2_s), e2 = toMins(s.s2_e); if ((e2 < s2 && (cur >= s2 || cur < e2)) || (cur >= s2 && cur < e2)) open = true; }
         }
         c.innerHTML = open ? `<div class="status-badge status-open"><i class="fas fa-circle" style="font-size:0.7rem;"></i> مفتوح الآن - نرحب بكم</div>` : `<div class="status-badge status-closed"><i class="fas fa-circle"></i> مغلق حالياً</div>`;
     }
 
-    function renderImageGallery(images, parentId) {
-        if (!images || Object.keys(images).length === 0) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>';
-        let html = '<div class="photo-grid">';
-        Object.keys(images).forEach(imgId => {
-            const url = images[imgId].url;
-            if (!url) return;
-            const fullId = `${parentId}_${imgId}`;
-            const favClass = isFav(fullId) ? 'active' : '';
-            html += `<div class="photo-item" data-url="${url}"><img src="${url}" loading="lazy"><div class="photo-overlay"><button class="action-btn-icon fav-btn-icon ${favClass}" onclick="event.stopPropagation(); toggleFavorite('${fullId}', '${url}')"><i class="fas fa-heart"></i></button><button class="action-btn-icon whatsapp-btn-icon" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}', '_blank')"><i class="fab fa-whatsapp"></i></button></div></div>`;
-        });
-        html += '</div>';
-        return html;
-    }
+    function renderImageGallery(images, parentId) { /* كما هي */ if (!images || Object.keys(images).length === 0) return '<div class="empty-state"><i class="fas fa-image fa-3x"></i><p>لا توجد صور</p></div>'; let html = '<div class="photo-grid">'; Object.keys(images).forEach(imgId => { const url = images[imgId].url; if (!url) return; const fullId = `${parentId}_${imgId}`; const favClass = isFav(fullId) ? 'active' : ''; html += `<div class="photo-item" data-url="${url}"><img src="${url}" loading="lazy"><div class="photo-overlay"><button class="action-btn-icon fav-btn-icon ${favClass}" onclick="event.stopPropagation(); toggleFavorite('${fullId}', '${url}')"><i class="fas fa-heart"></i></button><button class="action-btn-icon whatsapp-btn-icon" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent(url)}', '_blank')"><i class="fab fa-whatsapp"></i></button></div></div>`; }); html += '</div>'; return html; }
 
-    function renderHome() {
-        const d = currentData;
-        const about = d.about_text || 'نحن في بصمة غير للديكور نخلق مساحات تعكس شخصيتك. نفخر بتقديم تصاميم داخلية وخارجية فاخرة للمحلات والمكاتب في جدة، بأعلى معايير الجودة.';
-        return `
-            <div class="glass-card"><div class="card-title"><i class="fas fa-palette"></i> من نحن</div><p style="line-height:1.7">${about}</p><div style="margin-top:16px;"><strong>📍 موقعنا:</strong> جدة، طريق المكرونة، أمام عمائر بغلف<br><strong>📞 تواصل:</strong> <a href="tel:0541780995" style="color:var(--gold);">0541780995</a></div></div>
-            <div class="grid-2cols">
-                <div class="glass-card"><div class="card-title"><i class="fas fa-star"></i> آراء العملاء</div><div class="review-slider" id="reviewSlider">${d.reviews && Object.keys(d.reviews).length ? Object.keys(d.reviews).map(id=>`<div class="review-item"><div class="review-stars">${'★'.repeat(d.reviews[id].rating)}${'☆'.repeat(5-d.reviews[id].rating)}</div><div class="review-text">"${d.reviews[id].message}"</div><div class="review-name">— ${d.reviews[id].name}</div></div>`).join('') : '<div class="empty-state">لا توجد تقييمات</div>'}</div></div>
-                <div class="glass-card"><div class="card-title"><i class="fas fa-clock"></i> أوقات العمل</div>${getGroupedScheduleHtml(d)}<div id="statusContainer" style="margin-top:18px;"></div>${d.location_url ? `<button onclick="window.open('${d.location_url}','_blank')" class="location-btn"><i class="fas fa-map-marker-alt"></i> موقعنا على الخريطة</button>` : ''}</div>
-            </div>
-            <div class="glass-card"><div class="card-title"><i class="fas fa-comment-dots"></i> أضف تقييمك</div><input type="text" id="reviewName" placeholder="اسمك الكريم"><div class="star-rating" id="starRating"><i class="fas fa-star" data-star="5"></i><i class="fas fa-star" data-star="4"></i><i class="fas fa-star" data-star="3"></i><i class="fas fa-star" data-star="2"></i><i class="fas fa-star" data-star="1"></i></div><textarea id="reviewMsg" placeholder="شاركنا تجربتك مع ديكوراتنا..." rows="3"></textarea><button onclick="submitReview()" class="whatsapp-btn" style="background:var(--gold);">إرسال التقييم</button></div>
-            <div class="glass-card"><div class="card-title"><i class="fab fa-whatsapp"></i> تواصل معنا</div><button onclick="whatsappGlobal()" class="whatsapp-btn"><i class="fab fa-whatsapp"></i> واتساب</button><div class="social-links" id="socialLinks"></div></div>
-        `;
-    }
-
-    function renderWorks() {
-        if (!currentData.albums || Object.keys(currentData.albums).length === 0) return '<div class="empty-state"><i class="fas fa-folder-open fa-3x"></i><p>لا توجد ألبومات بعد</p></div>';
-        let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:22px;">';
-        Object.keys(currentData.albums).forEach(id => {
-            const alb = currentData.albums[id];
-            let cover = '';
-            if (alb.imgs && Object.keys(alb.imgs).length) cover = Object.values(alb.imgs)[0].url;
-            html += `<div class="album-card" data-album-id="${id}">${cover ? `<img src="${cover}" loading="lazy">` : '<i class="fas fa-folder-open fa-3x" style="margin:30px 0;"></i>'}<h4>${alb.name || 'ألبوم'}</h4><div class="album-overlay"><button class="album-icon-btn" onclick="event.stopPropagation(); toggleFavorite('album_${id}_cover', '${cover}')"><i class="fas fa-heart"></i></button><button class="album-icon-btn" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent(cover)}','_blank')"><i class="fab fa-whatsapp"></i></button></div></div>`;
-        });
-        html += '</div>';
-        return html;
-    }
-
-    function renderCatalogs() {
-        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) return '<div class="empty-state"><i class="fas fa-book-open fa-3x"></i><p>لا توجد كتالوجات</p></div>';
-        let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:20px;">';
-        Object.keys(currentData.catalogs).forEach(id => {
-            html += `<div class="folder-card" onclick="openCatalog('${id}')"><i class="fas fa-book-open fa-3x" style="color:var(--gold);"></i><h4>${currentData.catalogs[id].name}</h4><p style="font-size:0.7rem;">📄 افتح الكتالوج</p></div>`;
-        });
-        html += '</div>';
-        return html;
-    }
-
-    function renderFavorites() {
-        if (favorites.length === 0) return '<div class="empty-state"><i class="far fa-heart fa-3x"></i><p>المفضلة فارغة</p></div>';
-        let html = '<div class="photo-grid">';
-        favorites.forEach(fav => {
-            html += `<div class="photo-item"><img src="${fav.url}" loading="lazy"><div class="photo-overlay"><button class="action-btn-icon fav-btn-icon active" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')"><i class="fas fa-heart"></i></button><button class="action-btn-icon whatsapp-btn-icon" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent(fav.url)}','_blank')"><i class="fab fa-whatsapp"></i></button></div></div>`;
-        });
-        html += '</div>';
-        return html;
-    }
-
-    function openAlbum(id) {
-        const alb = currentData.albums?.[id];
-        if (!alb || !alb.imgs) return;
-        const urls = Object.values(alb.imgs).map(i=>i.url).filter(u=>u);
-        if (urls.length) openViewer(urls[0], urls, 0, `album_${id}_0`);
-        else showToast("لا توجد صور");
-    }
-    function openCatalog(id) {
-        const cat = currentData.catalogs?.[id];
-        if (cat && cat.code) { const win = window.open(); win.document.write(cat.code); }
-        else showToast('الكتالوج غير متاح');
-    }
+    function renderHome() { const d = currentData; const about = d.about_text || 'نحن في بصمة غير للديكور نخلق مساحات تعكس شخصيتك. نفخر بتقديم تصاميم داخلية وخارجية فاخرة للمحلات والمكاتب في جدة.'; return `<div class="glass-card"><div class="card-title"><i class="fas fa-palette"></i> من نحن</div><p style="line-height:1.7">${about}</p><div style="margin-top:16px;"><strong>📍 موقعنا:</strong> جدة، طريق المكرونة، أمام عمائر بغلف<br><strong>📞 تواصل:</strong> <a href="tel:0541780995" style="color:var(--gold);">0541780995</a></div></div><div class="grid-2cols"><div class="glass-card"><div class="card-title"><i class="fas fa-star"></i> آراء العملاء</div><div class="review-slider" id="reviewSlider">${d.reviews && Object.keys(d.reviews).length ? Object.keys(d.reviews).map(id=>`<div class="review-item"><div class="review-stars">${'★'.repeat(d.reviews[id].rating)}${'☆'.repeat(5-d.reviews[id].rating)}</div><div class="review-text">"${d.reviews[id].message}"</div><div class="review-name">— ${d.reviews[id].name}</div></div>`).join('') : '<div class="empty-state">لا توجد تقييمات</div>'}</div></div><div class="glass-card"><div class="card-title"><i class="fas fa-clock"></i> أوقات العمل</div>${getGroupedScheduleHtml(d)}<div id="statusContainer" style="margin-top:18px;"></div></div></div><div class="glass-card"><div class="card-title"><i class="fas fa-comment-dots"></i> أضف تقييمك</div><input type="text" id="reviewName" placeholder="اسمك الكريم"><div class="star-rating" id="starRating"><i class="fas fa-star" data-star="5"></i><i class="fas fa-star" data-star="4"></i><i class="fas fa-star" data-star="3"></i><i class="fas fa-star" data-star="2"></i><i class="fas fa-star" data-star="1"></i></div><textarea id="reviewMsg" placeholder="شاركنا تجربتك مع ديكوراتنا..." rows="3"></textarea><button onclick="submitReview()" class="contact-btn btn-location" style="width:100%; background:var(--gold);">إرسال التقييم</button></div>`; }
+    function renderWorks() { if (!currentData.albums || Object.keys(currentData.albums).length === 0) return '<div class="empty-state"><i class="fas fa-folder-open fa-3x"></i><p>لا توجد ألبومات بعد</p></div>'; let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(170px,1fr)); gap:22px;">'; Object.keys(currentData.albums).forEach(id => { const alb = currentData.albums[id]; let cover = ''; if (alb.imgs && Object.keys(alb.imgs).length) cover = Object.values(alb.imgs)[0].url; html += `<div class="album-card" data-album-id="${id}">${cover ? `<img src="${cover}" loading="lazy">` : '<i class="fas fa-folder-open fa-3x" style="margin:30px 0;"></i>'}<h4>${alb.name || 'ألبوم'}</h4><div class="album-overlay"><button class="album-icon-btn" onclick="event.stopPropagation(); toggleFavorite('album_${id}_cover', '${cover}')"><i class="fas fa-heart"></i></button><button class="album-icon-btn" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent(cover)}','_blank')"><i class="fab fa-whatsapp"></i></button></div></div>`; }); html += '</div>'; return html; }
+    function renderCatalogs() { if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) return '<div class="empty-state"><i class="fas fa-book-open fa-3x"></i><p>لا توجد كتالوجات</p></div>'; let html = '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(150px,1fr)); gap:20px;">'; Object.keys(currentData.catalogs).forEach(id => { html += `<div class="folder-card" onclick="openCatalog('${id}')"><i class="fas fa-book-open fa-3x" style="color:var(--gold);"></i><h4>${currentData.catalogs[id].name}</h4><p style="font-size:0.7rem;">📄 افتح الكتالوج</p></div>`; }); html += '</div>'; return html; }
+    function renderFavorites() { if (favorites.length === 0) return '<div class="empty-state"><i class="far fa-heart fa-3x"></i><p>المفضلة فارغة</p></div>'; let html = '<div class="photo-grid">'; favorites.forEach(fav => { html += `<div class="photo-item"><img src="${fav.url}" loading="lazy"><div class="photo-overlay"><button class="action-btn-icon fav-btn-icon active" onclick="event.stopPropagation(); toggleFavorite('${fav.id}', '${fav.url}')"><i class="fas fa-heart"></i></button><button class="action-btn-icon whatsapp-btn-icon" onclick="event.stopPropagation(); window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent(fav.url)}','_blank')"><i class="fab fa-whatsapp"></i></button></div></div>`; }); html += '</div>'; return html; }
+    
+    function openAlbum(id) { const alb = currentData.albums?.[id]; if (!alb || !alb.imgs) return; const urls = Object.values(alb.imgs).map(i=>i.url).filter(u=>u); if (urls.length) openViewer(urls[0], urls, 0, `album_${id}_0`); else showToast("لا توجد صور"); }
+    function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) { const win = window.open(); win.document.write(cat.code); } else showToast('الكتالوج غير متاح'); }
     function whatsappGlobal() { window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن خدمات الديكور')}`, '_blank'); }
     function closePopup() { document.getElementById('popupBubble').style.display = 'none'; }
 
-    // render current page & bind events
     function renderCurrentPage() {
         const main = document.getElementById('mainContent');
         if (!main) return;
@@ -751,27 +771,27 @@
         else if (currentPage === 'works') content = `<h2 style="margin-bottom:28px; font-weight:700;"><i class="fas fa-images"></i> أعمالنا</h2>${renderWorks()}`;
         else if (currentPage === 'catalogs') content = `<h2 style="margin-bottom:28px;"><i class="fas fa-book-open"></i> الكتالوجات</h2>${renderCatalogs()}`;
         else if (currentPage === 'favorites') content = `<h2 style="margin-bottom:28px;"><i class="fas fa-heart"></i> المفضلة</h2>${renderFavorites()}`;
-        else if (currentPage.startsWith('page_')) {
-            const pid = currentPage.replace('page_','');
-            const pageData = currentData.pages?.[pid];
-            content = `<h2 style="margin-bottom:28px;">${pageData?.title || 'صفحة'}</h2>${renderImageGallery(pageData?.imgs, `page_${pid}`)}`;
-        } else content = '<div class="empty-state">صفحة غير موجودة</div>';
+        else if (currentPage.startsWith('page_')) { const pid = currentPage.replace('page_',''); const pageData = currentData.pages?.[pid]; content = `<h2 style="margin-bottom:28px;">${pageData?.title || 'صفحة'}</h2>${renderImageGallery(pageData?.imgs, `page_${pid}`)}`; }
+        else content = '<div class="empty-state">صفحة غير موجودة</div>';
         main.innerHTML = adHtml + content + adHtml;
         document.getElementById('siteTitle').innerText = currentData.site_name || 'بصمة غير';
-        renderSocial();
+        // تحديث أيقونات السوشال ميديا في الشريط الثابت
+        const socialBar = document.getElementById('socialIconsBar');
+        if (socialBar) {
+            let socialHtml = '';
+            if (currentData.insta_url) socialHtml += `<a href="${currentData.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`;
+            if (currentData.tiktok_url) socialHtml += `<a href="${currentData.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`;
+            if (currentData.snap_url) socialHtml += `<a href="${currentData.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`;
+            socialBar.innerHTML = socialHtml;
+        }
         updateWorkStatus();
         setTimeout(() => {
             if (document.querySelectorAll('.review-item').length) {
-                let idx = 0;
-                const items = document.querySelectorAll('.review-item');
+                let idx = 0; const items = document.querySelectorAll('.review-item');
                 items.forEach((item,i)=>item.classList.remove('active'));
                 if(items[0]) items[0].classList.add('active');
                 if(window.reviewInterval) clearInterval(window.reviewInterval);
-                window.reviewInterval = setInterval(()=>{
-                    idx = (idx+1) % items.length;
-                    items.forEach(i=>i.classList.remove('active'));
-                    if(items[idx]) items[idx].classList.add('active');
-                }, 4500);
+                window.reviewInterval = setInterval(()=>{ idx = (idx+1) % items.length; items.forEach(i=>i.classList.remove('active')); if(items[idx]) items[idx].classList.add('active'); }, 4500);
             }
             setupStarRating();
         }, 100);
@@ -779,92 +799,33 @@
         attachPhotoGridEvents();
     }
 
-    function attachAlbumEvents() {
-        document.querySelectorAll('.album-card').forEach(card => {
-            card.removeEventListener('click', albumHandler);
-            card.addEventListener('click', albumHandler);
-        });
-    }
+    function attachAlbumEvents() { document.querySelectorAll('.album-card').forEach(card => { card.removeEventListener('click', albumHandler); card.addEventListener('click', albumHandler); }); }
     function albumHandler(e) { if(e.target.closest('.album-icon-btn')) return; const id = this.dataset.albumId; if(id) openAlbum(id); }
-    function attachPhotoGridEvents() {
-        document.querySelectorAll('.photo-item').forEach(item => {
-            item.removeEventListener('click', photoHandler);
-            item.addEventListener('click', photoHandler);
-        });
-    }
+    function attachPhotoGridEvents() { document.querySelectorAll('.photo-item').forEach(item => { item.removeEventListener('click', photoHandler); item.addEventListener('click', photoHandler); }); }
     function photoHandler(e) { if(e.target.closest('.action-btn-icon')) return; const grid = this.closest('.photo-grid'); if(grid){ const urls = Array.from(grid.querySelectorAll('.photo-item img')).map(img=>img.src); const idx = urls.indexOf(this.querySelector('img').src); if(idx!==-1) openViewer(urls[idx], urls, idx, `img_${Date.now()}_${idx}`); } }
 
-    function renderSocial() {
-        const d = currentData;
-        const cont = document.getElementById('socialLinks');
-        if(cont) cont.innerHTML = `${d.insta_url?`<a href="${d.insta_url}" target="_blank" class="social-link"><i class="fab fa-instagram"></i></a>`:''}${d.tiktok_url?`<a href="${d.tiktok_url}" target="_blank" class="social-link"><i class="fab fa-tiktok"></i></a>`:''}${d.snap_url?`<a href="${d.snap_url}" target="_blank" class="social-link"><i class="fab fa-snapchat"></i></a>`:''}`;
-    }
     function setupStarRating() {
         let selected = 0;
         const stars = document.querySelectorAll('#starRating i');
-        stars.forEach(s => {
-            s.onclick = () => {
-                selected = parseInt(s.dataset.star);
-                stars.forEach(st => st.classList.remove('active'));
-                for(let i=stars.length-1; i>=stars.length-selected; i--) stars[i]?.classList.add('active');
-            };
-        });
+        stars.forEach(s => { s.onclick = () => { selected = parseInt(s.dataset.star); stars.forEach(st => st.classList.remove('active')); for(let i=stars.length-1; i>=stars.length-selected; i--) stars[i]?.classList.add('active'); }; });
         window.submitReview = () => {
             const name = document.getElementById('reviewName')?.value;
             const msg = document.getElementById('reviewMsg')?.value;
             if (!name || !msg || !selected) return showToast('يرجى إكمال الاسم والتقييم والنص');
-            db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selected }).then(() => {
-                showToast('شكراً لتقييمك!');
-                document.getElementById('reviewName').value = '';
-                document.getElementById('reviewMsg').value = '';
-                stars.forEach(s => s.classList.remove('active'));
-                selected = 0;
-            });
+            db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selected }).then(() => { showToast('شكراً لتقييمك!'); document.getElementById('reviewName').value = ''; document.getElementById('reviewMsg').value = ''; stars.forEach(s => s.classList.remove('active')); selected = 0; });
         };
     }
 
     function renderTabs() {
         const container = document.getElementById('tabsSection');
         if (!container) return;
-        let html = `
-            <button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button>
-            <button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button>
-            <button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button>
-            <button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>
-        `;
-        if (currentData.pages) {
-            Object.keys(currentData.pages).forEach(pid => {
-                const title = currentData.pages[pid].title || 'صفحة';
-                const key = `page_${pid}`;
-                html += `<button class="tab-btn ${currentPage === key ? 'active' : ''}" data-page="${key}"><i class="fas fa-file-alt"></i> ${title}</button>`;
-            });
-        }
+        let html = `<button class="tab-btn ${currentPage === 'home' ? 'active' : ''}" data-page="home"><i class="fas fa-home"></i> الرئيسية</button><button class="tab-btn ${currentPage === 'works' ? 'active' : ''}" data-page="works"><i class="fas fa-images"></i> أعمالنا</button><button class="tab-btn ${currentPage === 'catalogs' ? 'active' : ''}" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</button><button class="tab-btn ${currentPage === 'favorites' ? 'active' : ''}" data-page="favorites"><i class="fas fa-heart"></i> المفضلة</button>`;
+        if (currentData.pages) { Object.keys(currentData.pages).forEach(pid => { const title = currentData.pages[pid].title || 'صفحة'; const key = `page_${pid}`; html += `<button class="tab-btn ${currentPage === key ? 'active' : ''}" data-page="${key}"><i class="fas fa-file-alt"></i> ${title}</button>`; }); }
         container.innerHTML = html;
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const page = btn.dataset.page;
-                if (page && page !== currentPage) {
-                    currentPage = page;
-                    history.pushState(null, '', '#' + (page === 'home' ? 'الرئيسية' : (page === 'works' ? 'أعمالنا' : (page === 'catalogs' ? 'الكــتالوجات' : (page === 'favorites' ? 'المفضلة' : (currentData.pages?.[page.replace('page_','')]?.title || page))))));
-                    renderCurrentPage();
-                    renderTabs();
-                    setTimeout(updateTabIndicator, 80);
-                }
-            });
-        });
+        document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { const page = btn.dataset.page; if (page && page !== currentPage) { currentPage = page; history.pushState(null, '', '#' + (page === 'home' ? 'الرئيسية' : (page === 'works' ? 'أعمالنا' : (page === 'catalogs' ? 'الكــتالوجات' : (page === 'favorites' ? 'المفضلة' : (currentData.pages?.[page.replace('page_','')]?.title || page)))))); renderCurrentPage(); renderTabs(); setTimeout(updateTabIndicator, 80); } }); });
         setTimeout(updateTabIndicator, 100);
     }
-
-    function updateTabIndicator() {
-        const active = document.querySelector('.tab-btn.active');
-        const indicator = document.querySelector('.tab-indicator');
-        const wrapper = document.querySelector('.tabs-wrapper');
-        if (active && indicator && wrapper) {
-            indicator.style.width = active.offsetWidth + 'px';
-            indicator.style.left = (active.offsetLeft) + 'px';
-        }
-    }
-
+    function updateTabIndicator() { const active = document.querySelector('.tab-btn.active'); const indicator = document.querySelector('.tab-indicator'); const wrapper = document.querySelector('.tabs-wrapper'); if (active && indicator && wrapper) { indicator.style.width = active.offsetWidth + 'px'; indicator.style.left = (active.offsetLeft) + 'px'; } }
     function renderPartnersMarquee() {
         const container = document.getElementById('partnersMarquee');
         const track = document.getElementById('marqueeTrack');
@@ -872,69 +833,22 @@
         if (currentData.partners && Object.keys(currentData.partners).length) {
             container.style.display = 'block';
             track.innerHTML = Object.values(currentData.partners).map(p => `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy"></div>`).join('');
+            // نسخ المحتوى لتأثير الحركة اللانهائية
+            track.innerHTML += track.innerHTML;
         } else container.style.display = 'none';
     }
+    function checkMaintenance() { const maintDiv = document.getElementById('maintenance-screen'); if (maintDiv) maintDiv.style.display = currentData.maintenance_mode ? 'flex' : 'none'; }
+    function showPopupIfNeeded() { if (currentPage === 'home' && currentData.popup_enabled && currentData.popup_message) { const bubble = document.getElementById('popupBubble'); document.getElementById('popupMessage').innerText = currentData.popup_message; bubble.style.display = 'block'; setTimeout(() => closePopup(), (currentData.popup_duration || 7) * 1000); } }
 
-    function checkMaintenance() {
-        const maintDiv = document.getElementById('maintenance-screen');
-        if (maintDiv) maintDiv.style.display = currentData.maintenance_mode ? 'flex' : 'none';
-    }
+    // تصدير الدوال العامة
+    window.toggleFavorite = toggleFavorite; window.openAlbum = openAlbum; window.openCatalog = openCatalog; window.whatsappGlobal = whatsappGlobal; window.closePopup = closePopup; window.viewerToggleFavorite = viewerToggleFavorite; window.viewerWhatsapp = viewerWhatsapp; window.viewerPrev = viewerPrev; window.viewerNext = viewerNext; window.closeViewer = closeViewer; window.openViewer = openViewer;
 
-    function showPopupIfNeeded() {
-        if (currentPage === 'home' && currentData.popup_enabled && currentData.popup_message) {
-            const bubble = document.getElementById('popupBubble');
-            document.getElementById('popupMessage').innerText = currentData.popup_message;
-            bubble.style.display = 'block';
-            setTimeout(() => closePopup(), (currentData.popup_duration || 7) * 1000);
-        }
-    }
-
-    // Expose globals
-    window.toggleFavorite = toggleFavorite;
-    window.openAlbum = openAlbum;
-    window.openCatalog = openCatalog;
-    window.whatsappGlobal = whatsappGlobal;
-    window.closePopup = closePopup;
-    window.viewerToggleFavorite = viewerToggleFavorite;
-    window.viewerWhatsapp = viewerWhatsapp;
-    window.viewerPrev = viewerPrev;
-    window.viewerNext = viewerNext;
-    window.closeViewer = closeViewer;
-    window.openViewer = openViewer;
-
-    // Initialize on load
-    window.addEventListener('load', () => {
-        setTimeout(() => {
-            const splash = document.getElementById('splash');
-            if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); }
-            document.body.classList.add('loaded');
-        }, 900);
-    });
-
+    window.addEventListener('load', () => { setTimeout(() => { const splash = document.getElementById('splash'); if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); } document.body.classList.add('loaded'); }, 900); });
     db.ref(DB_PATH).on('value', (snap) => {
         currentData = snap.val() || {};
         if (!window.location.hash || window.location.hash === '#') currentPage = 'home';
-        else {
-            const hash = window.location.hash.substring(1);
-            if (hash === 'الرئيسية') currentPage = 'home';
-            else if (hash === 'أعمالنا') currentPage = 'works';
-            else if (hash === 'الكــتالوجات') currentPage = 'catalogs';
-            else if (hash === 'المفضلة') currentPage = 'favorites';
-            else {
-                let found = false;
-                if (currentData.pages) {
-                    for (let pid in currentData.pages) {
-                        if (currentData.pages[pid].title === hash) { currentPage = 'page_'+pid; found=true; break; }
-                    }
-                }
-                if (!found) currentPage = 'home';
-            }
-        }
-        renderTabs();
-        renderCurrentPage();
-        renderPartnersMarquee();
-        checkMaintenance();
-        setTimeout(showPopupIfNeeded, 1500);
+        else { const hash = window.location.hash.substring(1); if (hash === 'الرئيسية') currentPage = 'home'; else if (hash === 'أعمالنا') currentPage = 'works'; else if (hash === 'الكــتالوجات') currentPage = 'catalogs'; else if (hash === 'المفضلة') currentPage = 'favorites'; else { let found = false; if (currentData.pages) { for (let pid in currentData.pages) { if (currentData.pages[pid].title === hash) { currentPage = 'page_'+pid; found=true; break; } } } if (!found) currentPage = 'home'; } }
+        renderTabs(); renderCurrentPage(); renderPartnersMarquee(); checkMaintenance(); setTimeout(showPopupIfNeeded, 1500);
     });
 </script>
 </body>
