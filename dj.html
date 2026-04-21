@@ -180,6 +180,16 @@
             background: #28a745;
             transition: width 0.2s;
         }
+        .duration-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .duration-row input {
+            width: 80px;
+            margin-bottom: 0;
+        }
     </style>
 </head>
 <body>
@@ -387,9 +397,29 @@
             if(d.pages) Object.keys(d.pages).forEach(id=>o+=`<option value="pages/${id}">📄 صفحة: ${d.pages[id].title}</option>`);
             return o;
         };
+        
+        // حساب القيمة المعروضة لمدة الصيانة (بالساعات)
+        let maintenanceDurationHours = 1;
+        if (d.maintenance_until && d.maintenance_until > Date.now()) {
+            const diffHours = (d.maintenance_until - Date.now()) / (1000 * 60 * 60);
+            maintenanceDurationHours = Math.ceil(diffHours);
+        }
+        
         document.getElementById('adminSections').innerHTML = `
             <div class="collapse-section" data-section-id="popup"><button class="collapse-btn" onclick="toggleCollapse(this,'popup')">💬 فقاعة الترحيب <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="popupEnabled" ${d.popup_enabled?'checked':''}> تفعيل الفقاعة</label><input id="popupMessageInput" placeholder="نص الرسالة" value="${(d.popup_message||'مرحباً بكم في عالم التصميم والأناقة ✨').replace(/"/g, '&quot;')}"><input id="popupDuration" type="number" placeholder="مدة الظهور (ثواني)" value="${d.popup_duration||8}"><button class="btn-gold" onclick="savePopupSettings()">حفظ</button></div></div>
-            <div class="collapse-section" data-section-id="maintenance"><button class="collapse-btn" onclick="toggleCollapse(this,'maintenance')">🛡️ وضع الصيانة <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode?'checked':''}> تفعيل</label><input id="maintenanceTitle" placeholder="العنوان" value="${d.maintenance_title||'الموقع في صيانة'}"><textarea id="maintenanceMsg" placeholder="الرسالة">${d.maintenance_message||'نعمل على تحسين تجربتك'}</textarea><button class="btn-gold" onclick="saveMaintenance()">حفظ</button></div></div>
+            <div class="collapse-section" data-section-id="maintenance"><button class="collapse-btn" onclick="toggleCollapse(this,'maintenance')">🛡️ وضع الصيانة <span>▾</span></button><div class="collapse-content">
+                <label><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode?'checked':''}> تفعيل وضع الصيانة</label>
+                <input id="maintenanceTitle" placeholder="عنوان الصيانة" value="${(d.maintenance_title||'الموقع في صيانة').replace(/"/g, '&quot;')}">
+                <textarea id="maintenanceMsg" placeholder="رسالة الصيانة" rows="2">${(d.maintenance_message||'نعمل على تحسين تجربتك، سنعود قريباً').replace(/"/g, '&quot;')}</textarea>
+                <div class="duration-row">
+                    <span>مدة الصيانة (ساعات):</span>
+                    <input type="number" id="maintenanceHours" min="0.5" step="0.5" value="${maintenanceDurationHours}" style="width:100px;">
+                    <span>ساعة</span>
+                </div>
+                <button class="btn-gold" onclick="saveMaintenance()">حفظ إعدادات الصيانة</button>
+                <hr>
+                <p style="font-size:0.85rem; color:#6c757d;">🔔 عند التفعيل مع تحديد مدة، سيظهر للزوار عداد تنازلي. بعد انتهاء الوقت، سيتم إلغاء وضع الصيانة تلقائياً.</p>
+            </div></div>
             <div class="collapse-section" data-section-id="partners"><button class="collapse-btn" onclick="toggleCollapse(this,'partners')">🤝 شركاء النجاح <span>▾</span></button><div class="collapse-content"><div id="partnersAdminList"></div><div style="margin: 15px 0 10px;"><input id="newPartnerUrl" placeholder="رابط الشعار (صورة)"><button class="btn-green" onclick="addPartnerLocally()">إضافة شريك (محلياً)</button></div><button class="btn-gold" onclick="saveAllPartners()">حفظ جميع التعديلات</button></div></div>
             <div class="collapse-section" data-section-id="pages"><button class="collapse-btn" onclick="toggleCollapse(this,'pages')">📁 الأقسام (الصفحات) <span>▾</span></button><div class="collapse-content"><div id="pagesList"></div><div style="display:flex; gap:8px; flex-wrap:wrap;"><input id="newPageName" placeholder="اسم القسم الجديد" style="flex:1"><button class="btn-green" onclick="addPageLocally()">إضافة محلياً</button></div><button class="btn-gold" style="margin-top:12px;" onclick="saveAllPages()">حفظ جميع التعديلات</button></div></div>
             <div class="collapse-section" data-section-id="albums"><button class="collapse-btn" onclick="toggleCollapse(this,'albums')">📁 الألبومات <span>▾</span></button><div class="collapse-content"><div id="albumsList"></div><div style="display:flex; gap:8px; flex-wrap:wrap;"><input id="newAlbumName" placeholder="اسم الألبوم" style="flex:1"><button class="btn-green" onclick="addAlbumLocally()">إضافة محلياً</button></div><button class="btn-gold" style="margin-top:12px;" onclick="saveAllAlbums()">حفظ جميع التعديلات</button></div></div>
@@ -435,12 +465,29 @@
             popup_duration: parseInt(document.getElementById('popupDuration').value) || 8
         }).then(()=>showToast('تم حفظ إعدادات الفقاعة'));
     }
+    
     function saveMaintenance() {
+        const isActive = document.getElementById('maintenanceMode').checked;
+        const title = document.getElementById('maintenanceTitle').value;
+        const message = document.getElementById('maintenanceMsg').value;
+        let untilTime = null;
+        if (isActive) {
+            const hours = parseFloat(document.getElementById('maintenanceHours').value);
+            if (!isNaN(hours) && hours > 0) {
+                untilTime = Date.now() + (hours * 60 * 60 * 1000);
+            }
+        }
         db.ref(DB_PATH).update({
-            maintenance_mode: document.getElementById('maintenanceMode').checked,
-            maintenance_title: document.getElementById('maintenanceTitle').value,
-            maintenance_message: document.getElementById('maintenanceMsg').value
-        }).then(()=>showToast('تم حفظ وضع الصيانة'));
+            maintenance_mode: isActive,
+            maintenance_title: title,
+            maintenance_message: message,
+            maintenance_until: untilTime
+        }).then(() => {
+            showToast('تم حفظ إعدادات الصيانة');
+            if (isActive && untilTime) {
+                showToast(`تم تفعيل الصيانة لمدة ${document.getElementById('maintenanceHours').value} ساعة`);
+            }
+        });
     }
 
     // الشركاء
@@ -834,4 +881,3 @@
 </script>
 </body>
 </html>
-
