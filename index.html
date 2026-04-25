@@ -2,447 +2,126 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>متجر بصمة غير | ديكورات وتصميم داخلي فاخر</title>
-    <meta name="description" content="أكبر متجر إلكتروني متخصص في الديكورات والتصميم الداخلي في جدة. تشكيلة واسعة من الأثاث والإكسسوارات">
-    <link rel="icon" type="image/png" href="https://i.ibb.co/CsmG3G7r/1.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>لوحة إدارة المتجر | بصمة غير</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.css"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick-theme.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #b88b4a;
-            --primary-dark: #9b6e35;
-            --primary-light: #d9b88c;
-            --secondary: #2c3e50;
-            --light-bg: #fefaf5;
-            --gray-text: #4a5568;
-            --border-light: #e2e8f0;
-            --white: #ffffff;
-            --shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02);
-            --transition: all 0.3s ease;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Cairo', sans-serif;
-            background: var(--light-bg);
-            color: var(--secondary);
-            line-height: 1.6;
-        }
-        /* شاشة البداية */
-        .splash-screen {
-            position: fixed; inset: 0; z-index: 9999;
-            background: white;
-            display: flex; align-items: center; justify-content: center;
-            transition: opacity 0.8s;
-        }
-        .splash-screen img {
-            max-width: 90vw; max-height: 90vh; object-fit: contain;
-        }
-        /* هيدر وشريط علوي */
-        .top-bar {
-            background: var(--white);
-            box-shadow: var(--shadow);
-            position: sticky; top:0; z-index: 100;
-            border-bottom: 1px solid var(--border-light);
-        }
-        .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
-        .header-main {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 15px 0; flex-wrap: wrap; gap: 15px;
-        }
-        .logo h1 { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
-        .logo p { font-size: 0.75rem; color: var(--gray-text); }
-        .header-actions { display: flex; gap: 20px; align-items: center; }
-        .header-actions i { font-size: 1.3rem; color: var(--primary); cursor: pointer; }
-        nav {
-            background: white; border-top: 1px solid var(--border-light);
-            overflow-x: auto; white-space: nowrap;
-            padding: 10px 0;
-        }
-        .nav-links { display: inline-flex; gap: 30px; padding: 0 20px; }
-        .nav-links a {
-            text-decoration: none; color: var(--secondary);
-            font-weight: 600; padding: 5px 0;
-            border-bottom: 2px solid transparent; transition: var(--transition);
-        }
-        .nav-links a.active, .nav-links a:hover { border-bottom-color: var(--primary); color: var(--primary); }
-        
-        /* البنر الرئيسي (Carousel) */
-        .hero-carousel { margin: 30px 0; border-radius: 24px; overflow: hidden; box-shadow: var(--shadow); }
-        .hero-slide { position: relative; }
-        .hero-slide img { width: 100%; height: 450px; object-fit: cover; }
-        @media (max-width: 768px) { .hero-slide img { height: 250px; } }
-        
-        /* أقسام المتجر (عرض سريع) */
-        .section-title {
-            font-size: 1.8rem; font-weight: 700; margin: 40px 0 20px;
-            border-right: 5px solid var(--primary); padding-right: 15px;
-        }
-        .categories-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(180px,1fr));
-            gap: 25px; margin: 20px 0;
-        }
-        .category-card {
-            background: white; border-radius: 20px; overflow: hidden;
-            text-align: center; transition: var(--transition);
-            box-shadow: var(--shadow); cursor: pointer;
-        }
-        .category-card:hover { transform: translateY(-8px); }
-        .category-card img { width: 100%; height: 160px; object-fit: cover; }
-        .category-card h3 { padding: 12px; font-size: 1.1rem; }
-        
-        /* كروت المنتجات */
-        .products-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr));
-            gap: 25px; margin: 30px 0;
-        }
-        .product-card {
-            background: white; border-radius: 20px; overflow: hidden;
-            transition: var(--transition); box-shadow: var(--shadow);
-            cursor: pointer; position: relative;
-        }
-        .product-card:hover { transform: translateY(-5px); }
-        .product-card img { width: 100%; height: 200px; object-fit: cover; }
-        .product-info { padding: 15px; }
-        .product-title { font-weight: 700; margin-bottom: 5px; }
-        .product-price { color: var(--primary); font-weight: 600; margin-top: 8px; }
-        .whatsapp-order {
-            background: #25D366; color: white; border: none;
-            width: 100%; padding: 8px; border-radius: 30px;
-            margin-top: 10px; font-weight: 600; cursor: pointer;
-        }
-        
-        /* تقييمات العملاء */
-        .reviews-section { background: #f8f4ed; padding: 40px 0; margin: 40px 0; border-radius: 40px; }
-        .review-card {
-            background: white; padding: 20px; border-radius: 24px;
-            margin: 10px; box-shadow: var(--shadow);
-        }
-        .review-stars { color: #f5b042; margin: 10px 0; }
-        
-        /* أوقات العمل والتواصل */
-        .contact-hours {
-            display: flex; flex-wrap: wrap; gap: 30px;
-            background: white; padding: 30px; border-radius: 30px;
-            margin: 40px 0; box-shadow: var(--shadow);
-        }
-        .hours-box, .contact-box { flex: 1; }
-        .hours-box h3, .contact-box h3 { color: var(--primary); margin-bottom: 15px; }
-        .schedule-item { margin-bottom: 10px; }
-        .social-icons { display: flex; gap: 15px; margin-top: 20px; }
-        .social-icons a { background: var(--primary-light); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; transition: var(--transition); }
-        
-        /* شركاء النجاح */
-        .partners-slider { overflow: hidden; white-space: nowrap; padding: 20px 0; background: white; margin: 40px 0; border-radius: 50px; }
-        .partners-track { display: inline-flex; gap: 40px; animation: slide 30s linear infinite; }
-        .partner-logo { height: 60px; width: auto; margin: 0 20px; }
-        @keyframes slide { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        
-        /* تذييل */
-        footer {
-            background: var(--secondary); color: white; padding: 40px 0 20px;
-            margin-top: 60px;
-        }
-        .footer-content { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 30px; }
-        .footer-col h4 { color: var(--primary-light); margin-bottom: 15px; }
-        .footer-col ul { list-style: none; }
-        .footer-col li { margin-bottom: 8px; }
-        .footer-col a { color: #ddd; text-decoration: none; }
-        
-        /* زر العودة للأعلى */
-        .scroll-top {
-            position: fixed; bottom: 20px; right: 20px;
-            background: var(--primary); width: 50px; height: 50px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; cursor: pointer; z-index: 99;
-        }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 20px; border-radius: 50px; z-index: 9999; display: none; }
-        @media (max-width: 700px) { .categories-grid { grid-template-columns: repeat(2,1fr); } .products-grid { grid-template-columns: repeat(2,1fr); } }
+        *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif;}
+        body{background:#f5f3f0;padding:20px;color:#2d2a27;}
+        .container{max-width:1100px;margin:0 auto;}
+        .login-box,.admin-panel{background:white;border-radius:32px;padding:28px;box-shadow:0 15px 35px rgba(0,0,0,0.1);margin-top:30px;}
+        .admin-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px;flex-wrap:wrap;gap:15px;}
+        .admin-header h1{color:#b88b4a;font-size:1.6rem;}
+        button,.btn{background:#d4af7a;color:white;padding:10px 18px;border:none;border-radius:40px;font-weight:600;cursor:pointer;transition:0.2s;}
+        button:hover{transform:translateY(-2px);opacity:0.95;}
+        .btn-red{background:#dc3545;}
+        .btn-green{background:#28a745;}
+        .btn-gold{background:#b88b4a;}
+        .logout-btn{background:#dc3545;width:auto;padding:8px 22px;}
+        .collapse-section{background:white;border-radius:24px;margin-bottom:20px;border:1px solid #e9e2d8;overflow:hidden;}
+        .collapse-btn{background:#fefaf5;display:flex;justify-content:space-between;padding:16px 22px;font-weight:700;font-size:1rem;color:#b88b4a;border-bottom:1px solid #e9e2d8;cursor:pointer;}
+        .collapse-content{display:none;padding:22px;background:white;}
+        .list-item-row{display:flex;gap:12px;align-items:center;margin-bottom:12px;background:#fefaf5;padding:12px;border-radius:20px;border:1px solid #e9e2d8;}
+        .list-item-row input{flex:1;margin:0;padding:10px;border-radius:30px;border:1px solid #ddd;}
+        .file-upload-area{border:2px dashed #d4af7a;border-radius:24px;padding:20px;text-align:center;margin-bottom:20px;background:#fef9ef;}
+        .progress-bar{width:100%;background:#e9ecef;border-radius:20px;margin:10px 0;height:8px;overflow:hidden;}
+        .progress-fill{width:0%;height:100%;background:#28a745;transition:width 0.2s;}
+        .image-delete-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:15px;margin-top:15px;}
+        .image-delete-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:16px;}
+        .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1e2a3a;color:white;padding:10px 24px;border-radius:50px;z-index:9999;display:none;font-size:0.85rem;}
+        @media(max-width:700px){.list-item-row{flex-wrap:wrap;}}
+        hr{margin:15px 0;border-color:#e9e2d8;}
+        .checkbox-row{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
     </style>
 </head>
 <body>
-
-<div class="splash-screen" id="splashScreen">
-    <img id="splashImage" alt="شعار المتجر">
-</div>
-
-<div class="top-bar">
-    <div class="container">
-        <div class="header-main">
-            <div class="logo">
-                <h1 id="siteName">بصمة غير</h1>
-                <p>لمسة فاخرة لديكورك</p>
-            </div>
-            <div class="header-actions">
-                <i class="fas fa-search" id="searchIcon"></i>
-                <i class="fas fa-heart" id="favIcon"></i>
-                <i class="fas fa-shopping-cart" id="cartIcon"></i>
-            </div>
-        </div>
-    </div>
-    <nav>
-        <div class="nav-links" id="navLinks"></div>
-    </nav>
-</div>
-
 <div class="container">
-    <!-- بنر متحرك -->
-    <div class="hero-carousel" id="heroCarousel"></div>
-    
-    <!-- الأقسام الرئيسية للمتجر (عرض سريع) -->
-    <div id="homeCategoriesSection"></div>
-    
-    <!-- قسم التقييمات -->
-    <div class="reviews-section" id="reviewsSection"></div>
-    
-    <!-- أوقات العمل والتواصل -->
-    <div class="contact-hours" id="contactHoursSection"></div>
-    
-    <!-- شركاء النجاح -->
-    <div class="partners-slider" id="partnersSlider"></div>
+    <div class="login-box" id="loginBox"><h2 style="text-align:center;">🔐 دخول المدير</h2><input type="password" id="adminPassword" placeholder="كلمة المرور"><button onclick="login()">تسجيل الدخول</button></div>
+    <div id="adminPanel" style="display:none;"><div class="admin-header"><h1>⚙️ إدارة المتجر</h1><button onclick="logout()" class="logout-btn">خروج</button></div><div id="adminSections"></div></div>
 </div>
+<div id="toast" class="toast"></div>
 
-<footer>
-    <div class="container">
-        <div class="footer-content">
-            <div class="footer-col"><h4>بصمة غير</h4><p>أفضل متجر إلكتروني للديكور الداخلي في المملكة</p></div>
-            <div class="footer-col"><h4>روابط سريعة</h4><ul><li><a href="#" data-page="home">الرئيسية</a></li><li><a href="#" data-page="works">أعمالنا</a></li><li><a href="#" data-page="store">متجرنا</a></li></ul></div>
-            <div class="footer-col"><h4>تابعنا</h4><div class="social-icons" id="footerSocial"></div></div>
-        </div>
-        <div class="copyright" style="text-align:center; margin-top:30px;">© 2025 بصمة غير - جميع الحقوق محفوظة</div>
-    </div>
-</footer>
-
-<div class="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})"><i class="fas fa-arrow-up"></i></div>
-<div id="toastMsg" class="toast"></div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/slick-carousel/1.8.1/slick.min.js"></script>
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
-        authDomain: "mydecor-b29bd.firebaseapp.com",
-        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "mydecor-b29bd",
-        storageBucket: "mydecor-b29bd.firebasestorage.app",
-        messagingSenderId: "302609299720",
-        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", authDomain: "mydecor-b29bd.firebaseapp.com", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd", storageBucket: "mydecor-b29bd.firebasestorage.app", messagingSenderId: "302609299720", appId: "1:302609299720:web:e086b600c3ee824acd54bd" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const storage = firebase.storage();
     const DB_PATH = 'site_v28';
+    let currentData = {}, loggedIn = false, openSections = {};
 
-    let currentData = {};
-    let currentPage = 'home';
-    let currentCategoryId = null;
-    let currentSubCategoryId = null;
-    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+    function showToast(msg){ const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
+    function login(){ const pwd=document.getElementById('adminPassword').value; db.ref(DB_PATH+'/in').once('value').then(snap=>{ if(snap.val() && snap.val().toString()===pwd){ loggedIn=true; document.getElementById('loginBox').style.display='none'; document.getElementById('adminPanel').style.display='block'; loadData(); } else showToast('كلمة المرور غير صحيحة'); }); }
+    function logout(){ loggedIn=false; document.getElementById('loginBox').style.display='block'; document.getElementById('adminPanel').style.display='none'; currentData={}; }
+    function loadData(){ db.ref(DB_PATH).on('value', snap=>{ currentData=snap.val()||{}; buildAdmin(); restoreOpen(); }); }
+    function toggleCollapse(btn,id){ const content=btn.nextElementSibling; const isOpen=content.style.display==='block'; content.style.display=isOpen?'none':'block'; openSections[id]=!isOpen; btn.querySelector('span').innerHTML=isOpen?'▾':'▴'; }
+    function restoreOpen(){ document.querySelectorAll('.collapse-section').forEach(section=>{ const id=section.dataset.sectionId; if(openSections[id]){ section.querySelector('.collapse-content').style.display='block'; section.querySelector('.collapse-btn span').innerHTML='▴'; } }); }
 
-    function showToast(msg) { const t=document.getElementById('toastMsg'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
-    
-    // ========== تحميل بيانات الفايربيز ==========
-    db.ref(DB_PATH).on('value', async (snap) => {
-        currentData = snap.val() || {};
-        if(currentData.maintenance_mode) {
-            document.body.innerHTML = `<div style="text-align:center; padding:50px;"><h2>${currentData.maintenance_title||'صيانة'}</h2><p>${currentData.maintenance_message||'نعود قريباً'}</p></div>`;
-            return;
-        }
-        // إظهار شاشة البداية
-        const splashUrl = currentData.splash_image_url || '';
-        if(splashUrl) document.getElementById('splashImage').src = splashUrl;
-        setTimeout(() => {
-            const splash = document.getElementById('splashScreen');
-            splash.style.opacity = '0';
-            setTimeout(() => splash.style.display = 'none', 800);
-        }, 5000);
-        
-        renderNav();
-        renderHeroBanner();
-        renderCurrentPage();
-        renderReviews();
-        renderContactHours();
-        renderPartners();
-        renderFooterSocial();
-        document.getElementById('siteName').innerText = currentData.site_name || 'بصمة غير';
-    });
-    
-    function renderNav() {
-        const nav = document.getElementById('navLinks');
-        const showHome = currentData.sections_visibility?.home !== false;
-        const showWorks = currentData.sections_visibility?.works !== false;
-        const showStore = currentData.sections_visibility?.store !== false;
-        let html = '';
-        if(showHome) html += `<a href="#" data-page="home" class="${currentPage==='home'?'active':''}">الرئيسية</a>`;
-        if(showWorks) html += `<a href="#" data-page="works" class="${currentPage==='works'?'active':''}">أعمالنا</a>`;
-        if(showStore) html += `<a href="#" data-page="store" class="${currentPage==='store'?'active':''}">متجرنا</a>`;
-        nav.innerHTML = html;
-        document.querySelectorAll('[data-page]').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const page = link.dataset.page;
-                currentPage = page;
-                currentCategoryId = null;
-                currentSubCategoryId = null;
-                renderNav();
-                renderCurrentPage();
-                window.scrollTo({top:0,behavior:'smooth'});
-            });
-        });
+    // رفع الملفات
+    async function uploadFile(file, folder='products'){ const ext=file.name.split('.').pop(); const name=`${Date.now()}_${Math.random().toString(36).substr(2,6)}.${ext}`; const ref=storage.ref(`${folder}/${name}`); await ref.put(file); return await ref.getDownloadURL(); }
+    async function uploadMultiple(files, folder, prog){ let urls=[]; for(let i=0;i<files.length;i++){ urls.push(await uploadFile(files[i],folder)); if(prog) prog(i+1,files.length); } return urls; }
+    async function saveImages(target, urlsOrFiles, isFiles=false){ if(!target) return showToast('اختر الوجهة'); let imageUrls=[]; if(isFiles){ if(!urlsOrFiles.length) return showToast('اختر صوراً'); showToast(`جاري رفع ${urlsOrFiles.length} صورة`); try{ imageUrls=await uploadMultiple(urlsOrFiles,'products',(d,t)=>{ const p=document.getElementById('uploadProgress'); if(p){ p.style.display='block'; p.querySelector('.progress-fill').style.width=`${(d/t)*100}%`; } }); showToast(`تم رفع ${imageUrls.length} صورة`); }catch(e){ showToast('فشل الرفع'); return; } } else { imageUrls=urlsOrFiles.filter(u=>u.trim()); if(!imageUrls.length) return showToast('أدخل روابط'); } const promises=imageUrls.map(url=>db.ref(DB_PATH+'/'+target+'/imgs').push({url})); await Promise.all(promises); showToast(`تم نشر ${imageUrls.length} صورة`); }
+
+    // ========== إدارة أقسام المتجر ==========
+    function renderStoreCats(){ const c=document.getElementById('storeCatsList'); if(!c) return; if(!currentData.store_categories) c.innerHTML='<div>لا توجد أقسام</div>'; else c.innerHTML=Object.keys(currentData.store_categories).map(id=>`<div class="list-item-row" data-id="${id}"><input type="text" value="${currentData.store_categories[id].name.replace(/"/g,'&quot;')}" class="cat-name"><button onclick="deleteCatLocal(this)" class="btn-red">حذف</button></div>`).join(''); }
+    function addCatLocal(){ const name=document.getElementById('newCatName').value.trim(); if(!name) return showToast('أدخل اسم القسم'); const newId='temp_cat_'+Date.now(); const div=document.createElement('div'); div.className='list-item-row'; div.setAttribute('data-id',newId); div.innerHTML=`<input type="text" value="${name.replace(/"/g,'&quot;')}" class="cat-name"><button onclick="deleteCatLocal(this)" class="btn-red">حذف</button>`; document.getElementById('storeCatsList').appendChild(div); document.getElementById('newCatName').value=''; showToast('أضيف محلياً'); }
+    function deleteCatLocal(btn){ btn.closest('.list-item-row').remove(); showToast('حذف محلياً'); }
+    function saveAllCats(){ const rows=document.querySelectorAll('#storeCatsList .list-item-row'); const updates={}, toRemove=[]; rows.forEach(row=>{ const id=row.getAttribute('data-id'); const name=row.querySelector('.cat-name').value.trim(); if(name){ if(!id.startsWith('temp_cat_')) updates[`store_categories/${id}/name`]=name; else updates[`store_categories/${id}`]={name}; } else { if(!id.startsWith('temp_cat_')) toRemove.push(id); } }); Promise.all([...toRemove.map(id=>db.ref(DB_PATH+'/store_categories/'+id).remove()), ...Object.keys(updates).map(p=>db.ref(DB_PATH).child(p).set(updates[p]))]).then(()=>showToast('تم حفظ الأقسام')); }
+
+    // ========== إدارة ألبومات أعمالنا ==========
+    function renderAlbums(){ const c=document.getElementById('albumsList'); if(!c) return; if(!currentData.albums) c.innerHTML='<div>لا توجد ألبومات</div>'; else c.innerHTML=Object.keys(currentData.albums).map(id=>`<div class="list-item-row" data-id="${id}"><input type="text" value="${currentData.albums[id].name.replace(/"/g,'&quot;')}" class="album-name"><button onclick="deleteAlbumLocal(this)" class="btn-red">حذف</button></div>`).join(''); }
+    function addAlbumLocal(){ const name=document.getElementById('newAlbumName').value.trim(); if(!name) return; const newId='temp_alb_'+Date.now(); const div=document.createElement('div'); div.className='list-item-row'; div.setAttribute('data-id',newId); div.innerHTML=`<input type="text" value="${name}" class="album-name"><button onclick="deleteAlbumLocal(this)" class="btn-red">حذف</button>`; document.getElementById('albumsList').appendChild(div); document.getElementById('newAlbumName').value=''; showToast('أضيف محلياً'); }
+    function deleteAlbumLocal(btn){ btn.closest('.list-item-row').remove(); }
+    function saveAllAlbums(){ const rows=document.querySelectorAll('#albumsList .list-item-row'); const updates={}, toRemove=[]; rows.forEach(row=>{ const id=row.getAttribute('data-id'); const name=row.querySelector('.album-name').value.trim(); if(name){ if(!id.startsWith('temp_alb_')) updates[`albums/${id}/name`]=name; else updates[`albums/${id}`]={name}; } else { if(!id.startsWith('temp_alb_')) toRemove.push(id); } }); Promise.all([...toRemove.map(id=>db.ref(DB_PATH+'/albums/'+id).remove()), ...Object.keys(updates).map(p=>db.ref(DB_PATH).child(p).set(updates[p]))]).then(()=>showToast('تم حفظ الألبومات')); }
+
+    // ========== إدارة الشركاء ==========
+    function renderPartners(){ const c=document.getElementById('partnersList'); if(!c) return; if(!currentData.partners) c.innerHTML='<div>لا يوجد شركاء</div>'; else c.innerHTML=Object.keys(currentData.partners).map(id=>`<div class="list-item-row" data-id="${id}"><img src="${currentData.partners[id].url}" style="width:50px;height:50px;object-fit:contain;"><input type="text" value="${currentData.partners[id].url.replace(/"/g,'&quot;')}" class="partner-url"><input type="text" value="${(currentData.partners[id].link||'').replace(/"/g,'&quot;')}" placeholder="رابط" class="partner-link"><button onclick="deletePartnerLocal(this)" class="btn-red">حذف</button></div>`).join(''); }
+    function addPartnerLocal(){ const url=document.getElementById('newPartnerUrl').value.trim(); if(!url) return; const newId='temp_part_'+Date.now(); const div=document.createElement('div'); div.className='list-item-row'; div.setAttribute('data-id',newId); div.innerHTML=`<img src="${url}" style="width:50px;height:50px;object-fit:contain;"><input type="text" value="${url}" class="partner-url"><input type="text" placeholder="رابط" class="partner-link"><button onclick="deletePartnerLocal(this)" class="btn-red">حذف</button>`; document.getElementById('partnersList').appendChild(div); document.getElementById('newPartnerUrl').value=''; showToast('أضيف محلياً'); }
+    function deletePartnerLocal(btn){ btn.closest('.list-item-row').remove(); }
+    function saveAllPartners(){ const rows=document.querySelectorAll('#partnersList .list-item-row'); const updates={}, toRemove=[]; rows.forEach(row=>{ const id=row.getAttribute('data-id'); const url=row.querySelector('.partner-url').value.trim(); const link=row.querySelector('.partner-link').value.trim(); if(url){ if(!id.startsWith('temp_part_')){ updates[`partners/${id}/url`]=url; if(link) updates[`partners/${id}/link`]=link; } else updates[`partners/${id}`]={url, link:link||null}; } else { if(!id.startsWith('temp_part_')) toRemove.push(id); } }); Promise.all([...toRemove.map(id=>db.ref(DB_PATH+'/partners/'+id).remove()), ...Object.keys(updates).map(p=>db.ref(DB_PATH).child(p).set(updates[p]))]).then(()=>showToast('تم حفظ الشركاء')); }
+
+    // ========== إعدادات الموقع ==========
+    function saveGeneral(){ db.ref(DB_PATH).update({ site_name: document.getElementById('siteName').value, whatsapp_num: document.getElementById('whatsappNum').value, location_url: document.getElementById('locationUrl').value }).then(()=>showToast('تم الحفظ')); }
+    function saveAbout(){ db.ref(DB_PATH).update({ about_text: document.getElementById('aboutText').value }).then(()=>showToast('تم حفظ من نحن')); }
+    function saveSchedule(){ let sched={}; for(let i=0;i<=6;i++){ sched[i]={ active:document.getElementById(`dayActive_${i}`).checked, s1_s:document.getElementById(`s1s_${i}`).value, s1_e:document.getElementById(`s1e_${i}`).value, s2_a:document.getElementById(`s2a_${i}`).checked, s2_s:document.getElementById(`s2s_${i}`).value, s2_e:document.getElementById(`s2e_${i}`).value }; } db.ref(DB_PATH+'/work_schedule').set(sched).then(()=>showToast('تم حفظ أوقات العمل')); }
+    function saveMaintenance(){ const active=document.getElementById('maintenanceMode').checked; let until=null; if(active){ let h=parseInt(document.getElementById('hours').value)||0; let m=parseInt(document.getElementById('minutes').value)||0; let s=parseInt(document.getElementById('seconds').value)||0; let total=(h*3600+m*60+s)*1000; if(total>0) until=Date.now()+total; } db.ref(DB_PATH).update({ maintenance_mode: active, maintenance_title: document.getElementById('mainTitle').value, maintenance_message: document.getElementById('mainMsg').value, maintenance_until: until }).then(()=>showToast('تم حفظ إعدادات الصيانة')); }
+    function saveSplash(){ const url=document.getElementById('splashUrl').value.trim(); if(url) db.ref(DB_PATH+'/splash_image_url').set(url).then(()=>showToast('تم حفظ بوستر البداية')); else showToast('أدخل رابط الصورة'); }
+    async function uploadSplashFile(){ const file=document.getElementById('splashFile').files[0]; if(!file) return; showToast('جاري الرفع...'); const url=await uploadFile(file,'splash'); document.getElementById('splashUrl').value=url; showToast('تم الرفع، اضغط حفظ'); }
+
+    // دوال حذف الصور وعرض الوجهات
+    let selectedFiles=[];
+    function handleFileSelect(e){ selectedFiles=Array.from(e.target.files); showToast(`تم اختيار ${selectedFiles.length} صورة`); }
+    async function uploadFromFiles(){ const target=document.getElementById('uploadTarget').value; if(!target) return showToast('اختر الوجهة'); if(!selectedFiles.length) return showToast('اختر صوراً'); await saveImages(target, selectedFiles, true); selectedFiles=[]; document.getElementById('imageFiles').value=''; document.getElementById('uploadProgress').style.display='none'; }
+    async function uploadFromUrls(){ const target=document.getElementById('uploadTarget').value; const urls=document.getElementById('imageUrls').value.split('\n').filter(u=>u.trim()); if(!target || !urls.length) return showToast('اختر الوجهة وأدخل روابط'); await saveImages(target, urls, false); document.getElementById('imageUrls').value=''; }
+    function loadImagesForDelete(){ const path=document.getElementById('deleteTarget').value; const grid=document.getElementById('deleteGrid'); if(!path){ grid.innerHTML=''; return; } const [type,id]=path.split('/'); const folder=currentData[type]?.[id]; if(!folder||!folder.imgs){ grid.innerHTML='<p>لا توجد صور</p>'; return; } grid.innerHTML=Object.keys(folder.imgs).map(imgId=>`<div><img src="${folder.imgs[imgId].url}"><button onclick="deleteImage('${path}','${imgId}')" class="btn-red" style="margin-top:4px;">حذف</button></div>`).join(''); }
+    function deleteImage(path,imgId){ db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{ showToast('تم الحذف'); loadImagesForDelete(); }); }
+    function getTargetOptions(){ let o='<option value="">-- اختر الوجهة --</option>'; if(currentData.store_categories) Object.keys(currentData.store_categories).forEach(id=>o+=`<option value="store_categories/${id}">🛒 متجر: ${currentData.store_categories[id].name}</option>`); if(currentData.albums) Object.keys(currentData.albums).forEach(id=>o+=`<option value="albums/${id}">📁 ألبوم: ${currentData.albums[id].name}</option>`); return o; }
+
+    // بناء لوحة الإدارة
+    function buildAdmin(){
+        const d=currentData;
+        const scheduleEditor = () => { let html=''; const days=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"]; for(let i=0;i<=6;i++){ const s=d.work_schedule?.[i]||{}; html+=`<div style="border:1px solid #e9e2d8;border-radius:16px;padding:12px;margin-bottom:12px;"><label><input type="checkbox" id="dayActive_${i}" ${s.active?'checked':''}> ${days[i]}</label><div><input type="time" id="s1s_${i}" value="${s.s1_s||'09:00'}"> — <input type="time" id="s1e_${i}" value="${s.s1_e||'17:00'}"></div><label><input type="checkbox" id="s2a_${i}" ${s.s2_a?'checked':''}> فترة مسائية</label><div id="evening_${i}" style="${s.s2_a?'':'display:none'};margin-top:6px;"><input type="time" id="s2s_${i}" value="${s.s2_s||''}"> — <input type="time" id="s2e_${i}" value="${s.s2_e||''}"></div></div>`; } setTimeout(()=>{ for(let i=0;i<=6;i++){ const cb=document.getElementById(`s2a_${i}`); if(cb) cb.onchange=()=>document.getElementById(`evening_${i}`).style.display=cb.checked?'block':'none'; } },100); return html; };
+        const html=`
+            <div class="collapse-section" data-section-id="general"><button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ إعدادات المتجر <span>▾</span></button><div class="collapse-content"><input id="siteName" placeholder="اسم الموقع" value="${(d.site_name||'').replace(/"/g,'&quot;')}"><input id="whatsappNum" placeholder="رقم واتساب (بدون +)" value="${d.whatsapp_num||''}"><input id="locationUrl" placeholder="رابط موقع الخريطة" value="${(d.location_url||'').replace(/"/g,'&quot;')}"><button class="btn-gold" onclick="saveGeneral()">حفظ</button></div></div>
+            <div class="collapse-section" data-section-id="about"><button class="collapse-btn" onclick="toggleCollapse(this,'about')">📖 من نحن <span>▾</span></button><div class="collapse-content"><textarea id="aboutText" rows="4">${(d.about_text||'').replace(/"/g,'&quot;')}</textarea><button class="btn-gold" onclick="saveAbout()">حفظ</button></div></div>
+            <div class="collapse-section" data-section-id="schedule"><button class="collapse-btn" onclick="toggleCollapse(this,'schedule')">🕒 أوقات العمل <span>▾</span></button><div class="collapse-content">${scheduleEditor()}<button class="btn-gold" onclick="saveSchedule()">حفظ المواعيد</button></div></div>
+            <div class="collapse-section" data-section-id="maintenance"><button class="collapse-btn" onclick="toggleCollapse(this,'maintenance')">🛡️ وضع الصيانة <span>▾</span></button><div class="collapse-content"><label><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode?'checked':''}> تفعيل الصيانة</label><input id="mainTitle" placeholder="عنوان" value="${(d.maintenance_title||'').replace(/"/g,'&quot;')}"><textarea id="mainMsg" placeholder="رسالة" rows="2">${(d.maintenance_message||'').replace(/"/g,'&quot;')}</textarea><div style="display:flex;gap:10px;"><input type="number" id="hours" placeholder="ساعات" value="0"><input type="number" id="minutes" placeholder="دقائق" value="0"><input type="number" id="seconds" placeholder="ثواني" value="0"></div><button class="btn-gold" onclick="saveMaintenance()">حفظ إعدادات الصيانة</button></div></div>
+            <div class="collapse-section" data-section-id="splash"><button class="collapse-btn" onclick="toggleCollapse(this,'splash')">📸 بوستر البداية <span>▾</span></button><div class="collapse-content"><input id="splashUrl" placeholder="رابط الصورة" value="${(d.splash_image_url||'').replace(/"/g,'&quot;')}"><div class="file-upload-area"><input type="file" id="splashFile" accept="image/*"><button class="btn-green" onclick="uploadSplashFile()">رفع من الجهاز</button></div><button class="btn-gold" onclick="saveSplash()">حفظ الرابط</button></div></div>
+            <div class="collapse-section" data-section-id="store_cats"><button class="collapse-btn" onclick="toggleCollapse(this,'store_cats')">🛍️ أقسام المتجر <span>▾</span></button><div class="collapse-content"><div id="storeCatsList"></div><div style="display:flex;gap:10px;margin:10px 0;"><input id="newCatName" placeholder="اسم القسم الجديد"><button class="btn-green" onclick="addCatLocal()">إضافة محلياً</button></div><button class="btn-gold" onclick="saveAllCats()">حفظ جميع الأقسام</button></div></div>
+            <div class="collapse-section" data-section-id="albums"><button class="collapse-btn" onclick="toggleCollapse(this,'albums')">📁 ألبومات أعمالنا <span>▾</span></button><div class="collapse-content"><div id="albumsList"></div><div style="display:flex;gap:10px;"><input id="newAlbumName" placeholder="اسم الألبوم"><button class="btn-green" onclick="addAlbumLocal()">إضافة</button></div><button class="btn-gold" onclick="saveAllAlbums()">حفظ الألبومات</button></div></div>
+            <div class="collapse-section" data-section-id="partners"><button class="collapse-btn" onclick="toggleCollapse(this,'partners')">🤝 شركاء النجاح <span>▾</span></button><div class="collapse-content"><div id="partnersList"></div><div style="display:flex;gap:10px;"><input id="newPartnerUrl" placeholder="رابط الشعار"><button class="btn-green" onclick="addPartnerLocal()">إضافة شريك</button></div><button class="btn-gold" onclick="saveAllPartners()">حفظ الشركاء</button></div></div>
+            <div class="collapse-section" data-section-id="upload"><button class="collapse-btn" onclick="toggleCollapse(this,'upload')">📸 رفع صور <span>▾</span></button><div class="collapse-content"><select id="uploadTarget">${getTargetOptions()}</select><div class="file-upload-area"><input type="file" id="imageFiles" multiple accept="image/*" onchange="handleFileSelect(event)"><button class="btn-green" onclick="document.getElementById('imageFiles').click()">اختر صوراً</button><div id="uploadProgress" style="display:none;"><div class="progress-bar"><div class="progress-fill"></div></div><span>جاري الرفع...</span></div><button class="btn-gold" onclick="uploadFromFiles()">رفع المختارة</button></div><textarea id="imageUrls" placeholder="روابط الصور (كل رابط بسطر)" rows="3"></textarea><button class="btn-gold" onclick="uploadFromUrls()">نشر من الروابط</button></div></div>
+            <div class="collapse-section" data-section-id="delete"><button class="collapse-btn" onclick="toggleCollapse(this,'delete')">🗑️ حذف الصور <span>▾</span></button><div class="collapse-content"><select id="deleteTarget" onchange="loadImagesForDelete()">${getTargetOptions()}</select><div id="deleteGrid" class="image-delete-grid"></div></div></div>
+        `;
+        document.getElementById('adminSections').innerHTML=html;
+        renderStoreCats(); renderAlbums(); renderPartners();
+        // ربط الدوال العامة
+        window.toggleCollapse=toggleCollapse; window.saveGeneral=saveGeneral; window.saveAbout=saveAbout; window.saveSchedule=saveSchedule; window.saveMaintenance=saveMaintenance; window.saveSplash=saveSplash; window.uploadSplashFile=uploadSplashFile; window.addCatLocal=addCatLocal; window.deleteCatLocal=deleteCatLocal; window.saveAllCats=saveAllCats; window.addAlbumLocal=addAlbumLocal; window.deleteAlbumLocal=deleteAlbumLocal; window.saveAllAlbums=saveAllAlbums; window.addPartnerLocal=addPartnerLocal; window.deletePartnerLocal=deletePartnerLocal; window.saveAllPartners=saveAllPartners; window.handleFileSelect=handleFileSelect; window.uploadFromFiles=uploadFromFiles; window.uploadFromUrls=uploadFromUrls; window.loadImagesForDelete=loadImagesForDelete; window.deleteImage=deleteImage;
     }
-    
-    function renderHeroBanner() {
-        const container = document.getElementById('heroCarousel');
-        if(!currentData.carousel || Object.keys(currentData.carousel).length === 0) {
-            container.innerHTML = '';
-            return;
-        }
-        let slides = '';
-        Object.values(currentData.carousel).forEach(slide => {
-            slides += `<div class="hero-slide"><img src="${slide.url}" alt="بانر"></div>`;
-        });
-        container.innerHTML = slides;
-        $(container).slick({ dots: true, infinite: true, speed: 500, slidesToShow: 1, autoplay: true, autoplaySpeed: 4000, rtl: true });
-    }
-    
-    function renderCurrentPage() {
-        const main = document.getElementById('homeCategoriesSection');
-        const reviewsSec = document.getElementById('reviewsSection');
-        const contactSec = document.getElementById('contactHoursSection');
-        if(currentPage === 'home') {
-            // عرض أقسام المتجر الرئيسية
-            let catsHtml = '<div class="section-title">أقسام المتجر</div><div class="categories-grid">';
-            if(currentData.store_categories) {
-                Object.keys(currentData.store_categories).forEach(catId => {
-                    const cat = currentData.store_categories[catId];
-                    let cover = cat.imgs ? Object.values(cat.imgs)[0]?.url : '';
-                    catsHtml += `<div class="category-card" onclick="navigateToCategory('${catId}')">
-                        <img src="${cover || 'https://via.placeholder.com/200'}" loading="lazy">
-                        <h3>${cat.name}</h3>
-                    </div>`;
-                });
-            }
-            catsHtml += '</div>';
-            // عرض منتجات مميزة (أول 6 منتجات من أول قسم)
-            let productsHtml = '<div class="section-title">منتجات مميزة</div><div class="products-grid">';
-            if(currentData.products) {
-                let count=0;
-                for(let prodId in currentData.products) {
-                    if(count>=6) break;
-                    const p = currentData.products[prodId];
-                    productsHtml += `<div class="product-card" onclick="openProduct('${prodId}')">
-                        <img src="${p.image || ''}" loading="lazy">
-                        <div class="product-info">
-                            <div class="product-title">${p.name}</div>
-                            <div class="product-price">${p.price ? p.price+' ر.س' : ''}</div>
-                            <button class="whatsapp-order" onclick="event.stopPropagation(); orderViaWhatsapp('${p.name}', '${p.image}')">اطلب الآن <i class="fab fa-whatsapp"></i></button>
-                        </div>
-                    </div>`;
-                    count++;
-                }
-            }
-            productsHtml += '</div>';
-            main.innerHTML = catsHtml + productsHtml;
-            reviewsSec.style.display = 'block';
-            contactSec.style.display = 'flex';
-        } 
-        else if(currentPage === 'works') {
-            reviewsSec.style.display = 'none';
-            contactSec.style.display = 'none';
-            // عرض ألبومات أعمالنا بنفس الطريقة القديمة
-            let worksHtml = '<div class="section-title">أعمالنا</div><div class="categories-grid">';
-            if(currentData.albums) {
-                Object.keys(currentData.albums).forEach(albumId => {
-                    const alb = currentData.albums[albumId];
-                    let cover = alb.imgs ? Object.values(alb.imgs)[0]?.url : '';
-                    worksHtml += `<div class="category-card" onclick="openAlbum('${albumId}')">
-                        <img src="${cover || 'https://via.placeholder.com/200'}" loading="lazy">
-                        <h3>${alb.name}</h3>
-                    </div>`;
-                });
-            }
-            worksHtml += '</div>';
-            main.innerHTML = worksHtml;
-        }
-        else if(currentPage === 'store') {
-            reviewsSec.style.display = 'none';
-            contactSec.style.display = 'none';
-            if(currentCategoryId === null) {
-                // عرض الأقسام الرئيسية
-                let catsHtml = '<div class="section-title">أقسام المتجر</div><div class="categories-grid">';
-                if(currentData.store_categories) {
-                    Object.keys(currentData.store_categories).forEach(catId => {
-                        const cat = currentData.store_categories[catId];
-                        let cover = cat.imgs ? Object.values(cat.imgs)[0]?.url : '';
-                        catsHtml += `<div class="category-card" onclick="navigateToCategory('${catId}')">
-                            <img src="${cover || 'https://via.placeholder.com/200'}" loading="lazy">
-                            <h3>${cat.name}</h3>
-                        </div>`;
-                    });
-                }
-                catsHtml += '</div>';
-                main.innerHTML = catsHtml;
-            } 
-            else if(currentSubCategoryId === null) {
-                // عرض الأقسام الفرعية داخل القسم الرئيسي
-                let category = currentData.store_categories?.[currentCategoryId];
-                if(!category) { currentCategoryId=null; renderCurrentPage(); return; }
-                let subcatsHtml = `<div class="section-title"><button onclick="goBackToStore()" class="back-btn">← العودة</button> ${category.name}</div><div class="categories-grid">`;
-                if(category.subcategories) {
-                    Object.keys(category.subcategories).forEach(subId => {
-                        const sub = category.subcategories[subId];
-                        let cover = sub.imgs ? Object.values(sub.imgs)[0]?.url : '';
-                        subcatsHtml += `<div class="category-card" onclick="navigateToSubCategory('${currentCategoryId}','${subId}')">
-                            <img src="${cover || 'https://via.placeholder.com/200'}" loading="lazy">
-                            <h3>${sub.name}</h3>
-                        </div>`;
-                    });
-                }
-                subcatsHtml += '</div>';
-                main.innerHTML = subcatsHtml;
-            }
-            else {
-                // عرض المنتجات داخل القسم الفرعي
-                let category = currentData.store_categories?.[currentCategoryId];
-                let subcat = category?.subcategories?.[currentSubCategoryId];
-                if(!subcat) { currentSubCategoryId=null; renderCurrentPage(); return; }
-                let productsHtml = `<div class="section-title"><button onclick="goBackToSubCategories()" class="back-btn">← العودة</button> ${subcat.name}</div><div class="products-grid">`;
-                if(subcat.products) {
-                    Object.keys(subcat.products).forEach(prodId => {
-                        const p = subcat.products[prodId];
-                        productsHtml += `<div class="product-card" onclick="openProduct('${prodId}', '${currentCategoryId}', '${currentSubCategoryId}')">
-                            <img src="${p.image || ''}" loading="lazy">
-                            <div class="product-info">
-                                <div class="product-title">${p.name}</div>
-                                <div class="product-price">${p.price ? p.price+' ر.س' : ''}</div>
-                                <button class="whatsapp-order" onclick="event.stopPropagation(); orderViaWhatsapp('${p.name}', '${p.image}', '${p.price}')">اطلب الآن <i class="fab fa-whatsapp"></i></button>
-                            </div>
-                        </div>`;
-                    });
-                }
-                productsHtml += '</div>';
-                main.innerHTML = productsHtml;
-            }
-        }
-    }
-    
-    function navigateToCategory(catId) { currentCategoryId = catId; currentSubCategoryId = null; renderCurrentPage(); }
-    function navigateToSubCategory(catId, subId) { currentCategoryId = catId; currentSubCategoryId = subId; renderCurrentPage(); }
-    function goBackToStore() { currentCategoryId = null; currentSubCategoryId = null; renderCurrentPage(); }
-    function goBackToSubCategories() { currentSubCategoryId = null; renderCurrentPage(); }
-    function openAlbum(albumId) { const alb = currentData.albums[albumId]; if(alb?.imgs) { const urls=Object.values(alb.imgs).map(i=>i.url); if(urls.length) openViewer(urls[0], urls, 0); } }
-    function openProduct(prodId, catId, subId) { /* عرض نافذة منبثقة للمنتج */ showToast('سيتم إضافة خاصية عرض المنتج لاحقاً'); }
-    function orderViaWhatsapp(name, image, price) { const msg = `السلام عليكم، أرغب في طلب منتج: ${name} ${price ? 'السعر: '+price : ''}`; window.open(`https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent(msg)}`,'_blank'); }
-    function openViewer(url, list, idx) { /* عارض الصور */ alert('عارض الصور قيد التطوير'); }
-    
-    function renderReviews() { const container = document.getElementById('reviewsSection'); if(!currentData.reviews || !Object.keys(currentData.reviews).length) { container.innerHTML = ''; return; } let html = '<div class="container"><div class="section-title">آراء عملائنا</div><div class="categories-grid">'; Object.keys(currentData.reviews).forEach(id=>{ const r=currentData.reviews[id]; html+=`<div class="review-card"><div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div><p>${r.message}</p><h4>${r.name}</h4></div>`; }); html+='</div></div>'; container.innerHTML = html; }
-    function renderContactHours() { const container = document.getElementById('contactHoursSection'); let hours=''; if(currentData.work_schedule){ const days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت']; days.forEach((day,i)=>{ const s=currentData.work_schedule[i]; if(s&&s.active) hours+=`<div class="schedule-item"><strong>${day}</strong>: ${s.s1_s} - ${s.s1_e} ${s.s2_a?` / ${s.s2_s} - ${s.s2_e}`:''}</div>`; }); } container.innerHTML = `<div class="hours-box"><h3>⏰ ساعات العمل</h3>${hours}</div><div class="contact-box"><h3>📞 تواصل معنا</h3><p>واتساب: <a href="https://wa.me/${currentData.whatsapp_num||''}">${currentData.whatsapp_num||'غير محدد'}</a></p><p>هاتف: 0541780995</p><div class="social-icons" id="contactSocial"></div></div>`; const socialDiv=document.getElementById('contactSocial'); if(socialDiv){ let s=''; if(currentData.insta_url) s+=`<a href="${currentData.insta_url}"><i class="fab fa-instagram"></i></a>`; if(currentData.tiktok_url) s+=`<a href="${currentData.tiktok_url}"><i class="fab fa-tiktok"></i></a>`; if(currentData.snap_url) s+=`<a href="${currentData.snap_url}"><i class="fab fa-snapchat"></i></a>`; socialDiv.innerHTML=s; } }
-    function renderPartners() { const container=document.getElementById('partnersSlider'); if(!currentData.partners || !Object.keys(currentData.partners).length) { container.style.display='none'; return; } let html='<div class="partners-track">'; Object.values(currentData.partners).forEach(p=>{ html+=`<img src="${p.url}" class="partner-logo">`; }); html+=html+'</div>'; container.innerHTML=html; }
-    function renderFooterSocial() { const container=document.getElementById('footerSocial'); let s=''; if(currentData.insta_url) s+=`<a href="${currentData.insta_url}"><i class="fab fa-instagram"></i></a>`; if(currentData.tiktok_url) s+=`<a href="${currentData.tiktok_url}"><i class="fab fa-tiktok"></i></a>`; if(currentData.snap_url) s+=`<a href="${currentData.snap_url}"><i class="fab fa-snapchat"></i></a>`; if(currentData.whatsapp_num) s+=`<a href="https://wa.me/${currentData.whatsapp_num}"><i class="fab fa-whatsapp"></i></a>`; container.innerHTML=s; }
-    window.navigateToCategory=navigateToCategory; window.navigateToSubCategory=navigateToSubCategory; window.goBackToStore=goBackToStore; window.goBackToSubCategories=goBackToSubCategories; window.openAlbum=openAlbum; window.openProduct=openProduct; window.orderViaWhatsapp=orderViaWhatsapp;
+    window.login=login; window.logout=logout;
 </script>
 </body>
 </html>
