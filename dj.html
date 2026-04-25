@@ -82,15 +82,13 @@
     function toggleCollapse(btn,id) { const content=btn.nextElementSibling; const isOpen=content.style.display==='block'; content.style.display=isOpen?'none':'block'; openSections[id]=!isOpen; btn.querySelector('span').innerHTML=isOpen?'▾':'▴'; }
     function restoreOpen() { document.querySelectorAll('.collapse-section').forEach(s=>{ const id=s.dataset.sectionId; if(openSections[id]){ s.querySelector('.collapse-content').style.display='block'; s.querySelector('.collapse-btn span').innerHTML='▴'; } }); }
 
-    // ========== دوال الحفظ العامة ==========
     function updateDB(path, value) { db.ref(DB_PATH+'/'+path).set(value).then(()=>showToast('تم الحفظ')).catch(e=>showToast('خطأ')); }
 
-    // إدارة الصور عبر الروابط (لأي وجهة)
     async function addImageByUrl(target, url) {
         if(!target || !url) return showToast('اختر الوجهة وأدخل رابط الصورة');
         await db.ref(DB_PATH+'/'+target+'/imgs').push({ url });
         showToast('تمت الإضافة');
-        loadData(); // تحديث الواجهة
+        loadData();
     }
     async function addMultipleImagesByUrl(target, urlsArray) {
         if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط صالحة');
@@ -109,7 +107,6 @@
         grid.innerHTML = Object.keys(folder.imgs).map(imgId=>`<div><img src="${folder.imgs[imgId].url}"><button class="btn-red" onclick="deleteImage('${path}','${imgId}')" style="margin-top:4px;">حذف</button></div>`).join('');
     }
 
-    // ========== بناء لوحة التحكم ==========
     function buildAdmin() {
         const d = currentData;
         const getTargetOptions = () => {
@@ -118,7 +115,6 @@
             if(d.store_categories) Object.keys(d.store_categories).forEach(id=>o+=`<option value="store_categories/${id}">🛒 قسم متجر: ${d.store_categories[id].name}</option>`);
             return o;
         };
-        // دالة توليد جدول أوقات العمل
         const scheduleHTML = () => {
             const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
             let html='';
@@ -134,7 +130,6 @@
             setTimeout(()=>{ for(let i=0;i<=6;i++){ const cb=document.getElementById(`s2a_${i}`); if(cb) cb.onchange=()=>document.getElementById(`evening_${i}`).style.display=cb.checked?'block':'none'; } },100);
             return html;
         };
-        // إدارة القوائم (ألبومات، أقسام متجر، كتالوجات، شركاء)
         const renderGenericList = (containerId, dataObj, type, nameKey, onDelete, onSaveAll) => {
             const container = document.getElementById(containerId);
             if(!container) return;
@@ -162,7 +157,6 @@
                 Promise.all([...removePromises, ...updatePromises]).then(()=>showToast('تم حفظ جميع العناصر'));
             };
         };
-        // دالة لإضافة عنصر محلياً
         const addItemLocal = (containerId, inputId, newIdPrefix) => {
             const name = document.getElementById(inputId).value.trim();
             if(!name) return showToast('أدخل الاسم');
@@ -175,7 +169,6 @@
             showToast('تمت الإضافة محلياً');
         };
 
-        // بناء واجهة HTML
         const html = `
             <div class="collapse-section" data-section-id="general">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ الإعدادات العامة والنصوص <span>▾</span></button>
@@ -188,6 +181,9 @@
                     <div class="input-group"><label>انستقرام</label><input id="instaUrl" value="${(d.insta_url||'').replace(/"/g,'&quot;')}"></div>
                     <div class="input-group"><label>تيك توك</label><input id="tiktokUrl" value="${(d.tiktok_url||'').replace(/"/g,'&quot;')}"></div>
                     <div class="input-group"><label>سناب شات</label><input id="snapUrl" value="${(d.snap_url||'').replace(/"/g,'&quot;')}"></div>
+                    <!-- حقل جديد لنص الاستفسار للصور والمنتجات -->
+                    <div class="input-group"><label>📞 نص الاستفسار للصور والمنتجات (سيظهر على زر "استفسار")</label><textarea id="inquiryText" rows="2" placeholder="السلام عليكم، أود الاستفسار عن هذه الصورة">${(d.inquiry_text||'السلام عليكم، أود الاستفسار عن هذه الصورة').replace(/"/g,'&quot;')}</textarea>
+                    <small class="help-text">سيتم إضافة رابط الصورة تلقائياً بعد هذا النص</small></div>
                     <button class="btn-gold" onclick="saveGeneral()">حفظ جميع الإعدادات</button>
                 </div>
             </div>
@@ -284,18 +280,15 @@
         `;
         document.getElementById('adminSections').innerHTML = html;
 
-        // إدراج القوائم
         renderGenericList('albumsList', d.albums, 'albums', 'name', 'deleteAlbumLocal', 'saveAllAlbums');
         renderGenericList('storeCatsList', d.store_categories, 'store_categories', 'name', 'deleteStoreCatLocal', 'saveAllStoreCats');
         renderGenericList('catalogsList', d.catalogs, 'catalogs', 'name', 'deleteCatalogLocal', 'saveAllCatalogs');
         renderGenericList('partnersList', d.partners, 'partners', 'url', 'deletePartnerLocal', 'saveAllPartners');
-        // عرض التقييمات
         const revContainer = document.getElementById('reviewsList');
         if(revContainer && d.reviews){
             revContainer.innerHTML = Object.keys(d.reviews).map(id=>`<div style="border-bottom:1px solid #eee; padding:8px;"><b>${d.reviews[id].name}</b> ${'★'.repeat(d.reviews[id].rating)}<p>${d.reviews[id].message}</p><button class="btn-red" onclick="deleteReview('${id}')">حذف</button></div>`).join('');
         }
 
-        // دوال الإضافة والحفظ
         window.addAlbumLocal = () => addItemLocal('albumsList', 'newAlbumName', 'temp_album');
         window.saveAllAlbums = () => { const rows=document.querySelectorAll('#albumsList .list-item-row'); const updates={}, toRemove=[]; rows.forEach(row=>{ const id=row.dataset.id; const name=row.querySelector('.item-name-input').value.trim(); if(name){ if(!id.startsWith('temp_album')) updates[`albums/${id}/name`]=name; else updates[`albums/${id}`]={name}; } else if(!id.startsWith('temp_album')) toRemove.push(id); }); Promise.all([...toRemove.map(id=>db.ref(DB_PATH+'/albums/'+id).remove()), ...Object.keys(updates).map(p=>db.ref(DB_PATH).child(p).set(updates[p]))]).then(()=>showToast('تم حفظ الألبومات')); };
         window.addStoreCatLocal = () => addItemLocal('storeCatsList', 'newStoreCatName', 'temp_storecat');
@@ -305,15 +298,12 @@
         window.addPartnerLocal = () => { const url=document.getElementById('newPartnerUrl').value.trim(); const link=document.getElementById('newPartnerLink').value.trim(); if(!url) return showToast('أدخل رابط الصورة'); const container=document.getElementById('partnersList'); const newId='temp_part_'+Date.now(); const div=document.createElement('div'); div.className='list-item-row'; div.setAttribute('data-id',newId); div.innerHTML=`<input type="text" value="${url.replace(/"/g,'&quot;')}" class="partner-url-input"><input type="text" placeholder="الرابط" class="partner-link-input" value="${link.replace(/"/g,'&quot;')}"><button class="btn-red" onclick="this.closest('.list-item-row').remove()">حذف</button>`; container.appendChild(div); document.getElementById('newPartnerUrl').value=''; document.getElementById('newPartnerLink').value=''; showToast('أضيف محلياً'); };
         window.saveAllPartners = () => { const rows=document.querySelectorAll('#partnersList .list-item-row'); const updates={}, toRemove=[]; rows.forEach(row=>{ const id=row.dataset.id; const url=row.querySelector('.partner-url-input').value.trim(); const link=row.querySelector('.partner-link-input')?.value.trim(); if(url){ if(!id.startsWith('temp_part')){ updates[`partners/${id}/url`]=url; if(link) updates[`partners/${id}/link`]=link; } else updates[`partners/${id}`]={url, link:link||null}; } else if(!id.startsWith('temp_part')) toRemove.push(id); }); Promise.all([...toRemove.map(id=>db.ref(DB_PATH+'/partners/'+id).remove()), ...Object.keys(updates).map(p=>db.ref(DB_PATH).child(p).set(updates[p]))]).then(()=>showToast('تم حفظ الشركاء')); };
         window.deleteReview = (id) => db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>loadData());
-
-        // إدارة الصور للألبومات والمتجر
         window.loadAlbumImagesForDelete = () => { const val=document.getElementById('albumSelect').value; if(val) loadImagesForDelete(val, 'albumImagesGrid'); };
         window.loadStoreImagesForDelete = () => { const val=document.getElementById('storeCatSelect').value; if(val) loadImagesForDelete(val, 'storeImagesGrid'); };
         window.addImagesToAlbum = async () => { const target=document.getElementById('addToAlbumSelect').value; const urlsText=document.getElementById('albumUrls').value; const urls=urlsText.split('\n').filter(u=>u.trim()); if(!target) return showToast('اختر ألبوم'); if(urls.length===0) return showToast('أدخل روابط الصور'); await addMultipleImagesByUrl(target, urls); document.getElementById('albumUrls').value=''; loadData(); };
         window.addImagesToStore = async () => { const target=document.getElementById('addToStoreSelect').value; const urlsText=document.getElementById('storeUrls').value; const urls=urlsText.split('\n').filter(u=>u.trim()); if(!target) return showToast('اختر قسم'); if(urls.length===0) return showToast('أدخل روابط المنتجات'); await addMultipleImagesByUrl(target, urls); document.getElementById('storeUrls').value=''; loadData(); };
     }
 
-    // دوال الحفظ العامة
     function saveGeneral() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
@@ -323,7 +313,8 @@
             location_url: document.getElementById('locationUrl').value,
             insta_url: document.getElementById('instaUrl').value,
             tiktok_url: document.getElementById('tiktokUrl').value,
-            snap_url: document.getElementById('snapUrl').value
+            snap_url: document.getElementById('snapUrl').value,
+            inquiry_text: document.getElementById('inquiryText').value  // الحقل الجديد
         }).then(()=>showToast('تم حفظ الإعدادات العامة'));
     }
     function saveSchedule() {
