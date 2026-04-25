@@ -27,11 +27,11 @@
             --shadow: 0 8px 25px rgba(0,0,0,0.05);
             --shadow-hover: 0 15px 35px rgba(0,0,0,0.1);
         }
-        /* شاشة بداية متجاوبة ومتناسقة */
+        /* شاشة بداية تغطي الشاشة بالكامل */
         #splash {
             position: fixed;
             inset: 0;
-            background-color: #0a0a0c;
+            background-color: #000;
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -41,10 +41,8 @@
         .splash-media {
             width: 100%;
             height: 100%;
-            object-fit: contain;  /* يظهر العنصر كاملاً بدون قص، مع خلفية سوداء */
-            background-color: #000;
+            object-fit: cover;  /* يملأ الشاشة بالكامل مع قص بسيط للأطراف */
         }
-        /* إذا كنت تفضل ملء الشاشة مع قص بسيط، استخدم object-fit: cover بدلاً من contain */
         /* زر تخطي اختياري */
         .splash-skip {
             position: absolute;
@@ -60,8 +58,9 @@
             z-index: 10000;
             border: none;
             font-family: inherit;
+            backdrop-filter: blur(4px);
         }
-        /* باقي الأنماط (كما هي من الكود السابق النظيف) */
+        /* باقي الأنماط كما هي (لم تتغير) */
         .header {
             background: rgba(255,255,255,0.96);
             backdrop-filter: blur(12px);
@@ -608,14 +607,12 @@
         attachNavEvents();
     }
 
-    // ========== شاشة البداية (Splash) المتطورة ==========
+    // ========== شاشة البداية (Splash) مع تغطية كاملة باستخدام cover ==========
     let splashTimeout;
     function showSplash(settings) {
         const splashDiv = document.getElementById('splash');
         if (!splashDiv) return;
-        // تنظيف المحتوى السابق
         splashDiv.innerHTML = '';
-        // إذا كان السبلاش معطلاً في الإعدادات
         if (!settings.enabled) {
             splashDiv.style.display = 'none';
             return;
@@ -671,7 +668,6 @@
     // تحميل البيانات الأولية وتشغيل السبلاش
     db.ref(DB_PATH).once('value', snap => {
         currentData = snap.val() || {};
-        // إعدادات السبلاش من قاعدة البيانات
         const splashSettings = {
             enabled: currentData.splash_enabled !== false,
             type: currentData.splash_type || 'image',
