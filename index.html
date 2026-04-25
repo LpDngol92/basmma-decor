@@ -11,7 +11,12 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
         body {
             font-family: 'Cairo', sans-serif;
             background: #fefaf5;
@@ -23,7 +28,7 @@
             --gold-dark: #b88b4a;
             --gold-light: #f8efdf;
             --gray: #6f6a64;
-            --card-white: #ffffff;
+            --white: #ffffff;
             --border-light: #efe5d8;
             --shadow: 0 8px 20px rgba(0,0,0,0.05);
             --shadow-hover: 0 15px 30px rgba(0,0,0,0.1);
@@ -70,6 +75,11 @@
             -webkit-background-clip: text;
             color: transparent;
         }
+        .logo-section p {
+            font-size: 0.8rem;
+            color: var(--gray);
+            margin-top: 5px;
+        }
         /* شركاء النجاح (شريط متحرك) */
         .partners-marquee {
             background: #fdf7ef;
@@ -99,12 +109,14 @@
             display: inline-flex;
             align-items: center;
         }
+        .partner-item:hover { transform: translateY(-5px); border-color: var(--gold); }
         .partner-logo { height: 50px; width: auto; max-width: 120px; object-fit: contain; }
         /* تبويبات */
         .tabs-wrapper {
             background: white;
             border-bottom: 1px solid var(--border-light);
             overflow-x: auto;
+            scrollbar-width: thin;
         }
         .tabs-section {
             display: flex;
@@ -169,7 +181,7 @@
             background: #25D366;
             color: white;
             border: none;
-            padding: 8px 16px;
+            padding: 10px 16px;
             border-radius: 40px;
             font-weight: 600;
             width: 100%;
@@ -181,11 +193,11 @@
             gap: 8px;
         }
         .whatsapp-order-btn:hover { background: #1da15a; transform: scale(0.98); }
-        /* ألبومات أعمالنا (بنفس التصميم القديم) */
+        /* ألبومات أعمالنا (بنفس التصميم القديم الأصلي) */
         .albums-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-            gap: 20px;
+            gap: 25px;
         }
         .album-card {
             background: white;
@@ -194,8 +206,7 @@
             text-align: center;
             border: 1px solid var(--border-light);
             cursor: pointer;
-            transition: 0.2s;
-            position: relative;
+            transition: 0.25s;
         }
         .album-card img {
             width: 100%;
@@ -207,10 +218,12 @@
         .album-card h4 {
             font-size: 0.9rem;
             color: var(--gold-dark);
+            margin-top: 6px;
         }
         .album-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-hover);
+            border-color: var(--gold);
         }
         /* أقسام المتجر (الفئات) */
         .categories-grid {
@@ -236,14 +249,15 @@
             margin-bottom: 12px;
         }
         .category-card h3 { color: var(--gold-dark); margin-top: 8px; }
+        .category-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
         /* قسم التقييمات وأوقات العمل جنباً إلى جنب */
         .two-columns {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
-            margin: 40px 0;
+            margin: 50px 0;
         }
-        @media (max-width: 900px) { .two-columns { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { .two-columns { grid-template-columns: 1fr; gap: 30px; } }
         .glass-card {
             background: white;
             border-radius: 28px;
@@ -262,7 +276,7 @@
             align-items: center;
             gap: 10px;
         }
-        /* تصميم التقييمات الأنيق (مثل القديم) */
+        /* التقييمات الأنيقة */
         .reviews-list {
             display: flex;
             flex-direction: column;
@@ -405,7 +419,7 @@
             font-size: 0.75rem;
             font-weight: 500;
         }
-        /* أزرار التوابل الثابتة */
+        /* أزرار التواصل الثابتة */
         .social-fixed {
             position: fixed;
             bottom: 20px;
@@ -451,9 +465,12 @@
         }
         @media (max-width: 700px) {
             .products-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
-            .categories-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+            .categories-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
+            .albums-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 16px; }
             .partner-logo { height: 35px; }
             .partner-item { padding: 4px 16px; }
+            .social-fixed { bottom: 15px; left: 15px; gap: 8px; }
+            .social-fixed a { width: 40px; height: 40px; font-size: 1.1rem; }
         }
     </style>
 </head>
@@ -498,8 +515,15 @@
 
     // ========== دوال مساعدة ==========
     function showToast(msg) { const t=document.getElementById('toastMsg'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
-    function closeViewer() { document.getElementById('viewerModal').style.display='none'; document.body.style.overflow=''; }
-    function openViewer(url, list, index) { currentImageList=list; currentImageIndex=index; document.getElementById('viewerImg').src=url; document.getElementById('viewerModal').style.display='flex'; document.body.style.overflow='hidden'; }
+    function closeViewer() { document.getElementById('viewerModal').style.display='none'; document.body.style.overflow=''; currentImageList=[]; }
+    function openViewer(url, list, index) { 
+        if(!list || list.length===0) return;
+        currentImageList=list; 
+        currentImageIndex=index; 
+        document.getElementById('viewerImg').src=url; 
+        document.getElementById('viewerModal').style.display='flex'; 
+        document.body.style.overflow='hidden'; 
+    }
     function viewerNext() { if(currentImageList.length){ currentImageIndex=(currentImageIndex+1)%currentImageList.length; document.getElementById('viewerImg').src=currentImageList[currentImageIndex]; } }
     function viewerPrev() { if(currentImageList.length){ currentImageIndex=(currentImageIndex-1+currentImageList.length)%currentImageList.length; document.getElementById('viewerImg').src=currentImageList[currentImageIndex]; } }
     document.addEventListener('keydown', (e) => { if(e.key==='ArrowRight') viewerNext(); if(e.key==='ArrowLeft') viewerPrev(); if(e.key==='Escape') closeViewer(); });
@@ -606,7 +630,7 @@
                     <i class="fas fa-star" data-star="1"></i>
                 </div>
                 <textarea id="reviewMsg" placeholder="شاركنا تجربتك..." rows="2"></textarea>
-                <button onclick="submitReview()" class="contact-chip" style="width:100%; background:var(--gold); color:white; justify-content:center; padding:10px; border-radius:40px; border:none; font-weight:600;">إرسال التقييم</button>
+                <button onclick="submitReview()" style="width:100%; background:var(--gold); color:white; border:none; padding:10px; border-radius:40px; font-weight:600; cursor:pointer;">إرسال التقييم</button>
             </div>
         `;
         return `<div class="glass-card"><div class="card-title"><i class="fas fa-star"></i> آراء العملاء</div>${reviewsHtml}${formHtml}</div>`;
@@ -667,24 +691,29 @@
     function backToCategories() { currentStoreCategoryId = null; renderCurrentPage(); renderTabs(); }
     function openProductImage(url, idx, listArray) { openViewer(url, listArray, idx); }
 
-    // ========== عرض أعمالنا (الألبومات - نفس القديم الذي يعمل) ==========
+    // ========== عرض أعمالنا (الألبومات - الطريقة الأصلية) ==========
     function renderWorks() {
         if(!currentData.albums || Object.keys(currentData.albums).length===0) return '<div class="empty-state"><i class="fas fa-folder-open fa-3x"></i><p>لا توجد ألبومات بعد</p></div>';
         let html = '<div class="albums-grid">';
         Object.keys(currentData.albums).forEach(id => {
             const alb = currentData.albums[id];
-            let cover = ''; if(alb.imgs && Object.keys(alb.imgs).length) cover = Object.values(alb.imgs)[0].url;
-            html += `<div class="album-card" data-album-id="${id}">${cover ? `<img src="${cover}" loading="lazy">` : '<i class="fas fa-folder-open fa-3x" style="margin:30px 0;"></i>'}<h4>${alb.name || 'ألبوم'}</h4></div>`;
+            let cover = ''; 
+            if(alb.imgs && Object.keys(alb.imgs).length) cover = Object.values(alb.imgs)[0].url;
+            html += `<div class="album-card" data-album-id="${id}">
+                        ${cover ? `<img src="${cover}" loading="lazy">` : '<i class="fas fa-folder-open fa-3x" style="margin:30px 0;"></i>'}
+                        <h4>${alb.name || 'ألبوم'}</h4>
+                    </div>`;
         });
         html += '</div>';
         return html;
     }
     function openAlbum(id) {
         const alb = currentData.albums?.[id];
-        if(!alb || !alb.imgs) { showToast("لا توجد صور"); return; }
+        if(!alb) { showToast("الألبوم غير موجود"); return; }
+        if(!alb.imgs || Object.keys(alb.imgs).length===0) { showToast("لا توجد صور في هذا الألبوم"); return; }
         const urls = Object.values(alb.imgs).map(i=>i.url).filter(u=>u);
         if(urls.length) openViewer(urls[0], urls, 0);
-        else showToast("لا توجد صور");
+        else showToast("لا توجد صور صالحة");
     }
 
     // ========== عرض الصفحة الرئيسية (متجر + تقييمات + ساعات) ==========
@@ -703,8 +732,8 @@
         if(!main) return;
         let content = '';
         if(currentPage === 'home') content = renderHome();
-        else if(currentPage === 'works') content = `<h2 style="margin-bottom:20px;"><i class="fas fa-images"></i> أعمالنا</h2>${renderWorks()}`;
-        else if(currentPage === 'store') content = `<h2 style="margin-bottom:20px;"><i class="fas fa-store"></i> متجرنا</h2>${renderStore()}`;
+        else if(currentPage === 'works') content = `<h2 style="margin-bottom:25px;"><i class="fas fa-images"></i> أعمالنا</h2>${renderWorks()}`;
+        else if(currentPage === 'store') content = `<h2 style="margin-bottom:25px;"><i class="fas fa-store"></i> متجرنا</h2>${renderStore()}`;
         else content = '<div class="empty-state">صفحة غير موجودة</div>';
         main.innerHTML = content;
         document.getElementById('siteTitle').innerText = currentData.site_name || 'بصمة غير';
@@ -735,12 +764,21 @@
     function setupStarRating() {
         let selected = 0;
         const stars = document.querySelectorAll('#starRating i');
-        stars.forEach(s => { s.onclick = () => { selected = parseInt(s.dataset.star); stars.forEach(st => st.classList.remove('active')); for(let i=stars.length-1; i>=stars.length-selected; i--) stars[i]?.classList.add('active'); }; });
+        stars.forEach(s => { 
+            s.onclick = () => { 
+                selected = parseInt(s.dataset.star); 
+                stars.forEach(st => st.classList.remove('active')); 
+                for(let i=stars.length-1; i>=stars.length-selected; i--) stars[i]?.classList.add('active'); 
+            }; 
+        });
         window.submitReview = () => {
             const name = document.getElementById('reviewName')?.value;
             const msg = document.getElementById('reviewMsg')?.value;
             if (!name || !msg || !selected) return showToast('يرجى إكمال الاسم والتقييم والنص');
-            db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selected }).then(() => { showToast('شكراً لتقييمك!'); renderCurrentPage(); });
+            db.ref(DB_PATH+'/reviews').push({ name, message: msg, rating: selected }).then(() => { 
+                showToast('شكراً لتقييمك!'); 
+                renderCurrentPage(); 
+            });
         };
     }
 
@@ -764,6 +802,11 @@
                 }
             });
         });
+        // تمرير التبويب النشط للرؤية
+        setTimeout(()=>{
+            const activeBtn = document.querySelector('.tab-btn.active');
+            if(activeBtn) activeBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        },100);
     }
 
     // ========== شركاء النجاح ==========
@@ -822,7 +865,7 @@
         renderCurrentPage();
         renderPartners();
     });
-    // تعريف الدوال العامة
+    // تعريف الدوال العامة للاستخدام في الأحداث المباشرة
     window.selectStoreCategory = selectStoreCategory;
     window.backToCategories = backToCategories;
     window.openProductImage = openProductImage;
