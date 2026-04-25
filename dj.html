@@ -77,41 +77,31 @@
 
     function showToast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
     function login() { const pwd=document.getElementById('adminPassword').value; db.ref(DB_PATH+'/in').once('value').then(snap=>{ if(snap.val() && snap.val().toString()===pwd){ loggedIn=true; document.getElementById('loginBox').style.display='none'; document.getElementById('adminPanel').style.display='block'; loadData(); } else showToast('كلمة المرور غير صحيحة'); }); }
-    function logout() { loggedIn=false; document.getElementById('loginBox').style.display='block'; document.getElementById('adminPanel').style.display='none'; }
+    function logout() { loggedIn=false; document.getElementById('loginBox').style.display='block'; document.getElementById('adminPanel').style.display='none'; currentData={}; }
     function loadData() { db.ref(DB_PATH).on('value', snap=>{ currentData=snap.val()||{}; buildAdmin(); restoreOpen(); }); }
     function toggleCollapse(btn,id) { const content=btn.nextElementSibling; const isOpen=content.style.display==='block'; content.style.display=isOpen?'none':'block'; openSections[id]=!isOpen; btn.querySelector('span').innerHTML=isOpen?'▾':'▴'; }
     function restoreOpen() { document.querySelectorAll('.collapse-section').forEach(s=>{ const id=s.dataset.sectionId; if(openSections[id]){ s.querySelector('.collapse-content').style.display='block'; s.querySelector('.collapse-btn span').innerHTML='▴'; } }); }
 
-    // دوال الحذف الفوري
-    function deleteAlbumNow(albumId) {
-        if(confirm('هل أنت متأكد من حذف هذا الألبوم وجميع صوره نهائياً؟')) {
-            db.ref(DB_PATH+'/albums/'+albumId).remove().then(()=>{ showToast('تم حذف الألبوم'); loadData(); });
-        }
-    }
-    function deleteStoreCatNow(catId) {
-        if(confirm('هل أنت متأكد من حذف هذا القسم وجميع منتجاته؟')) {
-            db.ref(DB_PATH+'/store_categories/'+catId).remove().then(()=>{ showToast('تم حذف القسم'); loadData(); });
-        }
-    }
-    function deleteCatalogNow(catId) {
-        if(confirm('حذف الكتالوج؟')) {
-            db.ref(DB_PATH+'/catalogs/'+catId).remove().then(()=>{ showToast('تم الحذف'); loadData(); });
-        }
-    }
-    function deletePartnerNow(partnerId) {
-        if(confirm('حذف الشريك؟')) {
-            db.ref(DB_PATH+'/partners/'+partnerId).remove().then(()=>{ showToast('تم الحذف'); loadData(); });
-        }
+    // ========== إدارة الصور (بدون تكرار) ==========
+    async function addImagesToTarget(target, urlsArray, clearTextareaId, reloadCallback) {
+        if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط صالحة');
+        // إزالة التكرار داخل نفس الدفعة
+        const unique = [...new Set(urlsArray)];
+        if(unique.length !== urlsArray.length) showToast('تمت إزالة الروابط المكررة تلقائياً');
+        const promises = unique.map(url => db.ref(DB_PATH+'/'+target+'/imgs').push({ url }));
+        await Promise.all(promises);
+        showToast(`تمت إضافة ${unique.length} صورة بنجاح`);
+        if(clearTextareaId) document.getElementById(clearTextareaId).value = '';
+        if(reloadCallback) reloadCallback();
+        loadData(); // تحديث كامل للواجهة
     }
 
-    async function addMultipleImagesByUrl(target, urlsArray) {
-        if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط صالحة');
-        const promises = urlsArray.map(url => db.ref(DB_PATH+'/'+target+'/imgs').push({ url }));
-        await Promise.all(promises);
-        showToast(`تمت إضافة ${urlsArray.length} صورة`);
-        loadData();
+    function deleteImage(path, imgId) { 
+        db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{ 
+            showToast('تم الحذف'); 
+            loadData(); 
+        }); 
     }
-    function deleteImage(path, imgId) { db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{ showToast('تم حذف الصورة'); loadData(); }); }
     function loadImagesForDelete(path, containerId) {
         const grid = document.getElementById(containerId);
         if(!grid) return;
@@ -121,8 +111,15 @@
         grid.innerHTML = Object.keys(folder.imgs).map(imgId=>`<div><img src="${folder.imgs[imgId].url}"><button class="btn-red" onclick="deleteImage('${path}','${imgId}')" style="margin-top:4px;">حذف</button></div>`).join('');
     }
 
+    // ========== بناء لوحة التحكم ==========
     function buildAdmin() {
         const d = currentData;
+        const getTargetOptions = (type) => {
+            let o = '<option value="">-- اختر --</option>';
+            if(type==='album' && d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">📁 ${d.albums[id].name}</option>`);
+            if(type==='store' && d.store_categories) Object.keys(d.store_categories).forEach(id=>o+=`<option value="store_categories/${id}">🛒 ${d.store_categories[id].name}</option>`);
+            return o;
+        };
         const scheduleHTML = () => {
             const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
             let html='';
@@ -138,47 +135,33 @@
             setTimeout(()=>{ for(let i=0;i<=6;i++){ const cb=document.getElementById(`s2a_${i}`); if(cb) cb.onchange=()=>document.getElementById(`evening_${i}`).style.display=cb.checked?'block':'none'; } },100);
             return html;
         };
-        // وظيفة إضافة عنصر جديد (فورية)
-        async function addAlbumNow() {
-            const name = document.getElementById('newAlbumName').value.trim();
-            if(!name) return showToast('أدخل اسم الألبوم');
-            const newRef = db.ref(DB_PATH+'/albums').push();
-            await newRef.set({ name: name });
-            document.getElementById('newAlbumName').value='';
-            showToast('تم إضافة الألبوم');
-            loadData();
-        }
-        async function addStoreCatNow() {
-            const name = document.getElementById('newStoreCatName').value.trim();
-            if(!name) return showToast('أدخل اسم القسم');
-            const newRef = db.ref(DB_PATH+'/store_categories').push();
-            await newRef.set({ name: name });
-            document.getElementById('newStoreCatName').value='';
-            showToast('تم إضافة القسم');
-            loadData();
-        }
-        async function addCatalogNow() {
-            const name = document.getElementById('newCatalogName').value.trim();
-            const code = document.getElementById('newCatalogCode').value.trim();
-            if(!name || !code) return showToast('أدخل الاسم والكود');
-            const newRef = db.ref(DB_PATH+'/catalogs').push();
-            await newRef.set({ name: name, code: code });
-            document.getElementById('newCatalogName').value='';
-            document.getElementById('newCatalogCode').value='';
-            showToast('تم إضافة الكتالوج');
-            loadData();
-        }
-        async function addPartnerNow() {
-            const url = document.getElementById('newPartnerUrl').value.trim();
-            const link = document.getElementById('newPartnerLink').value.trim();
-            if(!url) return showToast('أدخل رابط الصورة');
-            const newRef = db.ref(DB_PATH+'/partners').push();
-            await newRef.set({ url: url, link: link || null });
-            document.getElementById('newPartnerUrl').value='';
-            document.getElementById('newPartnerLink').value='';
-            showToast('تم إضافة الشريك');
-            loadData();
-        }
+        // دوال مساعدة لإدارة القوائم (ألبومات، أقسام متجر، كتالوجات، شركاء)
+        const addItemLocal = (containerId, inputId, newIdPrefix, nameKey='name') => {
+            const name = document.getElementById(inputId).value.trim();
+            if(!name) return showToast('أدخل الاسم');
+            const container = document.getElementById(containerId);
+            const newId = `${newIdPrefix}_${Date.now()}`;
+            const div = document.createElement('div'); div.className='list-item-row'; div.setAttribute('data-id',newId);
+            div.innerHTML = `<input type="text" value="${name.replace(/"/g,'&quot;')}" class="item-name-input"><button class="btn-red" onclick="this.closest('.list-item-row').remove()">حذف</button>`;
+            container.appendChild(div);
+            document.getElementById(inputId).value='';
+            showToast('تمت الإضافة محلياً');
+        };
+        const saveGenericList = (containerId, dbPath, nameKey) => {
+            const rows = document.querySelectorAll(`#${containerId} .list-item-row`);
+            const updates = {}, toRemove = [];
+            rows.forEach(row => {
+                const id = row.dataset.id;
+                const name = row.querySelector('.item-name-input').value.trim();
+                if(name){
+                    if(!id.startsWith('temp_')) updates[`${dbPath}/${id}/${nameKey}`]=name;
+                    else updates[`${dbPath}/${id}`]={ [nameKey]: name };
+                } else { if(!id.startsWith('temp_')) toRemove.push(id); }
+            });
+            const removePromises = toRemove.map(id=>db.ref(DB_PATH+'/'+dbPath+'/'+id).remove());
+            const updatePromises = Object.keys(updates).map(p=>db.ref(DB_PATH).child(p).set(updates[p]));
+            return Promise.all([...removePromises, ...updatePromises]);
+        };
 
         const html = `
             <div class="collapse-section" data-section-id="general">
@@ -192,7 +175,6 @@
                     <div class="input-group"><label>انستقرام</label><input id="instaUrl" value="${(d.insta_url||'').replace(/"/g,'&quot;')}"></div>
                     <div class="input-group"><label>تيك توك</label><input id="tiktokUrl" value="${(d.tiktok_url||'').replace(/"/g,'&quot;')}"></div>
                     <div class="input-group"><label>سناب شات</label><input id="snapUrl" value="${(d.snap_url||'').replace(/"/g,'&quot;')}"></div>
-                    <div class="input-group"><label>📞 نص الاستفسار للصور والمنتجات</label><textarea id="inquiryText" rows="2">${(d.inquiry_text||'السلام عليكم، أود الاستفسار عن هذه الصورة').replace(/"/g,'&quot;')}</textarea></div>
                     <button class="btn-gold" onclick="saveGeneral()">حفظ جميع الإعدادات</button>
                 </div>
             </div>
@@ -200,12 +182,13 @@
                 <button class="collapse-btn" onclick="toggleCollapse(this,'albums')">📁 ألبومات أعمالنا <span>▾</span></button>
                 <div class="collapse-content">
                     <div id="albumsList"></div>
-                    <div style="display:flex; gap:8px; margin:10px 0;"><input id="newAlbumName" placeholder="اسم الألبوم الجديد"><button class="btn-green" onclick="addAlbumNow()">إضافة ألبوم</button></div>
+                    <div style="display:flex; gap:8px; margin:10px 0;"><input id="newAlbumName" placeholder="اسم الألبوم الجديد"><button class="btn-green" onclick="addAlbumLocal()">إضافة ألبوم</button></div>
+                    <button class="btn-gold" onclick="saveAllAlbums()">حفظ جميع الألبومات</button>
                     <hr><h4>📸 إدارة صور الألبوم</h4>
-                    <select id="albumSelect" onchange="loadAlbumImagesForDelete()">${(function(){ let o='<option value="">اختر ألبوم</option>'; if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">${d.albums[id].name}</option>`); return o; })()}</select>
+                    <select id="albumSelect" onchange="loadAlbumImagesForDelete()">${getTargetOptions('album')}</select>
                     <div id="albumImagesGrid" class="image-delete-grid" style="margin-top:10px;"></div>
                     <hr><h4>➕ إضافة صور إلى الألبوم (روابط)</h4>
-                    <select id="addToAlbumSelect">${(function(){ let o=''; if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">${d.albums[id].name}</option>`); return o; })()}</select>
+                    <select id="addToAlbumSelect">${getTargetOptions('album')}</select>
                     <textarea id="albumUrls" class="urls-textarea" placeholder="أدخل روابط الصور (كل رابط في سطر)"></textarea>
                     <button class="btn-gold" onclick="addImagesToAlbum()">إضافة صور للألبوم</button>
                 </div>
@@ -214,12 +197,13 @@
                 <button class="collapse-btn" onclick="toggleCollapse(this,'store')">🛍️ أقسام المتجر <span>▾</span></button>
                 <div class="collapse-content">
                     <div id="storeCatsList"></div>
-                    <div style="display:flex; gap:8px;"><input id="newStoreCatName" placeholder="اسم القسم الجديد"><button class="btn-green" onclick="addStoreCatNow()">إضافة قسم</button></div>
+                    <div style="display:flex; gap:8px;"><input id="newStoreCatName" placeholder="اسم القسم الجديد"><button class="btn-green" onclick="addStoreCatLocal()">إضافة قسم</button></div>
+                    <button class="btn-gold" onclick="saveAllStoreCats()">حفظ الأقسام</button>
                     <hr><h4>📸 إدارة منتجات القسم</h4>
-                    <select id="storeCatSelect" onchange="loadStoreImagesForDelete()">${(function(){ let o='<option value="">اختر قسم</option>'; if(d.store_categories) Object.keys(d.store_categories).forEach(id=>o+=`<option value="store_categories/${id}">${d.store_categories[id].name}</option>`); return o; })()}</select>
+                    <select id="storeCatSelect" onchange="loadStoreImagesForDelete()">${getTargetOptions('store')}</select>
                     <div id="storeImagesGrid" class="image-delete-grid" style="margin-top:10px;"></div>
                     <hr><h4>➕ إضافة منتجات (روابط)</h4>
-                    <select id="addToStoreSelect">${(function(){ let o=''; if(d.store_categories) Object.keys(d.store_categories).forEach(id=>o+=`<option value="store_categories/${id}">${d.store_categories[id].name}</option>`); return o; })()}</select>
+                    <select id="addToStoreSelect">${getTargetOptions('store')}</select>
                     <textarea id="storeUrls" class="urls-textarea" placeholder="روابط المنتجات (كل رابط في سطر)"></textarea>
                     <button class="btn-gold" onclick="addImagesToStore()">إضافة منتجات</button>
                 </div>
@@ -228,14 +212,16 @@
                 <button class="collapse-btn" onclick="toggleCollapse(this,'catalogs')">📚 الكتالوجات <span>▾</span></button>
                 <div class="collapse-content">
                     <div id="catalogsList"></div>
-                    <div style="margin-top:10px;"><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" rows="3" placeholder="كود iFrame"></textarea><button class="btn-green" onclick="addCatalogNow()">إضافة كتالوج</button></div>
+                    <div style="margin-top:10px;"><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" rows="3" placeholder="كود iFrame"></textarea><button class="btn-green" onclick="addCatalogLocal()">إضافة كتالوج</button></div>
+                    <button class="btn-gold" onclick="saveAllCatalogs()">حفظ الكتالوجات</button>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="partners">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'partners')">🤝 شركاء النجاح <span>▾</span></button>
                 <div class="collapse-content">
                     <div id="partnersList"></div>
-                    <div style="display:flex; gap:8px;"><input id="newPartnerUrl" placeholder="رابط الصورة"><input id="newPartnerLink" placeholder="الرابط (اختياري)"><button class="btn-green" onclick="addPartnerNow()">إضافة شريك</button></div>
+                    <div style="display:flex; gap:8px;"><input id="newPartnerUrl" placeholder="رابط الصورة"><input id="newPartnerLink" placeholder="الرابط (اختياري)"><button class="btn-green" onclick="addPartnerLocal()">إضافة شريك</button></div>
+                    <button class="btn-gold" onclick="saveAllPartners()">حفظ الشركاء</button>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="schedule">
@@ -285,84 +271,128 @@
         `;
         document.getElementById('adminSections').innerHTML = html;
 
-        // عرض قوائم الألبومات مع زر حذف فوري
-        if(d.albums) {
-            let albumsHtml = '';
-            Object.keys(d.albums).forEach(id => {
-                albumsHtml += `<div class="list-item-row" data-id="${id}">
-                    <input type="text" value="${(d.albums[id].name||'').replace(/"/g,'&quot;')}" class="album-name-input">
-                    <button class="btn-red" onclick="updateAlbumName('${id}', this)">تعديل</button>
-                    <button class="btn-red" onclick="deleteAlbumNow('${id}')">حذف فوري</button>
-                </div>`;
-            });
-            document.getElementById('albumsList').innerHTML = albumsHtml;
-            window.updateAlbumName = (id, btn) => { const newName = btn.previousElementSibling.value; if(newName) db.ref(DB_PATH+'/albums/'+id+'/name').set(newName).then(()=>showToast('تم التحديث')); };
-        } else document.getElementById('albumsList').innerHTML = '<div>لا توجد ألبومات</div>';
-
-        // عرض أقسام المتجر مع زر حذف فوري
-        if(d.store_categories) {
-            let catsHtml = '';
-            Object.keys(d.store_categories).forEach(id => {
-                catsHtml += `<div class="list-item-row" data-id="${id}">
-                    <input type="text" value="${(d.store_categories[id].name||'').replace(/"/g,'&quot;')}" class="cat-name-input">
-                    <button class="btn-red" onclick="updateStoreCatName('${id}', this)">تعديل</button>
-                    <button class="btn-red" onclick="deleteStoreCatNow('${id}')">حذف فوري</button>
-                </div>`;
-            });
-            document.getElementById('storeCatsList').innerHTML = catsHtml;
-            window.updateStoreCatName = (id, btn) => { const newName = btn.previousElementSibling.value; if(newName) db.ref(DB_PATH+'/store_categories/'+id+'/name').set(newName).then(()=>showToast('تم التحديث')); };
-        } else document.getElementById('storeCatsList').innerHTML = '<div>لا توجد أقسام</div>';
-
-        // الكتالوجات
-        if(d.catalogs) {
-            let catsHtml = '';
-            Object.keys(d.catalogs).forEach(id => {
-                catsHtml += `<div class="list-item-row" style="flex-direction:column; align-items:stretch;">
-                    <input type="text" value="${(d.catalogs[id].name||'').replace(/"/g,'&quot;')}" class="catalog-name-input" placeholder="الاسم">
-                    <textarea rows="2" class="catalog-code-input" placeholder="الكود">${(d.catalogs[id].code||'').replace(/"/g,'&quot;')}</textarea>
-                    <div><button class="btn-red" onclick="updateCatalog('${id}', this)">تعديل</button>
-                    <button class="btn-red" onclick="deleteCatalogNow('${id}')">حذف فوري</button></div>
-                </div>`;
-            });
-            document.getElementById('catalogsList').innerHTML = catsHtml;
-            window.updateCatalog = (id, btn) => { const row = btn.closest('.list-item-row'); const newName = row.querySelector('.catalog-name-input').value; const newCode = row.querySelector('.catalog-code-input').value; if(newName && newCode) db.ref(DB_PATH+'/catalogs/'+id).set({name:newName, code:newCode}).then(()=>showToast('تم التحديث')); };
-        } else document.getElementById('catalogsList').innerHTML = '<div>لا توجد كتالوجات</div>';
-
-        // الشركاء
-        if(d.partners) {
-            let partnersHtml = '';
-            Object.keys(d.partners).forEach(id => {
-                partnersHtml += `<div class="list-item-row">
+        // تعبئة القوائم الأساسية
+        const renderList = (containerId, dataObj, nameKey) => {
+            const c = document.getElementById(containerId);
+            if(!c) return;
+            if(!dataObj || Object.keys(dataObj).length===0){ c.innerHTML='<div class="empty-state">لا توجد عناصر</div>'; return; }
+            c.innerHTML = Object.keys(dataObj).map(id=>`<div class="list-item-row" data-id="${id}"><input type="text" value="${(dataObj[id][nameKey]||'').replace(/"/g,'&quot;')}" class="item-name-input"><button class="btn-red" onclick="this.closest('.list-item-row').remove()">حذف</button></div>`).join('');
+        };
+        renderList('albumsList', d.albums, 'name');
+        renderList('storeCatsList', d.store_categories, 'name');
+        // الكتالوجات (اسم + كود)
+        const catsContainer = document.getElementById('catalogsList');
+        if(catsContainer && d.catalogs){
+            catsContainer.innerHTML = Object.keys(d.catalogs).map(id=>`
+                <div class="list-item-row" data-id="${id}"><input type="text" value="${(d.catalogs[id].name||'').replace(/"/g,'&quot;')}" class="item-name-input"><button class="btn-red" onclick="this.closest('.list-item-row').nextElementSibling?.remove(); this.closest('.list-item-row').remove()">حذف</button></div>
+                <div class="list-item-row" style="margin-top:-8px;"><textarea class="catalog-code-input" rows="2" style="flex:2;">${(d.catalogs[id].code||'').replace(/"/g,'&quot;')}</textarea></div>
+            `).join('');
+        }
+        // الشركاء (صورة + رابط)
+        const partnersContainer = document.getElementById('partnersList');
+        if(partnersContainer && d.partners){
+            partnersContainer.innerHTML = Object.keys(d.partners).map(id=>`
+                <div class="list-item-row" data-id="${id}">
                     <input type="text" value="${(d.partners[id].url||'').replace(/"/g,'&quot;')}" class="partner-url-input" placeholder="رابط الصورة">
-                    <input type="text" value="${(d.partners[id].link||'').replace(/"/g,'&quot;')}" class="partner-link-input" placeholder="الرابط">
-                    <button class="btn-red" onclick="updatePartner('${id}', this)">تعديل</button>
-                    <button class="btn-red" onclick="deletePartnerNow('${id}')">حذف فوري</button>
-                </div>`;
-            });
-            document.getElementById('partnersList').innerHTML = partnersHtml;
-            window.updatePartner = (id, btn) => { const row = btn.closest('.list-item-row'); const url = row.querySelector('.partner-url-input').value; const link = row.querySelector('.partner-link-input').value; if(url) db.ref(DB_PATH+'/partners/'+id).set({url, link:link||null}).then(()=>showToast('تم التحديث')); };
-        } else document.getElementById('partnersList').innerHTML = '<div>لا توجد شركاء</div>';
-
+                    <input type="text" value="${(d.partners[id].link||'').replace(/"/g,'&quot;')}" class="partner-link-input" placeholder="الرابط (اختياري)">
+                    <button class="btn-red" onclick="this.closest('.list-item-row').remove()">حذف</button>
+                </div>
+            `).join('');
+        }
+        // التقييمات
         const revContainer = document.getElementById('reviewsList');
         if(revContainer && d.reviews){
             revContainer.innerHTML = Object.keys(d.reviews).map(id=>`<div style="border-bottom:1px solid #eee; padding:8px;"><b>${d.reviews[id].name}</b> ${'★'.repeat(d.reviews[id].rating)}<p>${d.reviews[id].message}</p><button class="btn-red" onclick="deleteReview('${id}')">حذف</button></div>`).join('');
         }
 
+        // دوال الإضافة والحفظ المحسنة
+        window.addAlbumLocal = () => addItemLocal('albumsList', 'newAlbumName', 'temp_album');
+        window.saveAllAlbums = () => saveGenericList('albumsList', 'albums', 'name').then(()=>showToast('تم حفظ الألبومات'));
+        window.addStoreCatLocal = () => addItemLocal('storeCatsList', 'newStoreCatName', 'temp_storecat');
+        window.saveAllStoreCats = () => saveGenericList('storeCatsList', 'store_categories', 'name').then(()=>showToast('تم حفظ أقسام المتجر'));
+        window.addCatalogLocal = () => {
+            const name=document.getElementById('newCatalogName').value.trim();
+            const code=document.getElementById('newCatalogCode').value.trim();
+            if(!name||!code) return showToast('أدخل الاسم والكود');
+            const container=document.getElementById('catalogsList');
+            const newId='temp_cat_'+Date.now();
+            const divName=document.createElement('div'); divName.className='list-item-row'; divName.setAttribute('data-id',newId);
+            divName.innerHTML=`<input type="text" value="${name.replace(/"/g,'&quot;')}" class="item-name-input"><button class="btn-red" onclick="this.closest('.list-item-row').nextElementSibling?.remove(); this.closest('.list-item-row').remove()">حذف</button>`;
+            const divCode=document.createElement('div'); divCode.className='list-item-row'; divCode.style.marginTop='-8px';
+            divCode.innerHTML=`<textarea class="catalog-code-input" rows="2" style="flex:2;">${code.replace(/"/g,'&quot;')}</textarea>`;
+            container.appendChild(divName); container.appendChild(divCode);
+            document.getElementById('newCatalogName').value=''; document.getElementById('newCatalogCode').value='';
+            showToast('أضيف محلياً');
+        };
+        window.saveAllCatalogs = () => {
+            const nameRows = document.querySelectorAll('#catalogsList .list-item-row:has(.item-name-input)');
+            const updates={}, toRemove=[];
+            nameRows.forEach(nameRow=>{
+                const id=nameRow.dataset.id;
+                const name=nameRow.querySelector('.item-name-input').value.trim();
+                const codeRow=nameRow.nextElementSibling;
+                const code=codeRow?codeRow.querySelector('.catalog-code-input').value.trim():'';
+                if(name && code){
+                    if(!id.startsWith('temp_cat')){
+                        updates[`catalogs/${id}/name`]=name;
+                        updates[`catalogs/${id}/code`]=code;
+                    } else updates[`catalogs/${id}`]={name,code};
+                } else if(!id.startsWith('temp_cat')) toRemove.push(id);
+            });
+            Promise.all([...toRemove.map(id=>db.ref(DB_PATH+'/catalogs/'+id).remove()), ...Object.keys(updates).map(p=>db.ref(DB_PATH).child(p).set(updates[p]))]).then(()=>showToast('تم حفظ الكتالوجات'));
+        };
+        window.addPartnerLocal = () => {
+            const url=document.getElementById('newPartnerUrl').value.trim();
+            const link=document.getElementById('newPartnerLink').value.trim();
+            if(!url) return showToast('أدخل رابط الصورة');
+            const container=document.getElementById('partnersList');
+            const newId='temp_part_'+Date.now();
+            const div=document.createElement('div'); div.className='list-item-row'; div.setAttribute('data-id',newId);
+            div.innerHTML=`<input type="text" value="${url.replace(/"/g,'&quot;')}" class="partner-url-input"><input type="text" value="${link.replace(/"/g,'&quot;')}" class="partner-link-input"><button class="btn-red" onclick="this.closest('.list-item-row').remove()">حذف</button>`;
+            container.appendChild(div);
+            document.getElementById('newPartnerUrl').value=''; document.getElementById('newPartnerLink').value='';
+            showToast('أضيف محلياً');
+        };
+        window.saveAllPartners = () => {
+            const rows = document.querySelectorAll('#partnersList .list-item-row');
+            const updates={}, toRemove=[];
+            rows.forEach(row=>{
+                const id=row.dataset.id;
+                const url=row.querySelector('.partner-url-input').value.trim();
+                const link=row.querySelector('.partner-link-input')?.value.trim();
+                if(url){
+                    if(!id.startsWith('temp_part')){
+                        updates[`partners/${id}/url`]=url;
+                        if(link) updates[`partners/${id}/link`]=link;
+                    } else updates[`partners/${id}`]={url, link:link||null};
+                } else if(!id.startsWith('temp_part')) toRemove.push(id);
+            });
+            Promise.all([...toRemove.map(id=>db.ref(DB_PATH+'/partners/'+id).remove()), ...Object.keys(updates).map(p=>db.ref(DB_PATH).child(p).set(updates[p]))]).then(()=>showToast('تم حفظ الشركاء'));
+        };
+        window.deleteReview = (id) => db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>loadData());
+
+        // إدارة الصور
         window.loadAlbumImagesForDelete = () => { const val=document.getElementById('albumSelect').value; if(val) loadImagesForDelete(val, 'albumImagesGrid'); };
         window.loadStoreImagesForDelete = () => { const val=document.getElementById('storeCatSelect').value; if(val) loadImagesForDelete(val, 'storeImagesGrid'); };
-        window.addImagesToAlbum = async () => { const target=document.getElementById('addToAlbumSelect').value; const urlsText=document.getElementById('albumUrls').value; const urls=urlsText.split('\n').filter(u=>u.trim()); if(!target) return showToast('اختر ألبوم'); if(urls.length===0) return showToast('أدخل روابط الصور'); await addMultipleImagesByUrl(target, urls); document.getElementById('albumUrls').value=''; loadData(); };
-        window.addImagesToStore = async () => { const target=document.getElementById('addToStoreSelect').value; const urlsText=document.getElementById('storeUrls').value; const urls=urlsText.split('\n').filter(u=>u.trim()); if(!target) return showToast('اختر قسم'); if(urls.length===0) return showToast('أدخل روابط المنتجات'); await addMultipleImagesByUrl(target, urls); document.getElementById('storeUrls').value=''; loadData(); };
-        window.deleteReview = (id) => db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>loadData());
-        window.addAlbumNow = addAlbumNow;
-        window.addStoreCatNow = addStoreCatNow;
-        window.addCatalogNow = addCatalogNow;
-        window.addPartnerNow = addPartnerNow;
-        window.deleteAlbumNow = deleteAlbumNow;
-        window.deleteStoreCatNow = deleteStoreCatNow;
-        window.deleteCatalogNow = deleteCatalogNow;
-        window.deletePartnerNow = deletePartnerNow;
+        window.addImagesToAlbum = async () => {
+            const target = document.getElementById('addToAlbumSelect').value;
+            const urlsText = document.getElementById('albumUrls').value;
+            const urls = urlsText.split('\n').filter(u=>u.trim());
+            if(!target) return showToast('اختر ألبوم');
+            if(urls.length===0) return showToast('أدخل روابط الصور');
+            await addImagesToTarget(target, urls, 'albumUrls', ()=>loadImagesForDelete(target, 'albumImagesGrid'));
+        };
+        window.addImagesToStore = async () => {
+            const target = document.getElementById('addToStoreSelect').value;
+            const urlsText = document.getElementById('storeUrls').value;
+            const urls = urlsText.split('\n').filter(u=>u.trim());
+            if(!target) return showToast('اختر قسم المتجر');
+            if(urls.length===0) return showToast('أدخل روابط المنتجات');
+            await addImagesToTarget(target, urls, 'storeUrls', ()=>loadImagesForDelete(target, 'storeImagesGrid'));
+        };
     }
 
+    // دوال الحفظ العامة
     function saveGeneral() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
@@ -372,8 +402,7 @@
             location_url: document.getElementById('locationUrl').value,
             insta_url: document.getElementById('instaUrl').value,
             tiktok_url: document.getElementById('tiktokUrl').value,
-            snap_url: document.getElementById('snapUrl').value,
-            inquiry_text: document.getElementById('inquiryText').value
+            snap_url: document.getElementById('snapUrl').value
         }).then(()=>showToast('تم حفظ الإعدادات العامة'));
     }
     function saveSchedule() {
