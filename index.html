@@ -7,6 +7,8 @@
     <link rel="icon" type="image/png" href="https://i.ibb.co/CsmG3G7r/1.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- إضافة مكتبة panzoom للتكبير بالسحب واللمس -->
+    <script src="https://cdn.jsdelivr.net/npm/panzoom@9.4.0/dist/panzoom.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -49,7 +51,6 @@
         .card-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
         .card-body { padding: 1.2rem; }
         .card-title { font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); }
-        /* بطاقات المنتجات مع زر استفسار */
         .product-card { background: var(--white); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; }
         .product-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
         .product-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
@@ -58,15 +59,94 @@
         .inquiry-btn { background: var(--primary); }
         .whatsapp-order:hover { background: #1da15a; }
         .inquiry-btn:hover { background: var(--primary-dark); }
-        /* نافذة عرض الصور (لايت بوكس) مع زر استفسار أسفل الصورة */
-        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .lightbox-container { position: relative; max-width: 90%; max-height: 85vh; display: flex; flex-direction: column; align-items: center; }
-        .lightbox img { max-width: 90vw; max-height: 70vh; object-fit: contain; border-radius: 16px; }
-        .lightbox-close, .lightbox-prev, .lightbox-next { position: absolute; color: white; font-size: 2rem; cursor: pointer; background: rgba(0,0,0,0.5); padding: 0.2rem 0.5rem; border-radius: 50%; }
+        /* نافذة عرض الصور (لايت بوكس) محسنة للتكبير والاستجابة */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.96);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .lightbox-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .lightbox-image-wrapper {
+            width: 90%;
+            height: 80%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        .lightbox-image-wrapper img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            cursor: grab;
+            transition: transform 0.1s ease;
+        }
+        .lightbox-image-wrapper img:active {
+            cursor: grabbing;
+        }
+        .lightbox-close, .lightbox-prev, .lightbox-next {
+            position: absolute;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: rgba(0,0,0,0.6);
+            padding: 0.2rem 0.5rem;
+            border-radius: 50%;
+            z-index: 2010;
+            transition: 0.2s;
+        }
         .lightbox-close { top: 20px; right: 30px; }
         .lightbox-prev { left: 20px; top: 50%; transform: translateY(-50%); }
         .lightbox-next { right: 20px; top: 50%; transform: translateY(-50%); }
-        .lightbox-inquiry-btn { background: var(--primary); color: white; border: none; padding: 10px 25px; border-radius: 60px; font-size: 1rem; margin-top: 20px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .lightbox-close:hover, .lightbox-prev:hover, .lightbox-next:hover { background: var(--primary); }
+        .lightbox-inquiry-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 60px;
+            font-size: 1rem;
+            margin-top: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 2010;
+        }
+        /* تلميح التكبير */
+        .zoom-hint {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 2010;
+            white-space: nowrap;
+        }
+        @media (max-width: 700px) {
+            .lightbox-image-wrapper { width: 95%; height: 70%; }
+            .lightbox-prev, .lightbox-next { font-size: 1.5rem; padding: 0.1rem 0.4rem; }
+            .zoom-hint { font-size: 0.7rem; white-space: normal; width: 80%; text-align: center; }
+        }
         .testimonial-card { background: var(--white); border-radius: 28px; padding: 1.5rem; box-shadow: var(--shadow); }
         .testimonial-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
         .testimonial-avatar { width: 50px; height: 50px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--primary); }
@@ -92,7 +172,6 @@
             .toast { white-space: normal; width: 80%; text-align: center; }
             .nav-bar { flex-direction: column; text-align: center; }
             .nav-links { justify-content: center; }
-            .lightbox-prev, .lightbox-next { font-size: 1.5rem; }
         }
     </style>
 </head>
@@ -132,13 +211,17 @@
     </div>
 </footer>
 
+<!-- نافذة عرض الصور مع دعم التكبير -->
 <div id="lightbox" class="lightbox" onclick="closeLightbox()">
     <div class="lightbox-container" onclick="event.stopPropagation()">
         <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
         <span class="lightbox-prev" onclick="prevImage()">&#10094;</span>
         <span class="lightbox-next" onclick="nextImage()">&#10095;</span>
-        <img id="lightboxImg">
+        <div class="lightbox-image-wrapper">
+            <img id="lightboxImg" alt="صورة مكبرة">
+        </div>
         <button id="lightboxInquiryBtn" class="lightbox-inquiry-btn"><i class="fab fa-whatsapp"></i> استفسار عن هذه الصورة</button>
+        <div class="zoom-hint">🔍 استخدم السكرول (الماوس) أو إصبعين للتكبير</div>
     </div>
 </div>
 <div id="toastMsg" class="toast"></div>
@@ -161,12 +244,12 @@
     let currentPage = 'home';
     let currentAlbumImages = [];
     let currentImageIndex = 0;
-    let currentInquiryText = 'السلام عليكم، أود الاستفسار عن هذه الصورة';
+    let panzoomInstance = null; // لتخزين كائن panzoom
 
     function showToast(msg) { const t=document.getElementById('toastMsg'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',2500); }
-
     function getInquiryText() { return currentData.inquiry_text || 'السلام عليكم، أود الاستفسار عن هذه الصورة'; }
 
+    // دوال الوقت
     function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
     function getGroupedScheduleHtml(d) {
         if (!d.work_schedule) return '<p>لم تحدد المواعيد</p>';
@@ -200,7 +283,50 @@
         return images;
     }
 
-    // دوال فتح الألبوم وعرض الصور في لايت بوكس مع زر استفسار
+    // دوال اللايت بوكس مع panzoom
+    function initPanzoomOnImage() {
+        const imgElement = document.getElementById('lightboxImg');
+        if (!imgElement) return;
+        // إزالة أي panzoom سابق
+        if (panzoomInstance) {
+            panzoomInstance.dispose();
+            panzoomInstance = null;
+        }
+        // إعادة تعيين التحويلات (zoom)
+        imgElement.style.transform = '';
+        // تفعيل panzoom مع خيارات: zoom بالسكرول، حدود قصوى، إلخ.
+        panzoomInstance = panzoom(imgElement, {
+            maxScale: 5,
+            minScale: 1,
+            step: 0.2,
+            zoomDoubleClickSpeed: 1,
+            bounds: true,
+            boundsPadding: 0.1,
+            smoothScroll: false,
+            filterKey: function(event) { // منع冲突 مع أزرار التنقل
+                return event.target === imgElement;
+            }
+        });
+        // إعادة تعيين الموضع عند تغيير الصورة
+        panzoomInstance.moveTo(0, 0);
+        panzoomInstance.zoomTo(0, 0, 1);
+    }
+
+    function updateLightboxImage() {
+        if (currentAlbumImages.length === 0) return;
+        const imgUrl = currentAlbumImages[currentImageIndex];
+        const imgElement = document.getElementById('lightboxImg');
+        // تغيير مصدر الصورة وإعادة تهيئة panzoom بعد تحميلها
+        imgElement.onload = () => { initPanzoomOnImage(); };
+        imgElement.src = imgUrl;
+        if (imgElement.complete) initPanzoomOnImage();
+        // تحديث زر الاستفسار
+        const inquiryText = getInquiryText();
+        const whatsappLink = `https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent(inquiryText + '\n\nرابط الصورة: ' + imgUrl)}`;
+        const btn = document.getElementById('lightboxInquiryBtn');
+        btn.onclick = () => window.open(whatsappLink, '_blank');
+    }
+
     function openAlbum(id) {
         const alb = currentData.albums?.[id];
         if (!alb || !alb.imgs) { showToast('لا توجد صور في هذا الألبوم'); return; }
@@ -212,24 +338,27 @@
         document.getElementById('lightbox').style.display = 'flex';
     }
 
-    function updateLightboxImage() {
-        if (currentAlbumImages.length === 0) return;
-        const imgUrl = currentAlbumImages[currentImageIndex];
-        document.getElementById('lightboxImg').src = imgUrl;
-        // تحديث زر الاستفسار ليرسل الصورة الحالية
-        const inquiryText = getInquiryText();
-        const whatsappLink = `https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent(inquiryText + '\n\nرابط الصورة: ' + imgUrl)}`;
-        const btn = document.getElementById('lightboxInquiryBtn');
-        btn.onclick = () => window.open(whatsappLink, '_blank');
+    function closeLightbox() {
+        document.getElementById('lightbox').style.display = 'none';
+        if (panzoomInstance) panzoomInstance.dispose();
+        panzoomInstance = null;
     }
-
-    function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
-    function nextImage() { if (currentAlbumImages.length) { currentImageIndex = (currentImageIndex + 1) % currentAlbumImages.length; updateLightboxImage(); } }
-    function prevImage() { if (currentAlbumImages.length) { currentImageIndex = (currentImageIndex - 1 + currentAlbumImages.length) % currentAlbumImages.length; updateLightboxImage(); } }
+    function nextImage() {
+        if (currentAlbumImages.length) {
+            currentImageIndex = (currentImageIndex + 1) % currentAlbumImages.length;
+            updateLightboxImage();
+        }
+    }
+    function prevImage() {
+        if (currentAlbumImages.length) {
+            currentImageIndex = (currentImageIndex - 1 + currentAlbumImages.length) % currentAlbumImages.length;
+            updateLightboxImage();
+        }
+    }
 
     function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) { const win = window.open(); win.document.write(cat.code); } else showToast('الكتالوج غير متاح'); }
 
-    // بناء واجهات الصفحات
+    // بناء واجهات الصفحات (نفس السابق)
     function renderHomePage() {
         return `<div class="hero"><div class="container"><h1>ديكور يعكس بصمتك</h1><p>نقدم تصاميم داخلية وخارجية فاخرة، ومنتجات راقية تناسب ذوقك.</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a></div></div></div>
                 <div class="container section"><h2 class="section-title">أقسام المتجر</h2><div class="grid-auto" id="categoriesGrid"></div></div>
@@ -346,10 +475,15 @@
 
     function hideSplash() { const splash = document.getElementById('splash'); if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 300); } }
 
+    // استماع البيانات
     db.ref(DB_PATH).once('value', snap => { currentData = snap.val() || {}; hideSplash(); renderPartnersMarquee(); loadPage(); });
     db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; if (document.getElementById('mainContent').innerHTML !== '') { renderPartnersMarquee(); loadPage(); } });
 
-    window.openAlbum = openAlbum; window.openCatalog = openCatalog; window.closeLightbox = closeLightbox; window.nextImage = nextImage; window.prevImage = prevImage;
+    window.openAlbum = openAlbum;
+    window.openCatalog = openCatalog;
+    window.closeLightbox = closeLightbox;
+    window.nextImage = nextImage;
+    window.prevImage = prevImage;
 </script>
 </body>
 </html>
