@@ -1011,12 +1011,10 @@
     function getPageKeyFromHash() {
         let hash = window.location.hash.substring(1);
         if (!hash) return 'home';
-        // التعرف على الأسماء العربية للتبويبات الأساسية
         if (hash === 'الرئيسية') return 'home';
         if (hash === 'أعمالنا') return 'works';
-        if (hash === 'الكــتالوجات') return 'catalogs';
+        if (hash === 'الكتالوجات') return 'catalogs';
         if (hash === 'المفضلة') return 'favorites';
-        // البحث في الصفحات المخصصة
         if (currentData.pages) {
             for (let pid in currentData.pages) {
                 if (currentData.pages[pid].title === hash) {
@@ -1024,7 +1022,6 @@
                 }
             }
         }
-        // إذا كان الرابط بصيغة page_xxx مباشرة
         if (hash.startsWith('page_')) return hash;
         return 'home';
     }
@@ -1033,7 +1030,7 @@
         let hash = '';
         if (pageKey === 'home') hash = 'الرئيسية';
         else if (pageKey === 'works') hash = 'أعمالنا';
-        else if (pageKey === 'catalogs') hash = 'الكــتالوجات';
+        else if (pageKey === 'catalogs') hash = 'الكتالوجات';
         else if (pageKey === 'favorites') hash = 'المفضلة';
         else if (pageKey.startsWith('page_')) {
             const pid = pageKey.replace('page_', '');
@@ -1066,7 +1063,6 @@
         }
         container.innerHTML = html;
         
-        // إضافة أحداث النقر للتبويبات
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const page = btn.dataset.page;
@@ -1074,8 +1070,7 @@
                     currentPage = page;
                     updateHashFromPage(currentPage);
                     renderCurrentPage();
-                    renderTabs(); // إعادة رسم الأزرار لتحديث الصنف active
-                    // تمرير التبويب النشط للرؤية
+                    renderTabs();
                     setTimeout(() => {
                         const activeBtn = document.querySelector('.tab-btn.active');
                         if (activeBtn) {
@@ -1086,7 +1081,6 @@
             });
         });
         
-        // تمرير إلى التبويب النشط عند التحميل
         setTimeout(() => {
             const activeBtn = document.querySelector('.tab-btn.active');
             if (activeBtn) {
@@ -1113,7 +1107,6 @@
 
     window.addEventListener('load', () => { setTimeout(() => { const splash = document.getElementById('splash'); if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.style.display = 'none', 500); } }, 900); });
     
-    // الاستماع لتغير الرابط (hash) من زر الرجوع/التقديم في المتصفح
     window.addEventListener('hashchange', () => {
         if (!currentData || Object.keys(currentData).length === 0) return;
         const newPage = getPageKeyFromHash();
@@ -1127,7 +1120,6 @@
     db.ref(DB_PATH).on('value', (snap) => {
         currentData = snap.val() || {};
         if (checkMaintenanceAndShow()) return;
-        // تعيين الصفحة الحالية بناءً على الرابط
         currentPage = getPageKeyFromHash();
         renderTabs();
         renderCurrentPage();
