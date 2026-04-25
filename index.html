@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>بصمة غير | ديكور فاخر وتصميم داخلي</title>
-    <meta name="description" content="بصمة غير - متخصصون في التصميم الداخلي والديكور الفاخر، نقدم منتجات وأعمال راقية تناسب ذوقك.">
+    <title>بصمة غير | لوحة تحكم فارغة</title>
     <link rel="icon" type="image/png" href="https://i.ibb.co/CsmG3G7r/1.png">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -12,8 +11,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html, body { height: 100%; overflow: auto; }
-        body { font-family: 'Cairo', sans-serif; background: #ffffff; color: #2d2a2a; line-height: 1.5; }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #ffffff;
+            color: #2d2a2a;
+            line-height: 1.5;
+        }
         :root {
             --primary: #c8a165;
             --primary-dark: #a47e44;
@@ -23,82 +26,282 @@
             --shadow: 0 8px 25px rgba(0,0,0,0.05);
             --shadow-hover: 0 15px 35px rgba(0,0,0,0.1);
         }
-        #splash { position: fixed; inset: 0; background: #1a1a1a; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.8s; }
-        .splash-img { width: 100%; height: 100%; object-fit: cover; }
-        .header { background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 1000; }
-        .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
-        .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; flex-wrap: wrap; }
-        .logo h1 { font-size: 1.8rem; font-weight: 800; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); background-clip: text; -webkit-background-clip: text; color: transparent; }
-        .nav-links { display: flex; gap: 1.8rem; }
-        .nav-links a { text-decoration: none; font-weight: 600; color: #333; transition: 0.2s; }
+        /* شاشة بداية سريعة جداً (لإخفاء أي تأخير) */
+        #splash {
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s;
+        }
+        .splash-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #eee;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* الهيدر */
+        .header {
+            background: rgba(255,255,255,0.96);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            flex-wrap: wrap;
+        }
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .nav-links {
+            display: flex;
+            gap: 1.8rem;
+        }
+        .nav-links a {
+            text-decoration: none;
+            font-weight: 600;
+            color: #333;
+            transition: 0.2s;
+            cursor: pointer;
+        }
         .nav-links a:hover { color: var(--primary); }
-        .hero { background: linear-gradient(135deg, #fef9f0, #fffaf5); padding: 5rem 20px; text-align: center; }
+        /* هيرو بسيط */
+        .hero {
+            background: linear-gradient(135deg, #fef9f0, #fffaf5);
+            padding: 5rem 20px;
+            text-align: center;
+        }
         .hero h1 { font-size: 3rem; font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem; }
         .hero p { font-size: 1.2rem; color: #5a5a5a; max-width: 700px; margin: 0 auto 2rem; }
         .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 0.8rem 2rem; border-radius: 60px; font-weight: 600; text-decoration: none; transition: 0.2s; display: inline-block; }
+        .btn {
+            padding: 0.8rem 2rem;
+            border-radius: 60px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.2s;
+            display: inline-block;
+        }
         .btn-primary { background: var(--primary); color: white; border: none; }
         .btn-primary:hover { background: var(--primary-dark); transform: translateY(-3px); }
         .btn-outline { border: 1px solid var(--primary); color: var(--primary); background: transparent; }
         .btn-outline:hover { background: var(--primary); color: white; }
+        /* الأقسام العامة */
         .section { padding: 4rem 0; }
-        .section-title { font-size: 2rem; font-weight: 700; text-align: center; margin-bottom: 2.5rem; color: var(--primary-dark); position: relative; }
-        .section-title::after { content: ''; display: block; width: 70px; height: 3px; background: var(--primary); margin: 0.5rem auto 0; }
-        .grid-4 { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2rem; }
-        .card { background: var(--white); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; cursor: pointer; text-align: center; }
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            color: var(--primary-dark);
+            position: relative;
+        }
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 70px;
+            height: 3px;
+            background: var(--primary);
+            margin: 0.5rem auto 0;
+        }
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 2rem;
+        }
+        /* البطاقات العامة */
+        .card {
+            background: var(--white);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: 0.3s;
+            cursor: pointer;
+            text-align: center;
+        }
         .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); }
         .card-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
         .card-body { padding: 1.2rem; }
         .card-title { font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); }
-        .product-card { background: var(--white); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; }
+        /* بطاقات المنتج مع زر واتساب أسفل الصورة */
+        .product-card {
+            background: var(--white);
+            border-radius: 28px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: 0.3s;
+        }
         .product-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
         .product-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
         .product-info { padding: 1rem; text-align: center; }
-        .whatsapp-order { background: #25D366; color: white; border: none; width: 100%; padding: 8px; border-radius: 50px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: 0.2s; }
+        .whatsapp-order {
+            background: #25D366;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
         .whatsapp-order:hover { background: #1da15a; }
-        .testimonial-card { background: var(--white); border-radius: 28px; padding: 1.5rem; box-shadow: var(--shadow); }
+        /* التقييمات */
+        .testimonial-card {
+            background: var(--white);
+            border-radius: 28px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
         .testimonial-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
-        .testimonial-avatar { width: 50px; height: 50px; background: var(--primary-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; color: var(--primary); }
+        .testimonial-avatar {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--primary);
+        }
         .stars { color: #f5b042; margin-top: 4px; }
-        .review-form { background: var(--white); border-radius: 28px; padding: 1.5rem; box-shadow: var(--shadow); margin-top: 2rem; }
-        .review-form input, .review-form textarea { width: 100%; padding: 10px 15px; border: 1px solid #eee; border-radius: 60px; margin-bottom: 1rem; font-family: inherit; }
+        /* نموذج التقييم */
+        .review-form {
+            background: var(--white);
+            border-radius: 28px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            margin-top: 2rem;
+        }
+        .review-form input, .review-form textarea {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #eee;
+            border-radius: 60px;
+            margin-bottom: 1rem;
+            font-family: inherit;
+        }
         .review-form textarea { border-radius: 20px; resize: vertical; }
-        .star-rating { display: flex; gap: 8px; justify-content: center; margin-bottom: 1rem; flex-direction: row-reverse; }
+        .star-rating {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-direction: row-reverse;
+        }
         .star-rating i { font-size: 1.6rem; color: #ddd; cursor: pointer; }
         .star-rating i.active, .star-rating i:hover { color: var(--primary); }
-        .footer { background: #1e1e1e; color: #ccc; padding: 3rem 0 1rem; }
-        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
+        /* الفوتر */
+        .footer {
+            background: #1e1e1e;
+            color: #ccc;
+            padding: 3rem 0 1rem;
+        }
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
         .footer h4 { color: var(--primary); margin-bottom: 1rem; }
         .schedule-item { margin-bottom: 0.8rem; }
         .social-icons { display: flex; gap: 1rem; margin-top: 1rem; }
-        .social-icons a { background: #333; width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: white; transition: 0.2s; }
+        .social-icons a {
+            background: #333;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            transition: 0.2s;
+        }
         .social-icons a:hover { background: var(--primary); }
         .copyright { text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #333; }
-        .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        /* لايت بوكس للصور */
+        .lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.96);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
         .lightbox img { max-width: 90%; max-height: 85vh; object-fit: contain; }
-        .lightbox-close, .lightbox-prev, .lightbox-next { position: absolute; color: white; font-size: 2rem; cursor: pointer; background: rgba(0,0,0,0.5); padding: 0.2rem 0.5rem; border-radius: 50%; }
+        .lightbox-close, .lightbox-prev, .lightbox-next {
+            position: absolute;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            background: rgba(0,0,0,0.5);
+            padding: 0.2rem 0.5rem;
+            border-radius: 50%;
+        }
         .lightbox-close { top: 20px; right: 30px; }
         .lightbox-prev { left: 20px; top: 50%; transform: translateY(-50%); }
         .lightbox-next { right: 20px; top: 50%; transform: translateY(-50%); }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e1e1e; color: white; padding: 8px 20px; border-radius: 50px; z-index: 2001; display: none; }
-        @media (max-width: 800px) { .nav-bar { flex-direction: column; gap: 0.8rem; } .hero h1 { font-size: 2rem; } .section { padding: 2rem 0; } }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e1e1e;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            z-index: 2001;
+            display: none;
+        }
+        @media (max-width: 800px) {
+            .nav-bar { flex-direction: column; gap: 0.8rem; }
+            .hero h1 { font-size: 2rem; }
+            .section { padding: 2rem 0; }
+        }
         .empty-state { text-align: center; padding: 2rem; color: var(--gray); }
     </style>
 </head>
 <body>
 
-<div id="splash"><img id="splashImg" class="splash-img" style="display:none;"></div>
+<div id="splash"><div class="splash-spinner"></div></div>
 
 <header class="header">
     <div class="container">
         <div class="nav-bar">
             <div class="logo"><h1 id="siteTitle">بصمة غير</h1></div>
             <div class="nav-links">
-                <a href="#" data-page="home">الرئيسية</a>
-                <a href="#" data-page="store">المتجر</a>
-                <a href="#" data-page="works">أعمالنا</a>
-                <a href="#" data-page="catalogs">الكتالوجات</a>
-                <a href="#" data-page="contact">اتصل بنا</a>
+                <a data-page="home">الرئيسية</a>
+                <a data-page="store">المتجر</a>
+                <a data-page="works">أعمالنا</a>
+                <a data-page="catalogs">الكتالوجات</a>
+                <a data-page="contact">اتصل بنا</a>
             </div>
         </div>
     </div>
@@ -109,9 +312,21 @@
 <footer class="footer">
     <div class="container">
         <div class="footer-grid">
-            <div><h4>بصمة غير</h4><p>نقدم تصاميم داخلية وخارجية فاخرة ومنتجات ديكور راقية.</p><div class="social-icons" id="socialIcons"></div></div>
-            <div><h4>أوقات العمل</h4><div id="footerHours"></div></div>
-            <div><h4>تواصل معنا</h4><p><i class="fas fa-phone"></i> <span id="footerPhone"></span></p><p><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp"></span></p><p><i class="fas fa-map-marker-alt"></i> <span id="footerLocation"></span></p></div>
+            <div>
+                <h4>بصمة غير</h4>
+                <p>نقدم تصاميم داخلية وخارجية فاخرة ومنتجات ديكور راقية.</p>
+                <div class="social-icons" id="socialIcons"></div>
+            </div>
+            <div>
+                <h4>أوقات العمل</h4>
+                <div id="footerHours"></div>
+            </div>
+            <div>
+                <h4>تواصل معنا</h4>
+                <p><i class="fas fa-phone"></i> <span id="footerPhone"></span></p>
+                <p><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp"></span></p>
+                <p><i class="fas fa-map-marker-alt"></i> <span id="footerLocation"></span></p>
+            </div>
         </div>
         <div class="copyright" id="footerCopyright">© 2025 بصمة غير - جميع الحقوق محفوظة</div>
     </div>
@@ -144,10 +359,20 @@
     let currentAlbumImages = [];
     let currentImageIndex = 0;
 
-    function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
+    function showToast(msg) {
+        const t = document.getElementById('toastMsg');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 2500);
+    }
 
-    // أوقات العمل المجمعة
-    function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
+    // ========== أوقات العمل المجمعة ==========
+    function formatTime12(t) {
+        if (!t) return '';
+        let [h, m] = t.split(':');
+        h = parseInt(h);
+        return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`;
+    }
     function getGroupedScheduleHtml(d) {
         if (!d.work_schedule) return '<p>لم تحدد المواعيد</p>';
         const dayNames = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
@@ -173,35 +398,41 @@
         return html;
     }
 
-    // دالة لجمع جميع صور المنتجات من كل المصادر (الألبومات وأقسام المتجر)
+    // ========== جلب جميع صور المنتجات من كل المصادر ==========
     function getAllProductImages() {
         let images = [];
-        // 1. من أقسام المتجر (store_categories)
         if (currentData.store_categories) {
-            Object.keys(currentData.store_categories).forEach(catId => {
-                const cat = currentData.store_categories[catId];
+            Object.keys(currentData.store_categories).forEach(cid => {
+                const cat = currentData.store_categories[cid];
                 if (cat.imgs) {
                     Object.values(cat.imgs).forEach(img => { if (img.url) images.push(img.url); });
                 }
             });
         }
-        // 2. من الألبومات (أعمالنا) – نعتبرها منتجات أيضاً حتى لا تختفي
         if (currentData.albums) {
-            Object.keys(currentData.albums).forEach(albId => {
-                const alb = currentData.albums[albId];
+            Object.keys(currentData.albums).forEach(aid => {
+                const alb = currentData.albums[aid];
                 if (alb.imgs) {
                     Object.values(alb.imgs).forEach(img => { if (img.url) images.push(img.url); });
                 }
             });
         }
-        // إزالة التكرار (اختياري)
         return [...new Set(images)];
     }
 
-    // دوال عرض الصفحات
+    // ========== دوال بناء الصفحات ==========
     function renderHomePage() {
         return `
-            <div class="hero"><div class="container"><h1>ديكور يعكس بصمتك</h1><p>نقدم تصاميم داخلية وخارجية فاخرة، ومنتجات راقية تناسب ذوقك.</p><div class="btn-group"><a href="#" class="btn btn-primary" data-page="store">تسوق الآن</a><a href="#" class="btn btn-outline" data-page="works">شاهد أعمالنا</a></div></div></div>
+            <div class="hero">
+                <div class="container">
+                    <h1>ديكور يعكس بصمتك</h1>
+                    <p>نقدم تصاميم داخلية وخارجية فاخرة، ومنتجات راقية تناسب ذوقك.</p>
+                    <div class="btn-group">
+                        <a class="btn btn-primary" data-page="store">تسوق الآن</a>
+                        <a class="btn btn-outline" data-page="works">شاهد أعمالنا</a>
+                    </div>
+                </div>
+            </div>
             <div class="container section"><h2 class="section-title">أقسام المتجر</h2><div class="grid-4" id="categoriesGrid"></div></div>
             <div class="container section"><h2 class="section-title">أحدث المنتجات</h2><div class="grid-4" id="productsGrid"></div></div>
             <div class="container section"><h2 class="section-title">أعمالنا</h2><div class="grid-4" id="portfolioGrid"></div></div>
@@ -220,15 +451,24 @@
     }
     function renderContactPage() {
         const d = currentData;
-        return `<div class="container section"><h2 class="section-title">اتصل بنا</h2><div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p><a href="tel:0541780995" style="color:inherit;">0541780995</a></p></div><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p><a href="https://wa.me/${d.whatsapp_num || '966500000000'}" target="_blank">واتساب</a></p></div>${d.insta_url ? `<div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p><a href="${d.insta_url}" target="_blank">انستقرام</a></p></div>` : ''}${d.tiktok_url ? `<div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p><a href="${d.tiktok_url}" target="_blank">تيك توك</a></p></div>` : ''}${d.snap_url ? `<div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p><a href="${d.snap_url}" target="_blank">سناب</a></p></div>` : ''}<div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p><a href="${d.location_url || '#'}" target="_blank">موقعنا</a></p></div></div></div>`;
+        return `<div class="container section"><h2 class="section-title">اتصل بنا</h2>
+            <div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;">
+                <a href="tel:0541780995" style="text-decoration:none; color:inherit;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p>0541780995</p></div></a>
+                <a href="https://wa.me/${d.whatsapp_num || '966500000000'}" target="_blank" style="text-decoration:none; color:inherit;"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p>واتساب</p></div></a>
+                ${d.insta_url ? `<a href="${d.insta_url}" target="_blank" style="text-decoration:none; color:inherit;"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p>انستقرام</p></div></a>` : ''}
+                ${d.tiktok_url ? `<a href="${d.tiktok_url}" target="_blank" style="text-decoration:none; color:inherit;"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p>تيك توك</p></div></a>` : ''}
+                ${d.snap_url ? `<a href="${d.snap_url}" target="_blank" style="text-decoration:none; color:inherit;"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p>سناب</p></div></a>` : ''}
+                <a href="${d.location_url || '#'}" target="_blank" style="text-decoration:none; color:inherit;"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p>موقعنا</p></div></a>
+            </div>
+        </div>`;
     }
 
-    // دوال ملء المحتوى
+    // ========== دوال ملء المحتوى ==========
     function buildCategories() {
-        const container = document.getElementById('categoriesGrid');
-        if (!container) return;
+        const cont = document.getElementById('categoriesGrid');
+        if (!cont) return;
         if (!currentData.store_categories || Object.keys(currentData.store_categories).length === 0) {
-            container.innerHTML = '<div class="empty-state">لا توجد أقسام بعد</div>';
+            cont.innerHTML = '<div class="empty-state">لا توجد أقسام بعد</div>';
             return;
         }
         let html = '';
@@ -236,92 +476,107 @@
             const cat = currentData.store_categories[id];
             let img = '';
             if (cat.imgs && Object.keys(cat.imgs).length) img = Object.values(cat.imgs)[0].url;
-            html += `<div class="card" onclick="location.href='#store'">${img ? `<img src="${img}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${cat.name || 'قسم'}</div></div></div>`;
+            html += `<div class="card" data-page="store">${img ? `<img src="${img}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${cat.name || 'قسم'}</div></div></div>`;
         });
-        container.innerHTML = html;
+        cont.innerHTML = html;
+        document.querySelectorAll('#categoriesGrid .card').forEach(c => {
+            c.addEventListener('click', () => { currentPage = 'store'; loadPage(); });
+        });
     }
     function buildLatestProducts() {
-        const container = document.getElementById('productsGrid');
-        if (!container) return;
-        let allImages = getAllProductImages();
-        if (allImages.length === 0) { container.innerHTML = '<div class="empty-state">لا توجد منتجات حالياً</div>'; return; }
-        const latest = allImages.slice(0, 6);
+        const cont = document.getElementById('productsGrid');
+        if (!cont) return;
+        let all = getAllProductImages();
+        if (all.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد منتجات حالياً</div>'; return; }
+        let latest = all.slice(0, 6);
         let html = '';
         latest.forEach(url => {
             html += `<div class="product-card"><img src="${url}" class="product-img" loading="lazy"><div class="product-info"><button class="whatsapp-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}', '_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`;
         });
-        container.innerHTML = html;
+        cont.innerHTML = html;
     }
     function buildAllProductsGrid() {
-        const container = document.getElementById('allProductsGrid');
-        if (!container) return;
-        let allImages = getAllProductImages();
-        if (allImages.length === 0) { container.innerHTML = '<div class="empty-state">لا توجد منتجات</div>'; return; }
+        const cont = document.getElementById('allProductsGrid');
+        if (!cont) return;
+        let all = getAllProductImages();
+        if (all.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد منتجات</div>'; return; }
         let html = '';
-        allImages.forEach(url => {
+        all.forEach(url => {
             html += `<div class="product-card"><img src="${url}" class="product-img" loading="lazy"><div class="product-info"><button class="whatsapp-order" onclick="window.open('https://wa.me/${currentData.whatsapp_num || '966500000000'}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}', '_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`;
         });
-        container.innerHTML = html;
+        cont.innerHTML = html;
     }
     function buildPortfolio() {
-        const container = document.getElementById('portfolioGrid');
-        if (!container) return;
-        if (!currentData.albums || Object.keys(currentData.albums).length === 0) { container.innerHTML = '<div class="empty-state">لا توجد أعمال بعد</div>'; return; }
+        const cont = document.getElementById('portfolioGrid');
+        if (!cont) return;
+        if (!currentData.albums || Object.keys(currentData.albums).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال بعد</div>'; return; }
         let html = '';
         Object.keys(currentData.albums).forEach(id => {
             const alb = currentData.albums[id];
             let cover = '';
             if (alb.imgs && Object.keys(alb.imgs).length) cover = Object.values(alb.imgs)[0].url;
-            html += `<div class="card" onclick="openAlbum('${id}')">${cover ? `<img src="${cover}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div></div></div>`;
+            html += `<div class="card" data-album="${id}">${cover ? `<img src="${cover}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div></div></div>`;
         });
-        container.innerHTML = html;
+        cont.innerHTML = html;
+        document.querySelectorAll('#portfolioGrid .card').forEach(c => {
+            c.addEventListener('click', () => openAlbum(c.getAttribute('data-album')));
+        });
     }
     function buildWorksGrid() {
-        const container = document.getElementById('worksGrid');
-        if (!container) return;
-        if (!currentData.albums || Object.keys(currentData.albums).length === 0) { container.innerHTML = '<div class="empty-state">لا توجد أعمال</div>'; return; }
+        const cont = document.getElementById('worksGrid');
+        if (!cont) return;
+        if (!currentData.albums || Object.keys(currentData.albums).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال</div>'; return; }
         let html = '';
         Object.keys(currentData.albums).forEach(id => {
             const alb = currentData.albums[id];
             let cover = '';
             if (alb.imgs && Object.keys(alb.imgs).length) cover = Object.values(alb.imgs)[0].url;
-            html += `<div class="card" onclick="openAlbum('${id}')">${cover ? `<img src="${cover}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div></div></div>`;
+            html += `<div class="card" data-album="${id}">${cover ? `<img src="${cover}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div></div></div>`;
         });
-        container.innerHTML = html;
+        cont.innerHTML = html;
+        document.querySelectorAll('#worksGrid .card').forEach(c => {
+            c.addEventListener('click', () => openAlbum(c.getAttribute('data-album')));
+        });
     }
     function buildCatalogsHome() {
-        const container = document.getElementById('catalogsHomeGrid');
-        if (!container) return;
-        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { container.innerHTML = '<div class="empty-state">لا توجد كتالوجات</div>'; return; }
+        const cont = document.getElementById('catalogsHomeGrid');
+        if (!cont) return;
+        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد كتالوجات</div>'; return; }
         let html = '';
         Object.keys(currentData.catalogs).forEach(id => {
             const cat = currentData.catalogs[id];
-            html += `<div class="card" onclick="openCatalog('${id}')"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary); margin-bottom:0.5rem; display:block;"></i><div class="card-title">${cat.name || 'كتالوج'}</div><small>اضغط للعرض</small></div></div>`;
+            html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary); margin-bottom:0.5rem; display:block;"></i><div class="card-title">${cat.name || 'كتالوج'}</div><small>اضغط للعرض</small></div></div>`;
         });
-        container.innerHTML = html;
+        cont.innerHTML = html;
+        document.querySelectorAll('#catalogsHomeGrid .card').forEach(c => {
+            c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog')));
+        });
     }
     function buildCatalogsPageGrid() {
-        const container = document.getElementById('catalogsPageGrid');
-        if (!container) return;
-        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { container.innerHTML = '<div class="empty-state">لا توجد كتالوجات</div>'; return; }
+        const cont = document.getElementById('catalogsPageGrid');
+        if (!cont) return;
+        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد كتالوجات</div>'; return; }
         let html = '';
         Object.keys(currentData.catalogs).forEach(id => {
             const cat = currentData.catalogs[id];
-            html += `<div class="card" onclick="openCatalog('${id}')"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small>اضغط للعرض</small></div></div>`;
+            html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small>اضغط للعرض</small></div></div>`;
         });
-        container.innerHTML = html;
+        cont.innerHTML = html;
+        document.querySelectorAll('#catalogsPageGrid .card').forEach(c => {
+            c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog')));
+        });
     }
     function buildTestimonials() {
-        const container = document.getElementById('testimonialsGrid');
-        if (!container) return;
-        if (!currentData.reviews || Object.keys(currentData.reviews).length === 0) { container.innerHTML = '<div class="empty-state">لا توجد تقييمات بعد</div>'; }
+        const cont = document.getElementById('testimonialsGrid');
+        if (!cont) return;
+        if (!currentData.reviews || Object.keys(currentData.reviews).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد تقييمات بعد</div>'; }
         else {
             let html = '';
             Object.keys(currentData.reviews).forEach(id => {
                 const rev = currentData.reviews[id];
                 html += `<div class="testimonial-card"><div class="testimonial-header"><div class="testimonial-avatar"><i class="fas fa-user-alt"></i></div><div><div class="card-title" style="margin:0;">${rev.name}</div><div class="stars">${'★'.repeat(rev.rating)}${'☆'.repeat(5 - rev.rating)}</div></div></div><p>${rev.message}</p></div>`;
             });
-            container.innerHTML = html;
+            cont.innerHTML = html;
         }
         const formContainer = document.getElementById('reviewFormContainer');
         if (formContainer) {
@@ -329,7 +584,6 @@
             setupStarRating();
         }
     }
-
     function setupStarRating() {
         let selected = 0;
         const stars = document.querySelectorAll('#starRating i');
@@ -377,9 +631,9 @@
     function updateFooterData() {
         const d = currentData;
         document.getElementById('siteTitle').innerText = d.site_name || 'بصمة غير';
-        document.getElementById('footerPhone').innerText = d.whatsapp_num || '0541780995';
+        document.getElementById('footerPhone').innerHTML = `<a href="tel:0541780995" style="color:inherit;">0541780995</a>`;
         document.getElementById('footerWhatsapp').innerHTML = `<a href="https://wa.me/${d.whatsapp_num || '966500000000'}" target="_blank" style="color:#25D366;">${d.whatsapp_num || '966500000000'}</a>`;
-        document.getElementById('footerLocation').innerHTML = d.location_url ? `<a href="${d.location_url}" target="_blank">جدة، السعودية</a>` : 'جدة، السعودية';
+        document.getElementById('footerLocation').innerHTML = d.location_url ? `<a href="${d.location_url}" target="_blank" style="color:inherit;">جدة، السعودية</a>` : 'جدة، السعودية';
         const socialDiv = document.getElementById('socialIcons');
         if (socialDiv) {
             let s = '';
@@ -391,6 +645,18 @@
         const hoursDiv = document.getElementById('footerHours');
         if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
         if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
+    }
+
+    function attachNavEvents() {
+        document.querySelectorAll('[data-page]').forEach(el => {
+            el.removeEventListener('click', navHandler);
+            el.addEventListener('click', navHandler);
+        });
+    }
+    function navHandler(e) {
+        e.preventDefault();
+        const page = this.getAttribute('data-page');
+        if (page) { currentPage = page; loadPage(); window.scrollTo(0, 0); }
     }
 
     function loadPage() {
@@ -418,31 +684,18 @@
         attachNavEvents();
     }
 
-    function attachNavEvents() {
-        document.querySelectorAll('[data-page]').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const page = link.getAttribute('data-page');
-                if (page) { currentPage = page; loadPage(); window.scrollTo(0, 0); }
-            });
-        });
-    }
-
-    function showSplash(imgUrl) {
+    // إخفاء السبلاش بعد تحميل البيانات
+    function hideSplash() {
         const splash = document.getElementById('splash');
-        const splashImg = document.getElementById('splashImg');
-        if (imgUrl) { splashImg.src = imgUrl; splashImg.style.display = 'block'; }
-        splash.style.display = 'flex';
-        setTimeout(() => {
+        if (splash) {
             splash.style.opacity = '0';
-            setTimeout(() => splash.style.display = 'none', 600);
-        }, 4000);
+            setTimeout(() => splash.style.display = 'none', 300);
+        }
     }
 
-    // تحميل البيانات من Firebase
     db.ref(DB_PATH).once('value', snap => {
         currentData = snap.val() || {};
-        showSplash(currentData.splash_image_url || '');
+        hideSplash();
         loadPage();
     });
     db.ref(DB_PATH).on('value', snap => {
@@ -455,6 +708,7 @@
     window.closeLightbox = closeLightbox;
     window.nextImage = nextImage;
     window.prevImage = prevImage;
+    window.submitNewReview = () => {};
 </script>
 </body>
 </html>
