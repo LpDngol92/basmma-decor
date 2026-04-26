@@ -27,7 +27,6 @@
             --shadow: 0 8px 25px rgba(0,0,0,0.05);
             --shadow-hover: 0 15px 35px rgba(0,0,0,0.1);
         }
-        /* شاشة بداية */
         #splash {
             position: fixed;
             inset: 0;
@@ -53,7 +52,6 @@
             border: none;
             backdrop-filter: blur(4px);
         }
-        /* الهيدر وشريط التنقل (ثابت في الأعلى) */
         .header {
             background: rgba(255,255,255,0.96);
             backdrop-filter: blur(12px);
@@ -133,7 +131,7 @@
         .hero h1 { font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem; }
         .hero p { font-size: clamp(1rem, 4vw, 1.2rem); color: #5a5a5a; max-width: 700px; margin: 0 auto 2rem; }
         .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 0.7rem 1.8rem; border-radius: 60px; font-weight: 600; text-decoration: none; transition: 0.2s; font-size: clamp(0.8rem, 3vw, 1rem); display: inline-block; }
+        .btn { padding: 0.7rem 1.8rem; border-radius: 60px; font-weight: 600; text-decoration: none; transition: 0.2s; font-size: clamp(0.8rem, 3vw, 1rem); display: inline-block; cursor: pointer; }
         .btn-primary { background: var(--primary); color: white; border: none; }
         .btn-primary:hover { background: var(--primary-dark); transform: translateY(-3px); }
         .btn-outline { border: 1px solid var(--primary); color: var(--primary); background: transparent; }
@@ -171,7 +169,7 @@
         .social-icons a { background: #333; width: 42px; height: 42px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; transition: 0.2s; }
         .social-icons a:hover { background: var(--primary); }
         .copyright { text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #333; }
-        /* ========== عارض الصورة (أزرار أسفل + سحب) ========== */
+        /* عارض الصورة */
         .lightbox {
             position: fixed;
             inset: 0;
@@ -272,7 +270,6 @@
             .lightbox-counter { padding: 4px 12px; font-size: 0.8rem; }
             .lightbox-wa-btn, .lightbox-nav { padding: 4px 12px; font-size: 0.8rem; }
         }
-        /* مودال لعرض الكتالوج */
         .catalog-modal {
             position: fixed;
             inset: 0;
@@ -329,9 +326,7 @@
     <div class="container">
         <div class="nav-bar">
             <div class="logo"><h1 id="siteTitle">بصمة غير</h1></div>
-            <div class="nav-links" id="navLinks">
-                <!-- سيتم ملء الروابط بواسطة JavaScript مع الحفاظ على الترتيب -->
-            </div>
+            <div class="nav-links" id="navLinks"></div>
         </div>
     </div>
 </header>
@@ -369,14 +364,13 @@
     <div id="lightboxClose" class="lightbox-close"><i class="fas fa-times"></i></div>
 </div>
 
-<!-- مودال لعرض الكتالوج -->
+<!-- مودال الكتالوج -->
 <div id="catalogModal" class="catalog-modal">
     <div class="catalog-modal-content">
         <button class="catalog-modal-close"><i class="fas fa-times"></i></button>
         <iframe id="catalogIframe" class="catalog-modal-iframe" src="about:blank"></iframe>
     </div>
 </div>
-
 <div id="toastMsg" class="toast"></div>
 
 <script>
@@ -399,7 +393,7 @@
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
 
-    // تعريف التبويبات الثابتة (يمكن إضافة المزيد مستقبلاً عبر Firebase لكن سنثبت الأساسيات)
+    // التبويبات الثابتة (القائمة العلوية)
     const pages = [
         { id: 'home', name: 'الرئيسية', icon: 'fas fa-home' },
         { id: 'store', name: 'المتجر', icon: 'fas fa-store' },
@@ -408,7 +402,7 @@
         { id: 'contact', name: 'اتصل بنا', icon: 'fas fa-phone-alt' }
     ];
 
-    // ========== عارض الصور المطور ==========
+    // ========== عارض الصور (مع أسهم وسحب) ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -419,7 +413,7 @@
     let initialPinchDist = 0;
     let pinchCenterX = 0, pinchCenterY = 0;
     let isPanning = false;
-    let touchStartX = 0;   // للسحب الأفقي
+    let touchStartX = 0;
 
     function setTransform() { imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`; }
     function resetTransform() { scale = 1; translateX = 0; translateY = 0; setTransform(); }
@@ -445,7 +439,6 @@
             pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             startTranslateX = translateX; startTranslateY = translateY;
         } else if (e.touches.length === 1) {
-            // بدء اللمس للسحب الأفقي (تبديل الصور) أو السحب العادي
             touchStartX = e.touches[0].clientX;
             if (scale > 1) {
                 isPanning = true;
@@ -480,13 +473,9 @@
     function onTouchEnd(e) {
         if (e.touches.length < 2) initialPinchDist = 0;
         if (e.touches.length === 0) {
-            // سحب أفقي (تبديل الصور) إذا لم يكن تكبير
             if (touchStartX && e.changedTouches[0] && scale <= 1) {
                 const diff = e.changedTouches[0].clientX - touchStartX;
-                if (Math.abs(diff) > 50) {
-                    if (diff > 0) prevImage();
-                    else nextImage();
-                }
+                if (Math.abs(diff) > 50) { if (diff > 0) prevImage(); else nextImage(); }
             }
             touchStartX = 0;
             isPanning = false;
@@ -547,30 +536,21 @@
     function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
     function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
-    // ربط الأزرار
     document.getElementById('lightboxPrev').onclick = () => prevImage();
     document.getElementById('lightboxNext').onclick = () => nextImage();
     document.getElementById('lightboxClose').onclick = () => closeLightbox();
     waBtn.onclick = () => sendWhatsapp();
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 
-    // ========== دوال الكتالوج (عرض في مودال) ==========
+    // ========== الكتالوج ==========
     const catalogModal = document.getElementById('catalogModal');
     const catalogIframe = document.getElementById('catalogIframe');
-    function openCatalogModal(code) {
-        catalogIframe.srcdoc = code;
-        catalogModal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-    function closeCatalogModal() {
-        catalogModal.style.display = 'none';
-        catalogIframe.srcdoc = '';
-        document.body.style.overflow = '';
-    }
+    function openCatalogModal(code) { catalogIframe.srcdoc = code; catalogModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    function closeCatalogModal() { catalogModal.style.display = 'none'; catalogIframe.srcdoc = ''; document.body.style.overflow = ''; }
     document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
     catalogModal.addEventListener('click', (e) => { if (e.target === catalogModal) closeCatalogModal(); });
 
-    // ========== دوال ربط الصور والكتالوجات ==========
+    // ========== الصور والكتالوجات من Firebase ==========
     function openAlbum(id) {
         const alb = currentData.albums?.[id];
         if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
@@ -642,7 +622,7 @@
             html += `<div class="card" data-page="store">${img ? `<img src="${img}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${cat.name || 'قسم'}</div></div></div>`;
         });
         cont.innerHTML = html;
-        document.querySelectorAll('#categoriesGrid .card').forEach(c => { c.addEventListener('click', () => { currentPage = 'store'; loadPage(); }); });
+        document.querySelectorAll('#categoriesGrid .card').forEach(c => { c.addEventListener('click', () => { changePage('store'); }); });
     }
     function buildLatestProducts() {
         const cont = document.getElementById('productsGrid');
@@ -761,10 +741,6 @@
         if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
         if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
     }
-    function attachNavEvents() {
-        document.querySelectorAll('.nav-links a').forEach(el => { el.removeEventListener('click', navHandler); el.addEventListener('click', navHandler); });
-    }
-    function navHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) { currentPage = page; loadPage(); window.scrollTo(0, 0); } }
     function renderNavLinks() {
         const container = document.getElementById('navLinks');
         if (!container) return;
@@ -773,49 +749,72 @@
             html += `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`;
         });
         container.innerHTML = html;
-        attachNavEvents();
     }
-    function renderHomePage() {
-        return `<div class="hero"><div class="container"><h1>ديكور يعكس بصمتك</h1><p>نقدم تصاميم داخلية وخارجية فاخرة ومنتجات راقية</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div>
-        <div class="container section"><h2 class="section-title">أقسام المتجر</h2><div class="grid-auto" id="categoriesGrid"></div></div>
-        <div class="container section"><h2 class="section-title">أحدث المنتجات</h2><div class="grid-auto" id="productsGrid"></div></div>`;
+    function attachNavEvents() {
+        // ربط أحداث جميع العناصر التي تحمل data-page (الأزرار العلوية والسفلية)
+        document.querySelectorAll('[data-page]').forEach(el => {
+            el.removeEventListener('click', navHandler);
+            el.addEventListener('click', navHandler);
+        });
     }
-    function renderStorePage() { return `<div class="container section"><h2 class="section-title">جميع المنتجات</h2><div class="grid-auto" id="allProductsGrid"></div></div>`; }
-    function renderWorksPage() { return `<div class="container section"><h2 class="section-title">أعمالنا</h2><div class="grid-auto" id="worksGrid"></div></div>`; }
-    function renderCatalogsPage() { return `<div class="container section"><h2 class="section-title">الكتالوجات</h2><div class="grid-auto" id="catalogsPageGrid"></div></div>`; }
-    function renderContactPage() {
-        return `<div class="container section"><h2 class="section-title">اتصل بنا</h2>
-        <div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;">
-            <a href="tel:0541780995" class="contact-icon"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i></div></a>
-            <a href="https://wa.me/${currentWhatsappNum}" target="_blank" class="contact-icon"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i></div></a>
-            ${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" class="contact-icon"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i></div></a>` : ''}
-            ${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" class="contact-icon"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i></div></a>` : ''}
-            ${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" class="contact-icon"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i></div></a>` : ''}
-            <a href="${currentData.location_url || '#'}" target="_blank" class="contact-icon"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i></div></a>
-        </div>
-        <div style="text-align:center; margin-top:20px; font-size:1.1rem;"><p>📞 0541780995</p></div>
-        </div>`;
+    function navHandler(e) {
+        e.preventDefault();
+        const page = this.getAttribute('data-page');
+        if (page) changePage(page);
+    }
+    function changePage(page) {
+        currentPage = page;
+        loadPage();
+        window.scrollTo(0, 0);
     }
     function loadPage() {
         const main = document.getElementById('mainContent');
         if (currentPage === 'home') {
-            main.innerHTML = renderHomePage();
+            main.innerHTML = `
+                <div class="hero">
+                    <div class="container">
+                        <h1>ديكور يعكس بصمتك</h1>
+                        <p>نقدم تصاميم داخلية وخارجية فاخرة ومنتجات راقية</p>
+                        <div class="btn-group">
+                            <a class="btn btn-primary" data-page="store">تسوق الآن</a>
+                            <a class="btn btn-outline" data-page="works">شاهد أعمالنا</a>
+                            <a class="btn btn-outline" data-page="catalogs">الكتالوجات</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="container section"><h2 class="section-title">أقسام المتجر</h2><div class="grid-auto" id="categoriesGrid"></div></div>
+                <div class="container section"><h2 class="section-title">أحدث المنتجات</h2><div class="grid-auto" id="productsGrid"></div></div>
+            `;
             buildCategories();
             buildLatestProducts();
         } else if (currentPage === 'store') {
-            main.innerHTML = renderStorePage();
+            main.innerHTML = `<div class="container section"><h2 class="section-title">جميع المنتجات</h2><div class="grid-auto" id="allProductsGrid"></div></div>`;
             buildAllProductsGrid();
         } else if (currentPage === 'works') {
-            main.innerHTML = renderWorksPage();
+            main.innerHTML = `<div class="container section"><h2 class="section-title">أعمالنا</h2><div class="grid-auto" id="worksGrid"></div></div>`;
             buildWorksGrid();
         } else if (currentPage === 'catalogs') {
-            main.innerHTML = renderCatalogsPage();
+            main.innerHTML = `<div class="container section"><h2 class="section-title">الكتالوجات</h2><div class="grid-auto" id="catalogsPageGrid"></div></div>`;
             buildCatalogsPageGrid();
         } else if (currentPage === 'contact') {
-            main.innerHTML = renderContactPage();
+            main.innerHTML = `
+                <div class="container section">
+                    <h2 class="section-title">اتصل بنا</h2>
+                    <div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;">
+                        <a href="tel:0541780995" class="contact-icon"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i></div></a>
+                        <a href="https://wa.me/${currentWhatsappNum}" target="_blank" class="contact-icon"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i></div></a>
+                        ${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" class="contact-icon"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i></div></a>` : ''}
+                        ${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" class="contact-icon"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i></div></a>` : ''}
+                        ${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" class="contact-icon"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i></div></a>` : ''}
+                        <a href="${currentData.location_url || '#'}" target="_blank" class="contact-icon"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i></div></a>
+                    </div>
+                    <div style="text-align:center; margin-top:20px; font-size:1.1rem;"><p>📞 0541780995</p></div>
+                </div>
+            `;
         }
         updateFooterData();
-        renderNavLinks();  // تحديث الروابط للحفاظ على التبويب النشط
+        renderNavLinks();    // تحديث الروابط العلوية (إضافة class active)
+        attachNavEvents();   // إعادة ربط الأحداث لأي عنصر جديد له data-page (بما في ذلك أزرار الهيرو)
     }
 
     let splashTimeout;
@@ -862,7 +861,6 @@
         currentData = snap.val() || {};
         showSplash({ enabled: currentData.splash_enabled !== false, type: currentData.splash_type || 'image', media_url: currentData.splash_media_url || '', video_url: currentData.splash_video_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true });
         renderPartnersMarquee();
-        renderNavLinks();
         loadPage();
     });
     db.ref(DB_PATH).on('value', snap => {
