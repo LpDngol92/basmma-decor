@@ -131,8 +131,8 @@
         .hero h1 { font-size: clamp(1.8rem, 6vw, 3rem); font-weight: 800; color: var(--primary-dark); margin-bottom: 1rem; }
         .hero p { font-size: clamp(1rem, 4vw, 1.2rem); color: #5a5a5a; max-width: 700px; margin: 0 auto 2rem; }
         .btn-group { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-        .btn { padding: 0.7rem 1.8rem; border-radius: 60px; font-weight: 600; text-decoration: none; transition: 0.2s; font-size: clamp(0.8rem, 3vw, 1rem); display: inline-block; cursor: pointer; }
-        .btn-primary { background: var(--primary); color: white; border: none; }
+        .btn { padding: 0.7rem 1.8rem; border-radius: 60px; font-weight: 600; text-decoration: none; transition: 0.2s; font-size: clamp(0.8rem, 3vw, 1rem); display: inline-block; cursor: pointer; border: none; }
+        .btn-primary { background: var(--primary); color: white; }
         .btn-primary:hover { background: var(--primary-dark); transform: translateY(-3px); }
         .btn-outline { border: 1px solid var(--primary); color: var(--primary); background: transparent; }
         .btn-outline:hover { background: var(--primary); color: white; }
@@ -169,7 +169,6 @@
         .social-icons a { background: #333; width: 42px; height: 42px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; transition: 0.2s; }
         .social-icons a:hover { background: var(--primary); }
         .copyright { text-align: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #333; }
-        /* عارض الصورة */
         .lightbox {
             position: fixed;
             inset: 0;
@@ -393,7 +392,7 @@
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
 
-    // التبويبات الثابتة (القائمة العلوية)
+    // التبويبات الثابتة
     const pages = [
         { id: 'home', name: 'الرئيسية', icon: 'fas fa-home' },
         { id: 'store', name: 'المتجر', icon: 'fas fa-store' },
@@ -402,7 +401,7 @@
         { id: 'contact', name: 'اتصل بنا', icon: 'fas fa-phone-alt' }
     ];
 
-    // ========== عارض الصور (مع أسهم وسحب) ==========
+    // ========== عارض الصور ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -550,7 +549,7 @@
     document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
     catalogModal.addEventListener('click', (e) => { if (e.target === catalogModal) closeCatalogModal(); });
 
-    // ========== الصور والكتالوجات من Firebase ==========
+    // ========== فتح الألبوم والكتالوج ==========
     function openAlbum(id) {
         const alb = currentData.albums?.[id];
         if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
@@ -564,7 +563,7 @@
         else showToast('الكتالوج غير متاح');
     }
 
-    // ========== دوال Firebase الأساسية ==========
+    // ========== دوال Firebase ==========
     function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
     function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
     function getGroupedScheduleHtml(d) {
@@ -643,19 +642,6 @@
         all.forEach(url => { html += `<div class="product-card"><img src="${url}" class="product-img" loading="lazy"><div class="product-info"><button class="whatsapp-order" onclick="window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`; });
         cont.innerHTML = html;
     }
-    function buildPortfolio() {
-        const cont = document.getElementById('portfolioGrid');
-        if (!cont) return;
-        if (!currentData.albums || Object.keys(currentData.albums).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال</div>'; return; }
-        let html = '';
-        Object.keys(currentData.albums).forEach(id => {
-            const alb = currentData.albums[id];
-            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            html += `<div class="card" data-album="${id}">${cover ? `<img src="${cover}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div></div></div>`;
-        });
-        cont.innerHTML = html;
-        document.querySelectorAll('#portfolioGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
-    }
     function buildWorksGrid() {
         const cont = document.getElementById('worksGrid');
         if (!cont) return;
@@ -669,18 +655,6 @@
         cont.innerHTML = html;
         document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
-    function buildCatalogsHome() {
-        const cont = document.getElementById('catalogsHomeGrid');
-        if (!cont) return;
-        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد كتالوجات</div>'; return; }
-        let html = '';
-        Object.keys(currentData.catalogs).forEach(id => {
-            const cat = currentData.catalogs[id];
-            html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary); margin-bottom:0.5rem; display:block;"></i><div class="card-title">${cat.name || 'كتالوج'}</div><small>اضغط للعرض</small></div></div>`;
-        });
-        cont.innerHTML = html;
-        document.querySelectorAll('#catalogsHomeGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); });
-    }
     function buildCatalogsPageGrid() {
         const cont = document.getElementById('catalogsPageGrid');
         if (!cont) return;
@@ -692,35 +666,6 @@
         });
         cont.innerHTML = html;
         document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); });
-    }
-    function buildTestimonials() {
-        const cont = document.getElementById('testimonialsGrid');
-        if (!cont) return;
-        if (!currentData.reviews || Object.keys(currentData.reviews).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد تقييمات</div>'; }
-        else {
-            let html = '';
-            Object.keys(currentData.reviews).forEach(id => {
-                const r = currentData.reviews[id];
-                html += `<div class="testimonial-card"><div class="testimonial-header"><div class="testimonial-avatar"><i class="fas fa-user-alt"></i></div><div><div class="card-title" style="margin:0;">${r.name}</div><div class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div></div></div><p>${r.message}</p></div>`;
-            });
-            cont.innerHTML = html;
-        }
-        const formCont = document.getElementById('reviewFormContainer');
-        if (formCont) {
-            formCont.innerHTML = `<div class="review-form"><h4>أضف تقييمك</h4><input type="text" id="reviewName" placeholder="اسمك الكريم"><div class="star-rating" id="starRating"><i class="fas fa-star" data-star="5"></i><i class="fas fa-star" data-star="4"></i><i class="fas fa-star" data-star="3"></i><i class="fas fa-star" data-star="2"></i><i class="fas fa-star" data-star="1"></i></div><textarea id="reviewMsg" rows="2" placeholder="شاركنا تجربتك..."></textarea><button onclick="submitReview()" style="background:var(--primary); color:white; border:none; padding:10px; border-radius:60px; width:100%; font-weight:600;">إرسال</button></div>`;
-            setupStarRating();
-        }
-    }
-    function setupStarRating() {
-        let selected = 0;
-        const stars = document.querySelectorAll('#starRating i');
-        stars.forEach(s => { s.onclick = () => { selected = parseInt(s.dataset.star); stars.forEach(st => st.classList.remove('active')); for (let i = stars.length - 1; i >= stars.length - selected; i--) stars[i]?.classList.add('active'); }; });
-        window.submitReview = () => {
-            const name = document.getElementById('reviewName')?.value;
-            const msg = document.getElementById('reviewMsg')?.value;
-            if (!name || !msg || !selected) { showToast('أكمل البيانات'); return; }
-            db.ref(DB_PATH + '/reviews').push({ name, message: msg, rating: selected }).then(() => { showToast('شكراً'); document.getElementById('reviewName').value = ''; document.getElementById('reviewMsg').value = ''; stars.forEach(st => st.classList.remove('active')); selected = 0; loadPage(); });
-        };
     }
     function updateFooterData() {
         const d = currentData;
@@ -751,7 +696,6 @@
         container.innerHTML = html;
     }
     function attachNavEvents() {
-        // ربط أحداث جميع العناصر التي تحمل data-page (الأزرار العلوية والسفلية)
         document.querySelectorAll('[data-page]').forEach(el => {
             el.removeEventListener('click', navHandler);
             el.addEventListener('click', navHandler);
@@ -813,8 +757,8 @@
             `;
         }
         updateFooterData();
-        renderNavLinks();    // تحديث الروابط العلوية (إضافة class active)
-        attachNavEvents();   // إعادة ربط الأحداث لأي عنصر جديد له data-page (بما في ذلك أزرار الهيرو)
+        renderNavLinks();
+        attachNavEvents();  // ✅ هذا السطر هو الحل: يعيد ربط الأحداث لكل العناصر التي تحمل data-page بعد كل تحديث للمحتوى
     }
 
     let splashTimeout;
