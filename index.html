@@ -37,7 +37,11 @@
             justify-content: center;
             transition: opacity 0.5s ease;
         }
-        .splash-media { width: 100%; height: 100%; object-fit: cover; }
+        .splash-media {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         .splash-skip {
             position: absolute;
             bottom: 30px;
@@ -228,19 +232,7 @@
             font-size: 0.9rem;
             color: white;
         }
-        .lightbox-wa-btn {
-            background: #25D366;
-            border: none;
-            color: white;
-            padding: 6px 18px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .lightbox-nav {
+        .lightbox-wa-btn, .lightbox-nav {
             background: rgba(0,0,0,0.5);
             color: white;
             border: none;
@@ -252,6 +244,7 @@
             align-items: center;
             gap: 8px;
         }
+        .lightbox-wa-btn { background: #25D366; }
         .lightbox-close {
             position: fixed;
             top: 20px;
@@ -307,8 +300,42 @@
             height: 100%;
             border: none;
         }
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e1e1e; color: white; padding: 8px 20px; border-radius: 50px; z-index: 2001; display: none; }
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e1e1e;
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            z-index: 2001;
+            display: none;
+        }
         .empty-state { text-align: center; padding: 2rem; color: var(--gray); }
+        .maintenance-screen {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(8px);
+            z-index: 9998;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .popup-bubble {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            max-width: 280px;
+            background: white;
+            border-radius: 28px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 10000;
+            border-right: 4px solid var(--primary);
+        }
         @media (max-width: 700px) {
             .grid-auto { gap: 1.5rem; }
             .toast { white-space: normal; width: 80%; text-align: center; }
@@ -320,6 +347,7 @@
 <body>
 
 <div id="splash"></div>
+<div id="maintenanceScreen" class="maintenance-screen"></div>
 
 <header class="header">
     <div class="container">
@@ -370,6 +398,15 @@
         <iframe id="catalogIframe" class="catalog-modal-iframe" src="about:blank"></iframe>
     </div>
 </div>
+
+<div id="popupBubble" class="popup-bubble">
+    <div style="padding:14px; display:flex; gap:10px; align-items:center;">
+        <div style="background:var(--primary); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; color:white;"><i class="fas fa-gift"></i></div>
+        <div id="popupMessage" style="flex:1; font-size:0.85rem;"></div>
+        <button onclick="closePopup()" style="background:none; border:none; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+    </div>
+</div>
+
 <div id="toastMsg" class="toast"></div>
 
 <script>
@@ -391,8 +428,10 @@
     let currentImageList = [];
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
+    let popupTimer = null;
+    let maintenanceInterval = null;
 
-    // التبويبات الثابتة
+    // صفحات التنقل الأساسية
     const pages = [
         { id: 'home', name: 'الرئيسية', icon: 'fas fa-home' },
         { id: 'store', name: 'المتجر', icon: 'fas fa-store' },
@@ -401,7 +440,7 @@
         { id: 'contact', name: 'اتصل بنا', icon: 'fas fa-phone-alt' }
     ];
 
-    // ========== عارض الصور ==========
+    // ========== عارض الصور (مطور بالكامل) ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -439,11 +478,7 @@
             startTranslateX = translateX; startTranslateY = translateY;
         } else if (e.touches.length === 1) {
             touchStartX = e.touches[0].clientX;
-            if (scale > 1) {
-                isPanning = true;
-                startX = e.touches[0].clientX - translateX;
-                startY = e.touches[0].clientY - translateY;
-            }
+            if (scale > 1) { isPanning = true; startX = e.touches[0].clientX - translateX; startY = e.touches[0].clientY - translateY; }
         }
     }
     function onTouchMove(e) {
@@ -541,15 +576,16 @@
     waBtn.onclick = () => sendWhatsapp();
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 
-    // ========== الكتالوج ==========
+    // ========== الكتالوج (مودال) ==========
     const catalogModal = document.getElementById('catalogModal');
     const catalogIframe = document.getElementById('catalogIframe');
     function openCatalogModal(code) { catalogIframe.srcdoc = code; catalogModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     function closeCatalogModal() { catalogModal.style.display = 'none'; catalogIframe.srcdoc = ''; document.body.style.overflow = ''; }
     document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
     catalogModal.addEventListener('click', (e) => { if (e.target === catalogModal) closeCatalogModal(); });
+    function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast('الكتالوج غير متاح'); }
 
-    // ========== فتح الألبوم والكتالوج ==========
+    // ========== فتح الألبومات ==========
     function openAlbum(id) {
         const alb = currentData.albums?.[id];
         if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
@@ -557,13 +593,8 @@
         if (urls.length) openLightbox(urls, 0);
         else showToast('لا توجد صور صالحة');
     }
-    function openCatalog(id) {
-        const cat = currentData.catalogs?.[id];
-        if (cat && cat.code) openCatalogModal(cat.code);
-        else showToast('الكتالوج غير متاح');
-    }
 
-    // ========== دوال Firebase ==========
+    // ========== دوال مساعدة عامة ==========
     function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
     function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
     function getGroupedScheduleHtml(d) {
@@ -590,6 +621,8 @@
         if (off.length) html += `<div class="schedule-item"><strong>عطلة:</strong> ${off.join('، ')}</div>`;
         return html;
     }
+
+    // ========== عرض الشركاء المتحركين ==========
     function renderPartnersMarquee() {
         const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack');
         if (!cont || !track) return;
@@ -600,6 +633,8 @@
             track.innerHTML = logos + logos;
         } else cont.style.display = 'none';
     }
+
+    // ========== جلب صور المتجر ==========
     function getAllStoreProducts() {
         let imgs = [];
         if (currentData.store_categories) {
@@ -610,6 +645,8 @@
         }
         return imgs;
     }
+
+    // ========== دوال بناء المحتوى الديناميكي ==========
     function buildCategories() {
         const cont = document.getElementById('categoriesGrid');
         if (!cont) return;
@@ -621,7 +658,7 @@
             html += `<div class="card" data-page="store">${img ? `<img src="${img}" class="card-img" loading="lazy">` : '<div class="card-img" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${cat.name || 'قسم'}</div></div></div>`;
         });
         cont.innerHTML = html;
-        document.querySelectorAll('#categoriesGrid .card').forEach(c => { c.addEventListener('click', () => { changePage('store'); }); });
+        document.querySelectorAll('#categoriesGrid .card').forEach(c => { c.addEventListener('click', () => changePage('store')); });
     }
     function buildLatestProducts() {
         const cont = document.getElementById('productsGrid');
@@ -686,6 +723,8 @@
         if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
         if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
     }
+
+    // ========== التنقل بين الصفحات ==========
     function renderNavLinks() {
         const container = document.getElementById('navLinks');
         if (!container) return;
@@ -696,10 +735,7 @@
         container.innerHTML = html;
     }
     function attachNavEvents() {
-        document.querySelectorAll('[data-page]').forEach(el => {
-            el.removeEventListener('click', navHandler);
-            el.addEventListener('click', navHandler);
-        });
+        document.querySelectorAll('[data-page]').forEach(el => { el.removeEventListener('click', navHandler); el.addEventListener('click', navHandler); });
     }
     function navHandler(e) {
         e.preventDefault();
@@ -752,15 +788,16 @@
                         ${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" class="contact-icon"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i></div></a>` : ''}
                         <a href="${currentData.location_url || '#'}" target="_blank" class="contact-icon"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i></div></a>
                     </div>
-                    <div style="text-align:center; margin-top:20px; font-size:1.1rem;"><p>📞 0541780995</p></div>
+                    <div style="text-align:center; margin-top:20px;"><p>📞 0541780995</p></div>
                 </div>
             `;
         }
         updateFooterData();
         renderNavLinks();
-        attachNavEvents();  // ✅ هذا السطر هو الحل: يعيد ربط الأحداث لكل العناصر التي تحمل data-page بعد كل تحديث للمحتوى
+        attachNavEvents();
     }
 
+    // ========== شاشة البداية (Splash) – تغطية كاملة ==========
     let splashTimeout;
     function showSplash(settings) {
         const splashDiv = document.getElementById('splash');
@@ -772,45 +809,142 @@
         const videoUrl = settings.video_url;
         const duration = (settings.duration || 5) * 1000;
         const showSkip = settings.show_skip === true;
-        let media;
+        let mediaElement;
         if (mediaType === 'video' && (videoUrl || mediaUrl)) {
             const vid = document.createElement('video');
-            vid.autoplay = true; vid.muted = true; vid.loop = false; vid.playsInline = true;
+            vid.autoplay = true;
+            vid.muted = true;
+            vid.loop = false;
+            vid.playsInline = true;
             vid.className = 'splash-media';
-            const src = document.createElement('source');
-            src.src = videoUrl || mediaUrl; src.type = 'video/mp4';
-            vid.appendChild(src); media = vid;
+            vid.style.width = '100%';
+            vid.style.height = '100%';
+            vid.style.objectFit = 'cover';
+            const source = document.createElement('source');
+            source.src = videoUrl || mediaUrl;
+            source.type = 'video/mp4';
+            vid.appendChild(source);
+            mediaElement = vid;
         } else {
             const img = document.createElement('img');
-            img.src = mediaUrl || ''; img.className = 'splash-media'; img.alt = 'Splash';
-            media = img;
+            img.src = mediaUrl || '';
+            img.className = 'splash-media';
+            img.alt = 'Splash';
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            mediaElement = img;
         }
-        splashDiv.appendChild(media);
+        splashDiv.appendChild(mediaElement);
         if (showSkip) {
-            const btn = document.createElement('button');
-            btn.innerText = 'تخطي ←'; btn.className = 'splash-skip';
-            btn.onclick = () => { clearTimeout(splashTimeout); splashDiv.style.opacity = '0'; setTimeout(() => splashDiv.style.display = 'none', 500); };
-            splashDiv.appendChild(btn);
+            const skipBtn = document.createElement('button');
+            skipBtn.innerText = 'تخطي ←';
+            skipBtn.className = 'splash-skip';
+            skipBtn.onclick = () => {
+                clearTimeout(splashTimeout);
+                splashDiv.style.opacity = '0';
+                setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
+            };
+            splashDiv.appendChild(skipBtn);
         }
         splashDiv.style.display = 'flex';
         splashDiv.style.opacity = '1';
         if (splashTimeout) clearTimeout(splashTimeout);
         splashTimeout = setTimeout(() => {
             splashDiv.style.opacity = '0';
-            setTimeout(() => splashDiv.style.display = 'none', 500);
+            setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
         }, duration);
+    }
+
+    // ========== وضع الصيانة ==========
+    function updateMaintenanceMode() {
+        const d = currentData;
+        const screen = document.getElementById('maintenanceScreen');
+        if (!d.maintenance_mode) {
+            if (screen.style.display !== 'none') screen.style.display = 'none';
+            if (maintenanceInterval) clearInterval(maintenanceInterval);
+            return;
+        }
+        const until = d.maintenance_until;
+        const title = d.maintenance_title || 'الموقع في صيانة';
+        const msg = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً';
+        if (until && until <= Date.now()) {
+            db.ref(DB_PATH).update({ maintenance_mode: false, maintenance_until: null });
+            return;
+        }
+        screen.innerHTML = `<div class="maintenance-card" style="background:white; border-radius:48px; padding:40px; max-width:500px; text-align:center;"><i class="fas fa-tools fa-4x" style="color:var(--primary);"></i><h2 style="margin:15px 0;">${title}</h2><p>${msg}</p>${until ? `<div id="maintenanceCountdown" style="font-size:2rem; font-weight:bold; margin-top:20px;"></div>` : ''}</div>`;
+        screen.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        if (until) {
+            const countdownEl = document.getElementById('maintenanceCountdown');
+            const updateCountdown = () => {
+                let diff = until - Date.now();
+                if (diff <= 0) {
+                    clearInterval(maintenanceInterval);
+                    window.location.reload();
+                    return;
+                }
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                if (countdownEl) countdownEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            };
+            updateCountdown();
+            maintenanceInterval = setInterval(updateCountdown, 1000);
+        }
+    }
+
+    // ========== فقاعة الترحيب ==========
+    let popupTimeout = null;
+    function updatePopup() {
+        const bubble = document.getElementById('popupBubble');
+        const msgSpan = document.getElementById('popupMessage');
+        if (!currentData.popup_enabled || !currentData.popup_message) {
+            if (bubble) bubble.style.display = 'none';
+            if (popupTimeout) clearTimeout(popupTimeout);
+            return;
+        }
+        if (bubble.style.display === 'none' || bubble.style.display === '') {
+            msgSpan.innerText = currentData.popup_message;
+            bubble.style.display = 'block';
+            if (popupTimeout) clearTimeout(popupTimeout);
+            popupTimeout = setTimeout(() => {
+                bubble.style.display = 'none';
+            }, (currentData.popup_duration || 7) * 1000);
+        }
+    }
+    function closePopup() {
+        const bubble = document.getElementById('popupBubble');
+        if (bubble) bubble.style.display = 'none';
+        if (popupTimeout) clearTimeout(popupTimeout);
+    }
+    window.closePopup = closePopup;
+
+    // ========== الاستماع لتغييرات Firebase وتحديث كل شيء ==========
+    function refreshAll() {
+        renderPartnersMarquee();
+        loadPage();
+        updateMaintenanceMode();
+        updatePopup();
     }
 
     db.ref(DB_PATH).once('value', snap => {
         currentData = snap.val() || {};
-        showSplash({ enabled: currentData.splash_enabled !== false, type: currentData.splash_type || 'image', media_url: currentData.splash_media_url || '', video_url: currentData.splash_video_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true });
-        renderPartnersMarquee();
-        loadPage();
+        showSplash({
+            enabled: currentData.splash_enabled !== false,
+            type: currentData.splash_type || 'image',
+            media_url: currentData.splash_media_url || '',
+            video_url: currentData.splash_video_url || '',
+            duration: currentData.splash_duration || 5,
+            show_skip: currentData.splash_show_skip === true
+        });
+        refreshAll();
     });
     db.ref(DB_PATH).on('value', snap => {
         currentData = snap.val() || {};
-        if (document.getElementById('mainContent').innerHTML !== '') { renderPartnersMarquee(); loadPage(); }
+        refreshAll();
     });
+
     window.openAlbum = openAlbum;
     window.openCatalog = openCatalog;
 </script>
