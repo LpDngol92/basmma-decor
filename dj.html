@@ -37,8 +37,6 @@
         @media (max-width: 700px) { .toast { white-space: normal; width: 80%; text-align: center; } .list-item-row { flex-direction: column; align-items: stretch; } .list-item-row input { margin-bottom: 8px; } }
         hr { margin: 15px 0; border-color: #e9e2d8; }
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-        .delete-image-btn { background: #dc3545; color: white; border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 0.8rem; cursor: pointer; margin-top: 4px; }
-        .delete-image-btn:hover { background: #a71d2a; }
     </style>
 </head>
 <body>
@@ -83,7 +81,7 @@
     function toggleCollapse(btn,id) { const content=btn.nextElementSibling; const isOpen=content.style.display==='block'; content.style.display=isOpen?'none':'block'; openSections[id]=!isOpen; btn.querySelector('span').innerHTML=isOpen?'▾':'▴'; }
     function restoreOpen() { document.querySelectorAll('.collapse-section').forEach(s=>{ const id=s.dataset.sectionId; if(openSections[id]){ s.querySelector('.collapse-content').style.display='block'; s.querySelector('.collapse-btn span').innerHTML='▴'; } }); }
 
-    // ========== إدارة الصور (إضافة وحذف) ==========
+    // ========== إدارة الصور (إضافة وحذف بدون confirm وإعادة تحميل ذكية) ==========
     async function addImagesToTarget(target, urlsArray, clearTextareaId) {
         if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط صالحة');
         const unique = [...new Set(urlsArray)];
@@ -92,23 +90,21 @@
         await Promise.all(promises);
         showToast(`تمت إضافة ${unique.length} صورة بنجاح`);
         if(clearTextareaId) document.getElementById(clearTextareaId).value = '';
-        loadData(); // تحديث واجهة الإدارة لعرض الصور الجديدة في شبكة الحذف
+        // تحديث شبكة الحذف إذا كانت مفتوحة لنفس المسار
+        const relatedSelect = document.querySelector(`select[data-delete-path="${target}"]`);
+        if(relatedSelect) loadImagesForDelete(target, relatedSelect.getAttribute('data-grid-id'));
+        else loadData(); // كحل أخير
     }
 
-    // حذف صورة محددة
-    window.deleteImage = function(path, imgId) {
-        if(confirm('هل أنت متأكد من حذف هذه الصورة؟')) {
-            db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{
-                showToast('تم حذف الصورة');
-                // إعادة تحميل شبكة الحذف بنفس المسار
-                const select = document.querySelector(`[data-delete-path="${path}"]`);
-                if(select) loadImagesForDelete(path, select.getAttribute('data-grid-id'));
-                else loadData();
-            }).catch(e=>showToast('خطأ في الحذف'));
-        }
+    // حذف صورة (بدون confirm, بدون إغلاق القسم)
+    window.deleteImage = function(path, imgId, gridId) {
+        db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{
+            showToast('تم حذف الصورة');
+            // تحديث شبكة الحذف فقط (نفس الشبكة التي نضغط منها)
+            loadImagesForDelete(path, gridId);
+        }).catch(e=>showToast('خطأ في الحذف'));
     }
 
-    // عرض صور الحذف في شبكة
     function loadImagesForDelete(path, gridId) {
         const grid = document.getElementById(gridId);
         if(!grid) return;
@@ -118,7 +114,7 @@
         grid.innerHTML = Object.keys(folder.imgs).map(imgId=>`
             <div style="text-align:center;">
                 <img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px;">
-                <button class="btn-red" style="margin-top:4px; padding:4px 8px; font-size:0.75rem;" onclick="deleteImage('${path}','${imgId}')">حذف</button>
+                <button class="btn-red" style="margin-top:4px; padding:4px 8px; font-size:0.75rem;" onclick="deleteImage('${path}','${imgId}','${gridId}')">حذف</button>
             </div>
         `).join('');
     }
@@ -169,7 +165,6 @@
         };
 
         const html = `
-            <!-- القسم 1: الإعدادات العامة -->
             <div class="collapse-section" data-section-id="general">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ الإعدادات العامة والنصوص <span>▾</span></button>
                 <div class="collapse-content">
@@ -184,7 +179,6 @@
                     <button class="btn-gold" onclick="saveGeneral()">حفظ</button>
                 </div>
             </div>
-            <!-- قسم الألبومات (إدارة + إضافة صور + حذف صور) -->
             <div class="collapse-section" data-section-id="albums">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'albums')">📁 ألبومات أعمالنا <span>▾</span></button>
                 <div class="collapse-content">
@@ -201,7 +195,6 @@
                     <div id="albumDeleteGrid" class="image-delete-grid"><p class="empty-state">اختر ألبوم لعرض الصور</p></div>
                 </div>
             </div>
-            <!-- قسم أقسام المتجر (إدارة + إضافة منتجات + حذف منتجات) -->
             <div class="collapse-section" data-section-id="store">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'store')">🛍️ أقسام المتجر <span>▾</span></button>
                 <div class="collapse-content">
@@ -218,7 +211,6 @@
                     <div id="storeDeleteGrid" class="image-delete-grid"><p class="empty-state">اختر قسم لعرض المنتجات</p></div>
                 </div>
             </div>
-            <!-- الكتالوجات -->
             <div class="collapse-section" data-section-id="catalogs">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'catalogs')">📚 الكتالوجات <span>▾</span></button>
                 <div class="collapse-content">
@@ -226,7 +218,6 @@
                     <div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" rows="3" placeholder="كود iFrame"></textarea><button class="btn-green" onclick="addCatalogNow()">إضافة كتالوج</button></div>
                 </div>
             </div>
-            <!-- شركاء النجاح -->
             <div class="collapse-section" data-section-id="partners">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'partners')">🤝 شركاء النجاح <span>▾</span></button>
                 <div class="collapse-content">
@@ -234,17 +225,14 @@
                     <div style="display:flex; gap:8px;"><input id="newPartnerUrl" placeholder="رابط الصورة"><input id="newPartnerLink" placeholder="الرابط (اختياري)"><button class="btn-green" onclick="addPartnerNow()">إضافة شريك</button></div>
                 </div>
             </div>
-            <!-- أوقات العمل -->
             <div class="collapse-section" data-section-id="schedule">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'schedule')">🕒 أوقات العمل <span>▾</span></button>
                 <div class="collapse-content">${scheduleHTML()}<button class="btn-gold" onclick="saveSchedule()">حفظ</button></div>
             </div>
-            <!-- التقييمات -->
             <div class="collapse-section" data-section-id="reviews">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'reviews')">⭐ التقييمات <span>▾</span></button>
                 <div class="collapse-content"><div id="reviewsList"></div></div>
             </div>
-            <!-- شاشة البداية -->
             <div class="collapse-section" data-section-id="splash">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'splash')">🎬 شاشة البداية (Splash) <span>▾</span></button>
                 <div class="collapse-content">
@@ -257,7 +245,6 @@
                     <button class="btn-gold" onclick="saveSplashSettings()">حفظ</button>
                 </div>
             </div>
-            <!-- فقاعة الترحيب -->
             <div class="collapse-section" data-section-id="popup">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'popup')">💬 فقاعة الترحيب <span>▾</span></button>
                 <div class="collapse-content">
@@ -267,7 +254,6 @@
                     <button class="btn-gold" onclick="savePopupSettings()">حفظ</button>
                 </div>
             </div>
-            <!-- وضع الصيانة -->
             <div class="collapse-section" data-section-id="maintenance">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'maintenance')">🛡️ وضع الصيانة <span>▾</span></button>
                 <div class="collapse-content">
@@ -281,7 +267,7 @@
         `;
         document.getElementById('adminSections').innerHTML = html;
 
-        // عرض قوائم العناصر (ألبومات، أقسام متجر، كتالوجات، شركاء، تقييمات)
+        // عرض قوائم العناصر
         if(d.albums){
             document.getElementById('albumsList').innerHTML = Object.keys(d.albums).map(id=>`
                 <div class="list-item-row"><input type="text" value="${(d.albums[id].name||'').replace(/"/g,'&quot;')}" class="album-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateAlbumName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('albums','${id}','${(d.albums[id].name||'').replace(/"/g,'&quot;')}')">حذف الألبوم</button></div>
@@ -312,7 +298,7 @@
             `).join('');
         }
 
-        // ربط دوال الإضافة والحذف
+        // دوال الإضافة والتحديث
         window.addAlbumNow = () => addItemWithSave('newAlbumName', 'albums', 'name');
         window.addStoreCatNow = () => addItemWithSave('newStoreCatName', 'store_categories', 'name');
         window.addCatalogNow = () => {
@@ -335,8 +321,8 @@
         window.updatePartner = (id, url, link) => { if(url) db.ref(DB_PATH+'/partners/'+id).update({ url, link: link||null }).then(()=>showToast('تم التحديث')); };
         window.deleteReview = (id) => db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>loadData());
         window.deleteSection = deleteSection;
-        
-        // ربط دوال إضافة وحذف الصور
+
+        // دوال إضافة الصور
         window.addImagesToAlbum = async () => {
             const target = document.getElementById('addToAlbumSelect').value;
             const urls = document.getElementById('albumUrls').value.split('\n').filter(u=>u.trim());
@@ -349,13 +335,8 @@
             if(!target || !urls.length) return showToast('اختر قسم وأدخل روابط');
             await addImagesToTarget(target, urls, 'storeUrls');
         };
-        // تعريف loadImagesForDelete كدالة عامة مع ربط السليكتات
+        // ربط تحميل صور الحذف
         window.loadImagesForDelete = loadImagesForDelete;
-        // ربط السليكتات مع حفظ المسار
-        const albumSelect = document.getElementById('albumDeleteSelect');
-        if(albumSelect) albumSelect.setAttribute('data-delete-path', '');
-        const storeSelect = document.getElementById('storeDeleteSelect');
-        if(storeSelect) storeSelect.setAttribute('data-delete-path', '');
     }
 
     // دوال الحفظ العامة
