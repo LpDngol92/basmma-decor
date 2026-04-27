@@ -5,20 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>بصمة غير</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        /* حاوية السبلاش - تغطي كامل الشاشة */
         #splash {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: black;
+            background-color: #000;
             z-index: 9999;
             display: flex;
             align-items: center;
@@ -26,8 +21,7 @@
             overflow: hidden;
         }
         
-        /* الحل السحري للـ GIF أو الصورة - يغطي الشاشة كاملة بدون قطع */
-        .splash-gif {
+        .splash-img {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -39,104 +33,104 @@
             object-fit: cover;
         }
         
-        /* زر التخطي */
         .splash-skip {
             position: absolute;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(8px);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
             color: white;
-            padding: 8px 20px;
-            border-radius: 40px;
-            font-size: 14px;
-            font-family: sans-serif;
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-family: 'Cairo', sans-serif;
             cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: none;
             z-index: 10000;
-        }
-        
-        .splash-skip:hover {
-            background: rgba(0,0,0,0.8);
         }
     </style>
 </head>
 <body>
 
-<div id="splash">
-    <!-- هنا حيتم وضع الـ GIF أو الصورة بواسطة الجافاسكريبت -->
-</div>
+<div id="splash"></div>
 
 <script>
-    // إعدادات السبلاش - غير القيم حسب رغبتك
-    const splashSettings = {
-        enabled: true,           // تفعيل السبلاش
-        mediaUrl: "رابط_gif_حقك_هنا.gif",   // حط رابط الصورة أو GIF حقك هنا
-        duration: 5,            // المدة بالثواني (5 ثواني)
-        showSkip: true          // إظهار زر التخطي
+    // اتصال Firebase حقك
+    const firebaseConfig = {
+        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+        authDomain: "mydecor-b29bd.firebaseapp.com",
+        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mydecor-b29bd",
+        storageBucket: "mydecor-b29bd.firebasestorage.app",
+        messagingSenderId: "302609299720",
+        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
     };
     
-    function showSplash(settings) {
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    
+    function showSplashWithImage(imageUrl, duration = 5, showSkip = true) {
         const splashDiv = document.getElementById('splash');
         if (!splashDiv) return;
         
-        // إذا كان السبلاش معطل
-        if (!settings.enabled) {
-            splashDiv.style.display = 'none';
-            return;
-        }
-        
-        // تفريغ المحتوى القديم
         splashDiv.innerHTML = '';
         
-        // إضافة الصورة أو الـ GIF
-        if (settings.mediaUrl) {
+        // التحقق: هل الرابط موجود وفعلاً صورة؟
+        if (imageUrl && imageUrl.trim() !== "") {
             const img = document.createElement('img');
-            img.src = settings.mediaUrl;
-            img.className = 'splash-gif';
+            img.src = imageUrl;
+            img.className = 'splash-img';
             img.alt = 'Splash';
-            img.style.objectFit = 'cover';
+            
+            // لو الصورة فشلت تحميل، نعطي خلفية سوداء
+            img.onerror = function() {
+                console.log("خطأ: الصورة ما تحملت - الرابط:", imageUrl);
+                splashDiv.style.backgroundColor = 'black';
+            };
+            
             splashDiv.appendChild(img);
         } else {
-            // إذا مافيه رابط، نضيف لون أسود
             splashDiv.style.backgroundColor = 'black';
         }
         
-        // إضافة زر التخطي إذا كان مفعل
-        if (settings.showSkip) {
+        if (showSkip) {
             const skipBtn = document.createElement('button');
             skipBtn.innerText = 'تخطي ←';
             skipBtn.className = 'splash-skip';
             skipBtn.onclick = () => {
                 splashDiv.style.opacity = '0';
-                setTimeout(() => {
-                    splashDiv.style.display = 'none';
-                }, 300);
+                setTimeout(() => splashDiv.style.display = 'none', 300);
             };
             splashDiv.appendChild(skipBtn);
         }
         
-        // إظهار السبلاش
         splashDiv.style.display = 'flex';
-        splashDiv.style.opacity = '1';
         
-        // إخفاء السبلاش تلقائياً بعد المدة المحددة
         setTimeout(() => {
             splashDiv.style.opacity = '0';
-            setTimeout(() => {
-                splashDiv.style.display = 'none';
-            }, 300);
-        }, settings.duration * 1000);
+            setTimeout(() => splashDiv.style.display = 'none', 300);
+        }, duration * 1000);
     }
     
-    // تشغيل السبلاش
-    showSplash(splashSettings);
+    // جلب البيانات من Firebase
+    db.ref('site_v28').once('value', (snap) => {
+        const data = snap.val() || {};
+        const splashMediaUrl = data.splash_media_url || '';  // رابط الصورة من لوحة الإدارة
+        const splashEnabled = data.splash_enabled !== false;
+        const splashDuration = data.splash_duration || 5;
+        const splashShowSkip = data.splash_show_skip === true;
+        
+        if (splashEnabled) {
+            showSplashWithImage(splashMediaUrl, splashDuration, splashShowSkip);
+        } else {
+            document.getElementById('splash').style.display = 'none';
+        }
+    });
 </script>
 
-<!-- باقي محتوى موقعك يأتي هنا -->
-<h1 style="text-align:center; margin-top:50px;">بصمة غير - ديكور فاخر</h1>
-<p style="text-align:center;">هذا هو محتوى موقعك بعد اختفاء السبلاش</p>
+<!-- باقي موقعك -->
+<h1 style="text-align:center; margin-top:100px;">بصمة غير</h1>
 
 </body>
 </html>
