@@ -1089,720 +1089,683 @@
 
 <script>
     window.addEventListener('load', function() {
-        apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
-        authDomain: "mydecor-b29bd.firebaseapp.com",
-        databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "mydecor-b29bd",
-        storageBucket: "mydecor-b29bd.firebasestorage.app",
-        messagingSenderId: "302609299720",
-        appId: "1:302609299720:web:e086b600c3ee824acd54bd"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const DB_PATH = 'site_v28';
+        // ===== إعدادات Firebase الصحيحة =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY",
+            authDomain: "mydecor-b29bd.firebaseapp.com",
+            databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "mydecor-b29bd",
+            storageBucket: "mydecor-b29bd.firebasestorage.app",
+            messagingSenderId: "302609299720",
+            appId: "1:302609299720:web:e086b600c3ee824acd54bd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+        const DB_PATH = 'site_v28';
 
-    let currentData = {};
-    let currentPage = 'home';
-    let currentImageList = [];
-    let currentIndex = 0;
-    let currentWhatsappNum = '966500000000';
-    let popupTimer = null;
-    let maintenanceInterval = null;
-    let carouselInterval = null;
-    let currentSlideIndex = 0;
-    let totalSlides = 0;
-    let activeFilter = 'all';
+        let currentData = {};
+        let currentPage = 'home';
+        let currentImageList = [];
+        let currentIndex = 0;
+        let currentWhatsappNum = '966500000000';
+        let popupTimer = null;
+        let maintenanceInterval = null;
+        let carouselInterval = null;
+        let currentSlideIndex = 0;
+        let totalSlides = 0;
+        let activeFilter = 'all';
 
-    const pages = [
-        { id: 'home', name: 'الرئيسية', icon: 'fas fa-home' },
-        { id: 'store', name: 'المتجر', icon: 'fas fa-store' },
-        { id: 'works', name: 'أعمالنا', icon: 'fas fa-images' },
-        { id: 'catalogs', name: 'الكتالوجات', icon: 'fas fa-book-open' },
-        { id: 'contact', name: 'اتصل بنا', icon: 'fas fa-phone-alt' }
-    ];
+        const pages = [
+            { id: 'home', name: 'الرئيسية', icon: 'fas fa-home' },
+            { id: 'store', name: 'المتجر', icon: 'fas fa-store' },
+            { id: 'works', name: 'أعمالنا', icon: 'fas fa-images' },
+            { id: 'catalogs', name: 'الكتالوجات', icon: 'fas fa-book-open' },
+            { id: 'contact', name: 'اتصل بنا', icon: 'fas fa-phone-alt' }
+        ];
 
-    // Header scroll effect
-    window.addEventListener('scroll', () => {
-        const header = document.getElementById('mainHeader');
-        if (header) header.classList.toggle('scrolled', window.scrollY > 20);
-    });
+        // Header scroll effect
+        window.addEventListener('scroll', () => {
+            const header = document.getElementById('mainHeader');
+            if (header) header.classList.toggle('scrolled', window.scrollY > 20);
+        });
 
-    // Lightbox
-    const imgElement = document.getElementById('lightboxImg');
-    const lightbox = document.getElementById('lightbox');
-    const counterSpan = document.getElementById('lightboxCounter');
-    const waBtn = document.getElementById('lightboxWhatsappBtn');
-    const zoomHint = document.getElementById('zoomHint');
-    let scale = 1, translateX = 0, translateY = 0;
-    let startX = 0, startY = 0;
-    let startScale = 1, startTranslateX = 0, startTranslateY = 0;
-    let initialPinchDist = 0;
-    let pinchCenterX = 0, pinchCenterY = 0;
-    let isPanning = false;
-    let touchStartX = 0;
-    let zoomHintTimer = null;
+        // Lightbox
+        const imgElement = document.getElementById('lightboxImg');
+        const lightbox = document.getElementById('lightbox');
+        const counterSpan = document.getElementById('lightboxCounter');
+        const waBtn = document.getElementById('lightboxWhatsappBtn');
+        const zoomHint = document.getElementById('zoomHint');
+        let scale = 1, translateX = 0, translateY = 0;
+        let startX = 0, startY = 0;
+        let startScale = 1, startTranslateX = 0, startTranslateY = 0;
+        let initialPinchDist = 0;
+        let pinchCenterX = 0, pinchCenterY = 0;
+        let isPanning = false;
+        let touchStartX = 0;
+        let zoomHintTimer = null;
 
-    function showZoomHint() {
-        zoomHint.style.opacity = '1';
-        if (zoomHintTimer) clearTimeout(zoomHintTimer);
-        zoomHintTimer = setTimeout(() => { zoomHint.style.opacity = '0'; }, 2000);
-    }
-    function setTransform() { imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`; }
-    function resetTransform() { scale = 1; translateX = 0; translateY = 0; setTransform(); }
-    function clampMovement() {
-        const containerRect = imgElement.parentElement.getBoundingClientRect();
-        const imgRect = imgElement.getBoundingClientRect();
-        const maxX = Math.max(0, (imgRect.width * scale - containerRect.width) / 2);
-        const maxY = Math.max(0, (imgRect.height * scale - containerRect.height) / 2);
-        translateX = Math.min(Math.max(translateX, -maxX), maxX);
-        translateY = Math.min(Math.max(translateY, -maxY), maxY);
-        setTransform();
-    }
-    function onMouseDown(e) { if (scale <= 1) return; e.preventDefault(); isPanning = true; startX = e.clientX - translateX; startY = e.clientY - translateY; imgElement.style.cursor = 'grabbing'; }
-    function onMouseMove(e) { if (!isPanning) return; translateX = e.clientX - startX; translateY = e.clientY - startY; clampMovement(); }
-    function onMouseUp() { isPanning = false; imgElement.style.cursor = 'grab'; }
-    function getDistance(touches) { const dx = touches[0].clientX - touches[1].clientX; const dy = touches[0].clientY - touches[1].clientY; return Math.hypot(dx, dy); }
-    function onTouchStart(e) {
-        if (e.touches.length === 2) { e.preventDefault(); initialPinchDist = getDistance(e.touches); startScale = scale; pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2; pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2; startTranslateX = translateX; startTranslateY = translateY; showZoomHint(); }
-        else if (e.touches.length === 1) { touchStartX = e.touches[0].clientX; if (scale > 1) { isPanning = true; startX = e.touches[0].clientX - translateX; startY = e.touches[0].clientY - translateY; } }
-    }
-    function onTouchMove(e) {
-        if (e.touches.length === 2 && initialPinchDist > 0) {
-            e.preventDefault();
-            const newDist = getDistance(e.touches);
-            let newScale = Math.min(4, Math.max(1, startScale * (newDist / initialPinchDist)));
-            if (newScale !== scale) {
-                const rect = imgElement.getBoundingClientRect();
-                const offsetX = pinchCenterX - rect.left;
-                const offsetY = pinchCenterY - rect.top;
-                const ratio = newScale / scale;
-                translateX = pinchCenterX - rect.left - (offsetX - translateX) * ratio;
-                translateY = pinchCenterY - rect.top - (offsetY - translateY) * ratio;
-                scale = newScale;
+        function showZoomHint() {
+            zoomHint.style.opacity = '1';
+            if (zoomHintTimer) clearTimeout(zoomHintTimer);
+            zoomHintTimer = setTimeout(() => { zoomHint.style.opacity = '0'; }, 2000);
+        }
+        function setTransform() { imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`; }
+        function resetTransform() { scale = 1; translateX = 0; translateY = 0; setTransform(); }
+        function clampMovement() {
+            const containerRect = imgElement.parentElement.getBoundingClientRect();
+            const imgRect = imgElement.getBoundingClientRect();
+            const maxX = Math.max(0, (imgRect.width * scale - containerRect.width) / 2);
+            const maxY = Math.max(0, (imgRect.height * scale - containerRect.height) / 2);
+            translateX = Math.min(Math.max(translateX, -maxX), maxX);
+            translateY = Math.min(Math.max(translateY, -maxY), maxY);
+            setTransform();
+        }
+        function onMouseDown(e) { if (scale <= 1) return; e.preventDefault(); isPanning = true; startX = e.clientX - translateX; startY = e.clientY - translateY; imgElement.style.cursor = 'grabbing'; }
+        function onMouseMove(e) { if (!isPanning) return; translateX = e.clientX - startX; translateY = e.clientY - startY; clampMovement(); }
+        function onMouseUp() { isPanning = false; imgElement.style.cursor = 'grab'; }
+        function getDistance(touches) { const dx = touches[0].clientX - touches[1].clientX; const dy = touches[0].clientY - touches[1].clientY; return Math.hypot(dx, dy); }
+        function onTouchStart(e) {
+            if (e.touches.length === 2) { e.preventDefault(); initialPinchDist = getDistance(e.touches); startScale = scale; pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2; pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2; startTranslateX = translateX; startTranslateY = translateY; showZoomHint(); }
+            else if (e.touches.length === 1) { touchStartX = e.touches[0].clientX; if (scale > 1) { isPanning = true; startX = e.touches[0].clientX - translateX; startY = e.touches[0].clientY - translateY; } }
+        }
+        function onTouchMove(e) {
+            if (e.touches.length === 2 && initialPinchDist > 0) {
+                e.preventDefault();
+                const newDist = getDistance(e.touches);
+                let newScale = Math.min(4, Math.max(1, startScale * (newDist / initialPinchDist)));
+                if (newScale !== scale) {
+                    const rect = imgElement.getBoundingClientRect();
+                    const offsetX = pinchCenterX - rect.left;
+                    const offsetY = pinchCenterY - rect.top;
+                    const ratio = newScale / scale;
+                    translateX = pinchCenterX - rect.left - (offsetX - translateX) * ratio;
+                    translateY = pinchCenterY - rect.top - (offsetY - translateY) * ratio;
+                    scale = newScale;
+                    clampMovement();
+                }
+            } else if (e.touches.length === 1 && isPanning && scale > 1) {
+                e.preventDefault();
+                translateX = e.touches[0].clientX - startX;
+                translateY = e.touches[0].clientY - startY;
                 clampMovement();
             }
-        } else if (e.touches.length === 1 && isPanning && scale > 1) {
+        }
+        function onTouchEnd(e) {
+            if (e.touches.length < 2) initialPinchDist = 0;
+            if (e.touches.length === 0) {
+                if (touchStartX && e.changedTouches[0] && scale <= 1) {
+                    const diff = e.changedTouches[0].clientX - touchStartX;
+                    if (Math.abs(diff) > 50) { if (diff > 0) prevImage(); else nextImage(); }
+                }
+                touchStartX = 0; isPanning = false;
+            }
+        }
+        function onWheel(e) {
             e.preventDefault();
-            translateX = e.touches[0].clientX - startX;
-            translateY = e.touches[0].clientY - startY;
+            let newScale = Math.min(4, Math.max(1, scale + (e.deltaY > 0 ? -0.1 : 0.1)));
+            if (newScale === scale) return;
+            const rect = imgElement.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            const ratio = newScale / scale;
+            translateX = e.clientX - rect.left - (mouseX - translateX) * ratio;
+            translateY = e.clientY - rect.top - (mouseY - translateY) * ratio;
+            scale = newScale;
             clampMovement();
+            showZoomHint();
         }
-    }
-    function onTouchEnd(e) {
-        if (e.touches.length < 2) initialPinchDist = 0;
-        if (e.touches.length === 0) {
-            if (touchStartX && e.changedTouches[0] && scale <= 1) {
-                const diff = e.changedTouches[0].clientX - touchStartX;
-                if (Math.abs(diff) > 50) { if (diff > 0) prevImage(); else nextImage(); }
-            }
-            touchStartX = 0; isPanning = false;
+        function bindLightboxEvents() {
+            imgElement.addEventListener('mousedown', onMouseDown);
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
+            imgElement.addEventListener('touchstart', onTouchStart, { passive: false });
+            imgElement.addEventListener('touchmove', onTouchMove, { passive: false });
+            imgElement.addEventListener('touchend', onTouchEnd);
+            imgElement.addEventListener('wheel', onWheel, { passive: false });
+            imgElement.style.cursor = 'grab';
         }
-    }
-    function onWheel(e) {
-        e.preventDefault();
-        let newScale = Math.min(4, Math.max(1, scale + (e.deltaY > 0 ? -0.1 : 0.1)));
-        if (newScale === scale) return;
-        const rect = imgElement.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const ratio = newScale / scale;
-        translateX = e.clientX - rect.left - (mouseX - translateX) * ratio;
-        translateY = e.clientY - rect.top - (mouseY - translateY) * ratio;
-        scale = newScale;
-        clampMovement();
-        showZoomHint();
-    }
-    function bindLightboxEvents() {
-        imgElement.addEventListener('mousedown', onMouseDown);
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-        imgElement.addEventListener('touchstart', onTouchStart, { passive: false });
-        imgElement.addEventListener('touchmove', onTouchMove, { passive: false });
-        imgElement.addEventListener('touchend', onTouchEnd);
-        imgElement.addEventListener('wheel', onWheel, { passive: false });
-        imgElement.style.cursor = 'grab';
-    }
-    function unbindLightboxEvents() {
-        imgElement.removeEventListener('mousedown', onMouseDown);
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-        imgElement.removeEventListener('touchstart', onTouchStart);
-        imgElement.removeEventListener('touchmove', onTouchMove);
-        imgElement.removeEventListener('touchend', onTouchEnd);
-        imgElement.removeEventListener('wheel', onWheel);
-    }
-    function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
-    function openLightbox(images, index) {
-        if (!images.length) return;
-        currentImageList = images; currentIndex = index;
-        imgElement.src = images[index];
-        resetTransform(); updateCounter();
-        lightbox.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        bindLightboxEvents(); showZoomHint();
-    }
-    function closeLightbox() {
-        lightbox.style.display = 'none';
-        document.body.style.overflow = '';
-        currentImageList = []; unbindLightboxEvents(); resetTransform();
-    }
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
-    function sendWhatsapp() { if (!currentImageList.length) return; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+currentImageList[currentIndex])}`, '_blank'); }
-    document.getElementById('lightboxPrev').onclick = () => prevImage();
-    document.getElementById('lightboxNext').onclick = () => nextImage();
-    document.getElementById('lightboxClose').onclick = () => closeLightbox();
-    waBtn.onclick = () => sendWhatsapp();
-    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+        function unbindLightboxEvents() {
+            imgElement.removeEventListener('mousedown', onMouseDown);
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+            imgElement.removeEventListener('touchstart', onTouchStart);
+            imgElement.removeEventListener('touchmove', onTouchMove);
+            imgElement.removeEventListener('touchend', onTouchEnd);
+            imgElement.removeEventListener('wheel', onWheel);
+        }
+        function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
+        function openLightbox(images, index) {
+            if (!images.length) return;
+            currentImageList = images; currentIndex = index;
+            imgElement.src = images[index];
+            resetTransform(); updateCounter();
+            lightbox.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            bindLightboxEvents(); showZoomHint();
+        }
+        function closeLightbox() {
+            lightbox.style.display = 'none';
+            document.body.style.overflow = '';
+            currentImageList = []; unbindLightboxEvents(); resetTransform();
+        }
+        function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
+        function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
+        function sendWhatsapp() { if (!currentImageList.length) return; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+currentImageList[currentIndex])}`, '_blank'); }
+        document.getElementById('lightboxPrev').onclick = () => prevImage();
+        document.getElementById('lightboxNext').onclick = () => nextImage();
+        document.getElementById('lightboxClose').onclick = () => closeLightbox();
+        waBtn.onclick = () => sendWhatsapp();
+        lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 
-    // Catalog Modal
-    const catalogModal = document.getElementById('catalogModal');
-    const catalogIframe = document.getElementById('catalogIframe');
-    function openCatalogModal(code) { catalogIframe.srcdoc = code; catalogModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-    function closeCatalogModal() { catalogModal.style.display = 'none'; catalogIframe.srcdoc = ''; document.body.style.overflow = ''; }
-    document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
-    catalogModal.addEventListener('click', (e) => { if (e.target === catalogModal) closeCatalogModal(); });
-    function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast('الكتالوج غير متاح'); }
+        // Catalog Modal
+        const catalogModal = document.getElementById('catalogModal');
+        const catalogIframe = document.getElementById('catalogIframe');
+        function openCatalogModal(code) { catalogIframe.srcdoc = code; catalogModal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+        function closeCatalogModal() { catalogModal.style.display = 'none'; catalogIframe.srcdoc = ''; document.body.style.overflow = ''; }
+        document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
+        catalogModal.addEventListener('click', (e) => { if (e.target === catalogModal) closeCatalogModal(); });
+        function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast('الكتالوج غير متاح'); }
 
-    function openAlbum(id) {
-        const alb = currentData.albums?.[id];
-        if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
-        const urls = Object.values(alb.imgs).map(i => i.url).filter(u => u);
-        if (urls.length) openLightbox(urls, 0);
-        else showToast('لا توجد صور صالحة');
-    }
+        function openAlbum(id) {
+            const alb = currentData.albums?.[id];
+            if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
+            const urls = Object.values(alb.imgs).map(i => i.url).filter(u => u);
+            if (urls.length) openLightbox(urls, 0);
+            else showToast('لا توجد صور صالحة');
+        }
 
-    function showToast(msg) {
-        const t = document.getElementById('toastMsg');
-        t.innerText = msg; t.style.display = 'block';
-        setTimeout(() => t.style.display = 'none', 2500);
-    }
-    function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
+        function showToast(msg) {
+            const t = document.getElementById('toastMsg');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2500);
+        }
+        function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
 
-    function getGroupedScheduleHtml(d) {
-        if (!d.work_schedule) return '<p>لم تحدد المواعيد</p>';
-        const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
-        const order = [6,0,1,2,3,4,5];
-        let groups = [], off = [];
-        order.forEach(jsDay => {
-            const s = d.work_schedule[jsDay];
-            if (s && s.active) {
-                const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}`;
-                let g = groups.find(g => g.key === key);
-                if (g) g.days.push(days[jsDay]);
-                else groups.push({ key, days: [days[jsDay]], data: s });
-            } else off.push(days[jsDay]);
-        });
-        let html = '';
-        groups.forEach(g => {
-            const dTxt = g.days.length === 1 ? g.days[0] : `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
-            html += `<div class="schedule-item"><strong style="color:var(--primary);">${dTxt}</strong><br>${formatTime12(g.data.s1_s)} - ${formatTime12(g.data.s1_e)}`;
-            if (g.data.s2_a) html += `<br>${formatTime12(g.data.s2_s)} - ${formatTime12(g.data.s2_e)}`;
-            html += `</div>`;
-        });
-        if (off.length) html += `<div class="schedule-item"><strong style="color:#888;">عطلة:</strong> ${off.join('، ')}</div>`;
-        return html;
-    }
-
-    function renderPartnersMarquee() {
-        const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack');
-        if (!cont || !track) return;
-        if (currentData.partners && Object.keys(currentData.partners).length) {
-            cont.style.display = 'block';
-            let logos = '';
-            Object.values(currentData.partners).forEach(p => { logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy"></div>`; });
-            track.innerHTML = logos + logos;
-        } else cont.style.display = 'none';
-    }
-
-    function getAllStoreProducts() {
-        let imgs = [];
-        if (currentData.store_categories) {
-            Object.keys(currentData.store_categories).forEach(cid => {
-                const cat = currentData.store_categories[cid];
-                if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) imgs.push({ url: img.url, category: cat.name || cid, categoryId: cid }); });
+        function getGroupedScheduleHtml(d) {
+            if (!d.work_schedule) return '<p>لم تحدد المواعيد</p>';
+            const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+            const order = [6,0,1,2,3,4,5];
+            let groups = [], off = [];
+            order.forEach(jsDay => {
+                const s = d.work_schedule[jsDay];
+                if (s && s.active) {
+                    const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}`;
+                    let g = groups.find(g => g.key === key);
+                    if (g) g.days.push(days[jsDay]);
+                    else groups.push({ key, days: [days[jsDay]], data: s });
+                } else off.push(days[jsDay]);
             });
-        }
-        return imgs;
-    }
-
-    function getStoreCategories() {
-        let cats = [];
-        if (currentData.store_categories) {
-            Object.keys(currentData.store_categories).forEach(cid => {
-                const cat = currentData.store_categories[cid];
-                cats.push({ id: cid, name: cat.name || cid });
-            });
-        }
-        return cats;
-    }
-
-    // Skeleton HTML
-    function skeletonGrid(count = 8) {
-        let html = '<div class="grid-auto">';
-        for (let i = 0; i < count; i++) {
-            html += `<div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div>`;
-        }
-        html += '</div>';
-        return html;
-    }
-
-    // Carousel
-    function initCarousel() {
-        const track = document.getElementById('carouselTrack');
-        if (!track) return;
-        const slides = track.querySelectorAll('.carousel-slide');
-        totalSlides = slides.length;
-        if (totalSlides === 0) return;
-        if (carouselInterval) clearInterval(carouselInterval);
-        const dotsContainer = document.getElementById('carouselDots');
-        if (dotsContainer) {
-            dotsContainer.innerHTML = '';
-            for (let i = 0; i < totalSlides; i++) {
-                const dot = document.createElement('div');
-                dot.classList.add('carousel-dot');
-                if (i === currentSlideIndex) dot.classList.add('active');
-                dot.addEventListener('click', () => { goToSlide(i); resetCarouselInterval(); });
-                dotsContainer.appendChild(dot);
-            }
-        }
-        const prevBtn = document.getElementById('carouselPrev');
-        const nextBtn = document.getElementById('carouselNext');
-        if (prevBtn) prevBtn.onclick = () => { prevSlide(); resetCarouselInterval(); };
-        if (nextBtn) nextBtn.onclick = () => { nextSlide(); resetCarouselInterval(); };
-        carouselInterval = setInterval(nextSlide, 4000);
-        updateCarousel();
-    }
-    function updateCarousel() {
-        const track = document.getElementById('carouselTrack');
-        if (!track) return;
-        const slide = track.querySelector('.carousel-slide');
-        if (!slide) return;
-        const slideWidth = slide.offsetWidth;
-        track.style.transform = `translateX(-${currentSlideIndex * (slideWidth + 20)}px)`;
-        document.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === currentSlideIndex));
-    }
-    function goToSlide(i) { currentSlideIndex = Math.max(0, Math.min(i, totalSlides - 1)); updateCarousel(); }
-    function nextSlide() { currentSlideIndex = (currentSlideIndex + 1 >= totalSlides) ? 0 : currentSlideIndex + 1; updateCarousel(); }
-    function prevSlide() { currentSlideIndex = (currentSlideIndex - 1 < 0) ? totalSlides - 1 : currentSlideIndex - 1; updateCarousel(); }
-    function resetCarouselInterval() { if (carouselInterval) { clearInterval(carouselInterval); carouselInterval = setInterval(nextSlide, 4000); } }
-
-    function buildLatestProductsCarousel() {
-        const cont = document.getElementById('productsCarousel');
-        if (!cont) return;
-        cont.innerHTML = skeletonGrid(4);
-        setTimeout(() => {
-            let all = getAllStoreProducts();
-            if (all.length === 0) { cont.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>لا توجد منتجات</p></div>'; return; }
-            currentSlideIndex = 0;
-            let html = `<div class="carousel-container">
-                <button class="carousel-button carousel-button-prev" id="carouselPrev"><i class="fas fa-chevron-right"></i></button>
-                <div class="carousel-track" id="carouselTrack">`;
-            all.forEach(p => {
-                html += `<div class="carousel-slide" data-url="${p.url}">
-                    <div class="img-wrapper"><img src="${p.url}" loading="lazy" alt="منتج"></div>
-                    <div class="product-info">
-                        <button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+p.url)}','_blank')">
-                            <i class="fab fa-whatsapp"></i> طلب عبر واتساب
-                        </button>
-                    </div>
-                </div>`;
-            });
-            html += `</div>
-                <button class="carousel-button carousel-button-next" id="carouselNext"><i class="fas fa-chevron-left"></i></button>
-                <div class="carousel-dots" id="carouselDots"></div>
-            </div>`;
-            cont.innerHTML = html;
-            document.querySelectorAll('#productsCarousel .carousel-slide').forEach(slide => {
-                slide.addEventListener('click', (e) => {
-                    if (!e.target.closest('.whatsapp-order')) {
-                        const allUrls = all.map(p => p.url);
-                        const idx = allUrls.indexOf(slide.getAttribute('data-url'));
-                        openLightbox(allUrls, idx >= 0 ? idx : 0);
-                    }
-                });
-            });
-            setTimeout(() => initCarousel(), 100);
-        }, 400);
-    }
-
-    function buildAllProductsGrid() {
-        const cont = document.getElementById('allProductsGrid');
-        if (!cont) return;
-        cont.innerHTML = skeletonGrid(8);
-        setTimeout(() => {
-            let all = getAllStoreProducts();
-            if (all.length === 0) { cont.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>لا توجد منتجات</p></div>'; return; }
-            const filtered = activeFilter === 'all' ? all : all.filter(p => p.categoryId === activeFilter);
-            if (filtered.length === 0) { cont.innerHTML = '<div class="empty-state"><i class="fas fa-filter"></i><p>لا توجد منتجات في هذا التصنيف</p></div>'; return; }
             let html = '';
-            filtered.forEach(p => {
-                html += `<div class="product-card" data-url="${p.url}">
-                    <div class="product-img-wrap"><img src="${p.url}" class="product-img" loading="lazy" alt="منتج"></div>
-                    <div class="product-info">
-                        <button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+p.url)}','_blank')">
-                            <i class="fab fa-whatsapp"></i> طلب عبر واتساب
-                        </button>
+            groups.forEach(g => {
+                const dTxt = g.days.length === 1 ? g.days[0] : `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
+                html += `<div class="schedule-item"><strong style="color:var(--primary);">${dTxt}</strong><br>${formatTime12(g.data.s1_s)} - ${formatTime12(g.data.s1_e)}`;
+                if (g.data.s2_a) html += `<br>${formatTime12(g.data.s2_s)} - ${formatTime12(g.data.s2_e)}`;
+                html += `</div>`;
+            });
+            if (off.length) html += `<div class="schedule-item"><strong style="color:#888;">عطلة:</strong> ${off.join('، ')}</div>`;
+            return html;
+        }
+
+        function renderPartnersMarquee() {
+            const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack');
+            if (!cont || !track) return;
+            if (currentData.partners && Object.keys(currentData.partners).length) {
+                cont.style.display = 'block';
+                let logos = '';
+                Object.values(currentData.partners).forEach(p => { logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy"></div>`; });
+                track.innerHTML = logos + logos;
+            } else cont.style.display = 'none';
+        }
+
+        function getAllStoreProducts() {
+            let imgs = [];
+            if (currentData.store_categories) {
+                Object.keys(currentData.store_categories).forEach(cid => {
+                    const cat = currentData.store_categories[cid];
+                    if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) imgs.push({ url: img.url, category: cat.name || cid, categoryId: cid }); });
+                });
+            }
+            return imgs;
+        }
+
+        function getStoreCategories() {
+            let cats = [];
+            if (currentData.store_categories) {
+                Object.keys(currentData.store_categories).forEach(cid => {
+                    const cat = currentData.store_categories[cid];
+                    cats.push({ id: cid, name: cat.name || cid });
+                });
+            }
+            return cats;
+        }
+
+        // Skeleton HTML
+        function skeletonGrid(count = 8) {
+            let html = '<div class="grid-auto">';
+            for (let i = 0; i < count; i++) {
+                html += `<div class="skeleton-card"><div class="skeleton skeleton-img"></div><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short"></div></div>`;
+            }
+            html += '</div>';
+            return html;
+        }
+
+        // Carousel
+        function initCarousel() {
+            const track = document.getElementById('carouselTrack');
+            if (!track) return;
+            const slides = track.querySelectorAll('.carousel-slide');
+            totalSlides = slides.length;
+            if (totalSlides === 0) return;
+            if (carouselInterval) clearInterval(carouselInterval);
+            const dotsContainer = document.getElementById('carouselDots');
+            if (dotsContainer) {
+                dotsContainer.innerHTML = '';
+                for (let i = 0; i < totalSlides; i++) {
+                    const dot = document.createElement('div');
+                    dot.classList.add('carousel-dot');
+                    if (i === currentSlideIndex) dot.classList.add('active');
+                    dot.addEventListener('click', () => { goToSlide(i); resetCarouselInterval(); });
+                    dotsContainer.appendChild(dot);
+                }
+            }
+            const prevBtn = document.getElementById('carouselPrev');
+            const nextBtn = document.getElementById('carouselNext');
+            if (prevBtn) prevBtn.onclick = () => { prevSlide(); resetCarouselInterval(); };
+            if (nextBtn) nextBtn.onclick = () => { nextSlide(); resetCarouselInterval(); };
+            carouselInterval = setInterval(nextSlide, 4000);
+            updateCarousel();
+        }
+        function updateCarousel() {
+            const track = document.getElementById('carouselTrack');
+            if (!track) return;
+            const slide = track.querySelector('.carousel-slide');
+            if (!slide) return;
+            const slideWidth = slide.offsetWidth;
+            track.style.transform = `translateX(-${currentSlideIndex * (slideWidth + 20)}px)`;
+            document.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === currentSlideIndex));
+        }
+        function goToSlide(i) { currentSlideIndex = Math.max(0, Math.min(i, totalSlides - 1)); updateCarousel(); }
+        function nextSlide() { currentSlideIndex = (currentSlideIndex + 1 >= totalSlides) ? 0 : currentSlideIndex + 1; updateCarousel(); }
+        function prevSlide() { currentSlideIndex = (currentSlideIndex - 1 < 0) ? totalSlides - 1 : currentSlideIndex - 1; updateCarousel(); }
+        function resetCarouselInterval() { if (carouselInterval) { clearInterval(carouselInterval); carouselInterval = setInterval(nextSlide, 4000); } }
+
+        function buildLatestProductsCarousel() {
+            const cont = document.getElementById('productsCarousel');
+            if (!cont) return;
+            cont.innerHTML = skeletonGrid(4);
+            setTimeout(() => {
+                let all = getAllStoreProducts();
+                if (all.length === 0) { cont.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>لا توجد منتجات</p></div>'; return; }
+                currentSlideIndex = 0;
+                let html = `<div class="carousel-container">
+                    <button class="carousel-button carousel-button-prev" id="carouselPrev"><i class="fas fa-chevron-right"></i></button>
+                    <div class="carousel-track" id="carouselTrack">`;
+                all.forEach(p => {
+                    html += `<div class="carousel-slide" data-url="${p.url}">
+                        <div class="img-wrapper"><img src="${p.url}" loading="lazy" alt="منتج"></div>
+                        <div class="product-info">
+                            <button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+p.url)}','_blank')">
+                                <i class="fab fa-whatsapp"></i> طلب عبر واتساب
+                            </button>
+                        </div>
+                    </div>`;
+                });
+                html += `</div>
+                    <button class="carousel-button carousel-button-next" id="carouselNext"><i class="fas fa-chevron-left"></i></button>
+                    <div class="carousel-dots" id="carouselDots"></div>
+                </div>`;
+                cont.innerHTML = html;
+                document.querySelectorAll('#productsCarousel .carousel-slide').forEach(slide => {
+                    slide.addEventListener('click', (e) => {
+                        if (!e.target.closest('.whatsapp-order')) {
+                            const allUrls = all.map(p => p.url);
+                            const idx = allUrls.indexOf(slide.getAttribute('data-url'));
+                            openLightbox(allUrls, idx >= 0 ? idx : 0);
+                        }
+                    });
+                });
+                setTimeout(() => initCarousel(), 100);
+            }, 400);
+        }
+
+        function buildAllProductsGrid() {
+            const cont = document.getElementById('allProductsGrid');
+            if (!cont) return;
+            cont.innerHTML = skeletonGrid(8);
+            setTimeout(() => {
+                let all = getAllStoreProducts();
+                if (all.length === 0) { cont.innerHTML = '<div class="empty-state"><i class="fas fa-box-open"></i><p>لا توجد منتجات</p></div>'; return; }
+                const filtered = activeFilter === 'all' ? all : all.filter(p => p.categoryId === activeFilter);
+                if (filtered.length === 0) { cont.innerHTML = '<div class="empty-state"><i class="fas fa-filter"></i><p>لا توجد منتجات في هذا التصنيف</p></div>'; return; }
+                let html = '';
+                filtered.forEach(p => {
+                    html += `<div class="product-card" data-url="${p.url}">
+                        <div class="product-img-wrap"><img src="${p.url}" class="product-img" loading="lazy" alt="منتج"></div>
+                        <div class="product-info">
+                            <button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+p.url)}','_blank')">
+                                <i class="fab fa-whatsapp"></i> طلب عبر واتساب
+                            </button>
+                        </div>
+                    </div>`;
+                });
+                cont.innerHTML = html;
+                const allUrls = filtered.map(p => p.url);
+                document.querySelectorAll('#allProductsGrid .product-card').forEach((card, i) => {
+                    card.addEventListener('click', (e) => {
+                        if (!e.target.closest('.whatsapp-order')) openLightbox(allUrls, i);
+                    });
+                });
+            }, 400);
+        }
+
+        function buildWorksGrid() {
+            const cont = document.getElementById('worksGrid');
+            if (!cont) return;
+            if (!currentData.albums || Object.keys(currentData.albums).length === 0) {
+                cont.innerHTML = '<div class="empty-state"><i class="fas fa-images"></i><p>لا توجد أعمال</p></div>'; return;
+            }
+            let html = '';
+            Object.keys(currentData.albums).forEach(id => {
+                const alb = currentData.albums[id];
+                let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
+                const count = alb.imgs ? Object.keys(alb.imgs).length : 0;
+                html += `<div class="card" data-album="${id}">
+                    <div class="card-img-wrap">${cover ? `<img src="${cover}" class="card-img" loading="lazy" alt="${alb.name || 'ألبوم'}">` : '<div class="card-img" style="background:#f5ece0; display:flex; align-items:center; justify-content:center;"><i class="fas fa-image" style="font-size:2rem; color:#ddd;"></i></div>'}</div>
+                    <div class="card-body">
+                        <div class="card-title">${alb.name || 'ألبوم'}</div>
+                        <div class="card-subtitle"><i class="fas fa-images" style="margin-left:4px;"></i>${count} صورة</div>
                     </div>
                 </div>`;
             });
             cont.innerHTML = html;
-            const allUrls = filtered.map(p => p.url);
-            document.querySelectorAll('#allProductsGrid .product-card').forEach((card, i) => {
-                card.addEventListener('click', (e) => {
-                    if (!e.target.closest('.whatsapp-order')) openLightbox(allUrls, i);
-                });
-            });
-        }, 400);
-    }
-
-    function buildWorksGrid() {
-        const cont = document.getElementById('worksGrid');
-        if (!cont) return;
-        if (!currentData.albums || Object.keys(currentData.albums).length === 0) {
-            cont.innerHTML = '<div class="empty-state"><i class="fas fa-images"></i><p>لا توجد أعمال</p></div>'; return;
+            document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
         }
-        let html = '';
-        Object.keys(currentData.albums).forEach(id => {
-            const alb = currentData.albums[id];
-            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            const count = alb.imgs ? Object.keys(alb.imgs).length : 0;
-            html += `<div class="card" data-album="${id}">
-                <div class="card-img-wrap">${cover ? `<img src="${cover}" class="card-img" loading="lazy" alt="${alb.name || 'ألبوم'}">` : '<div class="card-img" style="background:#f5ece0; display:flex; align-items:center; justify-content:center;"><i class="fas fa-image" style="font-size:2rem; color:#ddd;"></i></div>'}</div>
-                <div class="card-body">
-                    <div class="card-title">${alb.name || 'ألبوم'}</div>
-                    <div class="card-subtitle"><i class="fas fa-images" style="margin-left:4px;"></i>${count} صورة</div>
-                </div>
-            </div>`;
-        });
-        cont.innerHTML = html;
-        document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
-    }
 
-    function buildCatalogsPageGrid() {
-        const cont = document.getElementById('catalogsPageGrid');
-        if (!cont) return;
-        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) {
-            cont.innerHTML = '<div class="empty-state"><i class="fas fa-book-open"></i><p>لا توجد كتالوجات</p></div>'; return;
-        }
-        let html = '';
-        Object.keys(currentData.catalogs).forEach(id => {
-            const cat = currentData.catalogs[id];
-            html += `<div class="card" data-catalog="${id}" style="padding: 2rem 1rem;">
-                <div class="card-body" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
-                    <div style="width:64px; height:64px; background:linear-gradient(135deg,var(--primary-dark),var(--primary)); border-radius:50%; display:flex; align-items:center; justify-content:center;">
-                        <i class="fas fa-book-open" style="font-size:1.5rem; color:white;"></i>
+        function buildCatalogsPageGrid() {
+            const cont = document.getElementById('catalogsPageGrid');
+            if (!cont) return;
+            if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) {
+                cont.innerHTML = '<div class="empty-state"><i class="fas fa-book-open"></i><p>لا توجد كتالوجات</p></div>'; return;
+            }
+            let html = '';
+            Object.keys(currentData.catalogs).forEach(id => {
+                const cat = currentData.catalogs[id];
+                html += `<div class="card" data-catalog="${id}" style="padding: 2rem 1rem;">
+                    <div class="card-body" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
+                        <div style="width:64px; height:64px; background:linear-gradient(135deg,var(--primary-dark),var(--primary)); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                            <i class="fas fa-book-open" style="font-size:1.5rem; color:white;"></i>
+                        </div>
+                        <div class="card-title">${cat.name}</div>
+                        <span style="background:rgba(200,161,101,0.1); color:var(--primary-dark); padding:4px 14px; border-radius:30px; font-size:0.8rem; font-weight:600;">اضغط للعرض</span>
                     </div>
-                    <div class="card-title">${cat.name}</div>
-                    <span style="background:rgba(200,161,101,0.1); color:var(--primary-dark); padding:4px 14px; border-radius:30px; font-size:0.8rem; font-weight:600;">اضغط للعرض</span>
-                </div>
-            </div>`;
-        });
-        cont.innerHTML = html;
-        document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); });
-    }
-
-    function updateFooterData() {
-        const d = currentData;
-        currentWhatsappNum = d.whatsapp_num || '966500000000';
-        document.getElementById('waFloatLink').href = `https://wa.me/${currentWhatsappNum}`;
-        document.getElementById('siteTitle').innerText = d.site_name || 'بصمة غير';
-        document.getElementById('footerPhone').innerHTML = `<a href="tel:0541780995" style="color:#aaa; text-decoration:none;">0541780995</a>`;
-        document.getElementById('footerWhatsapp').innerHTML = `<a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="color:#25D366;">${currentWhatsappNum}</a>`;
-        document.getElementById('footerLocation').innerHTML = d.location_url ? `<a href="${d.location_url}" target="_blank" style="color:#aaa;">جدة</a>` : 'جدة';
-        const soc = document.getElementById('socialIcons');
-        if (soc) {
-            let s = '';
-            if (d.insta_url) s += `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`;
-            if (d.tiktok_url) s += `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`;
-            if (d.snap_url) s += `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`;
-            soc.innerHTML = s;
+                </div>`;
+            });
+            cont.innerHTML = html;
+            document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); });
         }
-        const hoursDiv = document.getElementById('footerHours');
-        if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
-        if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
-    }
 
-    function renderNavLinks() {
-        const container = document.getElementById('navLinks');
-        if (container) {
-            container.innerHTML = pages.map(p =>
-                `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`
-            ).join('');
+        function updateFooterData() {
+            const d = currentData;
+            currentWhatsappNum = d.whatsapp_num || '966500000000';
+            document.getElementById('waFloatLink').href = `https://wa.me/${currentWhatsappNum}`;
+            document.getElementById('siteTitle').innerText = d.site_name || 'بصمة غير';
+            document.getElementById('footerPhone').innerHTML = `<a href="tel:0541780995" style="color:#aaa; text-decoration:none;">0541780995</a>`;
+            document.getElementById('footerWhatsapp').innerHTML = `<a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="color:#25D366;">${currentWhatsappNum}</a>`;
+            document.getElementById('footerLocation').innerHTML = d.location_url ? `<a href="${d.location_url}" target="_blank" style="color:#aaa;">جدة</a>` : 'جدة';
+            const soc = document.getElementById('socialIcons');
+            if (soc) {
+                let s = '';
+                if (d.insta_url) s += `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`;
+                if (d.tiktok_url) s += `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`;
+                if (d.snap_url) s += `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`;
+                soc.innerHTML = s;
+            }
+            const hoursDiv = document.getElementById('footerHours');
+            if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
+            if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
         }
-        const bottomNavItems = document.getElementById('bottomNavItems');
-        if (bottomNavItems) {
-            bottomNavItems.innerHTML = pages.map(p =>
-                `<button class="bottom-nav-item ${currentPage === p.id ? 'active' : ''}" data-page="${p.id}">
-                    <i class="${p.icon}"></i>
-                    <span>${p.name}</span>
-                </button>`
-            ).join('');
+
+        function renderNavLinks() {
+            const container = document.getElementById('navLinks');
+            if (container) {
+                container.innerHTML = pages.map(p =>
+                    `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`
+                ).join('');
+            }
+            const bottomNavItems = document.getElementById('bottomNavItems');
+            if (bottomNavItems) {
+                bottomNavItems.innerHTML = pages.map(p =>
+                    `<button class="bottom-nav-item ${currentPage === p.id ? 'active' : ''}" data-page="${p.id}">
+                        <i class="${p.icon}"></i>
+                        <span>${p.name}</span>
+                    </button>`
+                ).join('');
+            }
         }
-    }
 
-    function attachNavEvents() {
-        document.querySelectorAll('[data-page]').forEach(el => {
-            el.removeEventListener('click', navHandler);
-            el.addEventListener('click', navHandler);
-        });
-    }
+        function attachNavEvents() {
+            document.querySelectorAll('[data-page]').forEach(el => {
+                el.removeEventListener('click', navHandler);
+                el.addEventListener('click', navHandler);
+            });
+        }
 
-    function navHandler(e) {
-        e.preventDefault();
-        const page = this.getAttribute('data-page');
-        if (page) changePage(page);
-    }
+        function navHandler(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+            if (page) changePage(page);
+        }
 
-    function changePage(page) {
-        currentPage = page;
-        activeFilter = 'all';
-        loadPage();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+        function changePage(page) {
+            currentPage = page;
+            activeFilter = 'all';
+            loadPage();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-    function loadPage() {
-        const main = document.getElementById('mainContent');
-        if (currentPage === 'home') {
-            main.innerHTML = `
-                <div class="hero">
-                    <div class="hero-bg"></div>
-                    <div class="container hero-content">
-                        <div class="hero-badge"><i class="fas fa-star" style="font-size:12px;"></i> ديكور فاخر راقي</div>
-                        <h1>ديكور يعكس <span>بصمتك</span></h1>
-                        <p>نقدم تصاميم داخلية وخارجية فاخرة ومنتجات راقية تعكس ذوقك وشخصيتك الفريدة</p>
-                        <div class="btn-group">
-                            <a class="btn btn-primary" data-page="store"><i class="fas fa-store"></i> تسوق الآن</a>
-                            <a class="btn btn-outline" data-page="works"><i class="fas fa-images"></i> أعمالنا</a>
-                            <a class="btn btn-outline" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</a>
+        function loadPage() {
+            const main = document.getElementById('mainContent');
+            if (currentPage === 'home') {
+                main.innerHTML = `
+                    <div class="hero">
+                        <div class="hero-bg"></div>
+                        <div class="container hero-content">
+                            <div class="hero-badge"><i class="fas fa-star" style="font-size:12px;"></i> ديكور فاخر راقي</div>
+                            <h1>ديكور يعكس <span>بصمتك</span></h1>
+                            <p>نقدم تصاميم داخلية وخارجية فاخرة ومنتجات راقية تعكس ذوقك وشخصيتك الفريدة</p>
+                            <div class="btn-group">
+                                <a class="btn btn-primary" data-page="store"><i class="fas fa-store"></i> تسوق الآن</a>
+                                <a class="btn btn-outline" data-page="works"><i class="fas fa-images"></i> أعمالنا</a>
+                                <a class="btn btn-outline" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="container section">
-                    <h2 class="section-title">أحدث المنتجات</h2>
-                    <div id="productsCarousel"></div>
-                </div>
-            `;
-            buildLatestProductsCarousel();
-        } else if (currentPage === 'store') {
-            const cats = getStoreCategories();
-            let filterHtml = '';
-            if (cats.length > 1) {
-                filterHtml = `<div class="filter-tabs">
-                    <button class="filter-tab ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">الكل</button>
-                    ${cats.map(c => `<button class="filter-tab ${activeFilter === c.id ? 'active' : ''}" data-filter="${c.id}">${c.name}</button>`).join('')}
-                </div>`;
-            }
-            main.innerHTML = `<div class="container section">
-                <h2 class="section-title">جميع المنتجات</h2>
-                ${filterHtml}
-                <div class="grid-auto" id="allProductsGrid"></div>
-            </div>`;
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.addEventListener('click', () => {
-                    activeFilter = tab.getAttribute('data-filter');
-                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-filter') === activeFilter));
-                    buildAllProductsGrid();
-                });
-            });
-            buildAllProductsGrid();
-        } else if (currentPage === 'works') {
-            main.innerHTML = `<div class="container section"><h2 class="section-title">أعمالنا</h2><div class="grid-auto" id="worksGrid"></div></div>`;
-            buildWorksGrid();
-        } else if (currentPage === 'catalogs') {
-            main.innerHTML = `<div class="container section"><h2 class="section-title">الكتالوجات</h2><div class="grid-auto" id="catalogsPageGrid"></div></div>`;
-            buildCatalogsPageGrid();
-        } else if (currentPage === 'contact') {
-            main.innerHTML = `
-                <div class="container section">
-                    <h2 class="section-title">اتصل بنا</h2>
-                    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1.2rem; max-width:700px; margin:0 auto 2rem;">
-                        <a href="tel:0541780995" class="contact-card">
-                            <div class="icon-wrap" style="background:rgba(200,161,101,0.1);"><i class="fas fa-phone" style="color:var(--primary);"></i></div>
-                            <strong>اتصل بنا</strong><p>0541780995</p>
-                        </a>
-                        <a href="https://wa.me/${currentWhatsappNum}" target="_blank" class="contact-card">
-                            <div class="icon-wrap" style="background:rgba(37,211,102,0.1);"><i class="fab fa-whatsapp" style="color:#25D366;"></i></div>
-                            <strong>واتساب</strong><p>تواصل معنا</p>
-                        </a>
-                        ${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" class="contact-card">
-                            <div class="icon-wrap" style="background:rgba(200,161,101,0.1);"><i class="fab fa-instagram" style="color:var(--primary);"></i></div>
-                            <strong>انستقرام</strong><p>تابعنا</p>
-                        </a>` : ''}
-                        ${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" class="contact-card">
-                            <div class="icon-wrap" style="background:rgba(0,0,0,0.05);"><i class="fab fa-tiktok" style="color:#333;"></i></div>
-                            <strong>تيك توك</strong><p>تابعنا</p>
-                        </a>` : ''}
-                        ${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" class="contact-card">
-                            <div class="icon-wrap" style="background:rgba(255,220,0,0.1);"><i class="fab fa-snapchat" style="color:#F7B731;"></i></div>
-                            <strong>سناب شات</strong><p>تابعنا</p>
-                        </a>` : ''}
-                        <a href="${currentData.location_url || '#'}" target="_blank" class="contact-card">
-                            <div class="icon-wrap" style="background:rgba(200,161,101,0.1);"><i class="fas fa-map-marker-alt" style="color:var(--primary);"></i></div>
-                            <strong>الموقع</strong><p>جدة</p>
-                        </a>
+                    <div class="container section">
+                        <h2 class="section-title">أحدث المنتجات</h2>
+                        <div id="productsCarousel"></div>
                     </div>
-                </div>
-            `;
-        }
-        updateFooterData();
-        renderNavLinks();
-        attachNavEvents();
-        document.querySelectorAll('[data-page].btn').forEach(el => {
-            el.addEventListener('click', (e) => { e.preventDefault(); changePage(el.getAttribute('data-page')); });
-        });
-    }
-
-    let splashTimeout;
-    function showSplash(settings) {
-        const splashDiv = document.getElementById('splash');
-        if (!splashDiv) return;
-        splashDiv.innerHTML = '';
-        if (!settings.enabled) { splashDiv.style.display = 'none'; return; }
-        const mediaType = settings.type || 'image';
-        const duration = (settings.duration || 5) * 1000;
-        const showSkip = settings.show_skip === true;
-        let mediaElement;
-        if (mediaType === 'video' && (settings.video_url || settings.media_url)) {
-            const vid = document.createElement('video');
-            vid.autoplay = true; vid.muted = true; vid.loop = false; vid.playsInline = true;
-            vid.className = 'splash-media';
-            const source = document.createElement('source');
-            source.src = settings.video_url || settings.media_url; source.type = 'video/mp4';
-            vid.appendChild(source); mediaElement = vid;
-        } else {
-            const img = document.createElement('img');
-            img.src = settings.media_url || '';
-            img.className = 'splash-media'; img.alt = 'Splash';
-            mediaElement = img;
-        }
-        if (mediaElement) splashDiv.appendChild(mediaElement);
-        if (showSkip) {
-            const skipBtn = document.createElement('button');
-            skipBtn.innerText = 'تخطي ←'; skipBtn.className = 'splash-skip';
-            skipBtn.onclick = () => { clearTimeout(splashTimeout); splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); };
-            splashDiv.appendChild(skipBtn);
-        }
-        splashDiv.style.display = 'flex'; splashDiv.style.opacity = '1';
-        if (splashTimeout) clearTimeout(splashTimeout);
-        splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration);
-    }
-
-    function updateMaintenanceMode() {
-        const d = currentData;
-        const screen = document.getElementById('maintenanceScreen');
-        if (!d.maintenance_mode) {
-            if (screen.style.display !== 'none') screen.style.display = 'none';
-            if (maintenanceInterval) clearInterval(maintenanceInterval);
-            return;
-        }
-        const until = d.maintenance_until;
-        const title = d.maintenance_title || 'الموقع في صيانة';
-        const msg = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً';
-        if (until && until <= Date.now()) { db.ref(DB_PATH).update({ maintenance_mode: false, maintenance_until: null }); return; }
-        screen.innerHTML = `<div style="background:white; border-radius:48px; padding:40px; max-width:500px; text-align:center; margin:20px;">
-            <i class="fas fa-tools fa-4x" style="color:var(--primary);"></i>
-            <h2 style="margin:15px 0; color:#2a1f0e;">${title}</h2>
-            <p style="color:#666;">${msg}</p>
-            ${until ? `<div id="maintenanceCountdown" style="font-size:2.5rem; font-weight:800; margin-top:20px; color:var(--primary-dark);"></div>` : ''}
-        </div>`;
-        screen.style.display = 'flex'; document.body.style.overflow = 'hidden';
-        if (until) {
-            const countdownEl = document.getElementById('maintenanceCountdown');
-            const updateCountdown = () => {
-                let diff = until - Date.now();
-                if (diff <= 0) { clearInterval(maintenanceInterval); window.location.reload(); return; }
-                const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
-                if (countdownEl) countdownEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            };
-            updateCountdown(); maintenanceInterval = setInterval(updateCountdown, 1000);
-        }
-    }
-
-    let popupTimeout = null;
-    function updatePopup() {
-        const bubble = document.getElementById('popupBubble');
-        const msgSpan = document.getElementById('popupMessage');
-        if (!currentData.popup_enabled || !currentData.popup_message) { if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); return; }
-        if (bubble.style.display === 'none' || bubble.style.display === '') {
-            msgSpan.innerText = currentData.popup_message; bubble.style.display = 'block';
-            if (popupTimeout) clearTimeout(popupTimeout);
-            popupTimeout = setTimeout(() => { bubble.style.display = 'none'; }, (currentData.popup_duration || 7) * 1000);
-        }
-    }
-    function closePopup() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); }
-    window.closePopup = closePopup;
-
-    function refreshAll() {
-        renderPartnersMarquee();
-        loadPage();
-        updateMaintenanceMode();
-        updatePopup();
-    }
-
-    db.ref(DB_PATH).once('value', snap => {
-        currentData = snap.val() || {};
-        showSplash({
-            enabled: currentData.splash_enabled !== false,
-            type: currentData.splash_type || 'image',
-            media_url: currentData.splash_media_url || '',
-            video_url: currentData.splash_video_url || '',
-            duration: currentData.splash_duration || 5,
-            show_skip: currentData.splash_show_skip === true
-        });
-        refreshAll();
-    });
-    db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAll(); });
-
-
-    // ===== SEO: Dynamic structured data =====
-    function updateStructuredData(d) {
-        const existing = document.getElementById('dynamicLD');
-        if (existing) existing.remove();
-        const daysEN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-        let openingHours = [];
-        if (d.work_schedule) {
-            Object.keys(d.work_schedule).forEach(jsDay => {
-                const s = d.work_schedule[jsDay];
-                if (s && s.active && s.s1_s && s.s1_e) {
-                    openingHours.push(daysEN[jsDay] + " " + s.s1_s + "-" + s.s1_e);
-                    if (s.s2_a && s.s2_s && s.s2_e) openingHours.push(daysEN[jsDay] + " " + s.s2_s + "-" + s.s2_e);
+                `;
+                buildLatestProductsCarousel();
+            } else if (currentPage === 'store') {
+                const cats = getStoreCategories();
+                let filterHtml = '';
+                if (cats.length > 1) {
+                    filterHtml = `<div class="filter-tabs">
+                        <button class="filter-tab ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">الكل</button>
+                        ${cats.map(c => `<button class="filter-tab ${activeFilter === c.id ? 'active' : ''}" data-filter="${c.id}">${c.name}</button>`).join('')}
+                    </div>`;
                 }
+                main.innerHTML = `<div class="container section">
+                    <h2 class="section-title">جميع المنتجات</h2>
+                    ${filterHtml}
+                    <div class="grid-auto" id="allProductsGrid"></div>
+                </div>`;
+                document.querySelectorAll('.filter-tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        activeFilter = tab.getAttribute('data-filter');
+                        document.querySelectorAll('.filter-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-filter') === activeFilter));
+                        buildAllProductsGrid();
+                    });
+                });
+                buildAllProductsGrid();
+            } else if (currentPage === 'works') {
+                main.innerHTML = `<div class="container section"><h2 class="section-title">أعمالنا</h2><div class="grid-auto" id="worksGrid"></div></div>`;
+                buildWorksGrid();
+            } else if (currentPage === 'catalogs') {
+                main.innerHTML = `<div class="container section"><h2 class="section-title">الكتالوجات</h2><div class="grid-auto" id="catalogsPageGrid"></div></div>`;
+                buildCatalogsPageGrid();
+            } else if (currentPage === 'contact') {
+                main.innerHTML = `
+                    <div class="container section">
+                        <h2 class="section-title">اتصل بنا</h2>
+                        <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1.2rem; max-width:700px; margin:0 auto 2rem;">
+                            <a href="tel:0541780995" class="contact-card">
+                                <div class="icon-wrap" style="background:rgba(200,161,101,0.1);"><i class="fas fa-phone" style="color:var(--primary);"></i></div>
+                                <strong>اتصل بنا</strong><p>0541780995</p>
+                            </a>
+                            <a href="https://wa.me/${currentWhatsappNum}" target="_blank" class="contact-card">
+                                <div class="icon-wrap" style="background:rgba(37,211,102,0.1);"><i class="fab fa-whatsapp" style="color:#25D366;"></i></div>
+                                <strong>واتساب</strong><p>تواصل معنا</p>
+                            </a>
+                            ${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" class="contact-card">
+                                <div class="icon-wrap" style="background:rgba(200,161,101,0.1);"><i class="fab fa-instagram" style="color:var(--primary);"></i></div>
+                                <strong>انستقرام</strong><p>تابعنا</p>
+                            </a>` : ''}
+                            ${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" class="contact-card">
+                                <div class="icon-wrap" style="background:rgba(0,0,0,0.05);"><i class="fab fa-tiktok" style="color:#333;"></i></div>
+                                <strong>تيك توك</strong><p>تابعنا</p>
+                            </a>` : ''}
+                            ${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" class="contact-card">
+                                <div class="icon-wrap" style="background:rgba(255,220,0,0.1);"><i class="fab fa-snapchat" style="color:#F7B731;"></i></div>
+                                <strong>سناب شات</strong><p>تابعنا</p>
+                            </a>` : ''}
+                            <a href="${currentData.location_url || '#'}" target="_blank" class="contact-card">
+                                <div class="icon-wrap" style="background:rgba(200,161,101,0.1);"><i class="fas fa-map-marker-alt" style="color:var(--primary);"></i></div>
+                                <strong>الموقع</strong><p>جدة</p>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }
+            updateFooterData();
+            renderNavLinks();
+            attachNavEvents();
+            document.querySelectorAll('[data-page].btn').forEach(el => {
+                el.addEventListener('click', (e) => { e.preventDefault(); changePage(el.getAttribute('data-page')); });
             });
         }
-        const sameAs = [d.insta_url, d.tiktok_url, d.snap_url].filter(Boolean);
-        const schema = {
-            "@context": "https://schema.org",
-            "@type": "LocalBusiness",
-            "name": d.site_name || "بصمة غير",
-            "description": "متخصصون في الديكور الفاخر والتصميم الداخلي والخارجي في جدة",
-            "url": "https://www.basmmaghyrdecor.com",
-            "logo": d.logo_url || "https://i.ibb.co/CsmG3G7r/1.png",
-            "image": d.logo_url || "https://i.ibb.co/CsmG3G7r/1.png",
-            "telephone": "+966" + (d.whatsapp_num || "").replace(/^966/, ""),
-            "priceRange": "$$",
-            "areaServed": "جدة، المملكة العربية السعودية",
-            "address": { "@type": "PostalAddress", "addressLocality": "جدة", "addressCountry": "SA" },
-            "sameAs": sameAs
-        };
-        if (openingHours.length) schema.openingHours = openingHours;
-        if (d.location_url) schema.hasMap = d.location_url;
-        const script = document.createElement("script");
-        script.type = "application/ld+json";
-        script.id = "dynamicLD";
-        script.textContent = JSON.stringify(schema, null, 2);
-        document.head.appendChild(script);
-        if (d.site_name) {
-            document.title = d.site_name + " | ديكور فاخر وتصميم داخلي - جدة";
-            const ogTitle = document.querySelector("meta[property=\"og:title\"]");
-            if (ogTitle) ogTitle.setAttribute("content", d.site_name + " | ديكور فاخر وتصميم داخلي - جدة");
-        }
-    }
-    db.ref(DB_PATH).on("value", snap => { updateStructuredData(snap.val() || {}); });
 
-    window.openAlbum = openAlbum;
-    window.openCatalog = openCatalog;
-    }); // end window.load
-</script>
-</body>
-</html>
+        let splashTimeout;
+        function showSplash(settings) {
+            const splashDiv = document.getElementById('splash');
+            if (!splashDiv) return;
+            splashDiv.innerHTML = '';
+            if (!settings.enabled) { splashDiv.style.display = 'none'; return; }
+            const mediaType = settings.type || 'image';
+            const duration = (settings.duration || 5) * 1000;
+            const showSkip = settings.show_skip === true;
+            let mediaElement;
+            if (mediaType === 'video' && (settings.video_url || settings.media_url)) {
+                const vid = document.createElement('video');
+                vid.autoplay = true; vid.muted = true; vid.loop = false; vid.playsInline = true;
+                vid.className = 'splash-media';
+                const source = document.createElement('source');
+                source.src = settings.video_url || settings.media_url; source.type = 'video/mp4';
+                vid.appendChild(source); mediaElement = vid;
+            } else {
+                const img = document.createElement('img');
+                img.src = settings.media_url || '';
+                img.className = 'splash-media'; img.alt = 'Splash';
+                mediaElement = img;
+            }
+            if (mediaElement) splashDiv.appendChild(mediaElement);
+            if (showSkip) {
+                const skipBtn = document.createElement('button');
+                skipBtn.innerText = 'تخطي ←'; skipBtn.className = 'splash-skip';
+                skipBtn.onclick = () => { clearTimeout(splashTimeout); splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); };
+                splashDiv.appendChild(skipBtn);
+            }
+            splashDiv.style.display = 'flex'; splashDiv.style.opacity = '1';
+            if (splashTimeout) clearTimeout(splashTimeout);
+            splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration);
+        }
+
+        function updateMaintenanceMode() {
+            const d = currentData;
+            const screen = document.getElementById('maintenanceScreen');
+            if (!d.maintenance_mode) {
+                if (screen.style.display !== 'none') screen.style.display = 'none';
+                if (maintenanceInterval) clearInterval(maintenanceInterval);
+                return;
+            }
+            const until = d.maintenance_until;
+            const title = d.maintenance_title || 'الموقع في صيانة';
+            const msg = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً';
+            if (until && until <= Date.now()) { db.ref(DB_PATH).update({ maintenance_mode: false, maintenance_until: null }); return; }
+            screen.innerHTML = `<div style="background:white; border-radius:48px; padding:40px; max-width:500px; text-align:center; margin:20px;">
+                <i class="fas fa-tools fa-4x" style="color:var(--primary);"></i>
+                <h2 style="margin:15px 0; color:#2a1f0e;">${title}</h2>
+                <p style="color:#666;">${msg}</p>
+                ${until ? `<div id="maintenanceCountdown" style="font-size:2.5rem; font-weight:800; margin-top:20px; color:var(--primary-dark);"></div>` : ''}
+            </div>`;
+            screen.style.display = 'flex'; document.body.style.overflow = 'hidden';
+            if (until) {
+                const countdownEl = document.getElementById('maintenanceCountdown');
+                const updateCountdown = () => {
+                    let diff = until - Date.now();
+                    if (diff <= 0) { clearInterval(maintenanceInterval); window.location.reload(); return; }
+                    const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+                    if (countdownEl) countdownEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                };
+                updateCountdown(); maintenanceInterval = setInterval(updateCountdown, 1000);
+            }
+        }
+
+        let popupTimeout = null;
+        function updatePopup() {
+            const bubble = document.getElementById('popupBubble');
+            const msgSpan = document.getElementById('popupMessage');
+            if (!currentData.popup_enabled || !currentData.popup_message) { if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); return; }
+            if (bubble.style.display === 'none' || bubble.style.display === '') {
+                msgSpan.innerText = currentData.popup_message; bubble.style.display = 'block';
+                if (popupTimeout) clearTimeout(popupTimeout);
+                popupTimeout = setTimeout(() => { bubble.style.display = 'none'; }, (currentData.popup_duration || 7) * 1000);
+            }
+        }
+        window.closePopup = closePopup;
+        function closePopup() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); }
+
+        function refreshAll() {
+            renderPartnersMarquee();
+            loadPage();
+            updateMaintenanceMode();
+            updatePopup();
+        }
+
+        db.ref(DB_PATH).once('value', snap => {
+            currentData = snap.val() || {};
+            showSplash({
+                enabled: currentData.splash_enabled !== false,
+                type: currentData.splash_type || 'image',
+                media_url: currentData.splash_media_url || '',
+                video_url: currentData.splash_video_url || '',
+                duration: currentData.splash_duration || 5,
+                show_skip: currentData.splash_show_skip === true
+            });
+            refreshAll();
+        });
+        db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAll(); });
+
+        // ===== SEO: Dynamic structured data =====
+        function updateStructuredData(d) {
+            const existing = document.getElementById('dynamicLD');
+            if (existing) existing.remove();
+            const daysEN = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+            let openingHours = [];
+            if (d.work_schedule) {
+                Object.keys(d.work_schedule).forEach(jsDay => {
+                    const s = d.work_schedule[jsDay];
+                    if (s && s.active && s.s1_s && s.s1_e) {
+                        openingHours.push(daysEN[jsDay] + " " + s.s1_s + "-" + s.s1_e);
+                        if (s.s2_a && s.s2_s && s.s2_e) openingHours.push(daysEN[jsDay] + " " + s.s2_s + "-" + s.s2_e);
+                    }
