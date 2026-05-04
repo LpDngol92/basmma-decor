@@ -136,7 +136,7 @@
             padding: 8px 18px;
             border-radius: 50px;
             letter-spacing: 1px;
-            opacity: 0.15; /* 85% transparency */
+            opacity: 0.15;
             pointer-events: none;
             z-index: 2;
             font-family: 'Cairo', sans-serif;
@@ -146,7 +146,6 @@
         @media (max-width: 550px) {
             .watermark-text { font-size: 12px; padding: 4px 12px; white-space: nowrap; }
         }
-        /* Lightbox watermark centered */
         .lightbox-watermark {
             position: absolute;
             top: 50%;
@@ -183,9 +182,10 @@
         @media (max-width: 1024px) { .carousel-slide { flex: 0 0 calc(33.333% - 14px); min-width: calc(33.333% - 14px); } }
         @media (max-width: 768px) { .carousel-slide { flex: 0 0 calc(50% - 10px); min-width: calc(50% - 10px); } }
         @media (max-width: 480px) { .carousel-slide { flex: 0 0 calc(100% - 0px); min-width: calc(100% - 0px); } .carousel-button { width: 35px; height: 35px; font-size: 1rem; } }
-        .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2rem; }
+        .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
         .card { background: var(--white); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; cursor: pointer; text-align: center; position: relative; }
         .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); }
+        .card-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
         .card-body { padding: 1.2rem; }
         .card-title { font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); }
         .product-card { background: var(--white); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; cursor: pointer; }
@@ -262,7 +262,6 @@
     let currentSlideIndex = 0;
     let totalSlides = 0;
 
-    // WATERMARK FUNCTION: centered inside image with 85% transparency
     const WATERMARK_TEXT = "بصمة غير للديكور";
     function getWatermarkedImage(src, alt, extraClass = '') {
         if (!src) return '<div class="empty-state">صورة غير متوفرة</div>';
@@ -272,7 +271,6 @@
                 </div>`;
     }
 
-    // Lightbox centered watermark
     let lightboxWatermarkDiv = null;
     function ensureLightboxWatermark() {
         if (!lightboxWatermarkDiv) {
@@ -289,7 +287,7 @@
         }
     }
 
-    // Lightbox logic (unchanged)
+    // Lightbox logic
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -317,7 +315,6 @@
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage; document.getElementById('lightboxNext').onclick = nextImage; document.getElementById('lightboxClose').onclick = closeLightbox; waBtn.onclick = sendWhatsapp;
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
-
     function openAlbum(id) { const alb = currentData.albums?.[id]; if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; } const urls = Object.values(alb.imgs).map(i => i.url).filter(u => u); if (urls.length) openLightbox(urls, 0); else showToast('لا توجد صور صالحة'); }
     function openCatalogModal(code) { const modal = document.getElementById('catalogModal'), iframe = document.getElementById('catalogIframe'); iframe.srcdoc = code; modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     function closeCatalogModal() { document.getElementById('catalogModal').style.display = 'none'; document.getElementById('catalogIframe').srcdoc = ''; document.body.style.overflow = ''; }
@@ -329,24 +326,86 @@
     function renderPartnersMarquee() { const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack'); if (!cont || !track) return; if (currentData.partners && Object.keys(currentData.partners).length) { cont.style.display = 'block'; let logos = ''; Object.values(currentData.partners).forEach(p => { logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy"></div>`; }); track.innerHTML = logos + logos; } else cont.style.display = 'none'; }
     function getAllStoreProducts() { let imgs = []; if (currentData.store_categories) { Object.keys(currentData.store_categories).forEach(cid => { const cat = currentData.store_categories[cid]; if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) imgs.push(img.url); }); }); } return imgs; }
     
-    // Carousel with watermarked images
-    function initCarousel() { const track = document.getElementById('carouselTrack'); const prevBtn = document.getElementById('carouselPrev'); const nextBtn = document.getElementById('carouselNext'); const dotsContainer = document.getElementById('carouselDots'); if (!track) return; const slides = track.querySelectorAll('.carousel-slide'); totalSlides = slides.length; if (totalSlides === 0) return; if (carouselInterval) clearInterval(carouselInterval); if (dotsContainer) { dotsContainer.innerHTML = ''; for (let i = 0; i < totalSlides; i++) { const dot = document.createElement('div'); dot.classList.add('carousel-dot'); if (i === currentSlideIndex) dot.classList.add('active'); dot.addEventListener('click', () => goToSlide(i)); dotsContainer.appendChild(dot); } } carouselInterval = setInterval(() => nextSlide(), 4000); if (prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); resetInterval(); }); if (nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); resetInterval(); }); updateCarousel(); }
-    function updateCarousel() { const track = document.getElementById('carouselTrack'); const dots = document.querySelectorAll('.carousel-dot'); if (!track) return; const slideWidth = track.querySelector('.carousel-slide')?.offsetWidth || 0; const moveX = currentSlideIndex * (slideWidth + 20); track.style.transform = `translateX(-${moveX}px)`; dots.forEach((dot, i) => { if (i === currentSlideIndex) dot.classList.add('active'); else dot.classList.remove('active'); }); }
+    // NEW: Build carousel for works (albums) on homepage
+    function getAlbumsList() {
+        if (!currentData.albums) return [];
+        return Object.keys(currentData.albums).map(id => ({ id, ...currentData.albums[id] }));
+    }
+    function buildLatestWorksCarousel() {
+        const cont = document.getElementById('worksCarousel');
+        if (!cont) return;
+        let albums = getAlbumsList();
+        if (albums.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال حالياً</div>'; return; }
+        let html = `<div class="carousel-container"><button class="carousel-button carousel-button-prev" id="carouselPrev"><i class="fas fa-chevron-right"></i></button><div class="carousel-track" id="carouselTrack">`;
+        albums.forEach(alb => {
+            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
+            html += `<div class="carousel-slide" data-album-id="${alb.id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="watermarked-img-container" style="height:200px; background:#eee;"></div>'}<div class="product-info"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+        });
+        html += `</div><button class="carousel-button carousel-button-next" id="carouselNext"><i class="fas fa-chevron-left"></i></button><div class="carousel-dots" id="carouselDots"></div></div>`;
+        cont.innerHTML = html;
+        document.querySelectorAll('#worksCarousel .carousel-slide').forEach(slide => {
+            slide.addEventListener('click', () => {
+                const albumId = slide.getAttribute('data-album-id');
+                if (albumId) openAlbum(albumId);
+            });
+        });
+        setTimeout(() => initCarousel(), 100);
+    }
+    
+    function initCarousel() { 
+        const track = document.getElementById('carouselTrack'); 
+        const prevBtn = document.getElementById('carouselPrev'); 
+        const nextBtn = document.getElementById('carouselNext'); 
+        const dotsContainer = document.getElementById('carouselDots'); 
+        if (!track) return; 
+        const slides = track.querySelectorAll('.carousel-slide'); 
+        totalSlides = slides.length; 
+        if (totalSlides === 0) return; 
+        if (carouselInterval) clearInterval(carouselInterval); 
+        if (dotsContainer) { 
+            dotsContainer.innerHTML = ''; 
+            for (let i = 0; i < totalSlides; i++) { 
+                const dot = document.createElement('div'); 
+                dot.classList.add('carousel-dot'); 
+                if (i === currentSlideIndex) dot.classList.add('active'); 
+                dot.addEventListener('click', () => goToSlide(i)); 
+                dotsContainer.appendChild(dot); 
+            } 
+        } 
+        carouselInterval = setInterval(() => nextSlide(), 4000); 
+        if (prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); resetInterval(); }); 
+        if (nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); resetInterval(); }); 
+        updateCarousel(); 
+    }
+    function updateCarousel() { 
+        const track = document.getElementById('carouselTrack'); 
+        const dots = document.querySelectorAll('.carousel-dot'); 
+        if (!track) return; 
+        const slideWidth = track.querySelector('.carousel-slide')?.offsetWidth || 0; 
+        const moveX = currentSlideIndex * (slideWidth + 20); 
+        track.style.transform = `translateX(-${moveX}px)`; 
+        dots.forEach((dot, i) => { if (i === currentSlideIndex) dot.classList.add('active'); else dot.classList.remove('active'); }); 
+    }
     function goToSlide(index) { if (index < 0) index = 0; if (index >= totalSlides) index = totalSlides - 1; currentSlideIndex = index; updateCarousel(); }
     function nextSlide() { if (currentSlideIndex + 1 >= totalSlides) currentSlideIndex = 0; else currentSlideIndex++; updateCarousel(); }
     function prevSlide() { if (currentSlideIndex - 1 < 0) currentSlideIndex = totalSlides - 1; else currentSlideIndex--; updateCarousel(); }
     function resetInterval() { if (carouselInterval) { clearInterval(carouselInterval); carouselInterval = setInterval(() => nextSlide(), 4000); } }
-    
-    function buildLatestProductsCarousel() {
-        const cont = document.getElementById('productsCarousel'); if (!cont) return;
-        let all = getAllStoreProducts(); if (all.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد منتجات</div>'; return; }
-        let html = `<div class="carousel-container"><button class="carousel-button carousel-button-prev" id="carouselPrev"><i class="fas fa-chevron-right"></i></button><div class="carousel-track" id="carouselTrack">`;
-        all.forEach(url => { html += `<div class="carousel-slide" data-product-url="${url}">${getWatermarkedImage(url, 'منتج ديكور - بصمة غير')}<div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`; });
-        html += `</div><button class="carousel-button carousel-button-next" id="carouselNext"><i class="fas fa-chevron-left"></i></button><div class="carousel-dots" id="carouselDots"></div></div>`;
+
+    // Build works grid (fixed)
+    function buildWorksGrid() {
+        const cont = document.getElementById('worksGrid');
+        if (!cont) return;
+        let albums = getAlbumsList();
+        if (albums.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال</div>'; return; }
+        let html = '';
+        albums.forEach(alb => {
+            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
+            html += `<div class="card" data-album="${alb.id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم', 'card-img') : '<div class="card-img" style="background:#f0f0f0; height:200px;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+        });
         cont.innerHTML = html;
-        document.querySelectorAll('#productsCarousel .carousel-slide').forEach(slide => { slide.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = slide.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); });
-        setTimeout(() => initCarousel(), 100);
+        document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
+    
     function buildAllProductsGrid() {
         const cont = document.getElementById('allProductsGrid'); if (!cont) return;
         let all = getAllStoreProducts(); if (all.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد منتجات</div>'; return; }
@@ -354,13 +413,7 @@
         cont.innerHTML = html;
         document.querySelectorAll('#allProductsGrid .product-card').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); });
     }
-    function buildWorksGrid() {
-        const cont = document.getElementById('worksGrid'); if (!cont) return;
-        if (!currentData.albums || Object.keys(currentData.albums).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال</div>'; return; }
-        let html = ''; Object.keys(currentData.albums).forEach(id => { const alb = currentData.albums[id]; let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : ''; html += `<div class="card" data-album="${id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم', 'card-img') : '<div class="card-img" style="background:#f0f0f0; height:200px;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`; });
-        cont.innerHTML = html;
-        document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
-    }
+    
     function buildCatalogsPageGrid() { const cont = document.getElementById('catalogsPageGrid'); if (!cont) return; if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد كتالوجات</div>'; return; } let html = ''; Object.keys(currentData.catalogs).forEach(id => { const cat = currentData.catalogs[id]; html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small style="color:var(--gray);">اضغط للعرض</small></div></div>`; }); cont.innerHTML = html; document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); }); }
     function updateFooterData() { const d = currentData; currentWhatsappNum = d.whatsapp_num || '966500000000'; document.getElementById('siteTitle').innerText = d.site_name || 'بصمة غير'; document.getElementById('footerPhone').innerHTML = `<a href="tel:0541780995" style="color:inherit;">0541780995</a>`; document.getElementById('footerWhatsapp').innerHTML = `<a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="color:#25D366;">${currentWhatsappNum}</a>`; document.getElementById('footerLocation').innerHTML = d.location_url ? `<a href="${d.location_url}" target="_blank">جدة</a>` : 'جدة'; const soc = document.getElementById('socialIcons'); if (soc) { let s = ''; if (d.insta_url) s += `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`; if (d.tiktok_url) s += `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`; if (d.snap_url) s += `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`; soc.innerHTML = s; } const hoursDiv = document.getElementById('footerHours'); if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d); if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text; }
     function renderNavLinks() { const container = document.getElementById('navLinks'); if (!container) return; let html = ''; pages.forEach(p => { html += `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`; }); container.innerHTML = html; }
@@ -368,7 +421,28 @@
     function navHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
     function changePage(page) { currentPage = page; loadPage(); window.scrollTo(0, 0); }
     const pages = [{ id: 'home', name: 'الرئيسية', icon: 'fas fa-home' },{ id: 'store', name: 'المتجر', icon: 'fas fa-store' },{ id: 'works', name: 'أعمالنا', icon: 'fas fa-images' },{ id: 'catalogs', name: 'الكتالوجات', icon: 'fas fa-book-open' },{ id: 'contact', name: 'اتصل بنا', icon: 'fas fa-phone-alt' }];
-    function loadPage() { const main = document.getElementById('mainContent'); if (currentPage === 'home') { main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة تناسب ذوقك</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">أحدث المنتجات</h2><div id="productsCarousel"></div></div>`; buildLatestProductsCarousel(); } else if (currentPage === 'store') { main.innerHTML = `<div class="container section"><h2 class="section-title">جميع المنتجات</h2><div class="grid-auto" id="allProductsGrid"></div></div>`; buildAllProductsGrid(); } else if (currentPage === 'works') { main.innerHTML = `<div class="container section"><h2 class="section-title">أعمالنا</h2><div class="grid-auto" id="worksGrid"></div></div>`; buildWorksGrid(); } else if (currentPage === 'catalogs') { main.innerHTML = `<div class="container section"><h2 class="section-title">الكتالوجات</h2><div class="grid-auto" id="catalogsPageGrid"></div></div>`; buildCatalogsPageGrid(); } else if (currentPage === 'contact') { main.innerHTML = `<div class="container section"><h2 class="section-title">اتصل بنا</h2><div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;"><a href="tel:0541780995" style="text-decoration:none;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p>اتصل بنا</p></div></a><a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p>واتساب</p></div></a>${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p>انستقرام</p></div></a>` : ''}${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p>تيك توك</p></div></a>` : ''}${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p>سناب شات</p></div></a>` : ''}<a href="${currentData.location_url || '#'}" target="_blank" style="text-decoration:none;"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p>الموقع</p></div></a></div><div style="text-align:center; margin-top:20px;"><p>📞 0541780995</p></div></div>`; } updateFooterData(); renderNavLinks(); attachNavEvents(); document.querySelectorAll('[data-page]').forEach(el => { if (el.classList.contains('btn')) { el.addEventListener('click', (e) => { e.preventDefault(); changePage(el.getAttribute('data-page')); }); } }); }
+    function loadPage() { 
+        const main = document.getElementById('mainContent'); 
+        if (currentPage === 'home') { 
+            main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة تناسب ذوقك</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">أحدث أعمالنا</h2><div id="worksCarousel"></div></div>`; 
+            buildLatestWorksCarousel(); 
+        } else if (currentPage === 'store') { 
+            main.innerHTML = `<div class="container section"><h2 class="section-title">جميع المنتجات</h2><div class="grid-auto" id="allProductsGrid"></div></div>`; 
+            buildAllProductsGrid(); 
+        } else if (currentPage === 'works') { 
+            main.innerHTML = `<div class="container section"><h2 class="section-title">أعمالنا</h2><div class="grid-auto" id="worksGrid"></div></div>`; 
+            buildWorksGrid(); 
+        } else if (currentPage === 'catalogs') { 
+            main.innerHTML = `<div class="container section"><h2 class="section-title">الكتالوجات</h2><div class="grid-auto" id="catalogsPageGrid"></div></div>`; 
+            buildCatalogsPageGrid(); 
+        } else if (currentPage === 'contact') { 
+            main.innerHTML = `<div class="container section"><h2 class="section-title">اتصل بنا</h2><div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;"><a href="tel:0541780995" style="text-decoration:none;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p>اتصل بنا</p></div></a><a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p>واتساب</p></div></a>${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p>انستقرام</p></div></a>` : ''}${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p>تيك توك</p></div></a>` : ''}${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p>سناب شات</p></div></a>` : ''}<a href="${currentData.location_url || '#'}" target="_blank" style="text-decoration:none;"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p>الموقع</p></div></a></div><div style="text-align:center; margin-top:20px;"><p>📞 0541780995</p></div></div>`; 
+        } 
+        updateFooterData(); 
+        renderNavLinks(); 
+        attachNavEvents(); 
+        document.querySelectorAll('[data-page]').forEach(el => { if (el.classList.contains('btn')) { el.addEventListener('click', (e) => { e.preventDefault(); changePage(el.getAttribute('data-page')); }); } }); 
+    }
     
     let splashTimeout, maintenanceInterval, popupTimeout;
     function showSplash(settings) { const splashDiv = document.getElementById('splash'); if (!splashDiv) return; splashDiv.innerHTML = ''; if (!settings.enabled) { splashDiv.style.display = 'none'; return; } const mediaType = settings.type || 'image'; const mediaUrl = settings.media_url; const videoUrl = settings.video_url; const duration = (settings.duration || 5) * 1000; const showSkip = settings.show_skip === true; let mediaElement; if (mediaType === 'video' && (videoUrl || mediaUrl)) { const vid = document.createElement('video'); vid.autoplay = true; vid.muted = true; vid.loop = false; vid.playsInline = true; vid.className = 'splash-media'; const source = document.createElement('source'); source.src = videoUrl || mediaUrl; source.type = 'video/mp4'; vid.appendChild(source); mediaElement = vid; } else { const img = document.createElement('img'); img.src = mediaUrl || ''; img.className = 'splash-media'; img.alt = 'Splash'; mediaElement = img; } if (mediaElement) splashDiv.appendChild(mediaElement); if (showSkip) { const skipBtn = document.createElement('button'); skipBtn.innerText = 'تخطي ←'; skipBtn.className = 'splash-skip'; skipBtn.onclick = () => { clearTimeout(splashTimeout); splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }; splashDiv.appendChild(skipBtn); } splashDiv.style.display = 'flex'; splashDiv.style.opacity = '1'; if (splashTimeout) clearTimeout(splashTimeout); splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration); }
