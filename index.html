@@ -107,28 +107,44 @@
         .section-title { font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; text-align: center; margin-bottom: 2rem; color: var(--primary-dark); position: relative; }
         .section-title::after { content: ''; display: block; width: 70px; height: 3px; background: var(--primary); margin: 0.5rem auto 0; }
 
-        /* Watermark CENTERED with 85% transparency */
-        .watermarked-img-container {
-            position: relative;
-            display: block;
-            width: 100%;
+        /* ========== تحسين الكروت (أعمالنا) ========== */
+        .card, .product-card, .carousel-slide {
+            background: var(--white);
+            border-radius: 28px;
             overflow: hidden;
-            background: #f8f8f8;
-            border-radius: 20px 20px 0 0;
+            box-shadow: var(--shadow);
+            transition: 0.3s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
-        .watermarked-img-container img {
+        .card:hover, .product-card:hover, .carousel-slide:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+        }
+        /* حاوية الصورة داخل الكرت - نسبة ثابتة 1:1 */
+        .card-img-container, .watermarked-img-container {
+            position: relative;
             width: 100%;
-            height: auto;
-            display: block;
-            transition: transform 0.3s ease;
+            aspect-ratio: 1 / 1; /* مربع */
+            background: #f5f5f5;
+            overflow: hidden;
         }
+        .card-img-container img, .watermarked-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        /* العلامة المائية في وسط الصورة (شفافية 85%) */
         .watermark-text {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             text-align: center;
-            font-size: clamp(14px, 5vw, 22px);
+            font-size: clamp(14px, 4vw, 20px);
             font-weight: 800;
             color: #ffffff;
             text-shadow: 0 2px 8px rgba(0,0,0,0.5);
@@ -146,6 +162,101 @@
         @media (max-width: 550px) {
             .watermark-text { font-size: 12px; padding: 4px 12px; white-space: nowrap; }
         }
+        /* محتوى الكرت (النص) */
+        .card-body, .product-info {
+            padding: 1rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 0.25rem;
+        }
+        /* شبكة أعمالنا */
+        .grid-auto {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+        /* كاروسيل الصفحة الرئيسية (أعمالنا) */
+        .carousel-container {
+            position: relative;
+            overflow: hidden;
+            padding: 20px 0;
+        }
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+            gap: 20px;
+        }
+        .carousel-slide {
+            flex: 0 0 calc(25% - 15px);
+            min-width: calc(25% - 15px);
+        }
+        @media (max-width: 1024px) { .carousel-slide { flex: 0 0 calc(33.333% - 14px); min-width: calc(33.333% - 14px); } }
+        @media (max-width: 768px) { .carousel-slide { flex: 0 0 calc(50% - 10px); min-width: calc(50% - 10px); } }
+        @media (max-width: 480px) { .carousel-slide { flex: 0 0 calc(100% - 0px); min-width: calc(100% - 0px); } }
+        
+        .carousel-button {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+        .carousel-button:hover { background: var(--primary); transform: translateY(-50%) scale(1.05); }
+        .carousel-button-prev { right: 10px; }
+        .carousel-button-next { left: 10px; }
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .carousel-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ddd;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .carousel-dot.active { background: var(--primary); width: 30px; border-radius: 10px; }
+        
+        /* منتجات المتجر */
+        .product-card .watermarked-img-container {
+            border-radius: 28px 28px 0 0;
+        }
+        .whatsapp-order {
+            background: #25D366;
+            color: white;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: 0.2s;
+        }
+        .whatsapp-order:hover { background: #1da15a; transform: scale(1.02); }
+        
+        /* Lightbox watermark */
         .lightbox-watermark {
             position: absolute;
             top: 50%;
@@ -167,32 +278,8 @@
             white-space: nowrap;
         }
         @media (max-width: 700px) { .lightbox-watermark { font-size: 18px; padding: 8px 20px; } }
-
-        .carousel-container { position: relative; overflow: hidden; padding: 20px 0; }
-        .carousel-track { display: flex; transition: transform 0.5s ease-in-out; gap: 20px; }
-        .carousel-slide { flex: 0 0 calc(25% - 15px); min-width: calc(25% - 15px); background: var(--white); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; cursor: pointer; }
-        .carousel-slide:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); }
-        .carousel-button { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .carousel-button:hover { background: var(--primary); transform: translateY(-50%) scale(1.05); }
-        .carousel-button-prev { right: 10px; }
-        .carousel-button-next { left: 10px; }
-        .carousel-dots { display: flex; justify-content: center; gap: 10px; margin-top: 20px; }
-        .carousel-dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; cursor: pointer; transition: 0.2s; }
-        .carousel-dot.active { background: var(--primary); width: 30px; border-radius: 10px; }
-        @media (max-width: 1024px) { .carousel-slide { flex: 0 0 calc(33.333% - 14px); min-width: calc(33.333% - 14px); } }
-        @media (max-width: 768px) { .carousel-slide { flex: 0 0 calc(50% - 10px); min-width: calc(50% - 10px); } }
-        @media (max-width: 480px) { .carousel-slide { flex: 0 0 calc(100% - 0px); min-width: calc(100% - 0px); } .carousel-button { width: 35px; height: 35px; font-size: 1rem; } }
-        .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
-        .card { background: var(--white); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; cursor: pointer; text-align: center; position: relative; }
-        .card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); }
-        .card-img { width: 100%; aspect-ratio: 1; object-fit: cover; }
-        .card-body { padding: 1.2rem; }
-        .card-title { font-size: 1.1rem; font-weight: 700; color: var(--primary-dark); }
-        .product-card { background: var(--white); border-radius: 28px; overflow: hidden; box-shadow: var(--shadow); transition: 0.3s; cursor: pointer; }
-        .product-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
-        .product-info { padding: 1rem; text-align: center; }
-        .whatsapp-order { background: #25D366; color: white; border: none; width: 100%; padding: 10px; border-radius: 50px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; }
-        .whatsapp-order:hover { background: #1da15a; transform: scale(1.02); }
+        
+        /* باقي الأنماط */
         .footer { background: #1e1e1e; color: #ccc; padding: 3rem 0 1rem; }
         .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 2rem; }
         .footer h4 { color: var(--primary); margin-bottom: 1rem; }
@@ -263,10 +350,10 @@
     let totalSlides = 0;
 
     const WATERMARK_TEXT = "بصمة غير للديكور";
-    function getWatermarkedImage(src, alt, extraClass = '') {
+    function getWatermarkedImage(src, alt) {
         if (!src) return '<div class="empty-state">صورة غير متوفرة</div>';
-        return `<div class="watermarked-img-container ${extraClass}">
-                    <img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}" style="width:100%; display:block;">
+        return `<div class="watermarked-img-container">
+                    <img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}">
                     <div class="watermark-text">${WATERMARK_TEXT}</div>
                 </div>`;
     }
@@ -287,7 +374,7 @@
         }
     }
 
-    // Lightbox logic
+    // Lightbox logic (مختصر لكن كامل)
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -315,6 +402,7 @@
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage; document.getElementById('lightboxNext').onclick = nextImage; document.getElementById('lightboxClose').onclick = closeLightbox; waBtn.onclick = sendWhatsapp;
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+
     function openAlbum(id) { const alb = currentData.albums?.[id]; if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; } const urls = Object.values(alb.imgs).map(i => i.url).filter(u => u); if (urls.length) openLightbox(urls, 0); else showToast('لا توجد صور صالحة'); }
     function openCatalogModal(code) { const modal = document.getElementById('catalogModal'), iframe = document.getElementById('catalogIframe'); iframe.srcdoc = code; modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
     function closeCatalogModal() { document.getElementById('catalogModal').style.display = 'none'; document.getElementById('catalogIframe').srcdoc = ''; document.body.style.overflow = ''; }
@@ -326,11 +414,8 @@
     function renderPartnersMarquee() { const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack'); if (!cont || !track) return; if (currentData.partners && Object.keys(currentData.partners).length) { cont.style.display = 'block'; let logos = ''; Object.values(currentData.partners).forEach(p => { logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy"></div>`; }); track.innerHTML = logos + logos; } else cont.style.display = 'none'; }
     function getAllStoreProducts() { let imgs = []; if (currentData.store_categories) { Object.keys(currentData.store_categories).forEach(cid => { const cat = currentData.store_categories[cid]; if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) imgs.push(img.url); }); }); } return imgs; }
     
-    // NEW: Build carousel for works (albums) on homepage
-    function getAlbumsList() {
-        if (!currentData.albums) return [];
-        return Object.keys(currentData.albums).map(id => ({ id, ...currentData.albums[id] }));
-    }
+    // Carousel for homepage (works)
+    function getAlbumsList() { if (!currentData.albums) return []; return Object.keys(currentData.albums).map(id => ({ id, ...currentData.albums[id] })); }
     function buildLatestWorksCarousel() {
         const cont = document.getElementById('worksCarousel');
         if (!cont) return;
@@ -339,19 +424,21 @@
         let html = `<div class="carousel-container"><button class="carousel-button carousel-button-prev" id="carouselPrev"><i class="fas fa-chevron-right"></i></button><div class="carousel-track" id="carouselTrack">`;
         albums.forEach(alb => {
             let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            html += `<div class="carousel-slide" data-album-id="${alb.id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="watermarked-img-container" style="height:200px; background:#eee;"></div>'}<div class="product-info"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+            html += `<div class="carousel-slide" data-album-id="${alb.id}">
+                        ${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="watermarked-img-container" style="background:#eee;"></div>'}
+                        <div class="product-info">
+                            <div class="card-title">${alb.name || 'ألبوم'}</div>
+                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
+                        </div>
+                    </div>`;
         });
         html += `</div><button class="carousel-button carousel-button-next" id="carouselNext"><i class="fas fa-chevron-left"></i></button><div class="carousel-dots" id="carouselDots"></div></div>`;
         cont.innerHTML = html;
         document.querySelectorAll('#worksCarousel .carousel-slide').forEach(slide => {
-            slide.addEventListener('click', () => {
-                const albumId = slide.getAttribute('data-album-id');
-                if (albumId) openAlbum(albumId);
-            });
+            slide.addEventListener('click', () => { const albumId = slide.getAttribute('data-album-id'); if (albumId) openAlbum(albumId); });
         });
         setTimeout(() => initCarousel(), 100);
     }
-    
     function initCarousel() { 
         const track = document.getElementById('carouselTrack'); 
         const prevBtn = document.getElementById('carouselPrev'); 
@@ -365,8 +452,7 @@
         if (dotsContainer) { 
             dotsContainer.innerHTML = ''; 
             for (let i = 0; i < totalSlides; i++) { 
-                const dot = document.createElement('div'); 
-                dot.classList.add('carousel-dot'); 
+                const dot = document.createElement('div'); dot.classList.add('carousel-dot'); 
                 if (i === currentSlideIndex) dot.classList.add('active'); 
                 dot.addEventListener('click', () => goToSlide(i)); 
                 dotsContainer.appendChild(dot); 
@@ -390,8 +476,8 @@
     function nextSlide() { if (currentSlideIndex + 1 >= totalSlides) currentSlideIndex = 0; else currentSlideIndex++; updateCarousel(); }
     function prevSlide() { if (currentSlideIndex - 1 < 0) currentSlideIndex = totalSlides - 1; else currentSlideIndex--; updateCarousel(); }
     function resetInterval() { if (carouselInterval) { clearInterval(carouselInterval); carouselInterval = setInterval(() => nextSlide(), 4000); } }
-
-    // Build works grid (fixed)
+    
+    // شبكة أعمالنا (منسقة)
     function buildWorksGrid() {
         const cont = document.getElementById('worksGrid');
         if (!cont) return;
@@ -400,7 +486,13 @@
         let html = '';
         albums.forEach(alb => {
             let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            html += `<div class="card" data-album="${alb.id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم', 'card-img') : '<div class="card-img" style="background:#f0f0f0; height:200px;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+            html += `<div class="card" data-album="${alb.id}">
+                        ${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="watermarked-img-container" style="background:#f0f0f0;"></div>'}
+                        <div class="card-body">
+                            <div class="card-title">${alb.name || 'ألبوم'}</div>
+                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
+                        </div>
+                    </div>`;
         });
         cont.innerHTML = html;
         document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
