@@ -6,6 +6,7 @@
     <title>لوحة إدارة بصمة غير | تحكم كامل</title>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
@@ -43,13 +44,14 @@
 <div class="container">
     <div class="login-box" id="loginBox">
         <h2 style="text-align:center;">🔐 لوحة التحكم</h2>
-        <input type="password" id="adminPassword" placeholder="كلمة المرور">
-        <button onclick="login()">دخول</button>
+        <input type="email" id="adminEmail" placeholder="البريد الإلكتروني" style="margin-bottom:10px;">
+        <input type="password" id="adminPasswordAuth" placeholder="كلمة المرور">
+        <button onclick="loginWithAuth()">دخول</button>
     </div>
     <div id="adminPanel" style="display:none;">
         <div class="admin-header">
             <h1>⚙️ تحكم كامل بالموقع</h1>
-            <button onclick="logout()" class="logout-btn">خروج</button>
+            <button onclick="logoutAuth()" class="logout-btn">خروج</button>
         </div>
         <div id="adminSections"></div>
     </div>
@@ -68,6 +70,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
+    const auth = firebase.auth();
     const DB_PATH = 'site_v28';
 
     let currentData = {};
@@ -75,34 +78,58 @@
     let openSections = {};
 
     function showToast(msg) { const t=document.getElementById('toast'); t.innerText=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
-    function login() { const pwd=document.getElementById('adminPassword').value; db.ref(DB_PATH+'/in').once('value').then(snap=>{ if(snap.val() && snap.val().toString()===pwd){ loggedIn=true; document.getElementById('loginBox').style.display='none'; document.getElementById('adminPanel').style.display='block'; loadData(); } else showToast('كلمة المرور غير صحيحة'); }); }
-    function logout() { loggedIn=false; document.getElementById('loginBox').style.display='block'; document.getElementById('adminPanel').style.display='none'; currentData={}; openSections={}; }
-    function loadData() { db.ref(DB_PATH).on('value', snap=>{ currentData=snap.val()||{}; buildAdmin(); restoreOpen(); }); }
+    
+    function loginWithAuth() {
+        const email = document.getElementById('adminEmail').value;
+        const pwd = document.getElementById('adminPasswordAuth').value;
+        auth.signInWithEmailAndPassword(email, pwd)
+            .then(() => {
+                loggedIn = true;
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+                loadData();
+            })
+            .catch(err => showToast('خطأ في الدخول: ' + err.message));
+    }
+    
+    function logoutAuth() {
+        auth.signOut().then(() => {
+            loggedIn = false;
+            document.getElementById('loginBox').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            currentData = {};
+            openSections = {};
+        });
+    }
+    
+    function loadData() {
+        db.ref(DB_PATH).on('value', snap => { 
+            currentData = snap.val() || {}; 
+            buildAdmin(); 
+            restoreOpen(); 
+        });
+    }
+    
     function toggleCollapse(btn,id) { const content=btn.nextElementSibling; const isOpen=content.style.display==='block'; content.style.display=isOpen?'none':'block'; openSections[id]=!isOpen; btn.querySelector('span').innerHTML=isOpen?'▾':'▴'; }
     function restoreOpen() { document.querySelectorAll('.collapse-section').forEach(s=>{ const id=s.dataset.sectionId; if(openSections[id]){ s.querySelector('.collapse-content').style.display='block'; s.querySelector('.collapse-btn span').innerHTML='▴'; } }); }
 
-    // ========== إدارة الصور (إضافة وحذف بدون confirm وإعادة تحميل ذكية) ==========
+    // ========== إدارة الصور ==========
     async function addImagesToTarget(target, urlsArray, clearTextareaId) {
         if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط صالحة');
         const unique = [...new Set(urlsArray)];
         if(unique.length !== urlsArray.length) showToast('تمت إزالة الروابط المكررة تلقائياً');
         const promises = unique.map(url => db.ref(DB_PATH+'/'+target+'/imgs').push({ url }));
         await Promise.all(promises);
-        showToast(`تمت إضافة ${unique.length} صورة بنجاح`);
+        showToast(`✅ تمت إضافة ${unique.length} صورة بنجاح`);
         if(clearTextareaId) document.getElementById(clearTextareaId).value = '';
-        // تحديث شبكة الحذف إذا كانت مفتوحة لنفس المسار
-        const relatedSelect = document.querySelector(`select[data-delete-path="${target}"]`);
-        if(relatedSelect) loadImagesForDelete(target, relatedSelect.getAttribute('data-grid-id'));
-        else loadData(); // كحل أخير
+        loadData();
     }
 
-    // حذف صورة (بدون confirm, بدون إغلاق القسم)
     window.deleteImage = function(path, imgId, gridId) {
         db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{
-            showToast('تم حذف الصورة');
-            // تحديث شبكة الحذف فقط (نفس الشبكة التي نضغط منها)
-            loadImagesForDelete(path, gridId);
-        }).catch(e=>showToast('خطأ في الحذف'));
+            showToast('🗑️ تم حذف الصورة');
+            loadData();
+        }).catch(e=>showToast('خطأ في الحذف: '+e.message));
     }
 
     function loadImagesForDelete(path, gridId) {
@@ -119,24 +146,113 @@
         `).join('');
     }
 
-    // ========== حذف الأقسام ==========
     async function deleteSection(type, id, name) {
         if(!confirm(`⚠️ هل أنت متأكد من حذف "${name}" بالكامل؟ سيتم حذف جميع الصور المرتبطة به.`)) return;
         try { await db.ref(DB_PATH+'/'+type+'/'+id).remove(); showToast(`✅ تم حذف "${name}" بنجاح`); loadData(); } 
-        catch(e) { showToast('❌ فشل الحذف'); }
+        catch(e) { showToast('❌ فشل الحذف: '+e.message); }
     }
 
-    // ========== بناء لوحة التحكم ==========
+    // ========== دوال الحفظ العامة ==========
+    window.saveGeneral = function() {
+        db.ref(DB_PATH).update({
+            site_name: document.getElementById('siteName').value,
+            whatsapp_num: document.getElementById('whatsappNum').value,
+            about_text: document.getElementById('aboutText').value,
+            footer_text: document.getElementById('footerText').value,
+            location_url: document.getElementById('locationUrl').value,
+            insta_url: document.getElementById('instaUrl').value,
+            tiktok_url: document.getElementById('tiktokUrl').value,
+            snap_url: document.getElementById('snapUrl').value
+        }).then(()=>{ showToast('تم حفظ الإعدادات العامة'); loadData(); });
+    };
+    window.saveSchedule = function() {
+        let sched={};
+        for(let i=0;i<=6;i++) sched[i]={ active:document.getElementById(`dayActive_${i}`).checked, s1_s:document.getElementById(`s1s_${i}`).value, s1_e:document.getElementById(`s1e_${i}`).value, s2_a:document.getElementById(`s2a_${i}`).checked, s2_s:document.getElementById(`s2s_${i}`).value, s2_e:document.getElementById(`s2e_${i}`).value };
+        db.ref(DB_PATH+'/work_schedule').set(sched).then(()=>{ showToast('تم حفظ أوقات العمل'); loadData(); });
+    };
+    window.savePopupSettings = function() {
+        db.ref(DB_PATH).update({ popup_enabled: document.getElementById('popupEnabled').checked, popup_message: document.getElementById('popupMessage').value, popup_duration: parseInt(document.getElementById('popupDuration').value)||8 }).then(()=>{ showToast('تم حفظ الفقاعة'); loadData(); });
+    };
+    window.saveMaintenance = function() {
+        const active=document.getElementById('maintenanceMode').checked;
+        let until=null;
+        if(active){
+            let h=parseInt(document.getElementById('hoursInput').value)||0, m=parseInt(document.getElementById('minutesInput').value)||0, s=parseInt(document.getElementById('secondsInput').value)||0;
+            let total=(h*3600+m*60+s)*1000;
+            if(total>0) until=Date.now()+total;
+        }
+        db.ref(DB_PATH).update({ maintenance_mode: active, maintenance_title: document.getElementById('maintenanceTitle').value, maintenance_message: document.getElementById('maintenanceMsg').value, maintenance_until: until }).then(()=>{ showToast('تم حفظ إعدادات الصيانة'); loadData(); });
+    };
+    window.saveSplashSettings = function() {
+        db.ref(DB_PATH).update({
+            splash_enabled: document.getElementById('splashEnabled').checked,
+            splash_show_skip: document.getElementById('splashShowSkip').checked,
+            splash_type: document.getElementById('splashType').value,
+            splash_media_url: document.getElementById('splashMediaUrl').value,
+            splash_video_url: document.getElementById('splashVideoUrl').value,
+            splash_duration: parseInt(document.getElementById('splashDuration').value)||5
+        }).then(()=>{ showToast('تم حفظ إعدادات شاشة البداية'); loadData(); });
+    };
+
+    // دوال الإضافة والتحديث
+    window.addAlbumNow = () => {
+        const name = document.getElementById('newAlbumName').value.trim();
+        if(!name) return showToast('أدخل اسم الألبوم');
+        db.ref(DB_PATH+'/albums/'+Date.now()).set({ name }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
+        document.getElementById('newAlbumName').value = '';
+    };
+    window.addStoreCatNow = () => {
+        const name = document.getElementById('newStoreCatName').value.trim();
+        if(!name) return showToast('أدخل اسم القسم');
+        db.ref(DB_PATH+'/store_categories/'+Date.now()).set({ name }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
+        document.getElementById('newStoreCatName').value = '';
+    };
+    window.addCatalogNow = () => {
+        const name = document.getElementById('newCatalogName').value.trim();
+        const code = document.getElementById('newCatalogCode').value.trim();
+        if(!name||!code) return showToast('أدخل الاسم والكود');
+        db.ref(DB_PATH+'/catalogs/'+Date.now()).set({ name, code }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
+        document.getElementById('newCatalogName').value = ''; document.getElementById('newCatalogCode').value = '';
+    };
+    window.addPartnerNow = () => {
+        const url = document.getElementById('newPartnerUrl').value.trim(); const link = document.getElementById('newPartnerLink').value.trim();
+        if(!url) return showToast('أدخل رابط الصورة');
+        db.ref(DB_PATH+'/partners/'+Date.now()).set({ url, link: link||null }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
+        document.getElementById('newPartnerUrl').value = ''; document.getElementById('newPartnerLink').value = '';
+    };
+    window.updateAlbumName = (id, newName) => { if(newName) db.ref(DB_PATH+'/albums/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
+    window.updateStoreCatName = (id, newName) => { if(newName) db.ref(DB_PATH+'/store_categories/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
+    window.updateCatalogName = (id, newName) => { if(newName) db.ref(DB_PATH+'/catalogs/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
+    window.updateCatalogCode = (id, newCode) => { db.ref(DB_PATH+'/catalogs/'+id+'/code').set(newCode).then(()=>{ showToast('تم تحديث الكود'); loadData(); }); };
+    window.updatePartner = (id, url, link) => { if(url) db.ref(DB_PATH+'/partners/'+id).update({ url, link: link||null }).then(()=>{ showToast('تم التحديث'); loadData(); }); };
+    window.deleteReview = (id) => db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>{ showToast('تم حذف التقييم'); loadData(); });
+    window.addImagesToAlbum = async () => {
+        const target = document.getElementById('addToAlbumSelect').value;
+        const urls = document.getElementById('albumUrls').value.split('\n').filter(u=>u.trim());
+        if(!target || !urls.length) return showToast('اختر ألبوم وأدخل روابط');
+        await addImagesToTarget(target, urls, 'albumUrls');
+    };
+    window.addImagesToStore = async () => {
+        const target = document.getElementById('addToStoreSelect').value;
+        const urls = document.getElementById('storeUrls').value.split('\n').filter(u=>u.trim());
+        if(!target || !urls.length) return showToast('اختر قسم وأدخل روابط');
+        await addImagesToTarget(target, urls, 'storeUrls');
+    };
+    window.loadImagesForDelete = loadImagesForDelete;
+    window.deleteSection = deleteSection;
+    window.toggleCollapse = toggleCollapse;
+
+    // بناء الواجهة (بنفس هيكل الكود القديم مع ربط الدوال)
     function buildAdmin() {
         const d = currentData;
         const getAlbumOptions = () => {
             let o = '<option value="">-- اختر ألبوم --</option>';
-            if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">📁 ${d.albums[id].name}</option>`);
+            if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">📁 ${(d.albums[id].name||'').replace(/"/g,'&quot;')}</option>`);
             return o;
         };
         const getStoreOptions = () => {
             let o = '<option value="">-- اختر قسم --</option>';
-            if(d.store_categories) Object.keys(d.store_categories).forEach(id=>o+=`<option value="store_categories/${id}">🛒 ${d.store_categories[id].name}</option>`);
+            if(d.store_categories) Object.keys(d.store_categories).forEach(id=>o+=`<option value="store_categories/${id}">🛒 ${(d.store_categories[id].name||'').replace(/"/g,'&quot;')}</option>`);
             return o;
         };
         const scheduleHTML = () => {
@@ -154,28 +270,19 @@
             setTimeout(()=>{ for(let i=0;i<=6;i++){ const cb=document.getElementById(`s2a_${i}`); if(cb) cb.onchange=()=>document.getElementById(`evening_${i}`).style.display=cb.checked?'block':'none'; } },100);
             return html;
         };
-        const addItemWithSave = (inputId, dbPath, nameKey, extraFields = null) => {
-            const name = document.getElementById(inputId).value.trim();
-            if(!name) return showToast('أدخل الاسم');
-            const newId = `temp_${Date.now()}`;
-            let newObj = { [nameKey]: name };
-            if(extraFields) Object.assign(newObj, extraFields);
-            db.ref(DB_PATH+'/'+dbPath+'/'+newId).set(newObj).then(()=>{ showToast('تمت الإضافة'); loadData(); });
-            document.getElementById(inputId).value = '';
-        };
 
         const html = `
             <div class="collapse-section" data-section-id="general">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ الإعدادات العامة والنصوص <span>▾</span></button>
                 <div class="collapse-content">
-                    <input id="siteName" value="${(d.site_name||'').replace(/"/g,'&quot;')}" placeholder="اسم الموقع">
-                    <input id="whatsappNum" value="${d.whatsapp_num||''}" placeholder="رقم واتساب (بدون +)">
-                    <textarea id="aboutText" rows="4" placeholder="نص من نحن">${(d.about_text||'').replace(/"/g,'&quot;')}</textarea>
-                    <input id="footerText" value="${(d.footer_text||'').replace(/"/g,'&quot;')}" placeholder="حقوق الملكية">
-                    <input id="locationUrl" value="${(d.location_url||'').replace(/"/g,'&quot;')}" placeholder="رابط الخريطة">
-                    <input id="instaUrl" value="${(d.insta_url||'').replace(/"/g,'&quot;')}" placeholder="انستقرام">
-                    <input id="tiktokUrl" value="${(d.tiktok_url||'').replace(/"/g,'&quot;')}" placeholder="تيك توك">
-                    <input id="snapUrl" value="${(d.snap_url||'').replace(/"/g,'&quot;')}" placeholder="سناب شات">
+                    <input id="siteName" value="${(d.site_name||'').replace(/"/g,'&quot;')}">
+                    <input id="whatsappNum" value="${d.whatsapp_num||''}">
+                    <textarea id="aboutText" rows="4">${(d.about_text||'').replace(/"/g,'&quot;')}</textarea>
+                    <input id="footerText" value="${(d.footer_text||'').replace(/"/g,'&quot;')}">
+                    <input id="locationUrl" value="${(d.location_url||'').replace(/"/g,'&quot;')}">
+                    <input id="instaUrl" value="${(d.insta_url||'').replace(/"/g,'&quot;')}">
+                    <input id="tiktokUrl" value="${(d.tiktok_url||'').replace(/"/g,'&quot;')}">
+                    <input id="snapUrl" value="${(d.snap_url||'').replace(/"/g,'&quot;')}">
                     <button class="btn-gold" onclick="saveGeneral()">حفظ</button>
                 </div>
             </div>
@@ -191,8 +298,8 @@
                     <button class="btn-gold" onclick="addImagesToAlbum()">إضافة صور</button>
                     <hr>
                     <h4 style="color:#dc3545;">🗑️ حذف الصور من الألبوم</h4>
-                    <select id="albumDeleteSelect" onchange="loadImagesForDelete(this.value, 'albumDeleteGrid')" data-delete-path="" data-grid-id="albumDeleteGrid">${getAlbumOptions()}</select>
-                    <div id="albumDeleteGrid" class="image-delete-grid"><p class="empty-state">اختر ألبوم لعرض الصور</p></div>
+                    <select id="albumDeleteSelect" onchange="loadImagesForDelete(this.value, 'albumDeleteGrid')">${getAlbumOptions()}</select>
+                    <div id="albumDeleteGrid" class="image-delete-grid"><p>اختر ألبوم لعرض الصور</p></div>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="store">
@@ -207,23 +314,17 @@
                     <button class="btn-gold" onclick="addImagesToStore()">إضافة منتجات</button>
                     <hr>
                     <h4 style="color:#dc3545;">🗑️ حذف المنتجات من القسم</h4>
-                    <select id="storeDeleteSelect" onchange="loadImagesForDelete(this.value, 'storeDeleteGrid')" data-delete-path="" data-grid-id="storeDeleteGrid">${getStoreOptions()}</select>
-                    <div id="storeDeleteGrid" class="image-delete-grid"><p class="empty-state">اختر قسم لعرض المنتجات</p></div>
+                    <select id="storeDeleteSelect" onchange="loadImagesForDelete(this.value, 'storeDeleteGrid')">${getStoreOptions()}</select>
+                    <div id="storeDeleteGrid" class="image-delete-grid"><p>اختر قسم لعرض المنتجات</p></div>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="catalogs">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'catalogs')">📚 الكتالوجات <span>▾</span></button>
-                <div class="collapse-content">
-                    <div id="catalogsList"></div>
-                    <div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" rows="3" placeholder="كود iFrame"></textarea><button class="btn-green" onclick="addCatalogNow()">إضافة كتالوج</button></div>
-                </div>
+                <div class="collapse-content"><div id="catalogsList"></div><div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" rows="3" placeholder="كود iFrame"></textarea><button class="btn-green" onclick="addCatalogNow()">إضافة كتالوج</button></div></div>
             </div>
             <div class="collapse-section" data-section-id="partners">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'partners')">🤝 شركاء النجاح <span>▾</span></button>
-                <div class="collapse-content">
-                    <div id="partnersList"></div>
-                    <div style="display:flex; gap:8px;"><input id="newPartnerUrl" placeholder="رابط الصورة"><input id="newPartnerLink" placeholder="الرابط (اختياري)"><button class="btn-green" onclick="addPartnerNow()">إضافة شريك</button></div>
-                </div>
+                <div class="collapse-content"><div id="partnersList"></div><div style="display:flex; gap:8px;"><input id="newPartnerUrl" placeholder="رابط الصورة"><input id="newPartnerLink" placeholder="الرابط (اختياري)"><button class="btn-green" onclick="addPartnerNow()">إضافة شريك</button></div></div>
             </div>
             <div class="collapse-section" data-section-id="schedule">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'schedule')">🕒 أوقات العمل <span>▾</span></button>
@@ -238,10 +339,10 @@
                 <div class="collapse-content">
                     <div class="checkbox-row"><input type="checkbox" id="splashEnabled" ${d.splash_enabled!==false?'checked':''}> <label>تفعيل</label></div>
                     <div class="checkbox-row"><input type="checkbox" id="splashShowSkip" ${d.splash_show_skip===true?'checked':''}> <label>إظهار زر "تخطي"</label></div>
-                    <select id="splashType"><option value="image" ${d.splash_type==='image'?'selected':''}>صورة ثابتة</option><option value="gif" ${d.splash_type==='gif'?'selected':''}>GIF متحرك</option><option value="video" ${d.splash_type==='video'?'selected':''}>فيديو</option></select>
-                    <input id="splashMediaUrl" value="${(d.splash_media_url||'').replace(/"/g,'&quot;')}" placeholder="رابط الصورة/الفيديو">
-                    <input id="splashVideoUrl" value="${(d.splash_video_url||'').replace(/"/g,'&quot;')}" placeholder="رابط فيديو إضافي">
-                    <input id="splashDuration" type="number" value="${d.splash_duration||5}" placeholder="مدة العرض (ثانية)">
+                    <select id="splashType"><option value="image" ${d.splash_type==='image'?'selected':''}>صورة ثابتة</option><option value="gif" ${d.splash_type==='gif'?'selected':''}>GIF</option><option value="video" ${d.splash_type==='video'?'selected':''}>فيديو</option></select>
+                    <input id="splashMediaUrl" value="${(d.splash_media_url||'').replace(/"/g,'&quot;')}">
+                    <input id="splashVideoUrl" value="${(d.splash_video_url||'').replace(/"/g,'&quot;')}">
+                    <input id="splashDuration" type="number" value="${d.splash_duration||5}">
                     <button class="btn-gold" onclick="saveSplashSettings()">حفظ</button>
                 </div>
             </div>
@@ -249,8 +350,8 @@
                 <button class="collapse-btn" onclick="toggleCollapse(this,'popup')">💬 فقاعة الترحيب <span>▾</span></button>
                 <div class="collapse-content">
                     <div class="checkbox-row"><input type="checkbox" id="popupEnabled" ${d.popup_enabled?'checked':''}> <label>تفعيل</label></div>
-                    <input id="popupMessage" value="${(d.popup_message||'').replace(/"/g,'&quot;')}" placeholder="نص الرسالة">
-                    <input id="popupDuration" type="number" value="${d.popup_duration||8}" placeholder="مدة الظهور (ثواني)">
+                    <input id="popupMessage" value="${(d.popup_message||'').replace(/"/g,'&quot;')}">
+                    <input id="popupDuration" type="number" value="${d.popup_duration||8}">
                     <button class="btn-gold" onclick="savePopupSettings()">حفظ</button>
                 </div>
             </div>
@@ -258,8 +359,8 @@
                 <button class="collapse-btn" onclick="toggleCollapse(this,'maintenance')">🛡️ وضع الصيانة <span>▾</span></button>
                 <div class="collapse-content">
                     <div class="checkbox-row"><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode?'checked':''}> <label>تفعيل</label></div>
-                    <input id="maintenanceTitle" value="${(d.maintenance_title||'').replace(/"/g,'&quot;')}" placeholder="عنوان الصيانة">
-                    <textarea id="maintenanceMsg" rows="2" placeholder="رسالة الصيانة">${(d.maintenance_message||'').replace(/"/g,'&quot;')}</textarea>
+                    <input id="maintenanceTitle" value="${(d.maintenance_title||'').replace(/"/g,'&quot;')}">
+                    <textarea id="maintenanceMsg" rows="2">${(d.maintenance_message||'').replace(/"/g,'&quot;')}</textarea>
                     <div style="display:flex; gap:10px;"><input type="number" id="hoursInput" placeholder="ساعات" value="0"><input type="number" id="minutesInput" placeholder="دقائق" value="0"><input type="number" id="secondsInput" placeholder="ثواني" value="0"></div>
                     <button class="btn-gold" onclick="saveMaintenance()">حفظ</button>
                 </div>
@@ -267,7 +368,7 @@
         `;
         document.getElementById('adminSections').innerHTML = html;
 
-        // عرض قوائم العناصر
+        // عرض القوائم
         if(d.albums){
             document.getElementById('albumsList').innerHTML = Object.keys(d.albums).map(id=>`
                 <div class="list-item-row"><input type="text" value="${(d.albums[id].name||'').replace(/"/g,'&quot;')}" class="album-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateAlbumName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('albums','${id}','${(d.albums[id].name||'').replace(/"/g,'&quot;')}')">حذف الألبوم</button></div>
@@ -297,98 +398,7 @@
                 <div style="border-bottom:1px solid #eee; padding:8px;"><b>${d.reviews[id].name}</b> ${'★'.repeat(d.reviews[id].rating)}<p>${d.reviews[id].message}</p><button class="btn-red" onclick="deleteReview('${id}')">حذف التقييم</button></div>
             `).join('');
         }
-
-        // دوال الإضافة والتحديث
-        window.addAlbumNow = () => addItemWithSave('newAlbumName', 'albums', 'name');
-        window.addStoreCatNow = () => addItemWithSave('newStoreCatName', 'store_categories', 'name');
-        window.addCatalogNow = () => {
-            const name = document.getElementById('newCatalogName').value.trim();
-            const code = document.getElementById('newCatalogCode').value.trim();
-            if(!name||!code) return showToast('أدخل الاسم والكود');
-            db.ref(DB_PATH+'/catalogs/'+Date.now()).set({ name, code }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
-            document.getElementById('newCatalogName').value = ''; document.getElementById('newCatalogCode').value = '';
-        };
-        window.addPartnerNow = () => {
-            const url = document.getElementById('newPartnerUrl').value.trim(); const link = document.getElementById('newPartnerLink').value.trim();
-            if(!url) return showToast('أدخل رابط الصورة');
-            db.ref(DB_PATH+'/partners/'+Date.now()).set({ url, link: link||null }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
-            document.getElementById('newPartnerUrl').value = ''; document.getElementById('newPartnerLink').value = '';
-        };
-        window.updateAlbumName = (id, newName) => { if(newName) db.ref(DB_PATH+'/albums/'+id+'/name').set(newName).then(()=>showToast('تم التحديث')); };
-        window.updateStoreCatName = (id, newName) => { if(newName) db.ref(DB_PATH+'/store_categories/'+id+'/name').set(newName).then(()=>showToast('تم التحديث')); };
-        window.updateCatalogName = (id, newName) => { if(newName) db.ref(DB_PATH+'/catalogs/'+id+'/name').set(newName); };
-        window.updateCatalogCode = (id, newCode) => { db.ref(DB_PATH+'/catalogs/'+id+'/code').set(newCode).then(()=>showToast('تم تحديث الكود')); };
-        window.updatePartner = (id, url, link) => { if(url) db.ref(DB_PATH+'/partners/'+id).update({ url, link: link||null }).then(()=>showToast('تم التحديث')); };
-        window.deleteReview = (id) => db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>loadData());
-        window.deleteSection = deleteSection;
-
-        // دوال إضافة الصور
-        window.addImagesToAlbum = async () => {
-            const target = document.getElementById('addToAlbumSelect').value;
-            const urls = document.getElementById('albumUrls').value.split('\n').filter(u=>u.trim());
-            if(!target || !urls.length) return showToast('اختر ألبوم وأدخل روابط');
-            await addImagesToTarget(target, urls, 'albumUrls');
-        };
-        window.addImagesToStore = async () => {
-            const target = document.getElementById('addToStoreSelect').value;
-            const urls = document.getElementById('storeUrls').value.split('\n').filter(u=>u.trim());
-            if(!target || !urls.length) return showToast('اختر قسم وأدخل روابط');
-            await addImagesToTarget(target, urls, 'storeUrls');
-        };
-        // ربط تحميل صور الحذف
-        window.loadImagesForDelete = loadImagesForDelete;
     }
-
-    // دوال الحفظ العامة
-    function saveGeneral() {
-        db.ref(DB_PATH).update({
-            site_name: document.getElementById('siteName').value,
-            whatsapp_num: document.getElementById('whatsappNum').value,
-            about_text: document.getElementById('aboutText').value,
-            footer_text: document.getElementById('footerText').value,
-            location_url: document.getElementById('locationUrl').value,
-            insta_url: document.getElementById('instaUrl').value,
-            tiktok_url: document.getElementById('tiktokUrl').value,
-            snap_url: document.getElementById('snapUrl').value
-        }).then(()=>showToast('تم حفظ الإعدادات العامة'));
-    }
-    function saveSchedule() {
-        let sched={};
-        for(let i=0;i<=6;i++) sched[i]={ active:document.getElementById(`dayActive_${i}`).checked, s1_s:document.getElementById(`s1s_${i}`).value, s1_e:document.getElementById(`s1e_${i}`).value, s2_a:document.getElementById(`s2a_${i}`).checked, s2_s:document.getElementById(`s2s_${i}`).value, s2_e:document.getElementById(`s2e_${i}`).value };
-        db.ref(DB_PATH+'/work_schedule').set(sched).then(()=>showToast('تم حفظ أوقات العمل'));
-    }
-    function savePopupSettings() {
-        db.ref(DB_PATH).update({ popup_enabled: document.getElementById('popupEnabled').checked, popup_message: document.getElementById('popupMessage').value, popup_duration: parseInt(document.getElementById('popupDuration').value)||8 }).then(()=>showToast('تم حفظ الفقاعة'));
-    }
-    function saveMaintenance() {
-        const active=document.getElementById('maintenanceMode').checked;
-        let until=null;
-        if(active){
-            let h=parseInt(document.getElementById('hoursInput').value)||0, m=parseInt(document.getElementById('minutesInput').value)||0, s=parseInt(document.getElementById('secondsInput').value)||0;
-            let total=(h*3600+m*60+s)*1000;
-            if(total>0) until=Date.now()+total;
-        }
-        db.ref(DB_PATH).update({ maintenance_mode: active, maintenance_title: document.getElementById('maintenanceTitle').value, maintenance_message: document.getElementById('maintenanceMsg').value, maintenance_until: until }).then(()=>showToast('تم حفظ إعدادات الصيانة'));
-    }
-    function saveSplashSettings() {
-        db.ref(DB_PATH).update({
-            splash_enabled: document.getElementById('splashEnabled').checked,
-            splash_show_skip: document.getElementById('splashShowSkip').checked,
-            splash_type: document.getElementById('splashType').value,
-            splash_media_url: document.getElementById('splashMediaUrl').value,
-            splash_video_url: document.getElementById('splashVideoUrl').value,
-            splash_duration: parseInt(document.getElementById('splashDuration').value)||5
-        }).then(()=>showToast('تم حفظ إعدادات شاشة البداية'));
-    }
-
-    window.saveGeneral = saveGeneral;
-    window.saveSchedule = saveSchedule;
-    window.savePopupSettings = savePopupSettings;
-    window.saveMaintenance = saveMaintenance;
-    window.saveSplashSettings = saveSplashSettings;
-    window.toggleCollapse = toggleCollapse;
-    window.login = login;
-    window.logout = logout;
 </script>
 </body>
 </html>
