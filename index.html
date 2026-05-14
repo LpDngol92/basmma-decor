@@ -61,8 +61,13 @@
         .nav-links { display: flex; gap: clamp(1rem, 3vw, 1.8rem); flex-wrap: wrap; align-items: center; }
         .nav-links a { text-decoration: none; font-weight: 600; color: #333; transition: 0.2s; cursor: pointer; font-size: clamp(0.85rem, 3vw, 1rem); }
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
-        /* زر تبديل اللغة الأنيق */
-        .lang-switch-btn {
+        
+        /* زر اللغة المنسدل الأنيق */
+        .lang-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+        .lang-dropbtn {
             background: linear-gradient(135deg, #f8f3e8, #fff6ea);
             border: 1px solid var(--primary);
             border-radius: 40px;
@@ -77,14 +82,56 @@
             gap: 8px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
-        .lang-switch-btn i { font-size: 1rem; }
-        .lang-switch-btn:hover {
+        .lang-dropbtn i { font-size: 1rem; }
+        .lang-dropbtn:hover {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(200,161,101,0.2);
         }
+        .lang-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 110%;
+            left: 0;
+            background-color: #fff;
+            min-width: 140px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            z-index: 1001;
+            overflow: hidden;
+            border: 1px solid rgba(200,161,101,0.3);
+            backdrop-filter: blur(4px);
+        }
+        .lang-dropdown-content a {
+            color: #333;
+            padding: 10px 18px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .lang-dropdown-content a i {
+            width: 20px;
+            color: var(--primary);
+        }
+        .lang-dropdown-content a:hover {
+            background-color: #fdf7ef;
+            color: var(--primary-dark);
+        }
+        .lang-dropdown:hover .lang-dropdown-content {
+            display: block;
+        }
+        /* تعديل الموقع عند الانجليزية */
+        html[dir="ltr"] .lang-dropdown-content {
+            left: auto;
+            right: 0;
+        }
+        
         .partners-marquee { background: #fdf7ef; padding: 12px 0; border-bottom: 1px solid #eee; overflow: hidden; white-space: nowrap; }
         .marquee-track { display: inline-flex; gap: 40px; animation: marqueeFlow 35s linear infinite; }
         .marquee-track:hover { animation-play-state: paused; }
@@ -156,7 +203,14 @@
         <div class="nav-bar">
             <div class="logo"><h1 id="siteTitle">بصمة غير</h1></div>
             <div class="nav-links" id="navLinks"></div>
-            <button id="langSwitchBtn" class="lang-switch-btn"><i class="fas fa-globe"></i><span id="langBtnText">English</span></button>
+            <!-- قائمة اللغة المنسدلة -->
+            <div class="lang-dropdown">
+                <button class="lang-dropbtn" id="langDropBtn"><i class="fas fa-globe"></i> <span id="currentLangLabel">English</span> <i class="fas fa-chevron-down"></i></button>
+                <div class="lang-dropdown-content">
+                    <a href="#" data-lang="ar"><i class="fas fa-flag"></i> العربية</a>
+                    <a href="#" data-lang="en"><i class="fas fa-flag-usa"></i> English</a>
+                </div>
+            </div>
         </div>
     </div>
 </header>
@@ -186,39 +240,28 @@
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
     
-    // ---------- الترجمة المتكاملة 100% ----------
-    let currentLang = localStorage.getItem('siteLang') || 'ar'; // 'ar' or 'en'
+    // ---------- الترجمة الشاملة 100% ----------
+    let currentLang = localStorage.getItem('siteLang') || 'ar';
     
     const translations = {
         ar: {
-            // عام
             site_name: 'بصمة غير',
             site_suffix: 'أفضل ديكورات معارض ومحلات تجارية في جدة',
-            // شريط التنقل
             nav_home: 'الرئيسية', nav_store: 'المتجر', nav_works: 'أعمالنا', nav_catalogs: 'الكتالوجات', nav_contact: 'اتصل بنا',
-            // الهيرو
             hero_title: 'بصمة غير: ديكورات معارض ومحلات تجارية في جدة',
             hero_desc: 'ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة',
             btn_shop: 'تسوق الآن', btn_works: 'شاهد أعمالنا', btn_catalogs: 'الكتالوجات',
-            // أقسام
             latest_works: 'أحدث أعمالنا', all_products: 'جميع المنتجات', our_works: 'أعمالنا', catalogs_section: 'الكتالوجات', contact_section: 'اتصل بنا',
-            // منتجات
             order_whatsapp: 'طلب عبر واتساب',
-            // أزرار
             contact_phone: 'اتصل بنا', whatsapp_label: 'واتساب', instagram: 'انستقرام', tiktok: 'تيك توك', snapchat: 'سناب شات', location: 'الموقع',
-            // رسائل فارغة
             no_works: 'لا توجد أعمال حالياً', no_products: 'لا توجد منتجات', no_catalogs: 'لا توجد كتالوجات', no_images: 'لا توجد صور', catalog_unavailable: 'الكتالوج غير متاح',
             disabled_save: '❌ تم تعطيل حفظ الصور',
-            // الفوتر
             footer_desc: 'ديكورات معارض ومحلات تجارية - ديكور خشب، دواليب، ارفف، كاونترات.',
             hours_title: 'أوقات العمل', contact_title: 'تواصل معنا',
-            // أيام الأسبوع
             sun: 'الأحد', mon: 'الاثنين', tue: 'الثلاثاء', wed: 'الأربعاء', thu: 'الخميس', fri: 'الجمعة', sat: 'السبت',
             holiday: 'عطلة',
-            // Lightbox
             prev: 'السابق', next: 'التالي', inquiry: 'استفسار',
-            // زر اللغة
-            lang_btn_en: "English"
+            lang_label: 'English'
         },
         en: {
             site_name: 'Basma Ghair',
@@ -237,7 +280,7 @@
             sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat',
             holiday: 'Closed',
             prev: 'Previous', next: 'Next', inquiry: 'Inquiry',
-            lang_btn_ar: "العربية"
+            lang_label: 'العربية'
         }
     };
     
@@ -247,7 +290,6 @@
         if (lang === currentLang) return;
         currentLang = lang;
         localStorage.setItem('siteLang', lang);
-        // تغيير اتجاه الصفحة
         const htmlElem = document.documentElement;
         if (currentLang === 'ar') {
             htmlElem.setAttribute('dir', 'rtl');
@@ -256,12 +298,11 @@
             htmlElem.setAttribute('dir', 'ltr');
             htmlElem.setAttribute('lang', 'en');
         }
-        // تحديث نص الزر
-        document.getElementById('langBtnText').innerText = t('lang_btn_en');
-        if (currentLang === 'en') document.getElementById('langBtnText').innerText = t('lang_btn_ar');
-        // تحديث العناوين الديناميكية
+        // تحديث النص المعروض على الزر الرئيسي
+        const currentLabelSpan = document.getElementById('currentLangLabel');
+        if (currentLabelSpan) currentLabelSpan.innerText = t('lang_label');
+        // تحديث كل المحتوى
         updateTitleAndMeta();
-        // إعادة رسم كامل الصفحة
         refreshAllPages();
     }
     
@@ -273,7 +314,6 @@
         if(metaDesc) metaDesc.setAttribute('content', t('hero_desc'));
         const siteTitleElem = document.getElementById('siteTitle');
         if(siteTitleElem) siteTitleElem.innerText = site;
-        // footer texts
         const footerBrand = document.getElementById('footerBrand');
         if(footerBrand) footerBrand.innerText = site;
         const footerDescSpan = document.getElementById('footerDesc');
@@ -282,7 +322,6 @@
         if(hoursTitleSpan) hoursTitleSpan.innerText = t('hours_title');
         const contactTitleSpan = document.getElementById('contactTitle');
         if(contactTitleSpan) contactTitleSpan.innerText = t('contact_title');
-        // lightbox buttons
         const prevSpan = document.getElementById('prevText');
         if(prevSpan) prevSpan.innerText = t('prev');
         const nextSpan = document.getElementById('nextText');
@@ -291,7 +330,7 @@
         if(inquirySpan) inquirySpan.innerText = t('inquiry');
     }
     
-    // تعديل دالة أيام الأسبوع مع الترجمة
+    // دالة أيام الأسبوع مع الترجمة
     function getGroupedScheduleHtml(d) {
         if (!d.work_schedule) return `<p>${t('no_works')}</p>`;
         const daysMap = {0:t('sun'),1:t('mon'),2:t('tue'),3:t('wed'),4:t('thu'),5:t('fri'),6:t('sat')};
@@ -319,7 +358,6 @@
     
     function formatTime12(tm) { if (!tm) return ''; let [h, m] = tm.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
     
-    // تعديل دوال الرندر لاستخدام الترجمة
     function renderNavLinks() {
         const container = document.getElementById('navLinks');
         if (!container) return;
@@ -391,7 +429,7 @@
     function buildAllProductsGrid() { const cont = document.getElementById('allProductsGrid'); if (!cont) return; let all = []; if (currentData.store_categories) Object.keys(currentData.store_categories).forEach(cid => { const cat = currentData.store_categories[cid]; if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) all.push(img.url); }); }); if (all.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_products')}</div>`; return; } let html = '<div class="grid-auto">'; all.forEach(url => { html += `<div class="product-card" data-product-url="${url}">${getWatermarkedImage(url, 'product')}<div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent(t('inquiry') + ': ' + url)}','_blank')"><i class="fab fa-whatsapp"></i> ${t('order_whatsapp')}</button></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#allProductsGrid .product-card').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); }); }
     function buildCatalogsPageGrid() { const cont = document.getElementById('catalogsPageGrid'); if (!cont) return; if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_catalogs')}</div>`; return; } let html = '<div class="grid-auto">'; Object.keys(currentData.catalogs).forEach(id => { const cat = currentData.catalogs[id]; html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small style="color:var(--gray);">${currentLang === 'ar' ? 'اضغط للعرض' : 'Click to view'}</small></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); }); }
     
-    // وظائف lightbox والـ zoom (دون تغيير)
+    // Lightbox and zoom functions (unchanged but keep)
     let scale = 1, translateX = 0, translateY = 0, startX = 0, startY = 0, isPanning = false, initialPinchDist = 0, startScale = 1, touchStartX = 0;
     const imgElement = document.getElementById('lightboxImg'), lightbox = document.getElementById('lightbox'), counterSpan = document.getElementById('lightboxCounter'), waBtn = document.getElementById('lightboxWhatsappBtn');
     function setTransform() { imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`; }
@@ -427,13 +465,19 @@
     window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
     function refreshAllPages() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
     
-    function initLangAndEvents() {
-        setLanguage(currentLang);
-        document.getElementById('langSwitchBtn').addEventListener('click', () => { setLanguage(currentLang === 'ar' ? 'en' : 'ar'); });
+    function initLangEvents() {
+        const langLinks = document.querySelectorAll('.lang-dropdown-content a');
+        langLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const lang = link.getAttribute('data-lang');
+                if (lang) setLanguage(lang);
+            });
+        });
     }
     
-    db.ref(DB_PATH).once('value', snap => { currentData = snap.val() || {}; showSplash({ enabled: currentData.splash_enabled !== false, media_url: currentData.splash_media_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true }); refreshAllPages(); initLangAndEvents(); });
-    db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAllPages(); });
+    db.ref(DB_PATH).once('value', snap => { currentData = snap.val() || {}; showSplash({ enabled: currentData.splash_enabled !== false, media_url: currentData.splash_media_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true }); refreshAllPages(); initLangEvents(); });
+    db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAllPages(); initLangEvents(); });
     
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
     (function blockImageDownload() {
