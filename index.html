@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>بصمة غير | أفضل ديكورات معارض ومحلات تجارية في جدة</title>
+    <title id="dynamicTitle">بصمة غير | أفضل ديكورات معارض ومحلات تجارية في جدة</title>
     <meta name="description" content="بصمة غير: خبراء في ديكورات المعارض والمحلات التجارية بجدة. ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال.">
     <meta name="keywords" content="ديكور, ديكورات, ديكورات معارض, ديكور محلات تجارية, ديكور خشب جدة">
     <meta name="author" content="بصمة غير">
@@ -49,7 +49,7 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: #fff; color: #2d2a2a; line-height: 1.5; }
+        body { font-family: 'Cairo', sans-serif; background: #fff; color: #2d2a2a; line-height: 1.5; transition: all 0.2s ease; }
         :root { --primary: #c8a165; --primary-dark: #a47e44; --gray: #6f6a64; --shadow: 0 8px 25px rgba(0,0,0,0.05); --shadow-hover: 0 15px 35px rgba(0,0,0,0.1); }
         #splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; }
         .splash-media { width: 100%; height: 100%; object-fit: cover; }
@@ -57,10 +57,34 @@
         .header { background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 1000; }
         .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; flex-wrap: wrap; gap: 1rem; }
-        .logo h1 { font-size: clamp(1.4rem, 5vw, 1.8rem); font-weight: 800; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); background-clip: text; -webkit-background-clip: text; color: transparent; }
-        .nav-links { display: flex; gap: clamp(1rem, 3vw, 1.8rem); flex-wrap: wrap; }
+        .logo h1 { font-size: clamp(1.4rem, 5vw, 1.8rem); font-weight: 800; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); background-clip: text; -webkit-background-clip: text; color: transparent; cursor: pointer; }
+        .nav-links { display: flex; gap: clamp(1rem, 3vw, 1.8rem); flex-wrap: wrap; align-items: center; }
         .nav-links a { text-decoration: none; font-weight: 600; color: #333; transition: 0.2s; cursor: pointer; font-size: clamp(0.85rem, 3vw, 1rem); }
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
+        /* زر تبديل اللغة الأنيق */
+        .lang-switch-btn {
+            background: linear-gradient(135deg, #f8f3e8, #fff6ea);
+            border: 1px solid var(--primary);
+            border-radius: 40px;
+            padding: 6px 16px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--primary-dark);
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .lang-switch-btn i { font-size: 1rem; }
+        .lang-switch-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(200,161,101,0.2);
+        }
         .partners-marquee { background: #fdf7ef; padding: 12px 0; border-bottom: 1px solid #eee; overflow: hidden; white-space: nowrap; }
         .marquee-track { display: inline-flex; gap: 40px; animation: marqueeFlow 35s linear infinite; }
         .marquee-track:hover { animation-play-state: paused; }
@@ -128,15 +152,21 @@
 <div id="maintenanceScreen" class="maintenance-screen"></div>
 
 <header class="header">
-    <div class="container"><div class="nav-bar"><div class="logo"><h1 id="siteTitle">بصمة غير</h1></div><div class="nav-links" id="navLinks"></div></div></div>
+    <div class="container">
+        <div class="nav-bar">
+            <div class="logo"><h1 id="siteTitle">بصمة غير</h1></div>
+            <div class="nav-links" id="navLinks"></div>
+            <button id="langSwitchBtn" class="lang-switch-btn"><i class="fas fa-globe"></i><span id="langBtnText">English</span></button>
+        </div>
+    </div>
 </header>
 <div class="partners-marquee" id="partnersMarquee" style="display:none;"><div class="marquee-track" id="marqueeTrack"></div></div>
 <main id="mainContent"></main>
-<footer class="footer"><div class="container"><div class="footer-grid"><div><h4>بصمة غير</h4><p>ديكورات معارض ومحلات تجارية - ديكور خشب، دواليب، ارفف، كاونترات.</p><div class="social-icons" id="socialIcons"></div></div><div><h4>أوقات العمل</h4><div id="footerHours"></div></div><div><h4>تواصل معنا</h4><p><i class="fas fa-phone"></i> <span id="footerPhone"></span></p><p><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp"></span></p><p><i class="fas fa-map-marker-alt"></i> <span id="footerLocation"></span></p></div></div><div class="copyright" id="footerCopyright">© 2025 بصمة غير - جميع الحقوق محفوظة</div></div></footer>
+<footer class="footer"><div class="container"><div class="footer-grid"><div><h4 id="footerBrand">بصمة غير</h4><p id="footerDesc">ديكورات معارض ومحلات تجارية - ديكور خشب، دواليب، ارفف، كاونترات.</p><div class="social-icons" id="socialIcons"></div></div><div><h4 id="hoursTitle">أوقات العمل</h4><div id="footerHours"></div></div><div><h4 id="contactTitle">تواصل معنا</h4><p><i class="fas fa-phone"></i> <span id="footerPhone"></span></p><p><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp"></span></p><p><i class="fas fa-map-marker-alt"></i> <span id="footerLocation"></span></p></div></div><div class="copyright" id="footerCopyright">© 2025 بصمة غير - جميع الحقوق محفوظة</div></div></footer>
 
 <div id="lightbox" class="lightbox">
     <div class="lightbox-container"><div class="lightbox-image-wrapper"><img id="lightboxImg" class="lightbox-img" draggable="false"></div></div>
-    <div class="lightbox-info"><button id="lightboxPrev" class="lightbox-nav"><i class="fas fa-chevron-right"></i> السابق</button><span id="lightboxCounter" class="lightbox-counter">0 / 0</span><button id="lightboxNext" class="lightbox-nav">التالي <i class="fas fa-chevron-left"></i></button><button id="lightboxWhatsappBtn" class="lightbox-wa-btn"><i class="fab fa-whatsapp"></i> استفسار</button></div>
+    <div class="lightbox-info"><button id="lightboxPrev" class="lightbox-nav"><i class="fas fa-chevron-right"></i> <span id="prevText">السابق</span></button><span id="lightboxCounter" class="lightbox-counter">0 / 0</span><button id="lightboxNext" class="lightbox-nav"><span id="nextText">التالي</span> <i class="fas fa-chevron-left"></i></button><button id="lightboxWhatsappBtn" class="lightbox-wa-btn"><i class="fab fa-whatsapp"></i> <span id="inquiryText">استفسار</span></button></div>
     <div id="lightboxClose" class="lightbox-close"><i class="fas fa-times"></i></div>
 </div>
 <div id="zoomHint" class="zoom-hint">🔍 استخدم إصبعين للتكبير</div>
@@ -155,164 +185,116 @@
     let currentImageList = [];
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
-
-    // No CSS watermark — removed entirely
-
-    function getWatermarkedImage(src, alt) {
-        if (!src) return '<div class="empty-state">صورة غير متوفرة</div>';
-        // Prevent context menu and drag on the image
-        return `<div class="img-square">
-                    <img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false">
-                </div>`;
-    }
-
-    // Lightbox with full zoom (no watermark)
-    const imgElement = document.getElementById('lightboxImg');
-    const lightbox = document.getElementById('lightbox');
-    const counterSpan = document.getElementById('lightboxCounter');
-    const waBtn = document.getElementById('lightboxWhatsappBtn');
-    let scale = 1, translateX = 0, translateY = 0, startX = 0, startY = 0, isPanning = false;
-    let initialPinchDist = 0, startScale = 1, pinchCenterX = 0, pinchCenterY = 0, touchStartX = 0;
-
-    function setTransform() { imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`; }
-    function resetTransform() { scale = 1; translateX = 0; translateY = 0; setTransform(); }
-    function clampMovement() {
-        const containerRect = imgElement.parentElement.getBoundingClientRect();
-        const imgRect = imgElement.getBoundingClientRect();
-        const maxX = Math.max(0, (imgRect.width * scale - containerRect.width) / 2);
-        const maxY = Math.max(0, (imgRect.height * scale - containerRect.height) / 2);
-        translateX = Math.min(Math.max(translateX, -maxX), maxX);
-        translateY = Math.min(Math.max(translateY, -maxY), maxY);
-        setTransform();
-    }
-    function onMouseDown(e) { if (scale <= 1) return; e.preventDefault(); isPanning = true; startX = e.clientX - translateX; startY = e.clientY - translateY; imgElement.style.cursor = 'grabbing'; }
-    function onMouseMove(e) { if (!isPanning) return; translateX = e.clientX - startX; translateY = e.clientY - startY; clampMovement(); }
-    function onMouseUp() { isPanning = false; imgElement.style.cursor = 'grab'; }
-    function getDistance(touches) { return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY); }
-    function onTouchStart(e) {
-        if (e.touches.length === 2) {
-            e.preventDefault();
-            initialPinchDist = getDistance(e.touches);
-            startScale = scale;
-            pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-            pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-            document.getElementById('zoomHint').style.opacity = '1';
-            setTimeout(() => document.getElementById('zoomHint').style.opacity = '0', 2000);
-        } else if (e.touches.length === 1) {
-            touchStartX = e.touches[0].clientX;
-            if (scale > 1) { isPanning = true; startX = e.touches[0].clientX - translateX; startY = e.touches[0].clientY - translateY; }
+    
+    // ---------- الترجمة المتكاملة 100% ----------
+    let currentLang = localStorage.getItem('siteLang') || 'ar'; // 'ar' or 'en'
+    
+    const translations = {
+        ar: {
+            // عام
+            site_name: 'بصمة غير',
+            site_suffix: 'أفضل ديكورات معارض ومحلات تجارية في جدة',
+            // شريط التنقل
+            nav_home: 'الرئيسية', nav_store: 'المتجر', nav_works: 'أعمالنا', nav_catalogs: 'الكتالوجات', nav_contact: 'اتصل بنا',
+            // الهيرو
+            hero_title: 'بصمة غير: ديكورات معارض ومحلات تجارية في جدة',
+            hero_desc: 'ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة',
+            btn_shop: 'تسوق الآن', btn_works: 'شاهد أعمالنا', btn_catalogs: 'الكتالوجات',
+            // أقسام
+            latest_works: 'أحدث أعمالنا', all_products: 'جميع المنتجات', our_works: 'أعمالنا', catalogs_section: 'الكتالوجات', contact_section: 'اتصل بنا',
+            // منتجات
+            order_whatsapp: 'طلب عبر واتساب',
+            // أزرار
+            contact_phone: 'اتصل بنا', whatsapp_label: 'واتساب', instagram: 'انستقرام', tiktok: 'تيك توك', snapchat: 'سناب شات', location: 'الموقع',
+            // رسائل فارغة
+            no_works: 'لا توجد أعمال حالياً', no_products: 'لا توجد منتجات', no_catalogs: 'لا توجد كتالوجات', no_images: 'لا توجد صور', catalog_unavailable: 'الكتالوج غير متاح',
+            disabled_save: '❌ تم تعطيل حفظ الصور',
+            // الفوتر
+            footer_desc: 'ديكورات معارض ومحلات تجارية - ديكور خشب، دواليب، ارفف، كاونترات.',
+            hours_title: 'أوقات العمل', contact_title: 'تواصل معنا',
+            // أيام الأسبوع
+            sun: 'الأحد', mon: 'الاثنين', tue: 'الثلاثاء', wed: 'الأربعاء', thu: 'الخميس', fri: 'الجمعة', sat: 'السبت',
+            holiday: 'عطلة',
+            // Lightbox
+            prev: 'السابق', next: 'التالي', inquiry: 'استفسار',
+            // زر اللغة
+            lang_btn_en: "English"
+        },
+        en: {
+            site_name: 'Basma Ghair',
+            site_suffix: 'Best Exhibitions & Commercial Shops Decor in Jeddah',
+            nav_home: 'Home', nav_store: 'Store', nav_works: 'Our Work', nav_catalogs: 'Catalogs', nav_contact: 'Contact',
+            hero_title: 'Basma Ghair: Exhibitions & Commercial Shops Decor in Jeddah',
+            hero_desc: 'Wood decor, display cabinets, storage shelves, reception counters, TV libraries - luxurious designs',
+            btn_shop: 'Shop Now', btn_works: 'View Our Work', btn_catalogs: 'Catalogs',
+            latest_works: 'Latest Work', all_products: 'All Products', our_works: 'Our Work', catalogs_section: 'Catalogs', contact_section: 'Contact Us',
+            order_whatsapp: 'Order via WhatsApp',
+            contact_phone: 'Call Us', whatsapp_label: 'WhatsApp', instagram: 'Instagram', tiktok: 'TikTok', snapchat: 'Snapchat', location: 'Location',
+            no_works: 'No work available', no_products: 'No products found', no_catalogs: 'No catalogs available', no_images: 'No images', catalog_unavailable: 'Catalog not available',
+            disabled_save: '❌ Image saving disabled',
+            footer_desc: 'Exhibition & shop decor - wood, cabinets, shelves, counters.',
+            hours_title: 'Working Hours', contact_title: 'Contact Us',
+            sun: 'Sun', mon: 'Mon', tue: 'Tue', wed: 'Wed', thu: 'Thu', fri: 'Fri', sat: 'Sat',
+            holiday: 'Closed',
+            prev: 'Previous', next: 'Next', inquiry: 'Inquiry',
+            lang_btn_ar: "العربية"
         }
-    }
-    function onTouchMove(e) {
-        if (e.touches.length === 2 && initialPinchDist > 0) {
-            e.preventDefault();
-            const newDist = getDistance(e.touches);
-            let newScale = startScale * (newDist / initialPinchDist);
-            newScale = Math.min(4, Math.max(1, newScale));
-            if (newScale !== scale) {
-                const rect = imgElement.getBoundingClientRect();
-                const offsetX = pinchCenterX - rect.left;
-                const offsetY = pinchCenterY - rect.top;
-                const ratio = newScale / scale;
-                translateX = pinchCenterX - rect.left - (offsetX - translateX) * ratio;
-                translateY = pinchCenterY - rect.top - (offsetY - translateY) * ratio;
-                scale = newScale;
-                clampMovement();
-            }
-        } else if (e.touches.length === 1 && isPanning && scale > 1) {
-            e.preventDefault();
-            translateX = e.touches[0].clientX - startX;
-            translateY = e.touches[0].clientY - startY;
-            clampMovement();
+    };
+    
+    function t(key) { return translations[currentLang][key] || translations['ar'][key] || key; }
+    
+    function setLanguage(lang) {
+        if (lang === currentLang) return;
+        currentLang = lang;
+        localStorage.setItem('siteLang', lang);
+        // تغيير اتجاه الصفحة
+        const htmlElem = document.documentElement;
+        if (currentLang === 'ar') {
+            htmlElem.setAttribute('dir', 'rtl');
+            htmlElem.setAttribute('lang', 'ar');
+        } else {
+            htmlElem.setAttribute('dir', 'ltr');
+            htmlElem.setAttribute('lang', 'en');
         }
+        // تحديث نص الزر
+        document.getElementById('langBtnText').innerText = t('lang_btn_en');
+        if (currentLang === 'en') document.getElementById('langBtnText').innerText = t('lang_btn_ar');
+        // تحديث العناوين الديناميكية
+        updateTitleAndMeta();
+        // إعادة رسم كامل الصفحة
+        refreshAllPages();
     }
-    function onTouchEnd(e) {
-        if (e.touches.length < 2) initialPinchDist = 0;
-        if (e.touches.length === 0) {
-            if (touchStartX && e.changedTouches[0] && scale <= 1) {
-                const diff = e.changedTouches[0].clientX - touchStartX;
-                if (Math.abs(diff) > 50) { if (diff > 0) prevImage(); else nextImage(); }
-            }
-            touchStartX = 0; isPanning = false;
-        }
+    
+    function updateTitleAndMeta() {
+        const site = t('site_name');
+        const suffix = t('site_suffix');
+        document.title = `${site} | ${suffix}`;
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if(metaDesc) metaDesc.setAttribute('content', t('hero_desc'));
+        const siteTitleElem = document.getElementById('siteTitle');
+        if(siteTitleElem) siteTitleElem.innerText = site;
+        // footer texts
+        const footerBrand = document.getElementById('footerBrand');
+        if(footerBrand) footerBrand.innerText = site;
+        const footerDescSpan = document.getElementById('footerDesc');
+        if(footerDescSpan) footerDescSpan.innerText = t('footer_desc');
+        const hoursTitleSpan = document.getElementById('hoursTitle');
+        if(hoursTitleSpan) hoursTitleSpan.innerText = t('hours_title');
+        const contactTitleSpan = document.getElementById('contactTitle');
+        if(contactTitleSpan) contactTitleSpan.innerText = t('contact_title');
+        // lightbox buttons
+        const prevSpan = document.getElementById('prevText');
+        if(prevSpan) prevSpan.innerText = t('prev');
+        const nextSpan = document.getElementById('nextText');
+        if(nextSpan) nextSpan.innerText = t('next');
+        const inquirySpan = document.getElementById('inquiryText');
+        if(inquirySpan) inquirySpan.innerText = t('inquiry');
     }
-    function onWheel(e) {
-        e.preventDefault();
-        let delta = e.deltaY > 0 ? -0.1 : 0.1;
-        let newScale = scale + delta;
-        newScale = Math.min(4, Math.max(1, newScale));
-        if (newScale === scale) return;
-        const rect = imgElement.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-        const ratio = newScale / scale;
-        translateX = e.clientX - rect.left - (mouseX - translateX) * ratio;
-        translateY = e.clientY - rect.top - (mouseY - translateY) * ratio;
-        scale = newScale;
-        clampMovement();
-        document.getElementById('zoomHint').style.opacity = '1';
-        setTimeout(() => document.getElementById('zoomHint').style.opacity = '0', 2000);
-    }
-    function bindLightboxEvents() {
-        imgElement.addEventListener('mousedown', onMouseDown);
-        window.addEventListener('mousemove', onMouseMove);
-        window.addEventListener('mouseup', onMouseUp);
-        imgElement.addEventListener('touchstart', onTouchStart, { passive: false });
-        imgElement.addEventListener('touchmove', onTouchMove, { passive: false });
-        imgElement.addEventListener('touchend', onTouchEnd);
-        imgElement.addEventListener('wheel', onWheel, { passive: false });
-    }
-    function unbindLightboxEvents() {
-        imgElement.removeEventListener('mousedown', onMouseDown);
-        window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);
-        imgElement.removeEventListener('touchstart', onTouchStart);
-        imgElement.removeEventListener('touchmove', onTouchMove);
-        imgElement.removeEventListener('touchend', onTouchEnd);
-        imgElement.removeEventListener('wheel', onWheel);
-    }
-    function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
-    function openLightbox(images, index) {
-        if (!images.length) return;
-        currentImageList = images; currentIndex = index;
-        imgElement.src = images[index];
-        resetTransform();
-        updateCounter();
-        lightbox.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        bindLightboxEvents();
-    }
-    function closeLightbox() {
-        lightbox.style.display = 'none';
-        document.body.style.overflow = '';
-        unbindLightboxEvents();
-        resetTransform();
-    }
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
-    function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
-    document.getElementById('lightboxPrev').onclick = prevImage;
-    document.getElementById('lightboxNext').onclick = nextImage;
-    document.getElementById('lightboxClose').onclick = closeLightbox;
-    waBtn.onclick = sendWhatsapp;
-    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
-
-    function openAlbum(id) {
-        const alb = currentData.albums?.[id];
-        if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
-        const urls = Object.values(alb.imgs).map(i => i.url).filter(u => u);
-        if (urls.length) openLightbox(urls, 0);
-        else showToast('لا توجد صور صالحة');
-    }
-    function openCatalogModal(code) { const modal = document.getElementById('catalogModal'), iframe = document.getElementById('catalogIframe'); iframe.srcdoc = code; modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-    function closeCatalogModal() { document.getElementById('catalogModal').style.display = 'none'; document.getElementById('catalogIframe').srcdoc = ''; document.body.style.overflow = ''; }
-    document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
-    function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast('الكتالوج غير متاح'); }
-    function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
-    function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
+    
+    // تعديل دالة أيام الأسبوع مع الترجمة
     function getGroupedScheduleHtml(d) {
-        if (!d.work_schedule) return '<p>لم تحدد المواعيد</p>';
-        const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+        if (!d.work_schedule) return `<p>${t('no_works')}</p>`;
+        const daysMap = {0:t('sun'),1:t('mon'),2:t('tue'),3:t('wed'),4:t('thu'),5:t('fri'),6:t('sat')};
         const order = [6,0,1,2,3,4,5];
         let groups = [], off = [];
         order.forEach(jsDay => {
@@ -320,291 +302,146 @@
             if (s && s.active) {
                 const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}`;
                 let g = groups.find(g => g.key === key);
-                if (g) g.days.push(days[jsDay]);
-                else groups.push({ key, days: [days[jsDay]], data: s });
-            } else off.push(days[jsDay]);
+                if (g) g.days.push(daysMap[jsDay]);
+                else groups.push({ key, days: [daysMap[jsDay]], data: s });
+            } else off.push(daysMap[jsDay]);
         });
         let html = '';
         groups.forEach(g => {
-            const dTxt = g.days.length === 1 ? g.days[0] : `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
+            const dTxt = g.days.length === 1 ? g.days[0] : `${g.days[0]} - ${g.days[g.days.length-1]}`;
             html += `<div class="schedule-item"><strong>${dTxt}</strong><br>${formatTime12(g.data.s1_s)} - ${formatTime12(g.data.s1_e)}`;
             if (g.data.s2_a) html += `<br>${formatTime12(g.data.s2_s)} - ${formatTime12(g.data.s2_e)}`;
             html += `</div>`;
         });
-        if (off.length) html += `<div class="schedule-item"><strong>عطلة:</strong> ${off.join('، ')}</div>`;
+        if (off.length) html += `<div class="schedule-item"><strong>${t('holiday')}:</strong> ${off.join('، ')}</div>`;
         return html;
     }
-    function getAllStoreProducts() {
-        let imgs = [];
-        if (currentData.store_categories) {
-            Object.keys(currentData.store_categories).forEach(cid => {
-                const cat = currentData.store_categories[cid];
-                if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) imgs.push(img.url); });
-            });
-        }
-        return imgs;
-    }
-    function getAlbumsList() { if (!currentData.albums) return []; return Object.keys(currentData.albums).map(id => ({ id, ...currentData.albums[id] })); }
-
-    function renderPartnersMarquee() {
-        const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack');
-        if (!cont || !track) return;
-        if (currentData.partners && Object.keys(currentData.partners).length) {
-            cont.style.display = 'block';
-            let logos = '';
-            Object.values(currentData.partners).forEach(p => {
-                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" oncontextmenu="return false" ondragstart="return false"></div>`;
-            });
-            track.innerHTML = logos + logos;
-        } else cont.style.display = 'none';
-    }
-
-    function buildHomepageWorksGrid() {
-        const cont = document.getElementById('homepageWorksGrid');
-        if (!cont) return;
-        let albums = getAlbumsList();
-        if (albums.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال حالياً</div>'; return; }
-        let html = '<div class="grid-auto">';
-        albums.forEach(alb => {
-            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            html += `<div class="card" data-album="${alb.id}">
-                        ${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="img-square" style="background:#f0f0f0;"></div>'}
-                        <div class="card-body">
-                            <div class="card-title">${alb.name || 'ألبوم'}</div>
-                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
-                        </div>
-                    </div>`;
-        });
-        html += '</div>';
-        cont.innerHTML = html;
-        document.querySelectorAll('#homepageWorksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
-    }
-
-    function buildWorksGrid() {
-        const cont = document.getElementById('worksGrid');
-        if (!cont) return;
-        let albums = getAlbumsList();
-        if (albums.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال</div>'; return; }
-        let html = '<div class="grid-auto">';
-        albums.forEach(alb => {
-            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            html += `<div class="card" data-album="${alb.id}">
-                        ${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="img-square" style="background:#f0f0f0;"></div>'}
-                        <div class="card-body">
-                            <div class="card-title">${alb.name || 'ألبوم'}</div>
-                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
-                        </div>
-                    </div>`;
-        });
-        html += '</div>';
-        cont.innerHTML = html;
-        document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
-    }
-
-    function buildAllProductsGrid() {
-        const cont = document.getElementById('allProductsGrid');
-        if (!cont) return;
-        let all = getAllStoreProducts();
-        if (all.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد منتجات</div>'; return; }
-        let html = '<div class="grid-auto">';
-        all.forEach(url => {
-            html += `<div class="product-card" data-product-url="${url}">
-                        ${getWatermarkedImage(url, 'منتج ديكور')}
-                        <div class="product-info">
-                            <button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button>
-                        </div>
-                    </div>`;
-        });
-        html += '</div>';
-        cont.innerHTML = html;
-        document.querySelectorAll('#allProductsGrid .product-card').forEach(card => {
-            card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } });
-        });
-    }
-
-    function buildCatalogsPageGrid() {
-        const cont = document.getElementById('catalogsPageGrid');
-        if (!cont) return;
-        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد كتالوجات</div>'; return; }
-        let html = '<div class="grid-auto">';
-        Object.keys(currentData.catalogs).forEach(id => {
-            const cat = currentData.catalogs[id];
-            html += `<div class="card" data-catalog="${id}">
-                        <div class="card-body">
-                            <i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i>
-                            <div class="card-title">${cat.name}</div>
-                            <small style="color:var(--gray);">اضغط للعرض</small>
-                        </div>
-                    </div>`;
-        });
-        html += '</div>';
-        cont.innerHTML = html;
-        document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); });
-    }
-
-    function updateFooterData() {
-        const d = currentData;
-        currentWhatsappNum = d.whatsapp_num || '966500000000';
-        document.getElementById('siteTitle').innerText = d.site_name || 'بصمة غير';
-        document.getElementById('footerPhone').innerHTML = `<a href="tel:0541780995" style="color:inherit;">0541780995</a>`;
-        document.getElementById('footerWhatsapp').innerHTML = `<a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="color:#25D366;">${currentWhatsappNum}</a>`;
-        document.getElementById('footerLocation').innerHTML = d.location_url ? `<a href="${d.location_url}" target="_blank">جدة</a>` : 'جدة';
-        const soc = document.getElementById('socialIcons');
-        if (soc) { let s = ''; if (d.insta_url) s += `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`; if (d.tiktok_url) s += `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`; if (d.snap_url) s += `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`; soc.innerHTML = s; }
-        const hoursDiv = document.getElementById('footerHours');
-        if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
-        if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
-        else document.getElementById('footerCopyright').innerHTML = '© 2025 بصمة غير - جميع الحقوق محفوظة';
-    }
-
+    
+    function formatTime12(tm) { if (!tm) return ''; let [h, m] = tm.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
+    
+    // تعديل دوال الرندر لاستخدام الترجمة
     function renderNavLinks() {
         const container = document.getElementById('navLinks');
         if (!container) return;
         const pages = [
-            { id: 'home', name: 'الرئيسية', icon: 'fas fa-home' },
-            { id: 'store', name: 'المتجر', icon: 'fas fa-store' },
-            { id: 'works', name: 'أعمالنا', icon: 'fas fa-images' },
-            { id: 'catalogs', name: 'الكتالوجات', icon: 'fas fa-book-open' },
-            { id: 'contact', name: 'اتصل بنا', icon: 'fas fa-phone-alt' }
+            { id: 'home', name: t('nav_home'), icon: 'fas fa-home' },
+            { id: 'store', name: t('nav_store'), icon: 'fas fa-store' },
+            { id: 'works', name: t('nav_works'), icon: 'fas fa-images' },
+            { id: 'catalogs', name: t('nav_catalogs'), icon: 'fas fa-book-open' },
+            { id: 'contact', name: t('nav_contact'), icon: 'fas fa-phone-alt' }
         ];
         let html = '';
         pages.forEach(p => { html += `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`; });
         container.innerHTML = html;
         document.querySelectorAll('[data-page]').forEach(el => { el.removeEventListener('click', navHandler); el.addEventListener('click', navHandler); });
     }
+    
     function navHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
     function changePage(page) { currentPage = page; loadPage(); window.scrollTo(0, 0); }
-
+    
     function loadPage() {
         const main = document.getElementById('mainContent');
         if (currentPage === 'home') {
-            main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">أحدث أعمالنا</h2><div id="homepageWorksGrid"></div></div>`;
+            main.innerHTML = `<div class="hero"><div class="container"><h1>${t('hero_title')}</h1><p>${t('hero_desc')}</p><div class="btn-group"><a class="btn btn-primary" data-page="store">${t('btn_shop')}</a><a class="btn btn-outline" data-page="works">${t('btn_works')}</a><a class="btn btn-outline" data-page="catalogs">${t('btn_catalogs')}</a></div></div></div><div class="container section"><h2 class="section-title">${t('latest_works')}</h2><div id="homepageWorksGrid"></div></div>`;
             buildHomepageWorksGrid();
         } else if (currentPage === 'store') {
-            main.innerHTML = `<div class="container section"><h2 class="section-title">جميع المنتجات</h2><div id="allProductsGrid"></div></div>`;
+            main.innerHTML = `<div class="container section"><h2 class="section-title">${t('all_products')}</h2><div id="allProductsGrid"></div></div>`;
             buildAllProductsGrid();
         } else if (currentPage === 'works') {
-            main.innerHTML = `<div class="container section"><h2 class="section-title">أعمالنا</h2><div id="worksGrid"></div></div>`;
+            main.innerHTML = `<div class="container section"><h2 class="section-title">${t('our_works')}</h2><div id="worksGrid"></div></div>`;
             buildWorksGrid();
         } else if (currentPage === 'catalogs') {
-            main.innerHTML = `<div class="container section"><h2 class="section-title">الكتالوجات</h2><div id="catalogsPageGrid"></div></div>`;
+            main.innerHTML = `<div class="container section"><h2 class="section-title">${t('catalogs_section')}</h2><div id="catalogsPageGrid"></div></div>`;
             buildCatalogsPageGrid();
         } else if (currentPage === 'contact') {
-            main.innerHTML = `<div class="container section"><h2 class="section-title">اتصل بنا</h2><div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;"><a href="tel:0541780995" style="text-decoration:none;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p>اتصل بنا</p></div></a><a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p>واتساب</p></div></a>${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p>انستقرام</p></div></a>` : ''}${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p>تيك توك</p></div></a>` : ''}${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p>سناب شات</p></div></a>` : ''}<a href="${currentData.location_url || '#'}" target="_blank" style="text-decoration:none;"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p>الموقع</p></div></a></div><div style="text-align:center; margin-top:20px;"><p>📞 0541780995</p></div></div>`;
+            main.innerHTML = `<div class="container section"><h2 class="section-title">${t('contact_section')}</h2><div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;"><a href="tel:0541780995" style="text-decoration:none;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p>${t('contact_phone')}</p></div></a><a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p>${t('whatsapp_label')}</p></div></a>${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p>${t('instagram')}</p></div></a>` : ''}${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p>${t('tiktok')}</p></div></a>` : ''}${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p>${t('snapchat')}</p></div></a>` : ''}<a href="${currentData.location_url || '#'}" target="_blank" style="text-decoration:none;"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p>${t('location')}</p></div></a></div><div style="text-align:center; margin-top:20px;"><p>📞 0541780995</p></div></div>`;
         }
         updateFooterData();
         renderNavLinks();
         document.querySelectorAll('[data-page]').forEach(el => {
-            if (el.classList.contains('btn')) {
+            if (el.classList && el.classList.contains('btn')) {
                 el.addEventListener('click', (e) => { e.preventDefault(); changePage(el.getAttribute('data-page')); });
             }
         });
     }
-
+    
+    function updateFooterData() {
+        const d = currentData;
+        currentWhatsappNum = d.whatsapp_num || '966500000000';
+        document.getElementById('footerPhone').innerHTML = `<a href="tel:0541780995" style="color:inherit;">0541780995</a>`;
+        document.getElementById('footerWhatsapp').innerHTML = `<a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="color:#25D366;">${currentWhatsappNum}</a>`;
+        document.getElementById('footerLocation').innerHTML = d.location_url ? `<a href="${d.location_url}" target="_blank">${t('location')}</a>` : 'جدة';
+        const soc = document.getElementById('socialIcons');
+        if (soc) { let s = ''; if (d.insta_url) s += `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`; if (d.tiktok_url) s += `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`; if (d.snap_url) s += `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`; soc.innerHTML = s; }
+        const hoursDiv = document.getElementById('footerHours');
+        if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
+        if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
+        else document.getElementById('footerCopyright').innerHTML = `© 2025 ${t('site_name')} - ${currentLang === 'ar' ? 'جميع الحقوق محفوظة' : 'All Rights Reserved'}`;
+        updateTitleAndMeta();
+    }
+    
+    function getWatermarkedImage(src, alt) { if (!src) return '<div class="empty-state">صورة غير متوفرة</div>'; return `<div class="img-square"><img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false"></div>`; }
+    
+    function openAlbum(id) { const alb = currentData.albums?.[id]; if (!alb || !alb.imgs) { showToast(t('no_images')); return; } const urls = Object.values(alb.imgs).map(i => i.url).filter(u => u); if (urls.length) openLightbox(urls, 0); else showToast(t('no_images')); }
+    function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast(t('catalog_unavailable')); }
+    function showToast(msg) { const tEl = document.getElementById('toastMsg'); tEl.innerText = msg; tEl.style.display = 'block'; setTimeout(() => tEl.style.display = 'none', 2500); }
+    
+    function buildHomepageWorksGrid() { const cont = document.getElementById('homepageWorksGrid'); if (!cont) return; let albums = Object.keys(currentData.albums || {}).map(id => ({ id, ...currentData.albums[id] })); if (albums.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_works')}</div>`; return; } let html = '<div class="grid-auto">'; albums.forEach(alb => { let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : ''; html += `<div class="card" data-album="${alb.id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="img-square" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} ${currentLang === 'ar' ? 'صورة' : 'image'}</small></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#homepageWorksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); }); }
+    function buildWorksGrid() { const cont = document.getElementById('worksGrid'); if (!cont) return; let albums = Object.keys(currentData.albums || {}).map(id => ({ id, ...currentData.albums[id] })); if (albums.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_works')}</div>`; return; } let html = '<div class="grid-auto">'; albums.forEach(alb => { let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : ''; html += `<div class="card" data-album="${alb.id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="img-square" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small>${alb.imgs ? Object.keys(alb.imgs).length : 0} ${currentLang === 'ar' ? 'صورة' : 'image'}</small></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); }); }
+    function buildAllProductsGrid() { const cont = document.getElementById('allProductsGrid'); if (!cont) return; let all = []; if (currentData.store_categories) Object.keys(currentData.store_categories).forEach(cid => { const cat = currentData.store_categories[cid]; if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) all.push(img.url); }); }); if (all.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_products')}</div>`; return; } let html = '<div class="grid-auto">'; all.forEach(url => { html += `<div class="product-card" data-product-url="${url}">${getWatermarkedImage(url, 'product')}<div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent(t('inquiry') + ': ' + url)}','_blank')"><i class="fab fa-whatsapp"></i> ${t('order_whatsapp')}</button></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#allProductsGrid .product-card').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); }); }
+    function buildCatalogsPageGrid() { const cont = document.getElementById('catalogsPageGrid'); if (!cont) return; if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_catalogs')}</div>`; return; } let html = '<div class="grid-auto">'; Object.keys(currentData.catalogs).forEach(id => { const cat = currentData.catalogs[id]; html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small style="color:var(--gray);">${currentLang === 'ar' ? 'اضغط للعرض' : 'Click to view'}</small></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); }); }
+    
+    // وظائف lightbox والـ zoom (دون تغيير)
+    let scale = 1, translateX = 0, translateY = 0, startX = 0, startY = 0, isPanning = false, initialPinchDist = 0, startScale = 1, touchStartX = 0;
+    const imgElement = document.getElementById('lightboxImg'), lightbox = document.getElementById('lightbox'), counterSpan = document.getElementById('lightboxCounter'), waBtn = document.getElementById('lightboxWhatsappBtn');
+    function setTransform() { imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`; }
+    function resetTransform() { scale = 1; translateX = 0; translateY = 0; setTransform(); }
+    function clampMovement() { const containerRect = imgElement.parentElement.getBoundingClientRect(); const imgRect = imgElement.getBoundingClientRect(); const maxX = Math.max(0, (imgRect.width * scale - containerRect.width) / 2); const maxY = Math.max(0, (imgRect.height * scale - containerRect.height) / 2); translateX = Math.min(Math.max(translateX, -maxX), maxX); translateY = Math.min(Math.max(translateY, -maxY), maxY); setTransform(); }
+    function onMouseDown(e) { if (scale <= 1) return; e.preventDefault(); isPanning = true; startX = e.clientX - translateX; startY = e.clientY - translateY; imgElement.style.cursor = 'grabbing'; }
+    function onMouseMove(e) { if (!isPanning) return; translateX = e.clientX - startX; translateY = e.clientY - startY; clampMovement(); }
+    function onMouseUp() { isPanning = false; imgElement.style.cursor = 'grab'; }
+    function getDistance(touches) { return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY); }
+    function onTouchStart(e) { if (e.touches.length === 2) { e.preventDefault(); initialPinchDist = getDistance(e.touches); startScale = scale; pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2; pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2; document.getElementById('zoomHint').style.opacity = '1'; setTimeout(() => document.getElementById('zoomHint').style.opacity = '0', 2000); } else if (e.touches.length === 1) { touchStartX = e.touches[0].clientX; if (scale > 1) { isPanning = true; startX = e.touches[0].clientX - translateX; startY = e.touches[0].clientY - translateY; } } }
+    function onTouchMove(e) { if (e.touches.length === 2 && initialPinchDist > 0) { e.preventDefault(); const newDist = getDistance(e.touches); let newScale = startScale * (newDist / initialPinchDist); newScale = Math.min(4, Math.max(1, newScale)); if (newScale !== scale) { const rect = imgElement.getBoundingClientRect(); const offsetX = pinchCenterX - rect.left; const offsetY = pinchCenterY - rect.top; const ratio = newScale / scale; translateX = pinchCenterX - rect.left - (offsetX - translateX) * ratio; translateY = pinchCenterY - rect.top - (offsetY - translateY) * ratio; scale = newScale; clampMovement(); } } else if (e.touches.length === 1 && isPanning && scale > 1) { e.preventDefault(); translateX = e.touches[0].clientX - startX; translateY = e.touches[0].clientY - startY; clampMovement(); } }
+    function onTouchEnd(e) { if (e.touches.length < 2) initialPinchDist = 0; if (e.touches.length === 0) { if (touchStartX && e.changedTouches[0] && scale <= 1) { const diff = e.changedTouches[0].clientX - touchStartX; if (Math.abs(diff) > 50) { if (diff > 0) prevImage(); else nextImage(); } } touchStartX = 0; isPanning = false; } }
+    function onWheel(e) { e.preventDefault(); let delta = e.deltaY > 0 ? -0.1 : 0.1; let newScale = scale + delta; newScale = Math.min(4, Math.max(1, newScale)); if (newScale === scale) return; const rect = imgElement.getBoundingClientRect(); const mouseX = e.clientX - rect.left; const mouseY = e.clientY - rect.top; const ratio = newScale / scale; translateX = e.clientX - rect.left - (mouseX - translateX) * ratio; translateY = e.clientY - rect.top - (mouseY - translateY) * ratio; scale = newScale; clampMovement(); document.getElementById('zoomHint').style.opacity = '1'; setTimeout(() => document.getElementById('zoomHint').style.opacity = '0', 2000); }
+    function bindLightboxEvents() { imgElement.addEventListener('mousedown', onMouseDown); window.addEventListener('mousemove', onMouseMove); window.addEventListener('mouseup', onMouseUp); imgElement.addEventListener('touchstart', onTouchStart, { passive: false }); imgElement.addEventListener('touchmove', onTouchMove, { passive: false }); imgElement.addEventListener('touchend', onTouchEnd); imgElement.addEventListener('wheel', onWheel, { passive: false }); }
+    function unbindLightboxEvents() { imgElement.removeEventListener('mousedown', onMouseDown); window.removeEventListener('mousemove', onMouseMove); window.removeEventListener('mouseup', onMouseUp); imgElement.removeEventListener('touchstart', onTouchStart); imgElement.removeEventListener('touchmove', onTouchMove); imgElement.removeEventListener('touchend', onTouchEnd); imgElement.removeEventListener('wheel', onWheel); }
+    function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
+    function openLightbox(images, index) { if (!images.length) return; currentImageList = images; currentIndex = index; imgElement.src = images[index]; resetTransform(); updateCounter(); lightbox.style.display = 'flex'; document.body.style.overflow = 'hidden'; bindLightboxEvents(); }
+    function closeLightbox() { lightbox.style.display = 'none'; document.body.style.overflow = ''; unbindLightboxEvents(); resetTransform(); }
+    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
+    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
+    function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent(t('inquiry') + ':\n' + url)}`, '_blank'); }
+    document.getElementById('lightboxPrev').onclick = prevImage; document.getElementById('lightboxNext').onclick = nextImage; document.getElementById('lightboxClose').onclick = closeLightbox; waBtn.onclick = sendWhatsapp; lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+    function openCatalogModal(code) { const modal = document.getElementById('catalogModal'), iframe = document.getElementById('catalogIframe'); iframe.srcdoc = code; modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    function closeCatalogModal() { document.getElementById('catalogModal').style.display = 'none'; document.getElementById('catalogIframe').srcdoc = ''; document.body.style.overflow = ''; }
+    document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
+    
+    function renderPartnersMarquee() { const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack'); if (!cont || !track) return; if (currentData.partners && Object.keys(currentData.partners).length) { cont.style.display = 'block'; let logos = ''; Object.values(currentData.partners).forEach(p => { logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" oncontextmenu="return false" ondragstart="return false"></div>`; }); track.innerHTML = logos + logos; } else cont.style.display = 'none'; }
+    
     let splashTimeout, maintenanceInterval, popupTimeout;
-    function showSplash(settings) {
-        const splashDiv = document.getElementById('splash');
-        if (!splashDiv) return;
-        splashDiv.innerHTML = '';
-        if (!settings.enabled) { splashDiv.style.display = 'none'; return; }
-        const mediaUrl = settings.media_url;
-        const duration = (settings.duration || 5) * 1000;
-        const showSkip = settings.show_skip === true;
-        const img = document.createElement('img');
-        img.src = mediaUrl || '';
-        img.className = 'splash-media';
-        img.alt = 'Splash';
-        img.oncontextmenu = (e) => e.preventDefault();
-        img.ondragstart = (e) => e.preventDefault();
-        splashDiv.appendChild(img);
-        if (showSkip) {
-            const skipBtn = document.createElement('button');
-            skipBtn.innerText = 'تخطي ←';
-            skipBtn.className = 'splash-skip';
-            skipBtn.onclick = () => { clearTimeout(splashTimeout); splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); };
-            splashDiv.appendChild(skipBtn);
-        }
-        splashDiv.style.display = 'flex';
-        splashDiv.style.opacity = '1';
-        if (splashTimeout) clearTimeout(splashTimeout);
-        splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration);
-    }
-    function updateMaintenanceMode() {
-        const d = currentData, screen = document.getElementById('maintenanceScreen');
-        if (!d.maintenance_mode) { if (screen.style.display !== 'none') screen.style.display = 'none'; if (maintenanceInterval) clearInterval(maintenanceInterval); return; }
-        const until = d.maintenance_until;
-        const title = d.maintenance_title || 'الموقع في صيانة', msg = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً';
-        if (until && until <= Date.now()) { db.ref(DB_PATH).update({ maintenance_mode: false, maintenance_until: null }); return; }
-        screen.innerHTML = `<div style="background:white; border-radius:48px; padding:40px; max-width:500px; text-align:center;"><i class="fas fa-tools fa-4x" style="color:var(--primary);"></i><h2 style="margin:15px 0;">${title}</h2><p>${msg}</p>${until ? `<div id="maintenanceCountdown" style="font-size:2rem; font-weight:bold;"></div>` : ''}</div>`;
-        screen.style.display = 'flex'; document.body.style.overflow = 'hidden';
-        if (until) {
-            const countdownEl = document.getElementById('maintenanceCountdown');
-            const updateCountdown = () => {
-                let diff = until - Date.now();
-                if (diff <= 0) { clearInterval(maintenanceInterval); window.location.reload(); return; }
-                const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
-                if (countdownEl) countdownEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-            };
-            updateCountdown(); maintenanceInterval = setInterval(updateCountdown, 1000);
-        }
-    }
-    function updatePopup() {
-        const bubble = document.getElementById('popupBubble'), msgSpan = document.getElementById('popupMessage');
-        if (!currentData.popup_enabled || !currentData.popup_message) { if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); return; }
-        if (bubble.style.display === 'none' || bubble.style.display === '') {
-            msgSpan.innerText = currentData.popup_message;
-            bubble.style.display = 'block';
-            if (popupTimeout) clearTimeout(popupTimeout);
-            popupTimeout = setTimeout(() => { bubble.style.display = 'none'; }, (currentData.popup_duration || 7) * 1000);
-        }
-    }
+    function showSplash(settings) { const splashDiv = document.getElementById('splash'); if (!splashDiv) return; splashDiv.innerHTML = ''; if (!settings.enabled) { splashDiv.style.display = 'none'; return; } const mediaUrl = settings.media_url; const duration = (settings.duration || 5) * 1000; const showSkip = settings.show_skip === true; const img = document.createElement('img'); img.src = mediaUrl || ''; img.className = 'splash-media'; img.alt = 'Splash'; img.oncontextmenu = (e) => e.preventDefault(); img.ondragstart = (e) => e.preventDefault(); splashDiv.appendChild(img); if (showSkip) { const skipBtn = document.createElement('button'); skipBtn.innerText = currentLang === 'ar' ? 'تخطي ←' : 'Skip →'; skipBtn.className = 'splash-skip'; skipBtn.onclick = () => { clearTimeout(splashTimeout); splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }; splashDiv.appendChild(skipBtn); } splashDiv.style.display = 'flex'; splashDiv.style.opacity = '1'; if (splashTimeout) clearTimeout(splashTimeout); splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration); }
+    function updateMaintenanceMode() { const d = currentData, screen = document.getElementById('maintenanceScreen'); if (!d.maintenance_mode) { if (screen.style.display !== 'none') screen.style.display = 'none'; if (maintenanceInterval) clearInterval(maintenanceInterval); return; } const until = d.maintenance_until; const title = d.maintenance_title || (currentLang === 'ar' ? 'الموقع في صيانة' : 'Under Maintenance'), msg = d.maintenance_message || (currentLang === 'ar' ? 'نعمل على تحسين تجربتك، سنعود قريباً' : 'We are improving your experience, back soon'); if (until && until <= Date.now()) { db.ref(DB_PATH).update({ maintenance_mode: false, maintenance_until: null }); return; } screen.innerHTML = `<div style="background:white; border-radius:48px; padding:40px; max-width:500px; text-align:center;"><i class="fas fa-tools fa-4x" style="color:var(--primary);"></i><h2 style="margin:15px 0;">${title}</h2><p>${msg}</p>${until ? `<div id="maintenanceCountdown" style="font-size:2rem; font-weight:bold;"></div>` : ''}</div>`; screen.style.display = 'flex'; document.body.style.overflow = 'hidden'; if (until) { const countdownEl = document.getElementById('maintenanceCountdown'); const updateCountdown = () => { let diff = until - Date.now(); if (diff <= 0) { clearInterval(maintenanceInterval); window.location.reload(); return; } const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000); if (countdownEl) countdownEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }; updateCountdown(); maintenanceInterval = setInterval(updateCountdown, 1000); } }
+    function updatePopup() { const bubble = document.getElementById('popupBubble'), msgSpan = document.getElementById('popupMessage'); if (!currentData.popup_enabled || !currentData.popup_message) { if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); return; } if (bubble.style.display === 'none' || bubble.style.display === '') { msgSpan.innerText = currentData.popup_message; bubble.style.display = 'block'; if (popupTimeout) clearTimeout(popupTimeout); popupTimeout = setTimeout(() => { bubble.style.display = 'none'; }, (currentData.popup_duration || 7) * 1000); } }
     window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
-    function refreshAll() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
-
-    db.ref(DB_PATH).once('value', snap => { currentData = snap.val() || {}; showSplash({ enabled: currentData.splash_enabled !== false, media_url: currentData.splash_media_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true }); refreshAll(); });
-    db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAll(); });
+    function refreshAllPages() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
+    
+    function initLangAndEvents() {
+        setLanguage(currentLang);
+        document.getElementById('langSwitchBtn').addEventListener('click', () => { setLanguage(currentLang === 'ar' ? 'en' : 'ar'); });
+    }
+    
+    db.ref(DB_PATH).once('value', snap => { currentData = snap.val() || {}; showSplash({ enabled: currentData.splash_enabled !== false, media_url: currentData.splash_media_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true }); refreshAllPages(); initLangAndEvents(); });
+    db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAllPages(); });
+    
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
-
-    // ========== منع تنزيل الصور بشكل كامل ==========
     (function blockImageDownload() {
-        // منع القوائم على جميع الصور (حالية ومستقبلية)
-        function disableContextAndDrag(img) {
-            img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
-            img.addEventListener('dragstart', (e) => { e.preventDefault(); return false; });
-            img.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1 && e.target === img) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
-        }
+        function disableContextAndDrag(img) { img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; }); img.addEventListener('dragstart', (e) => { e.preventDefault(); return false; }); }
         document.querySelectorAll('img').forEach(disableContextAndDrag);
-        const observer = new MutationObserver(() => {
-            document.querySelectorAll('img').forEach(img => {
-                if (!img.hasAttribute('data-blocked')) {
-                    img.setAttribute('data-blocked', 'true');
-                    disableContextAndDrag(img);
-                }
-            });
-        });
+        const observer = new MutationObserver(() => { document.querySelectorAll('img').forEach(img => { if (!img.hasAttribute('data-blocked')) { img.setAttribute('data-blocked', 'true'); disableContextAndDrag(img); } }); });
         observer.observe(document.body, { childList: true, subtree: true });
-
-        // منع مفاتيح اختصار حفظ الصفحة وأدوات المطور
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-                e.preventDefault();
-                showToast('❌ تم تعطيل حفظ الصور');
-                return false;
-            }
-            if (e.key === 'F12') {
-                e.preventDefault();
-                return false;
-            }
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
-                e.preventDefault();
-                return false;
-            }
-        });
+        document.addEventListener('keydown', (e) => { if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); showToast(t('disabled_save')); return false; } if (e.key === 'F12' || ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U'))) { e.preventDefault(); return false; } });
     })();
 </script>
 </body>
