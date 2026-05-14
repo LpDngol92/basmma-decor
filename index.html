@@ -62,75 +62,17 @@
         .nav-links a { text-decoration: none; font-weight: 600; color: #333; transition: 0.2s; cursor: pointer; font-size: clamp(0.85rem, 3vw, 1rem); }
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
         
-        /* زر اللغة المنسدل الأنيق */
-        .lang-dropdown {
-            position: relative;
-            display: inline-block;
-        }
-        .lang-dropbtn {
-            background: linear-gradient(135deg, #f8f3e8, #fff6ea);
-            border: 1px solid var(--primary);
-            border-radius: 40px;
-            padding: 6px 16px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--primary-dark);
-            cursor: pointer;
-            transition: all 0.25s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
+        /* قائمة اللغة المنسدلة */
+        .lang-dropdown { position: relative; display: inline-block; }
+        .lang-dropbtn { background: linear-gradient(135deg, #f8f3e8, #fff6ea); border: 1px solid var(--primary); border-radius: 40px; padding: 6px 16px; font-weight: 600; font-size: 0.9rem; color: var(--primary-dark); cursor: pointer; transition: all 0.25s; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
         .lang-dropbtn i { font-size: 1rem; }
-        .lang-dropbtn:hover {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(200,161,101,0.2);
-        }
-        .lang-dropdown-content {
-            display: none;
-            position: absolute;
-            top: 110%;
-            left: 0;
-            background-color: #fff;
-            min-width: 140px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            border-radius: 20px;
-            z-index: 1001;
-            overflow: hidden;
-            border: 1px solid rgba(200,161,101,0.3);
-            backdrop-filter: blur(4px);
-        }
-        .lang-dropdown-content a {
-            color: #333;
-            padding: 10px 18px;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 500;
-            transition: 0.2s;
-            font-size: 0.9rem;
-        }
-        .lang-dropdown-content a i {
-            width: 20px;
-            color: var(--primary);
-        }
-        .lang-dropdown-content a:hover {
-            background-color: #fdf7ef;
-            color: var(--primary-dark);
-        }
-        .lang-dropdown:hover .lang-dropdown-content {
-            display: block;
-        }
-        /* تعديل الموقع عند الانجليزية */
-        html[dir="ltr"] .lang-dropdown-content {
-            left: auto;
-            right: 0;
-        }
+        .lang-dropbtn:hover { background: var(--primary); color: white; border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(200,161,101,0.2); }
+        .lang-dropdown-content { display: none; position: absolute; top: 110%; left: 0; background-color: #fff; min-width: 140px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-radius: 20px; z-index: 1001; overflow: hidden; border: 1px solid rgba(200,161,101,0.3); backdrop-filter: blur(4px); }
+        .lang-dropdown-content a { color: #333; padding: 10px 18px; text-decoration: none; display: flex; align-items: center; gap: 10px; font-weight: 500; transition: 0.2s; font-size: 0.9rem; cursor: pointer; }
+        .lang-dropdown-content a i { width: 20px; color: var(--primary); }
+        .lang-dropdown-content a:hover { background-color: #fdf7ef; color: var(--primary-dark); }
+        .lang-dropdown:hover .lang-dropdown-content { display: block; }
+        html[dir="ltr"] .lang-dropdown-content { left: auto; right: 0; }
         
         .partners-marquee { background: #fdf7ef; padding: 12px 0; border-bottom: 1px solid #eee; overflow: hidden; white-space: nowrap; }
         .marquee-track { display: inline-flex; gap: 40px; animation: marqueeFlow 35s linear infinite; }
@@ -203,12 +145,11 @@
         <div class="nav-bar">
             <div class="logo"><h1 id="siteTitle">بصمة غير</h1></div>
             <div class="nav-links" id="navLinks"></div>
-            <!-- قائمة اللغة المنسدلة -->
             <div class="lang-dropdown">
                 <button class="lang-dropbtn" id="langDropBtn"><i class="fas fa-globe"></i> <span id="currentLangLabel">English</span> <i class="fas fa-chevron-down"></i></button>
-                <div class="lang-dropdown-content">
-                    <a href="#" data-lang="ar"><i class="fas fa-flag"></i> العربية</a>
-                    <a href="#" data-lang="en"><i class="fas fa-flag-usa"></i> English</a>
+                <div class="lang-dropdown-content" id="langDropdownMenu">
+                    <a data-lang="ar"><i class="fas fa-flag"></i> العربية</a>
+                    <a data-lang="en"><i class="fas fa-flag-usa"></i> English</a>
                 </div>
             </div>
         </div>
@@ -240,7 +181,6 @@
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
     
-    // ---------- الترجمة الشاملة 100% ----------
     let currentLang = localStorage.getItem('siteLang') || 'ar';
     
     const translations = {
@@ -286,6 +226,13 @@
     
     function t(key) { return translations[currentLang][key] || translations['ar'][key] || key; }
     
+    // دالة للحصول على اسم الألبوم المترجم إذا توفر name_en وإلا نعرض الاسم الأصلي
+    function getAlbumDisplayName(album) {
+        if (currentLang === 'en' && album.name_en) return album.name_en;
+        if (currentLang === 'ar' && album.name_ar) return album.name_ar;
+        return album.name || (currentLang === 'ar' ? 'ألبوم' : 'Album');
+    }
+    
     function setLanguage(lang) {
         if (lang === currentLang) return;
         currentLang = lang;
@@ -298,39 +245,27 @@
             htmlElem.setAttribute('dir', 'ltr');
             htmlElem.setAttribute('lang', 'en');
         }
-        // تحديث النص المعروض على الزر الرئيسي
-        const currentLabelSpan = document.getElementById('currentLangLabel');
-        if (currentLabelSpan) currentLabelSpan.innerText = t('lang_label');
-        // تحديث كل المحتوى
+        document.getElementById('currentLangLabel').innerText = t('lang_label');
         updateTitleAndMeta();
-        refreshAllPages();
+        refreshAllPages(); // يعيد بناء الصفحة بالكامل مع ترجمة الأسماء
     }
     
     function updateTitleAndMeta() {
-        const site = t('site_name');
-        const suffix = t('site_suffix');
-        document.title = `${site} | ${suffix}`;
+        document.title = `${t('site_name')} | ${t('site_suffix')}`;
         const metaDesc = document.querySelector('meta[name="description"]');
         if(metaDesc) metaDesc.setAttribute('content', t('hero_desc'));
-        const siteTitleElem = document.getElementById('siteTitle');
-        if(siteTitleElem) siteTitleElem.innerText = site;
-        const footerBrand = document.getElementById('footerBrand');
-        if(footerBrand) footerBrand.innerText = site;
-        const footerDescSpan = document.getElementById('footerDesc');
-        if(footerDescSpan) footerDescSpan.innerText = t('footer_desc');
-        const hoursTitleSpan = document.getElementById('hoursTitle');
-        if(hoursTitleSpan) hoursTitleSpan.innerText = t('hours_title');
-        const contactTitleSpan = document.getElementById('contactTitle');
-        if(contactTitleSpan) contactTitleSpan.innerText = t('contact_title');
-        const prevSpan = document.getElementById('prevText');
-        if(prevSpan) prevSpan.innerText = t('prev');
-        const nextSpan = document.getElementById('nextText');
-        if(nextSpan) nextSpan.innerText = t('next');
-        const inquirySpan = document.getElementById('inquiryText');
-        if(inquirySpan) inquirySpan.innerText = t('inquiry');
+        document.getElementById('siteTitle').innerText = t('site_name');
+        document.getElementById('footerBrand').innerText = t('site_name');
+        document.getElementById('footerDesc').innerText = t('footer_desc');
+        document.getElementById('hoursTitle').innerText = t('hours_title');
+        document.getElementById('contactTitle').innerText = t('contact_title');
+        document.getElementById('prevText').innerText = t('prev');
+        document.getElementById('nextText').innerText = t('next');
+        document.getElementById('inquiryText').innerText = t('inquiry');
     }
     
-    // دالة أيام الأسبوع مع الترجمة
+    function formatTime12(tm) { if (!tm) return ''; let [h, m] = tm.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
+    
     function getGroupedScheduleHtml(d) {
         if (!d.work_schedule) return `<p>${t('no_works')}</p>`;
         const daysMap = {0:t('sun'),1:t('mon'),2:t('tue'),3:t('wed'),4:t('thu'),5:t('fri'),6:t('sat')};
@@ -355,8 +290,6 @@
         if (off.length) html += `<div class="schedule-item"><strong>${t('holiday')}:</strong> ${off.join('، ')}</div>`;
         return html;
     }
-    
-    function formatTime12(tm) { if (!tm) return ''; let [h, m] = tm.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
     
     function renderNavLinks() {
         const container = document.getElementById('navLinks');
@@ -396,12 +329,14 @@
         }
         updateFooterData();
         renderNavLinks();
-        document.querySelectorAll('[data-page]').forEach(el => {
-            if (el.classList && el.classList.contains('btn')) {
-                el.addEventListener('click', (e) => { e.preventDefault(); changePage(el.getAttribute('data-page')); });
-            }
+        // إعادة ربط الأحداث للأزرار التي تحمل data-page داخل الهيرو
+        document.querySelectorAll('.btn[data-page]').forEach(btn => {
+            btn.removeEventListener('click', btnClickHandler);
+            btn.addEventListener('click', btnClickHandler);
         });
     }
+    
+    function btnClickHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if(page) changePage(page); }
     
     function updateFooterData() {
         const d = currentData;
@@ -424,13 +359,64 @@
     function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast(t('catalog_unavailable')); }
     function showToast(msg) { const tEl = document.getElementById('toastMsg'); tEl.innerText = msg; tEl.style.display = 'block'; setTimeout(() => tEl.style.display = 'none', 2500); }
     
-    function buildHomepageWorksGrid() { const cont = document.getElementById('homepageWorksGrid'); if (!cont) return; let albums = Object.keys(currentData.albums || {}).map(id => ({ id, ...currentData.albums[id] })); if (albums.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_works')}</div>`; return; } let html = '<div class="grid-auto">'; albums.forEach(alb => { let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : ''; html += `<div class="card" data-album="${alb.id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="img-square" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} ${currentLang === 'ar' ? 'صورة' : 'image'}</small></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#homepageWorksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); }); }
-    function buildWorksGrid() { const cont = document.getElementById('worksGrid'); if (!cont) return; let albums = Object.keys(currentData.albums || {}).map(id => ({ id, ...currentData.albums[id] })); if (albums.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_works')}</div>`; return; } let html = '<div class="grid-auto">'; albums.forEach(alb => { let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : ''; html += `<div class="card" data-album="${alb.id}">${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="img-square" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small>${alb.imgs ? Object.keys(alb.imgs).length : 0} ${currentLang === 'ar' ? 'صورة' : 'image'}</small></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); }); }
-    function buildAllProductsGrid() { const cont = document.getElementById('allProductsGrid'); if (!cont) return; let all = []; if (currentData.store_categories) Object.keys(currentData.store_categories).forEach(cid => { const cat = currentData.store_categories[cid]; if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) all.push(img.url); }); }); if (all.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_products')}</div>`; return; } let html = '<div class="grid-auto">'; all.forEach(url => { html += `<div class="product-card" data-product-url="${url}">${getWatermarkedImage(url, 'product')}<div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent(t('inquiry') + ': ' + url)}','_blank')"><i class="fab fa-whatsapp"></i> ${t('order_whatsapp')}</button></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#allProductsGrid .product-card').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); }); }
-    function buildCatalogsPageGrid() { const cont = document.getElementById('catalogsPageGrid'); if (!cont) return; if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_catalogs')}</div>`; return; } let html = '<div class="grid-auto">'; Object.keys(currentData.catalogs).forEach(id => { const cat = currentData.catalogs[id]; html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small style="color:var(--gray);">${currentLang === 'ar' ? 'اضغط للعرض' : 'Click to view'}</small></div></div>`; }); html += '</div>'; cont.innerHTML = html; document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); }); }
+    function buildHomepageWorksGrid() { 
+        const cont = document.getElementById('homepageWorksGrid'); 
+        if (!cont) return; 
+        let albums = Object.keys(currentData.albums || {}).map(id => ({ id, ...currentData.albums[id] })); 
+        if (albums.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_works')}</div>`; return; } 
+        let html = '<div class="grid-auto">'; 
+        albums.forEach(alb => { 
+            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : ''; 
+            let displayName = getAlbumDisplayName(alb);
+            html += `<div class="card" data-album="${alb.id}">${cover ? getWatermarkedImage(cover, displayName) : '<div class="img-square" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${displayName}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} ${currentLang === 'ar' ? 'صورة' : 'image'}</small></div></div>`; 
+        }); 
+        html += '</div>'; 
+        cont.innerHTML = html; 
+        document.querySelectorAll('#homepageWorksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); }); 
+    }
     
-    // Lightbox and zoom functions (unchanged but keep)
-    let scale = 1, translateX = 0, translateY = 0, startX = 0, startY = 0, isPanning = false, initialPinchDist = 0, startScale = 1, touchStartX = 0;
+    function buildWorksGrid() { 
+        const cont = document.getElementById('worksGrid'); 
+        if (!cont) return; 
+        let albums = Object.keys(currentData.albums || {}).map(id => ({ id, ...currentData.albums[id] })); 
+        if (albums.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_works')}</div>`; return; } 
+        let html = '<div class="grid-auto">'; 
+        albums.forEach(alb => { 
+            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : ''; 
+            let displayName = getAlbumDisplayName(alb);
+            html += `<div class="card" data-album="${alb.id}">${cover ? getWatermarkedImage(cover, displayName) : '<div class="img-square" style="background:#f0f0f0;"></div>'}<div class="card-body"><div class="card-title">${displayName}</div><small>${alb.imgs ? Object.keys(alb.imgs).length : 0} ${currentLang === 'ar' ? 'صورة' : 'image'}</small></div></div>`; 
+        }); 
+        html += '</div>'; 
+        cont.innerHTML = html; 
+        document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); }); 
+    }
+    
+    function buildAllProductsGrid() { 
+        const cont = document.getElementById('allProductsGrid'); 
+        if (!cont) return; 
+        let all = []; 
+        if (currentData.store_categories) Object.keys(currentData.store_categories).forEach(cid => { const cat = currentData.store_categories[cid]; if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) all.push(img.url); }); }); 
+        if (all.length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_products')}</div>`; return; } 
+        let html = '<div class="grid-auto">'; 
+        all.forEach(url => { html += `<div class="product-card" data-product-url="${url}">${getWatermarkedImage(url, 'product')}<div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent(t('inquiry') + ': ' + url)}','_blank')"><i class="fab fa-whatsapp"></i> ${t('order_whatsapp')}</button></div></div>`; }); 
+        html += '</div>'; 
+        cont.innerHTML = html; 
+        document.querySelectorAll('#allProductsGrid .product-card').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); }); 
+    }
+    
+    function buildCatalogsPageGrid() { 
+        const cont = document.getElementById('catalogsPageGrid'); 
+        if (!cont) return; 
+        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = `<div class="empty-state">${t('no_catalogs')}</div>`; return; } 
+        let html = '<div class="grid-auto">'; 
+        Object.keys(currentData.catalogs).forEach(id => { const cat = currentData.catalogs[id]; html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small style="color:var(--gray);">${currentLang === 'ar' ? 'اضغط للعرض' : 'Click to view'}</small></div></div>`; }); 
+        html += '</div>'; 
+        cont.innerHTML = html; 
+        document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); }); 
+    }
+    
+    // Lightbox و zoom (نفس الكود السابق مع الحفاظ على الوظائف)
+    let scale = 1, translateX = 0, translateY = 0, startX = 0, startY = 0, isPanning = false, initialPinchDist = 0, startScale = 1, pinchCenterX = 0, pinchCenterY = 0, touchStartX = 0;
     const imgElement = document.getElementById('lightboxImg'), lightbox = document.getElementById('lightbox'), counterSpan = document.getElementById('lightboxCounter'), waBtn = document.getElementById('lightboxWhatsappBtn');
     function setTransform() { imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`; }
     function resetTransform() { scale = 1; translateX = 0; translateY = 0; setTransform(); }
@@ -468,13 +454,11 @@
     function initLangEvents() {
         const langLinks = document.querySelectorAll('.lang-dropdown-content a');
         langLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const lang = link.getAttribute('data-lang');
-                if (lang) setLanguage(lang);
-            });
+            link.removeEventListener('click', langClickHandler);
+            link.addEventListener('click', langClickHandler);
         });
     }
+    function langClickHandler(e) { e.preventDefault(); const lang = this.getAttribute('data-lang'); if (lang) setLanguage(lang); }
     
     db.ref(DB_PATH).once('value', snap => { currentData = snap.val() || {}; showSplash({ enabled: currentData.splash_enabled !== false, media_url: currentData.splash_media_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true }); refreshAllPages(); initLangEvents(); });
     db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAllPages(); initLangEvents(); });
