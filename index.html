@@ -57,8 +57,8 @@
         .header { background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 1000; }
         .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; flex-wrap: wrap; gap: 1rem; }
-        .logo h1 { font-size: clamp(1.4rem, 5vw, 1.8rem); font-weight: 800; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); background-clip: text; -webkit-background-clip: text; color: transparent; }
-        .nav-links { display: flex; gap: clamp(1rem, 3vw, 1.8rem); flex-wrap: wrap; }
+        .logo h1 { font-size: clamp(1.4rem, 5vw, 1.8rem); font-weight: 800; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); background-clip: text; -webkit-background-clip: text; color: transparent; cursor: pointer; }
+        .nav-links { display: flex; gap: clamp(1rem, 3vw, 1.8rem); flex-wrap: wrap; align-items: center; }
         .nav-links a { text-decoration: none; font-weight: 600; color: #333; transition: 0.2s; cursor: pointer; font-size: clamp(0.85rem, 3vw, 1rem); }
         .nav-links a:hover, .nav-links a.active { color: var(--primary); }
         .partners-marquee { background: #fdf7ef; padding: 12px 0; border-bottom: 1px solid #eee; overflow: hidden; white-space: nowrap; }
@@ -128,7 +128,12 @@
 <div id="maintenanceScreen" class="maintenance-screen"></div>
 
 <header class="header">
-    <div class="container"><div class="nav-bar"><div class="logo"><h1 id="siteTitle">بصمة غير</h1></div><div class="nav-links" id="navLinks"></div></div></div>
+    <div class="container">
+        <div class="nav-bar">
+            <div class="logo"><h1 id="siteTitle">بصمة غير</h1></div>
+            <div class="nav-links" id="navLinks"></div>
+        </div>
+    </div>
 </header>
 <div class="partners-marquee" id="partnersMarquee" style="display:none;"><div class="marquee-track" id="marqueeTrack"></div></div>
 <main id="mainContent"></main>
@@ -156,17 +161,12 @@
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
 
-    // No CSS watermark — removed entirely
-
     function getWatermarkedImage(src, alt) {
         if (!src) return '<div class="empty-state">صورة غير متوفرة</div>';
-        // Prevent context menu and drag on the image
-        return `<div class="img-square">
-                    <img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false">
-                </div>`;
+        return `<div class="img-square"><img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false"></div>`;
     }
 
-    // Lightbox with full zoom (no watermark)
+    // ========== Lightbox (full zoom, unchanged but functional) ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -297,6 +297,7 @@
     waBtn.onclick = sendWhatsapp;
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 
+    // ========== الوظائف الأساسية ==========
     function openAlbum(id) {
         const alb = currentData.albums?.[id];
         if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
@@ -359,6 +360,7 @@
         } else cont.style.display = 'none';
     }
 
+    // دوال بناء المحتوى
     function buildHomepageWorksGrid() {
         const cont = document.getElementById('homepageWorksGrid');
         if (!cont) return;
@@ -457,6 +459,13 @@
         else document.getElementById('footerCopyright').innerHTML = '© 2025 بصمة غير - جميع الحقوق محفوظة';
     }
 
+    // ========== إصلاح التنقل: ربط الأحداث بشكل صحيح ==========
+    function navHandler(e) { 
+        e.preventDefault(); 
+        const page = this.getAttribute('data-page'); 
+        if (page) changePage(page); 
+    }
+
     function renderNavLinks() {
         const container = document.getElementById('navLinks');
         if (!container) return;
@@ -470,13 +479,36 @@
         let html = '';
         pages.forEach(p => { html += `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`; });
         container.innerHTML = html;
-        document.querySelectorAll('[data-page]').forEach(el => { el.removeEventListener('click', navHandler); el.addEventListener('click', navHandler); });
+        // ربط المستمعات لروابط التنقل فقط داخل container
+        container.querySelectorAll('[data-page]').forEach(link => {
+            link.removeEventListener('click', navHandler);
+            link.addEventListener('click', navHandler);
+        });
     }
-    function navHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
-    function changePage(page) { currentPage = page; loadPage(); window.scrollTo(0, 0); }
+
+    function changePage(page) { 
+        if (currentPage === page) return;
+        currentPage = page; 
+        loadPage(); 
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function bindHeroButtons() {
+        document.querySelectorAll('.btn[data-page]').forEach(btn => {
+            btn.removeEventListener('click', heroClickHandler);
+            btn.addEventListener('click', heroClickHandler);
+        });
+    }
+    function heroClickHandler(e) { 
+        e.preventDefault(); 
+        const page = this.getAttribute('data-page'); 
+        if (page) changePage(page); 
+    }
 
     function loadPage() {
         const main = document.getElementById('mainContent');
+        if (!main) return;
+        
         if (currentPage === 'home') {
             main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">أحدث أعمالنا</h2><div id="homepageWorksGrid"></div></div>`;
             buildHomepageWorksGrid();
@@ -493,14 +525,11 @@
             main.innerHTML = `<div class="container section"><h2 class="section-title">اتصل بنا</h2><div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;"><a href="tel:0541780995" style="text-decoration:none;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p>اتصل بنا</p></div></a><a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p>واتساب</p></div></a>${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p>انستقرام</p></div></a>` : ''}${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p>تيك توك</p></div></a>` : ''}${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p>سناب شات</p></div></a>` : ''}<a href="${currentData.location_url || '#'}" target="_blank" style="text-decoration:none;"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p>الموقع</p></div></a></div><div style="text-align:center; margin-top:20px;"><p>📞 0541780995</p></div></div>`;
         }
         updateFooterData();
-        renderNavLinks();
-        document.querySelectorAll('[data-page]').forEach(el => {
-            if (el.classList.contains('btn')) {
-                el.addEventListener('click', (e) => { e.preventDefault(); changePage(el.getAttribute('data-page')); });
-            }
-        });
+        renderNavLinks();      // إعادة بناء روابط التنقل وربطها
+        bindHeroButtons();     // ربط أزرار الهيرو (في الصفحة الحالية)
     }
 
+    // ========== إدارة الشاشة الافتتاحية والصيانة والإشعارات المنبثقة ==========
     let splashTimeout, maintenanceInterval, popupTimeout;
     function showSplash(settings) {
         const splashDiv = document.getElementById('splash');
@@ -515,7 +544,7 @@
         img.className = 'splash-media';
         img.alt = 'Splash';
         img.oncontextmenu = (e) => e.preventDefault();
-        img.ondragstart = (e) => e.preventDefault();
+        img.ondragstart = (e) e.preventDefault();
         splashDiv.appendChild(img);
         if (showSkip) {
             const skipBtn = document.createElement('button');
@@ -561,13 +590,13 @@
     window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
     function refreshAll() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
 
+    // بدء التطبيق
     db.ref(DB_PATH).once('value', snap => { currentData = snap.val() || {}; showSplash({ enabled: currentData.splash_enabled !== false, media_url: currentData.splash_media_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true }); refreshAll(); });
     db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAll(); });
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
 
-    // ========== منع تنزيل الصور بشكل كامل ==========
+    // ========== منع تنزيل الصور ==========
     (function blockImageDownload() {
-        // منع القوائم على جميع الصور (حالية ومستقبلية)
         function disableContextAndDrag(img) {
             img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
             img.addEventListener('dragstart', (e) => { e.preventDefault(); return false; });
@@ -588,22 +617,14 @@
             });
         });
         observer.observe(document.body, { childList: true, subtree: true });
-
-        // منع مفاتيح اختصار حفظ الصفحة وأدوات المطور
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
                 e.preventDefault();
                 showToast('❌ تم تعطيل حفظ الصور');
                 return false;
             }
-            if (e.key === 'F12') {
-                e.preventDefault();
-                return false;
-            }
-            if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
-                e.preventDefault();
-                return false;
-            }
+            if (e.key === 'F12') { e.preventDefault(); return false; }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); return false; }
         });
     })();
 </script>
