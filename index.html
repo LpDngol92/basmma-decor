@@ -535,7 +535,10 @@
         const splashDiv = document.getElementById('splash');
         if (!splashDiv) return;
         splashDiv.innerHTML = '';
-        if (!settings.enabled) { splashDiv.style.display = 'none'; return; }
+        if (!settings.enabled) {
+            splashDiv.style.display = 'none';
+            return;
+        }
         const mediaUrl = settings.media_url;
         const duration = (settings.duration || 5) * 1000;
         const showSkip = settings.show_skip === true;
@@ -544,7 +547,7 @@
         img.className = 'splash-media';
         img.alt = 'Splash';
         img.oncontextmenu = (e) => e.preventDefault();
-        img.ondragstart = (e) e.preventDefault();
+        img.ondragstart = (e) => e.preventDefault();
         splashDiv.appendChild(img);
         if (showSkip) {
             const skipBtn = document.createElement('button');
@@ -558,6 +561,7 @@
         if (splashTimeout) clearTimeout(splashTimeout);
         splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration);
     }
+    
     function updateMaintenanceMode() {
         const d = currentData, screen = document.getElementById('maintenanceScreen');
         if (!d.maintenance_mode) { if (screen.style.display !== 'none') screen.style.display = 'none'; if (maintenanceInterval) clearInterval(maintenanceInterval); return; }
@@ -590,9 +594,66 @@
     window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
     function refreshAll() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
 
-    // بدء التطبيق
-    db.ref(DB_PATH).once('value', snap => { currentData = snap.val() || {}; showSplash({ enabled: currentData.splash_enabled !== false, media_url: currentData.splash_media_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true }); refreshAll(); });
-    db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; refreshAll(); });
+    // ========== بدء التطبيق مع تحسين التعامل مع الأخطاء ==========
+    let forceHideTimer = null;
+    function forceHideSplash() {
+        const splashDiv = document.getElementById('splash');
+        if (splashDiv && splashDiv.style.display !== 'none') {
+            splashDiv.style.opacity = '0';
+            setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
+        }
+        if (forceHideTimer) clearTimeout(forceHideTimer);
+    }
+
+    // استدعاء البيانات مع معالجة الأخطاء والمهلة القصوى (أقصى 5 ثوانٍ)
+    const splashDurationSetting = (currentData && currentData.splash_duration) ? currentData.splash_duration : 5;
+    const maxWaitTime = Math.max(splashDurationSetting * 1000, 5000); // على الأقل 5 ثوانٍ أو مدة السبلاش
+    
+    // مهلة إجبارية لإخفاء السبلاش في حال تعطل Firebase
+    forceHideTimer = setTimeout(() => {
+        console.warn('⚠️ Firebase response timeout, forcing splash hide');
+        forceHideSplash();
+        // تعيين بيانات افتراضية لتشغيل الموقع
+        if (!currentData || Object.keys(currentData).length === 0) {
+            currentData = { splash_enabled: false };
+            refreshAll();
+        }
+    }, maxWaitTime);
+
+    db.ref(DB_PATH).once('value').then(snap => {
+        // نجاح جلب البيانات
+        clearTimeout(forceHideTimer);
+        currentData = snap.val() || {};
+        // تطبيق إعدادات السبلاش إذا كانت موجودة في قاعدة البيانات
+        const splashSettings = {
+            enabled: currentData.splash_enabled !== false,
+            media_url: currentData.splash_media_url || '',
+            duration: currentData.splash_duration || 5,
+            show_skip: currentData.splash_show_skip === true
+        };
+        showSplash(splashSettings);
+        refreshAll();
+    }).catch(err => {
+        console.error('❌ Firebase read error:', err);
+        clearTimeout(forceHideTimer);
+        // في حالة الخطأ، نستخدم بيانات افتراضية ونخفي السبلاش فورًا
+        currentData = { splash_enabled: false };
+        forceHideSplash();
+        refreshAll();
+        showToast('حدث خطأ في الاتصال، يتم عرض بيانات تجريبية');
+    });
+
+    // الاستماع للتحديثات المباشرة بعد التحميل الأولي (اختياري)
+    db.ref(DB_PATH).on('value', snap => {
+        // نتجنب استبدال البيانات في حالة عدم وجود اتصال أولي ناجح؟ ولكن نحدّث فقط إذا كانت البيانات موجودة
+        if (snap.exists()) {
+            currentData = snap.val();
+            refreshAll();
+        }
+    }, err => {
+        console.error('Realtime listener error:', err);
+    });
+
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
 
     // ========== منع تنزيل الصور ==========
