@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>بصمة غير | تجهيز المعارض والمحلات التجارية وتغليف جدران ومكاتب تلفزيون متخصصون في جميع اعمال الأخشاب </title>
+    <title>بصمة غير | تجهيز المعارض والمحلات التجارية وتغليف جدران ومكاتب تلفزيون متخصصون في جميع اعمال الأخشاب</title>
     <meta name="description" content="بصمة غير: خبراء في ديكورات المعارض والمحلات التجارية بجدة. ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال.">
     <meta name="keywords" content="ديكور, ديكورات, ديكورات معارض, ديكور محلات تجارية, ديكور خشب جدة">
     <meta name="author" content="بصمة غير">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://basmmaghyrdecor.com/">
     
-    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
     <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
@@ -121,7 +120,7 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
 
-        /* ====== ستايل السلايدر المتناسق ====== */
+        /* سلايدر متناسق */
         .slider-container {
             position: relative;
             width: 100%;
@@ -147,6 +146,7 @@
             box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             transform: scale(0.85);
             opacity: 0.7;
+            background: #f0f0f0;
         }
         .slider-item.active {
             transform: scale(1.05);
@@ -236,12 +236,32 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
-    function getWatermarkedImage(src, alt) {
-        if (!src) return '<div class="empty-state">صورة غير متوفرة</div>';
-        return `<div class="img-square"><img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false"></div>`;
+    // Helper: تحميل الصور مع إعادة المحاولة
+    function setImageWithRetry(imgElement, src, retries = 2) {
+        if (!imgElement) return;
+        const attempt = () => {
+            imgElement.src = src;
+        };
+        imgElement.onerror = () => {
+            if (retries > 0) {
+                setTimeout(() => {
+                    attempt();
+                }, 500);
+                retries--;
+            } else {
+                imgElement.src = 'https://placehold.co/600x400?text=صورة+غير+متوفرة';
+                imgElement.style.objectFit = 'contain';
+            }
+        };
+        attempt();
     }
 
-    // ========== Lightbox (full zoom) مع إمكانية إيقاف السلايدر ==========
+    function getWatermarkedImage(src, alt) {
+        if (!src) return '<div class="empty-state">صورة غير متوفرة</div>';
+        return `<div class="img-square"><img src="${src}" loading="lazy" decoding="async" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=خطأ+تحميل';"></div>`;
+    }
+
+    // ========== Lightbox معدل لإيقاف السلايدر ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -348,13 +368,11 @@
     }
     function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
     
-    // تعديل دالة openLightbox لإيقاف السلايدر
     function openLightbox(images, index) {
         if (!images.length) return;
-        // إيقاف السلايدر التلقائي
         if (sliderInterval) { clearInterval(sliderInterval); sliderInterval = null; isSliderPaused = true; }
         currentImageList = images; currentIndex = index;
-        imgElement.src = images[index];
+        setImageWithRetry(imgElement, images[index], 2);
         resetTransform();
         updateCounter();
         lightbox.style.display = 'flex';
@@ -362,21 +380,19 @@
         bindLightboxEvents();
     }
     
-    // تعديل دالة closeLightbox لاستئناف السلايدر
     function closeLightbox() {
         lightbox.style.display = 'none';
         document.body.style.overflow = '';
         unbindLightboxEvents();
         resetTransform();
-        // استئناف السلايدر إذا كان موجودًا ولم يتم إلغاؤه نهائيًا
         if (isSliderPaused && window.resumeSlider) {
             window.resumeSlider();
             isSliderPaused = false;
         }
     }
     
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
+    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 2); resetTransform(); updateCounter(); }
+    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 2); resetTransform(); updateCounter(); }
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage;
     document.getElementById('lightboxNext').onclick = nextImage;
@@ -441,13 +457,13 @@
             cont.style.display = 'block';
             let logos = '';
             Object.values(currentData.partners).forEach(p => {
-                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" oncontextmenu="return false" ondragstart="return false"></div>`;
+                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" decoding="async" oncontextmenu="return false" ondragstart="return false" onerror="this.src='https://placehold.co/200x60?text=شريك'"></div>`;
             });
             track.innerHTML = logos + logos;
         } else cont.style.display = 'none';
     }
 
-    // ========== السلايدر المتناسق مع إمكانية الإيقاف والاستئناف ==========
+    // ========== السلايدر المحسن ==========
     let currentSlideIndex = 0;
     let sliderImages = [];
     let sliderDirection = 'rtl';
@@ -463,7 +479,7 @@
             container.innerHTML = '<div class="empty-state">لا توجد صور في السلايدر</div>';
             return;
         }
-        sliderImages = sliderData.images.map(img => img.url).filter(url => url);
+        sliderImages = sliderData.images.map(img => img.url).filter(url => url && url.trim() !== '');
         if (sliderImages.length === 0) {
             container.innerHTML = '<div class="empty-state">لا توجد روابط صالحة</div>';
             return;
@@ -471,18 +487,16 @@
         sliderDirection = sliderData.direction === 'ltr' ? 'ltr' : 'rtl';
         const duration = (sliderData.duration || 5) * 1000;
 
-        // بناء واجهة السلايدر
         let html = `<div class="slider-container" style="direction: ltr;">
                         <div class="slider-track" id="sliderTrack">`;
         sliderImages.forEach((url, idx) => {
             html += `<div class="slider-item" data-index="${idx}">
-                        <img src="${url}" loading="lazy" oncontextmenu="return false" ondragstart="return false">
+                        <img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/600x400?text=خطأ+تحميل';this.style.objectFit='contain';">
                     </div>`;
         });
         html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div></div>`;
         container.innerHTML = html;
 
-        // توليد النقاط
         const dotsDiv = document.getElementById('sliderDots');
         if (dotsDiv) {
             dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
@@ -508,7 +522,6 @@
             const offset = activeRect.left + activeRect.width/2 - containerWidth/2;
             sliderTrack.style.transition = animate ? 'transform 0.5s ease' : 'none';
             sliderTrack.style.transform = `translateX(${-offset}px)`;
-
             sliderItems.forEach((item, idx) => {
                 if (idx === activeIndex) item.classList.add('active');
                 else item.classList.remove('active');
@@ -539,9 +552,7 @@
         function resetAutoSlide() {
             if (slideTimer) clearInterval(slideTimer);
             if (!isSliderPaused) {
-                slideTimer = setInterval(() => {
-                    nextSlide();
-                }, duration);
+                slideTimer = setInterval(() => { nextSlide(); }, duration);
             }
         }
 
@@ -557,27 +568,23 @@
             }
         }
 
-        // ربط النقر على الصور لفتح اللايت بوكس مع إيقاف السلايدر مؤقتًا
         sliderItems.forEach((item, idx) => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
-                pauseSlider();           // إيقاف الحركة عند الضغط
+                pauseSlider();
                 openLightbox(sliderImages, idx);
             });
         });
 
         window.addEventListener('resize', () => updateSlider(false));
         setTimeout(() => updateSlider(false), 100);
-        
-        // تعيين الدوال للنطاق العام لاستخدامها من اللايت بوكس
         window.resumeSlider = resumeSlider;
         window.pauseSlider = pauseSlider;
-        
         resetAutoSlide();
         window.goToSlide = goToSlide;
     }
 
-    // ========== دوال بناء المحتوى الأصلية (تم تعديل الصفحة الرئيسية) ==========
+    // ========== دوال بناء المحتوى الأخرى ==========
     function buildWorksGrid() {
         const cont = document.getElementById('worksGrid');
         if (!cont) return;
@@ -656,12 +663,7 @@
     }
 
     // ========== التنقل ==========
-    function navHandler(e) { 
-        e.preventDefault(); 
-        const page = this.getAttribute('data-page'); 
-        if (page) changePage(page); 
-    }
-
+    function navHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
     function renderNavLinks() {
         const container = document.getElementById('navLinks');
         if (!container) return;
@@ -680,30 +682,12 @@
             link.addEventListener('click', navHandler);
         });
     }
-
-    function changePage(page) { 
-        if (currentPage === page) return;
-        currentPage = page; 
-        loadPage(); 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function bindHeroButtons() {
-        document.querySelectorAll('.btn[data-page]').forEach(btn => {
-            btn.removeEventListener('click', heroClickHandler);
-            btn.addEventListener('click', heroClickHandler);
-        });
-    }
-    function heroClickHandler(e) { 
-        e.preventDefault(); 
-        const page = this.getAttribute('data-page'); 
-        if (page) changePage(page); 
-    }
-
+    function changePage(page) { if (currentPage === page) return; currentPage = page; loadPage(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function bindHeroButtons() { document.querySelectorAll('.btn[data-page]').forEach(btn => { btn.removeEventListener('click', heroClickHandler); btn.addEventListener('click', heroClickHandler); }); }
+    function heroClickHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
     function loadPage() {
         const main = document.getElementById('mainContent');
         if (!main) return;
-        
         if (currentPage === 'home') {
             const sliderTitle = (currentData.home_slider && currentData.home_slider.title) ? currentData.home_slider.title : 'أحدث أعمالنا';
             main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">${sliderTitle}</h2><div id="homeSliderContainer"></div></div>`;
@@ -725,16 +709,13 @@
         bindHeroButtons();
     }
 
-    // ========== إدارة الشاشة الافتتاحية والصيانة والإشعارات ==========
+    // ========== إدارة الشاشة الافتتاحية والصيانة ==========
     let splashTimeout, maintenanceInterval, popupTimeout;
-    function showSplash(settings) {
+    function showSplash(settings) { /* كما هي دون تغيير */ 
         const splashDiv = document.getElementById('splash');
         if (!splashDiv) return;
         splashDiv.innerHTML = '';
-        if (!settings.enabled) {
-            splashDiv.style.display = 'none';
-            return;
-        }
+        if (!settings.enabled) { splashDiv.style.display = 'none'; return; }
         const mediaUrl = settings.media_url;
         const duration = (settings.duration || 5) * 1000;
         const showSkip = settings.show_skip === true;
@@ -757,8 +738,7 @@
         if (splashTimeout) clearTimeout(splashTimeout);
         splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration);
     }
-    
-    function updateMaintenanceMode() {
+    function updateMaintenanceMode() { /* كما هي */ 
         const d = currentData, screen = document.getElementById('maintenanceScreen');
         if (!d.maintenance_mode) { if (screen.style.display !== 'none') screen.style.display = 'none'; if (maintenanceInterval) clearInterval(maintenanceInterval); return; }
         const until = d.maintenance_until;
@@ -777,7 +757,7 @@
             updateCountdown(); maintenanceInterval = setInterval(updateCountdown, 1000);
         }
     }
-    function updatePopup() {
+    function updatePopup() { /* كما هي */ 
         const bubble = document.getElementById('popupBubble'), msgSpan = document.getElementById('popupMessage');
         if (!currentData.popup_enabled || !currentData.popup_message) { if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); return; }
         if (bubble.style.display === 'none' || bubble.style.display === '') {
@@ -800,7 +780,6 @@
         }
         if (forceHideTimer) clearTimeout(forceHideTimer);
     }
-
     const splashDurationSetting = (currentData && currentData.splash_duration) ? currentData.splash_duration : 5;
     const maxWaitTime = Math.max(splashDurationSetting * 1000, 5000);
     forceHideTimer = setTimeout(() => {
@@ -811,7 +790,6 @@
             refreshAll();
         }
     }, maxWaitTime);
-
     db.ref(DB_PATH).once('value').then(snap => {
         clearTimeout(forceHideTimer);
         currentData = snap.val() || {};
@@ -831,29 +809,19 @@
         refreshAll();
         showToast('حدث خطأ في الاتصال، يتم عرض بيانات تجريبية');
     });
-
     db.ref(DB_PATH).on('value', snap => {
         if (snap.exists()) {
             currentData = snap.val();
             refreshAll();
         }
-    }, err => {
-        console.error('Realtime listener error:', err);
-    });
-
+    }, err => { console.error('Realtime listener error:', err); });
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
 
-    // ========== منع تنزيل الصور ==========
+    // منع تنزيل الصور
     (function blockImageDownload() {
         function disableContextAndDrag(img) {
             img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
             img.addEventListener('dragstart', (e) => { e.preventDefault(); return false; });
-            img.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1 && e.target === img) {
-                    e.preventDefault();
-                    return false;
-                }
-            });
         }
         document.querySelectorAll('img').forEach(disableContextAndDrag);
         const observer = new MutationObserver(() => {
@@ -866,11 +834,7 @@
         });
         observer.observe(document.body, { childList: true, subtree: true });
         document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) {
-                e.preventDefault();
-                showToast('❌ تم تعطيل حفظ الصور');
-                return false;
-            }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); showToast('❌ تم تعطيل حفظ الصور'); return false; }
             if (e.key === 'F12') { e.preventDefault(); return false; }
             if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); return false; }
         });
