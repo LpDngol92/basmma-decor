@@ -53,6 +53,9 @@
         .maintenance-preview { background: #fefaf5; padding: 15px; border-radius: 20px; margin: 15px 0; border-right: 4px solid #b88b4a; }
         .maintenance-preview h5 { margin-bottom: 8px; color: #b88b4a; }
         #maintenanceCountdownPreview { font-size: 1.2rem; font-weight: bold; direction: ltr; }
+        .story-video-item { display: flex; gap: 10px; align-items: center; background: #fefaf5; padding: 8px 12px; border-radius: 20px; border: 1px solid #e9e2d8; margin-bottom: 10px; }
+        .story-video-item video { width: 80px; height: 120px; object-fit: cover; border-radius: 12px; background: #000; }
+        .story-video-item input { flex: 1; margin: 0; }
     </style>
 </head>
 <body>
@@ -128,6 +131,7 @@
     function toggleCollapse(btn,id) { const content=btn.nextElementSibling; const isOpen=content.style.display==='block'; content.style.display=isOpen?'none':'block'; openSections[id]=!isOpen; btn.querySelector('span').innerHTML=isOpen?'▾':'▴'; }
     function restoreOpen() { document.querySelectorAll('.collapse-section').forEach(s=>{ const id=s.dataset.sectionId; if(openSections[id]){ s.querySelector('.collapse-content').style.display='block'; s.querySelector('.collapse-btn span').innerHTML='▴'; } }); }
 
+    // إدارة الصور للألبومات والمتجر
     async function addImagesToTarget(target, urlsArray, clearTextareaId) {
         if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط صالحة');
         const unique = [...new Set(urlsArray)];
@@ -166,6 +170,7 @@
         catch(e) { showToast('❌ فشل الحذف: '+e.message); }
     }
 
+    // ========== إدارة السلايدر ==========
     window.saveHomeSlider = function() {
         const enabled = document.getElementById('sliderEnabled').checked;
         const title = document.getElementById('sliderTitle').value;
@@ -219,17 +224,13 @@
                 selected.push(true);
             }
         });
-        if (selected.length === 0) {
-            showToast('لم يتم تحديد أي صورة للحذف');
-        } else {
-            showToast(`✅ تم حذف ${selected.length} صورة من القائمة (لم يتم حفظ التغييرات بعد، اضغط حفظ لحذفها نهائياً)`);
-        }
+        if (selected.length === 0) showToast('لم يتم تحديد أي صورة للحذف');
+        else showToast(`✅ تم حذف ${selected.length} صورة من القائمة (لم يتم حفظ التغييرات بعد، اضغط حفظ لحذفها نهائياً)`);
     };
 
     window.deleteAllSliderImages = function() {
         if (confirm('⚠️ هل أنت متأكد من حذف جميع الصور من القائمة؟ لن يتم حذفها من قاعدة البيانات إلا بعد الضغط على حفظ.')) {
-            const container = document.getElementById('sliderImagesList');
-            container.innerHTML = '';
+            document.getElementById('sliderImagesList').innerHTML = '';
             showToast('تم حذف جميع الصور من القائمة (لم يتم الحفظ بعد)');
         }
     };
@@ -246,6 +247,81 @@
         }
     };
 
+    // ========== إدارة سبلاش القصص (فيديوهات متعددة) ==========
+    window.saveSplashStories = function() {
+        const enabled = document.getElementById('splashStoriesEnabled').checked;
+        const videoInputs = document.querySelectorAll('.story-video-url');
+        const videos = [];
+        videoInputs.forEach(input => {
+            let url = input.value.trim();
+            if (url) videos.push(url);
+        });
+        db.ref(DB_PATH).update({
+            splash_stories_enabled: enabled,
+            splash_stories_videos: videos
+        }).then(() => { showToast('تم حفظ فيديوهات السبلاش'); loadData(); })
+          .catch(e => showToast('خطأ: '+e.message));
+    };
+
+    window.addStoryVideo = function() {
+        const container = document.getElementById('storiesVideosList');
+        const div = document.createElement('div');
+        div.className = 'story-video-item';
+        div.innerHTML = `<video src="" controls style="width:80px;height:120px;object-fit:cover;"></video>
+                         <input type="text" class="story-video-url" placeholder="رابط الفيديو (مثال: https://example.com/video.mp4)" style="flex:1;">
+                         <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+        const video = div.querySelector('video');
+        const input = div.querySelector('.story-video-url');
+        input.addEventListener('input', () => { video.src = input.value; video.load(); });
+        container.appendChild(div);
+    };
+
+    window.addMultipleStoryVideos = function() {
+        const textarea = document.getElementById('bulkStoryUrls');
+        const rawUrls = textarea.value.split(/\r?\n/);
+        const urls = rawUrls.filter(u => u.trim().length > 0);
+        if (urls.length === 0) {
+            showToast('الرجاء إدخال روابط صالحة (كل رابط في سطر)');
+            return;
+        }
+        const container = document.getElementById('storiesVideosList');
+        urls.forEach(url => {
+            const div = document.createElement('div');
+            div.className = 'story-video-item';
+            div.innerHTML = `<video src="${url}" controls style="width:80px;height:120px;object-fit:cover;"></video>
+                             <input type="text" class="story-video-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الفيديو" style="flex:1;">
+                             <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+            const video = div.querySelector('video');
+            const input = div.querySelector('.story-video-url');
+            input.addEventListener('input', () => { video.src = input.value; video.load(); });
+            container.appendChild(div);
+        });
+        textarea.value = '';
+        showToast(`✅ تمت إضافة ${urls.length} فيديو إلى القائمة (لا تنس حفظ التغييرات)`);
+    };
+
+    window.deleteSelectedStoryVideos = function() {
+        const checkboxes = document.querySelectorAll('#storiesVideosList .checkbox-select');
+        const selected = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const parent = cb.parentElement;
+                if (parent) parent.remove();
+                selected.push(true);
+            }
+        });
+        if (selected.length === 0) showToast('لم يتم تحديد أي فيديو للحذف');
+        else showToast(`✅ تم حذف ${selected.length} فيديو من القائمة (لم يتم الحفظ بعد)`);
+    };
+
+    window.deleteAllStoryVideos = function() {
+        if (confirm('⚠️ هل أنت متأكد من حذف جميع الفيديوهات؟')) {
+            document.getElementById('storiesVideosList').innerHTML = '';
+            showToast('تم حذف جميع الفيديوهات من القائمة (لم يتم الحفظ بعد)');
+        }
+    };
+
+    // ========== الإعدادات العامة ==========
     window.saveGeneral = function() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
@@ -266,7 +342,6 @@
     window.savePopupSettings = function() {
         db.ref(DB_PATH).update({ popup_enabled: document.getElementById('popupEnabled').checked, popup_message: document.getElementById('popupMessage').value, popup_duration: parseInt(document.getElementById('popupDuration').value)||8 }).then(()=>{ showToast('تم حفظ الفقاعة'); loadData(); });
     };
-    
     window.saveMaintenance = function() {
         const active = document.getElementById('maintenanceMode').checked;
         let until = null;
@@ -275,46 +350,33 @@
             let m = parseInt(document.getElementById('minutesInput').value) || 0;
             let s = parseInt(document.getElementById('secondsInput').value) || 0;
             let totalMs = (h * 3600 + m * 60 + s) * 1000;
-            if (totalMs > 0) {
-                until = Date.now() + totalMs;
-            }
+            if (totalMs > 0) until = Date.now() + totalMs;
         }
-        const title = document.getElementById('maintenanceTitle').value;
-        const message = document.getElementById('maintenanceMsg').value;
         db.ref(DB_PATH).update({
             maintenance_mode: active,
-            maintenance_title: title,
-            maintenance_message: message,
+            maintenance_title: document.getElementById('maintenanceTitle').value,
+            maintenance_message: document.getElementById('maintenanceMsg').value,
             maintenance_until: until
-        }).then(() => {
-            showToast('تم حفظ إعدادات الصيانة');
-            loadData();
-        }).catch(e => showToast('خطأ: ' + e.message));
+        }).then(() => { showToast('تم حفظ إعدادات الصيانة'); loadData(); }).catch(e => showToast('خطأ: ' + e.message));
     };
-    
     function updateMaintenancePreview() {
         const active = document.getElementById('maintenanceMode').checked;
         const previewBox = document.getElementById('maintenancePreviewBox');
-        if (!active) {
-            if (previewBox) previewBox.style.display = 'none';
-            return;
-        }
-        if (previewBox) previewBox.style.display = 'block';
+        if (!active) { if(previewBox) previewBox.style.display = 'none'; return; }
+        if(previewBox) previewBox.style.display = 'block';
         let h = parseInt(document.getElementById('hoursInput').value) || 0;
         let m = parseInt(document.getElementById('minutesInput').value) || 0;
         let s = parseInt(document.getElementById('secondsInput').value) || 0;
         let totalSec = h * 3600 + m * 60 + s;
         const previewSpan = document.getElementById('maintenanceCountdownPreview');
-        if (totalSec <= 0) {
-            previewSpan.innerHTML = 'بدون وقت محدد (سيستمر الصيانة حتى إلغائها يدوياً)';
-        } else {
+        if (totalSec <= 0) previewSpan.innerHTML = 'بدون وقت محدد';
+        else {
             const hours = Math.floor(totalSec / 3600);
             const minutes = Math.floor((totalSec % 3600) / 60);
             const seconds = totalSec % 60;
             previewSpan.innerHTML = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
         }
     }
-
     window.saveSplashSettings = function() {
         db.ref(DB_PATH).update({
             splash_enabled: document.getElementById('splashEnabled').checked,
@@ -326,6 +388,7 @@
         }).then(()=>{ showToast('تم حفظ إعدادات شاشة البداية'); loadData(); });
     };
 
+    // دوال الإضافة والتحديث للألبومات والمتجر والكتالوجات والشركاء
     window.addAlbumNow = () => {
         const name = document.getElementById('newAlbumName').value.trim();
         if(!name) return showToast('أدخل اسم الألبوم');
@@ -376,6 +439,7 @@
     function buildAdmin() {
         const d = currentData;
         const slider = d.home_slider || { enabled: false, title: 'أحدث أعمالنا', direction: 'rtl', duration: 5, images: [] };
+        const storiesVideos = d.splash_stories_videos || [];
         
         const getAlbumOptions = () => {
             let o = '<option value="">-- اختر ألبوم --</option>';
@@ -415,6 +479,18 @@
             });
         }
 
+        let storiesHtml = '';
+        if (storiesVideos.length) {
+            storiesVideos.forEach((url, idx) => {
+                storiesHtml += `<div class="story-video-item">
+                                    <input type="checkbox" class="checkbox-select" style="width:20px; margin:0;">
+                                    <video src="${url}" controls style="width:80px;height:120px;object-fit:cover;"></video>
+                                    <input type="text" class="story-video-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الفيديو" style="flex:1;">
+                                    <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>
+                                </div>`;
+            });
+        }
+
         const maintenanceUntil = d.maintenance_until;
         let previewTime = '';
         if (maintenanceUntil && maintenanceUntil > Date.now()) {
@@ -423,11 +499,7 @@
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
             previewTime = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-        } else if (maintenanceUntil && maintenanceUntil <= Date.now()) {
-            previewTime = 'انتهى الوقت (سيتم إلغاء الصيانة تلقائياً)';
-        } else {
-            previewTime = 'غير مضبوط';
-        }
+        } else previewTime = 'غير مضبوط';
 
         const html = `
             <div class="collapse-section" data-section-id="general">
@@ -449,8 +521,8 @@
                 <div class="collapse-content">
                     <div class="checkbox-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل عرض السلايدر</label></div>
                     <div class="input-group"><label>عنوان القسم</label><input id="sliderTitle" value="${(slider.title||'').replace(/"/g,'&quot;')}"></div>
-                    <div class="input-group"><label>اتجاه الحركة (تأثير بصري)</label><select id="sliderDirection"><option value="rtl" ${slider.direction === 'rtl' ? 'selected' : ''}>يمين ← يسار</option><option value="ltr" ${slider.direction === 'ltr' ? 'selected' : ''}>يسار ← يمين</option></select></div>
-                    <div class="input-group"><label>مدة العرض (ثانية) - ليس له تأثير الآن</label><input type="number" id="sliderDuration" value="${slider.duration}"></div>
+                    <div class="input-group"><label>اتجاه الحركة</label><select id="sliderDirection"><option value="rtl" ${slider.direction === 'rtl' ? 'selected' : ''}>يمين ← يسار</option><option value="ltr" ${slider.direction === 'ltr' ? 'selected' : ''}>يسار ← يمين</option></select></div>
+                    <div class="input-group"><label>مدة العرض (ثانية)</label><input type="number" id="sliderDuration" value="${slider.duration}"></div>
                     <hr>
                     <div class="bulk-delete-bar">
                         <button class="btn-red" onclick="deleteSelectedSliderImages()">🗑️ حذف المحدد</button>
@@ -466,6 +538,26 @@
                     </div>
                     <hr>
                     <button class="btn-gold" onclick="saveHomeSlider()">💾 حفظ إعدادات السلايدر</button>
+                </div>
+            </div>
+            <div class="collapse-section" data-section-id="splashStories">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'splashStories')">🎬 سبلاش الفيديو (قصص) <span>▾</span></button>
+                <div class="collapse-content">
+                    <div class="checkbox-row"><input type="checkbox" id="splashStoriesEnabled" ${d.splash_stories_enabled ? 'checked' : ''}> <label>تفعيل سبلاش الفيديو (سيظهر عند دخول الموقع)</label></div>
+                    <div class="bulk-delete-bar">
+                        <button class="btn-red" onclick="deleteSelectedStoryVideos()">🗑️ حذف المحدد</button>
+                        <button class="btn-red" onclick="deleteAllStoryVideos()">⚠️ حذف الكل</button>
+                    </div>
+                    <div id="storiesVideosList" class="image-list-grid">${storiesHtml}</div>
+                    <button class="btn-green" onclick="addStoryVideo()">➕ إضافة فيديو فردي</button>
+                    <div class="bulk-add-area">
+                        <label><strong>📎 إضافة روابط فيديوهات متعددة</strong> (كل رابط في سطر)</label>
+                        <textarea id="bulkStoryUrls" rows="4" placeholder="https://example.com/video1.mp4\nhttps://example.com/video2.mp4"></textarea>
+                        <button class="btn-gold" onclick="addMultipleStoryVideos()">➕ إضافة روابط متعددة</button>
+                        <div class="hint">* يدعم MP4 و WebM وغيرها. يفضل استخدام فيديوهات عمودية (9:16) لتناسب الريلز.</div>
+                    </div>
+                    <hr>
+                    <button class="btn-gold" onclick="saveSplashStories()">💾 حفظ إعدادات السبلاش</button>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="albums">
@@ -517,7 +609,7 @@
                 <div class="collapse-content"><div id="reviewsList"></div></div>
             </div>
             <div class="collapse-section" data-section-id="splash">
-                <button class="collapse-btn" onclick="toggleCollapse(this,'splash')">🎬 شاشة البداية (Splash) <span>▾</span></button>
+                <button class="collapse-btn" onclick="toggleCollapse(this,'splash')">🎬 شاشة البداية (صورة/فيديو قديم) <span>▾</span></button>
                 <div class="collapse-content">
                     <div class="checkbox-row"><input type="checkbox" id="splashEnabled" ${d.splash_enabled!==false?'checked':''}> <label>تفعيل</label></div>
                     <div class="checkbox-row"><input type="checkbox" id="splashShowSkip" ${d.splash_show_skip===true?'checked':''}> <label>إظهار زر "تخطي"</label></div>
@@ -526,6 +618,7 @@
                     <input id="splashVideoUrl" value="${(d.splash_video_url||'').replace(/"/g,'&quot;')}">
                     <input id="splashDuration" type="number" value="${d.splash_duration||5}">
                     <button class="btn-gold" onclick="saveSplashSettings()">حفظ</button>
+                    <div class="hint">* هذا القسم للتوافق مع الإصدارات القديمة. استخدم قسم "سبلاش الفيديو (قصص)" للفيديوهات المتعددة.</div>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="popup">
