@@ -120,6 +120,79 @@
         .popup-bubble { position: fixed; bottom: 20px; right: 20px; max-width: 280px; background: white; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; z-index: 10000; border-right: 4px solid var(--primary); animation: slideIn 0.3s ease; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
+
+        /* ====== ستايل السلايدر الجديد ====== */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            overflow: hidden;
+            padding: 20px 0;
+            direction: ltr;
+        }
+        .slider-track {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.5s ease;
+            gap: 30px;
+        }
+        .slider-item {
+            flex: 0 0 auto;
+            width: 260px;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            cursor: pointer;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            background: #fff;
+            transform: scale(0.85);
+            opacity: 0.6;
+        }
+        .slider-item.active {
+            transform: scale(1.1);
+            opacity: 1;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        .slider-item img {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.3s;
+        }
+        .slider-item.active img {
+            transform: scale(1.02);
+        }
+        @media (max-width: 700px) {
+            .slider-item { width: 180px; }
+            .slider-item.active { transform: scale(1.05); }
+            .slider-track { gap: 15px; }
+        }
+        .slider-nav {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .slider-dots {
+            display: inline-flex;
+            gap: 12px;
+            background: rgba(0,0,0,0.05);
+            padding: 8px 20px;
+            border-radius: 60px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: #ccc;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .dot.active {
+            background: var(--primary);
+            width: 28px;
+            border-radius: 20px;
+        }
     </style>
 </head>
 <body>
@@ -160,13 +233,14 @@
     let currentImageList = [];
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
+    let sliderInterval = null;
 
     function getWatermarkedImage(src, alt) {
         if (!src) return '<div class="empty-state">صورة غير متوفرة</div>';
         return `<div class="img-square"><img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false"></div>`;
     }
 
-    // ========== Lightbox (full zoom, unchanged but functional) ==========
+    // ========== Lightbox (full zoom) ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -360,26 +434,123 @@
         } else cont.style.display = 'none';
     }
 
-    // دوال بناء المحتوى
-    function buildHomepageWorksGrid() {
-        const cont = document.getElementById('homepageWorksGrid');
-        if (!cont) return;
-        let albums = getAlbumsList();
-        if (albums.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال حالياً</div>'; return; }
-        let html = '<div class="grid-auto">';
-        albums.forEach(alb => {
-            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            html += `<div class="card" data-album="${alb.id}">
-                        ${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="img-square" style="background:#f0f0f0;"></div>'}
-                        <div class="card-body">
-                            <div class="card-title">${alb.name || 'ألبوم'}</div>
-                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
-                        </div>
+    // ========== السلايدر الجديد ==========
+    let currentSlideIndex = 0;
+    let sliderImages = [];
+    let sliderDirection = 'rtl';
+    let slideTimer = null;
+
+    function buildHomeSlider() {
+        const container = document.getElementById('homeSliderContainer');
+        if (!container) return;
+        const sliderData = currentData.home_slider;
+        if (!sliderData || !sliderData.enabled || !sliderData.images || sliderData.images.length === 0) {
+            container.innerHTML = '<div class="empty-state">لا توجد صور في السلايدر</div>';
+            return;
+        }
+        sliderImages = sliderData.images.map(img => img.url).filter(url => url);
+        if (sliderImages.length === 0) {
+            container.innerHTML = '<div class="empty-state">لا توجد روابط صالحة</div>';
+            return;
+        }
+        sliderDirection = sliderData.direction === 'ltr' ? 'ltr' : 'rtl';
+        const duration = (sliderData.duration || 5) * 1000;
+
+        // بناء واجهة السلايدر
+        let html = `<div class="slider-container" style="direction: ltr;">
+                        <div class="slider-track" id="sliderTrack">`;
+        sliderImages.forEach((url, idx) => {
+            html += `<div class="slider-item" data-index="${idx}">
+                        <img src="${url}" loading="lazy" oncontextmenu="return false" ondragstart="return false">
                     </div>`;
         });
-        html += '</div>';
-        cont.innerHTML = html;
-        document.querySelectorAll('#homepageWorksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
+        html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div></div>`;
+        container.innerHTML = html;
+
+        // توليد النقاط
+        const dotsDiv = document.getElementById('sliderDots');
+        if (dotsDiv) {
+            dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
+            dotsDiv.querySelectorAll('.dot').forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    const idx = parseInt(dot.getAttribute('data-dot'));
+                    if (!isNaN(idx)) goToSlide(idx);
+                });
+            });
+        }
+
+        const track = document.getElementById('sliderTrack');
+        const items = document.querySelectorAll('.slider-item');
+        if (!track || items.length === 0) return;
+
+        // دالة تحديث موضع السلايدر وتكبير النشطة
+        function updateSlider(animate = true) {
+            if (!track) return;
+            const activeIndex = currentSlideIndex;
+            // حساب المركز: نريد أن تكون الصورة النشطة في منتصف العرض المرئي
+            const containerWidth = track.parentElement.clientWidth;
+            const activeItem = items[activeIndex];
+            if (!activeItem) return;
+            const activeRect = activeItem.getBoundingClientRect();
+            const trackRect = track.getBoundingClientRect();
+            const offset = activeRect.left + activeRect.width/2 - containerWidth/2;
+            track.style.transition = animate ? 'transform 0.5s ease' : 'none';
+            track.style.transform = `translateX(${-offset}px)`;
+
+            // تحديث التكبير
+            items.forEach((item, idx) => {
+                if (idx === activeIndex) item.classList.add('active');
+                else item.classList.remove('active');
+            });
+            // تحديث النقاط
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => {
+                if (idx === activeIndex) dot.classList.add('active');
+                else dot.classList.remove('active');
+            });
+        }
+
+        function goToSlide(newIndex) {
+            if (newIndex === currentSlideIndex) return;
+            if (newIndex < 0) newIndex = sliderImages.length - 1;
+            if (newIndex >= sliderImages.length) newIndex = 0;
+            currentSlideIndex = newIndex;
+            updateSlider(true);
+            resetAutoSlide();
+        }
+
+        function nextSlide() {
+            let next = currentSlideIndex + (sliderDirection === 'ltr' ? 1 : -1);
+            if (next < 0) next = sliderImages.length - 1;
+            if (next >= sliderImages.length) next = 0;
+            goToSlide(next);
+        }
+
+        function resetAutoSlide() {
+            if (slideTimer) clearInterval(slideTimer);
+            slideTimer = setInterval(() => {
+                nextSlide();
+            }, duration);
+        }
+
+        // ربط النقر على الصور لفتح اللايت بوكس
+        items.forEach((item, idx) => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openLightbox(sliderImages, idx);
+            });
+        });
+
+        window.addEventListener('resize', () => updateSlider(false));
+        setTimeout(() => updateSlider(false), 100);
+        resetAutoSlide();
+        window.goToSlide = goToSlide;
+    }
+
+    // ========== دوال بناء المحتوى الأصلية (تم تعديل الصفحة الرئيسية) ==========
+    function buildHomepageWorksGrid() {
+        // تم استبدالها بالسلايدر، لذا نتركها فارغة أو نستخدمها لشيء آخر إن أردت
+        // لكن لتجنب الأخطاء نضع دالة فارغة
     }
 
     function buildWorksGrid() {
@@ -459,7 +630,7 @@
         else document.getElementById('footerCopyright').innerHTML = '© 2025 بصمة غير - جميع الحقوق محفوظة';
     }
 
-    // ========== إصلاح التنقل: ربط الأحداث بشكل صحيح ==========
+    // ========== التنقل ==========
     function navHandler(e) { 
         e.preventDefault(); 
         const page = this.getAttribute('data-page'); 
@@ -479,7 +650,6 @@
         let html = '';
         pages.forEach(p => { html += `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`; });
         container.innerHTML = html;
-        // ربط المستمعات لروابط التنقل فقط داخل container
         container.querySelectorAll('[data-page]').forEach(link => {
             link.removeEventListener('click', navHandler);
             link.addEventListener('click', navHandler);
@@ -510,8 +680,9 @@
         if (!main) return;
         
         if (currentPage === 'home') {
-            main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">أحدث أعمالنا</h2><div id="homepageWorksGrid"></div></div>`;
-            buildHomepageWorksGrid();
+            const sliderTitle = (currentData.home_slider && currentData.home_slider.title) ? currentData.home_slider.title : 'أحدث أعمالنا';
+            main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">${sliderTitle}</h2><div id="homeSliderContainer"></div></div>`;
+            buildHomeSlider();
         } else if (currentPage === 'store') {
             main.innerHTML = `<div class="container section"><h2 class="section-title">جميع المنتجات</h2><div id="allProductsGrid"></div></div>`;
             buildAllProductsGrid();
@@ -525,11 +696,11 @@
             main.innerHTML = `<div class="container section"><h2 class="section-title">اتصل بنا</h2><div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;"><a href="tel:0541780995" style="text-decoration:none;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p>اتصل بنا</p></div></a><a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p>واتساب</p></div></a>${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p>انستقرام</p></div></a>` : ''}${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p>تيك توك</p></div></a>` : ''}${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p>سناب شات</p></div></a>` : ''}<a href="${currentData.location_url || '#'}" target="_blank" style="text-decoration:none;"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p>الموقع</p></div></a></div><div style="text-align:center; margin-top:20px;"><p>📞 0541780995</p></div></div>`;
         }
         updateFooterData();
-        renderNavLinks();      // إعادة بناء روابط التنقل وربطها
-        bindHeroButtons();     // ربط أزرار الهيرو (في الصفحة الحالية)
+        renderNavLinks();
+        bindHeroButtons();
     }
 
-    // ========== إدارة الشاشة الافتتاحية والصيانة والإشعارات المنبثقة ==========
+    // ========== إدارة الشاشة الافتتاحية والصيانة والإشعارات ==========
     let splashTimeout, maintenanceInterval, popupTimeout;
     function showSplash(settings) {
         const splashDiv = document.getElementById('splash');
@@ -594,7 +765,7 @@
     window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
     function refreshAll() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
 
-    // ========== بدء التطبيق مع تحسين التعامل مع الأخطاء ==========
+    // ========== بدء التطبيق ==========
     let forceHideTimer = null;
     function forceHideSplash() {
         const splashDiv = document.getElementById('splash');
@@ -605,15 +776,11 @@
         if (forceHideTimer) clearTimeout(forceHideTimer);
     }
 
-    // استدعاء البيانات مع معالجة الأخطاء والمهلة القصوى (أقصى 5 ثوانٍ)
     const splashDurationSetting = (currentData && currentData.splash_duration) ? currentData.splash_duration : 5;
-    const maxWaitTime = Math.max(splashDurationSetting * 1000, 5000); // على الأقل 5 ثوانٍ أو مدة السبلاش
-    
-    // مهلة إجبارية لإخفاء السبلاش في حال تعطل Firebase
+    const maxWaitTime = Math.max(splashDurationSetting * 1000, 5000);
     forceHideTimer = setTimeout(() => {
         console.warn('⚠️ Firebase response timeout, forcing splash hide');
         forceHideSplash();
-        // تعيين بيانات افتراضية لتشغيل الموقع
         if (!currentData || Object.keys(currentData).length === 0) {
             currentData = { splash_enabled: false };
             refreshAll();
@@ -621,10 +788,8 @@
     }, maxWaitTime);
 
     db.ref(DB_PATH).once('value').then(snap => {
-        // نجاح جلب البيانات
         clearTimeout(forceHideTimer);
         currentData = snap.val() || {};
-        // تطبيق إعدادات السبلاش إذا كانت موجودة في قاعدة البيانات
         const splashSettings = {
             enabled: currentData.splash_enabled !== false,
             media_url: currentData.splash_media_url || '',
@@ -636,16 +801,13 @@
     }).catch(err => {
         console.error('❌ Firebase read error:', err);
         clearTimeout(forceHideTimer);
-        // في حالة الخطأ، نستخدم بيانات افتراضية ونخفي السبلاش فورًا
         currentData = { splash_enabled: false };
         forceHideSplash();
         refreshAll();
         showToast('حدث خطأ في الاتصال، يتم عرض بيانات تجريبية');
     });
 
-    // الاستماع للتحديثات المباشرة بعد التحميل الأولي (اختياري)
     db.ref(DB_PATH).on('value', snap => {
-        // نتجنب استبدال البيانات في حالة عدم وجود اتصال أولي ناجح؟ ولكن نحدّث فقط إذا كانت البيانات موجودة
         if (snap.exists()) {
             currentData = snap.val();
             refreshAll();
