@@ -194,12 +194,6 @@
             width: 28px;
             border-radius: 20px;
         }
-        .loading-indicator {
-            text-align: center;
-            padding: 20px;
-            font-size: 0.9rem;
-            color: var(--primary);
-        }
     </style>
 </head>
 <body>
@@ -243,7 +237,7 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
-    // وظيفة قوية لتحميل الصور مع إعادة المحاولة
+    // تحميل الصورة مع إعادة محاولة قوية
     function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
         if (!src || src.trim() === '') {
@@ -255,7 +249,6 @@
             imgElement.src = src;
         };
         imgElement.onerror = () => {
-            console.warn(`فشل تحميل الصورة: ${src}, المحاولة ${attempts + 1}`);
             if (attempts < retries) {
                 attempts++;
                 setTimeout(tryLoad, 500 * attempts);
@@ -474,38 +467,48 @@
         } else cont.style.display = 'none';
     }
 
-    // ========== السلايدر المحسن - نسخة تعمل بشكل مؤكد ==========
+    // ========== السلايدر الرئيسي مع دعم الصور الاحتياطي ==========
     let currentSlideIndex = 0;
     let sliderImages = [];
     let sliderDirection = 'rtl';
     let slideTimer = null;
-    let sliderTrack = null;
-    let sliderItems = [];
 
     function buildHomeSlider() {
         const container = document.getElementById('homeSliderContainer');
         if (!container) return;
         
-        // التحقق من وجود بيانات السلايدر
-        console.log('بناء السلايدر، currentData.home_slider:', currentData.home_slider);
+        // جلب صور السلايدر من قاعدة البيانات
         const sliderData = currentData.home_slider;
-        if (!sliderData || !sliderData.enabled || !sliderData.images || sliderData.images.length === 0) {
-            container.innerHTML = '<div class="empty-state">لا توجد صور في السلايدر. قم بإضافة صور من لوحة التحكم.</div>';
+        let images = [];
+        if (sliderData && sliderData.enabled && sliderData.images && sliderData.images.length) {
+            images = sliderData.images.map(img => img.url).filter(url => url && url.trim() !== '');
+        }
+        
+        // إذا لم توجد صور في السلايدر، نستخدم صور الألبومات كاحتياطي
+        if (images.length === 0) {
+            // نحاول استخراج صور من أول ألبومين كعرض
+            const albums = getAlbumsList();
+            if (albums.length) {
+                for (let alb of albums) {
+                    if (alb.imgs && Object.keys(alb.imgs).length) {
+                        const albumImages = Object.values(alb.imgs).map(i => i.url).filter(u => u);
+                        images.push(...albumImages.slice(0, 10)); // نأخذ أول 10 صور من كل ألبوم
+                        if (images.length >= 20) break;
+                    }
+                }
+            }
+        }
+        
+        if (images.length === 0) {
+            container.innerHTML = '<div class="empty-state">⚠️ لا توجد صور للعرض. قم بإضافة صور من لوحة التحكم أو أضف صوراً في ألبومات أعمالنا.</div>';
             return;
         }
         
-        // استخراج الروابط
-        sliderImages = sliderData.images.map(img => img.url).filter(url => url && url.trim() !== '');
-        console.log('عدد الصور المستخرجة:', sliderImages.length);
-        if (sliderImages.length === 0) {
-            container.innerHTML = '<div class="empty-state">لا توجد روابط صالحة. تأكد من إضافة روابط صور صحيحة.</div>';
-            return;
-        }
+        sliderImages = images;
+        sliderDirection = (sliderData && sliderData.direction === 'ltr') ? 'ltr' : 'rtl';
+        const duration = (sliderData && sliderData.duration) ? sliderData.duration * 1000 : 5000;
         
-        sliderDirection = sliderData.direction === 'ltr' ? 'ltr' : 'rtl';
-        const duration = (sliderData.duration || 5) * 1000;
-
-        // بناء واجهة السلايدر (جميع الصور دفعة واحدة لكن مع تحميل بطيء للصور)
+        // بناء واجهة السلايدر
         let html = `<div class="slider-container" style="direction: ltr;">
                         <div class="slider-track" id="sliderTrack">`;
         sliderImages.forEach((url, idx) => {
@@ -515,8 +518,8 @@
         });
         html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div></div>`;
         container.innerHTML = html;
-
-        // إضافة النقاط
+        
+        // النقاط
         const dotsDiv = document.getElementById('sliderDots');
         if (dotsDiv) {
             dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
@@ -527,13 +530,12 @@
                 });
             });
         }
-
-        sliderTrack = document.getElementById('sliderTrack');
-        sliderItems = document.querySelectorAll('.slider-item');
+        
+        const sliderTrack = document.getElementById('sliderTrack');
+        const sliderItems = document.querySelectorAll('.slider-item');
         if (!sliderTrack || sliderItems.length === 0) return;
-
+        
         function updateSlider(animate = true) {
-            if (!sliderTrack) return;
             const activeIndex = currentSlideIndex;
             const containerWidth = sliderTrack.parentElement.clientWidth;
             const activeItem = sliderItems[activeIndex];
@@ -552,7 +554,7 @@
                 else dot.classList.remove('active');
             });
         }
-
+        
         function goToSlide(newIndex) {
             if (newIndex === currentSlideIndex) return;
             if (newIndex < 0) newIndex = sliderImages.length - 1;
@@ -561,34 +563,34 @@
             updateSlider(true);
             resetAutoSlide();
         }
-
+        
         function nextSlide() {
             let next = currentSlideIndex + (sliderDirection === 'ltr' ? 1 : -1);
             if (next < 0) next = sliderImages.length - 1;
             if (next >= sliderImages.length) next = 0;
             goToSlide(next);
         }
-
+        
         function resetAutoSlide() {
             if (slideTimer) clearInterval(slideTimer);
             if (!isSliderPaused) {
                 slideTimer = setInterval(() => { nextSlide(); }, duration);
             }
         }
-
+        
         function pauseSlider() {
             if (slideTimer) { clearInterval(slideTimer); slideTimer = null; }
             isSliderPaused = true;
         }
-
+        
         function resumeSlider() {
             if (isSliderPaused) {
                 isSliderPaused = false;
                 resetAutoSlide();
             }
         }
-
-        // ربط النقر على الصور لفتح اللايت بوكس
+        
+        // ربط النقر على الصور
         sliderItems.forEach((item, idx) => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -596,7 +598,7 @@
                 openLightbox(sliderImages, idx);
             });
         });
-
+        
         window.addEventListener('resize', () => updateSlider(false));
         setTimeout(() => updateSlider(false), 100);
         window.resumeSlider = resumeSlider;
@@ -814,7 +816,7 @@
     db.ref(DB_PATH).once('value').then(snap => {
         clearTimeout(forceHideTimer);
         currentData = snap.val() || {};
-        console.log('تم تحميل البيانات من Firebase:', currentData);
+        console.log('تم تحميل البيانات:', currentData);
         const splashSettings = {
             enabled: currentData.splash_enabled !== false,
             media_url: currentData.splash_media_url || '',
@@ -834,7 +836,6 @@
     db.ref(DB_PATH).on('value', snap => {
         if (snap.exists()) {
             currentData = snap.val();
-            console.log('تحديث البيانات المباشر من Firebase');
             refreshAll();
         }
     }, err => { console.error('Realtime listener error:', err); });
