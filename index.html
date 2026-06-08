@@ -10,7 +10,6 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://basmmaghyrdecor.com/">
     
-    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
     <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
@@ -121,7 +120,7 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
 
-        /* سلايدر سلس (سحب يدوي) */
+        /* سلايدر سلس */
         .slider-container {
             position: relative;
             width: 100%;
@@ -247,15 +246,6 @@
     let currentImageList = [];
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
-    let sliderTrack = null;
-    let isDragging = false;
-    let startDragX = 0;
-    let startTranslate = 0;
-    let velocity = 0;
-    let lastX = 0;
-    let dragStartTime = 0;
-    let currentSlideIndex = 0;
-    let sliderImages = [];
 
     // تحميل الصورة مع إعادة محاولة
     function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
@@ -270,7 +260,7 @@
         tryLoad();
     }
 
-    // ========== Lightbox ==========
+    // ========== Lightbox (بدون تغيير) ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -464,7 +454,17 @@
         } else cont.style.display = 'none';
     }
 
-    // ========== سلايدر سلس (سحب يدوي) ==========
+    // ========== سلايدر سلس مع إصلاح السحب والانتقال بين الصور ==========
+    let currentSlideIndex = 0;
+    let sliderImages = [];
+    let sliderTrack = null;
+    let isDragging = false;
+    let startDragX = 0;
+    let startTranslateX = 0;
+    let dragStartTime = 0;
+    let lastDragX = 0;
+    let velocity = 0;
+
     function buildHomeSlider() {
         const container = document.getElementById('homeSliderContainer');
         if (!container) return;
@@ -478,6 +478,8 @@
             buildAlbumsBackup(container);
             return;
         }
+        currentSlideIndex = 0;
+        
         // بناء الهيكل
         let html = `<div class="slider-container"><div class="slider-track" id="sliderTrack">`;
         sliderImages.forEach((url, idx) => {
@@ -492,7 +494,7 @@
             dotsDiv.querySelectorAll('.dot').forEach(dot => {
                 dot.addEventListener('click', (e) => {
                     const idx = parseInt(dot.getAttribute('data-dot'));
-                    if (!isNaN(idx)) smoothSnapToIndex(idx);
+                    if (!isNaN(idx)) goToSlide(idx);
                 });
             });
         }
@@ -500,58 +502,25 @@
         sliderTrack = document.getElementById('sliderTrack');
         if (!sliderTrack) return;
 
-        function getOffsetForIndex(index) {
-            const items = sliderTrack.children;
-            if (!items.length) return 0;
-            const targetItem = items[index];
-            if (!targetItem) return 0;
-            const targetRect = targetItem.getBoundingClientRect();
+        // تحديث الموضع بناءً على الصورة النشطة
+        function updateSliderPosition(animate = true) {
+            if (!sliderTrack) return;
+            const containerWidth = sliderTrack.parentElement.clientWidth;
+            const activeItem = sliderTrack.children[currentSlideIndex];
+            if (!activeItem) return;
+            const activeRect = activeItem.getBoundingClientRect();
             const containerRect = sliderTrack.parentElement.getBoundingClientRect();
-            const targetCenter = targetRect.left + targetRect.width / 2;
-            const containerCenter = containerRect.left + containerRect.width / 2;
-            const diff = targetCenter - containerCenter;
-            const currentTransform = getCurrentTranslate();
-            return currentTransform - diff;
-        }
-
-        function getCurrentTranslate() {
-            const transform = sliderTrack.style.transform;
-            const match = transform.match(/translateX\(([-\d.]+)px\)/);
-            return match ? parseFloat(match[1]) : 0;
-        }
-
-        function setTranslate(value, animate = false) {
-            if (animate) sliderTrack.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1)';
-            else sliderTrack.style.transition = 'none';
-            sliderTrack.style.transform = `translateX(${value}px)`;
-        }
-
-        function snapToNearest() {
-            const items = sliderTrack.children;
-            if (!items.length) return;
-            let minDist = Infinity, nearestIndex = currentSlideIndex;
-            for (let i = 0; i < items.length; i++) {
-                const targetOffset = getOffsetForIndex(i);
-                const currentOffset = getCurrentTranslate();
-                const dist = Math.abs(targetOffset - currentOffset);
-                if (dist < minDist) { minDist = dist; nearestIndex = i; }
+            const offset = activeRect.left + activeRect.width/2 - containerRect.width/2;
+            if (animate) {
+                sliderTrack.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1)';
+            } else {
+                sliderTrack.style.transition = 'none';
             }
-            if (nearestIndex !== currentSlideIndex) {
-                currentSlideIndex = nearestIndex;
-                updateActiveAndDots();
-            }
-            setTranslate(getOffsetForIndex(currentSlideIndex), true);
+            sliderTrack.style.transform = `translateX(${-offset}px)`;
         }
 
-        function smoothSnapToIndex(index) {
-            if (index < 0) index = 0;
-            if (index >= sliderImages.length) index = sliderImages.length - 1;
-            currentSlideIndex = index;
-            updateActiveAndDots();
-            setTranslate(getOffsetForIndex(currentSlideIndex), true);
-        }
-
-        function updateActiveAndDots() {
+        // تحديث الفئة النشطة والنقاط
+        function updateActiveClass() {
             const items = sliderTrack.children;
             for (let i = 0; i < items.length; i++) {
                 if (i === currentSlideIndex) items[i].classList.add('active');
@@ -564,53 +533,75 @@
             });
         }
 
+        function goToSlide(index) {
+            if (index < 0) index = 0;
+            if (index >= sliderImages.length) index = sliderImages.length - 1;
+            if (index === currentSlideIndex) return;
+            currentSlideIndex = index;
+            updateActiveClass();
+            updateSliderPosition(true);
+        }
+
         // أحداث السحب
-        let dragStartX = 0, startTrans = 0;
         function onDragStart(e) {
             e.preventDefault();
             isDragging = true;
-            dragStartX = (e.type === 'mousedown') ? e.clientX : e.touches[0].clientX;
-            startTrans = getCurrentTranslate();
+            startDragX = (e.type === 'mousedown') ? e.clientX : e.touches[0].clientX;
+            lastDragX = startDragX;
+            dragStartTime = performance.now();
+            // الحصول على الترجمة الحالية
+            const transform = sliderTrack.style.transform;
+            const match = transform.match(/translateX\(([-\d.]+)px\)/);
+            startTranslateX = match ? parseFloat(match[1]) : 0;
             sliderTrack.style.transition = 'none';
             sliderTrack.classList.add('dragging');
         }
+
         function onDragMove(e) {
             if (!isDragging) return;
             const currentX = (e.type === 'mousemove') ? e.clientX : e.touches[0].clientX;
-            const dx = currentX - dragStartX;
-            let newTranslate = startTrans + dx;
-            const maxOffset = getOffsetForIndex(0);
-            const minOffset = getOffsetForIndex(sliderImages.length - 1);
+            const dx = currentX - startDragX;
+            let newTranslate = startTranslateX + dx;
+            // حدود بسيطة (لا تسحب لأكثر من نهاية المسار)
+            const container = sliderTrack.parentElement;
+            const maxOffset = 0;
+            const minOffset = -(sliderTrack.scrollWidth - container.clientWidth);
             newTranslate = Math.min(maxOffset, Math.max(minOffset, newTranslate));
             sliderTrack.style.transform = `translateX(${newTranslate}px)`;
+            lastDragX = currentX;
         }
+
         function onDragEnd(e) {
             if (!isDragging) return;
             isDragging = false;
             sliderTrack.classList.remove('dragging');
-            const endX = (e.type === 'mouseup') ? e.clientX : (e.changedTouches ? e.changedTouches[0].clientX : dragStartX);
-            const diff = endX - dragStartX;
-            const threshold = 50;
+            const endTime = performance.now();
+            const dt = endTime - dragStartTime;
+            const endX = (e.type === 'mouseup') ? e.clientX : (e.changedTouches ? e.changedTouches[0].clientX : lastDragX);
+            const deltaX = endX - startDragX;
+            const speed = (dt > 0) ? Math.abs(deltaX / dt) : 0;
+            const threshold = 0.3; // بكسل/مللي ثانية
+            
             let targetIndex = currentSlideIndex;
-            if (Math.abs(diff) > threshold) {
-                if (diff > 0) targetIndex--;
-                else targetIndex++;
-                targetIndex = Math.max(0, Math.min(sliderImages.length - 1, targetIndex));
+            if (Math.abs(deltaX) > 30 || speed > threshold) {
+                if (deltaX > 0 && currentSlideIndex > 0) targetIndex--;
+                else if (deltaX < 0 && currentSlideIndex < sliderImages.length - 1) targetIndex++;
             } else {
+                // نبحث عن أقرب صورة للموضع الحالي
+                const containerRect = sliderTrack.parentElement.getBoundingClientRect();
                 const items = sliderTrack.children;
                 let minDist = Infinity;
                 for (let i = 0; i < items.length; i++) {
-                    const targetOffset = getOffsetForIndex(i);
-                    const currentOffset = getCurrentTranslate();
-                    const dist = Math.abs(targetOffset - currentOffset);
-                    if (dist < minDist) { minDist = dist; targetIndex = i; }
+                    const rect = items[i].getBoundingClientRect();
+                    const center = rect.left + rect.width/2;
+                    const distance = Math.abs(center - (containerRect.left + containerRect.width/2));
+                    if (distance < minDist) {
+                        minDist = distance;
+                        targetIndex = i;
+                    }
                 }
             }
-            if (targetIndex !== currentSlideIndex) {
-                currentSlideIndex = targetIndex;
-                updateActiveAndDots();
-            }
-            setTranslate(getOffsetForIndex(currentSlideIndex), true);
+            goToSlide(targetIndex);
         }
 
         sliderTrack.addEventListener('mousedown', onDragStart);
@@ -620,7 +611,7 @@
         window.addEventListener('touchmove', onDragMove, { passive: false });
         window.addEventListener('touchend', onDragEnd);
 
-        // النقر على الصورة
+        // النقر على الصورة لفتح اللايت بوكس
         const items = sliderTrack.children;
         for (let i = 0; i < items.length; i++) {
             items[i].addEventListener('click', (e) => {
@@ -629,8 +620,9 @@
             });
         }
 
-        window.addEventListener('resize', () => snapToNearest());
-        setTimeout(() => snapToNearest(), 50);
+        window.addEventListener('resize', () => updateSliderPosition(false));
+        updateActiveClass();
+        updateSliderPosition(false);
     }
 
     function buildAlbumsBackup(container) {
@@ -654,7 +646,7 @@
         });
     }
 
-    // ========== دوال بناء المحتوى الأخرى ==========
+    // ========== دوال بناء المحتوى الأخرى (بدون تغيير) ==========
     function buildWorksGrid() {
         const cont = document.getElementById('worksGrid');
         if (!cont) return;
