@@ -120,7 +120,7 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
 
-        /* سلايدر محسن لأعداد ضخمة من الصور */
+        /* سلايدر بحجم ريلز (عمودي) */
         .slider-container {
             position: relative;
             width: 100%;
@@ -137,9 +137,9 @@
         }
         .slider-item {
             flex: 0 0 auto;
-            width: 380px;  /* حجم أكبر ليتناسب مع الصور العريضة */
-            aspect-ratio: 16 / 9;
-            border-radius: 24px;
+            width: 360px;
+            aspect-ratio: 9 / 16;
+            border-radius: 28px;
             overflow: hidden;
             cursor: pointer;
             transition: all 0.4s ease;
@@ -150,7 +150,7 @@
             position: relative;
         }
         .slider-item.active {
-            transform: scale(1.08);
+            transform: scale(1.05);
             opacity: 1;
             box-shadow: 0 25px 40px rgba(0,0,0,0.3);
             z-index: 2;
@@ -243,8 +243,7 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
-    // دالة قوية لتحميل الصورة مع إعادة المحاولة
-    function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/800x450?text=صورة+غير+متوفرة') {
+    function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
         let attempts = 0;
         const tryLoad = () => {
@@ -469,7 +468,7 @@
         } else cont.style.display = 'none';
     }
 
-    // ========== السلايدر المحسن لأعداد ضخمة (تحميل تدريجي) ==========
+    // ========== السلايدر المحسن بحجم ريلز ==========
     let currentSlideIndex = 0;
     let sliderImages = [];
     let sliderDirection = 'rtl';
@@ -494,13 +493,12 @@
         sliderDirection = sliderData.direction === 'ltr' ? 'ltr' : 'rtl';
         const duration = (sliderData.duration || 5) * 1000;
 
-        // نعرض في البداية 15 صورة فقط لتجنب التجميد
         const initialBatch = sliderImages.slice(0, 15);
         let html = `<div class="slider-container" style="direction: ltr;">
                         <div class="slider-track" id="sliderTrack">`;
         initialBatch.forEach((url, idx) => {
             html += `<div class="slider-item" data-index="${idx}" data-url="${url}">
-                        <img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/800x450?text=خطأ+تحميل';">
+                        <img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/600x1067?text=خطأ+تحميل';">
                     </div>`;
         });
         html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div>`;
@@ -510,7 +508,6 @@
         html += `</div>`;
         container.innerHTML = html;
 
-        // إعادة إنشاء النقاط
         const dotsDiv = document.getElementById('sliderDots');
         if (dotsDiv) {
             dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
@@ -526,7 +523,6 @@
         sliderItems = document.querySelectorAll('.slider-item');
         if (!sliderTrack || sliderItems.length === 0) return;
 
-        // وظيفة تحميل الدفعة التالية بشكل غير متزامن
         let currentBatchSize = initialBatch.length;
         function loadNextBatch() {
             if (currentBatchSize >= sliderImages.length) {
@@ -543,7 +539,7 @@
                 newItem.className = 'slider-item';
                 newItem.setAttribute('data-index', newIndex);
                 newItem.setAttribute('data-url', url);
-                newItem.innerHTML = `<img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/800x450?text=خطأ+تحميل';">`;
+                newItem.innerHTML = `<img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/600x1067?text=خطأ+تحميل';">`;
                 newItem.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (window.pauseSlider) window.pauseSlider();
@@ -552,9 +548,8 @@
                 sliderTrack.appendChild(newItem);
             });
             currentBatchSize += nextBatch.length;
-            sliderItems = document.querySelectorAll('.slider-item'); // تحديث القائمة
+            sliderItems = document.querySelectorAll('.slider-item');
             isLoadingMore = false;
-            // إعادة حساب النقاط
             const newDotsDiv = document.getElementById('sliderDots');
             if (newDotsDiv) {
                 newDotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
@@ -566,14 +561,13 @@
                 });
             }
             if (currentBatchSize < sliderImages.length) {
-                setTimeout(loadNextBatch, 500); // تحميل الدفعة التالية بعد نصف ثانية
+                setTimeout(loadNextBatch, 500);
             } else {
                 const loadingDiv = document.getElementById('sliderLoading');
                 if (loadingDiv) loadingDiv.style.display = 'none';
             }
         }
 
-        // بدء التحميل التدريجي بعد ثانيتين من بدء السلايدر
         if (sliderImages.length > initialBatch.length) {
             setTimeout(loadNextBatch, 2000);
         }
@@ -636,7 +630,6 @@
             }
         }
 
-        // ربط النقر على الصور الموجودة حالياً
         document.querySelectorAll('.slider-item').forEach((item, idx) => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -887,7 +880,6 @@
     }, err => { console.error('Realtime listener error:', err); });
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
 
-    // منع تنزيل الصور
     (function blockImageDownload() {
         function disableContextAndDrag(img) {
             img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
