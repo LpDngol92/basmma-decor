@@ -10,7 +10,6 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://basmmaghyrdecor.com/">
     
-    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
     <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
@@ -121,7 +120,7 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
 
-        /* سلايدر تلقائي مع إمكانية إيقاف مؤقت */
+        /* سلايدر تلقائي */
         .slider-container {
             position: relative;
             width: 100%;
@@ -148,7 +147,6 @@
             transform: scale(0.85);
             opacity: 0.7;
             background: #f0f0f0;
-            position: relative;
         }
         .slider-item.active {
             transform: scale(1.05);
@@ -193,13 +191,23 @@
         }
 
         /* أنماط التقييم */
-        .rating-box { background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); border-radius: 28px; padding: 12px 20px; margin-top: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+        .rating-box {
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            border-radius: 28px;
+            padding: 12px 20px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
         .stars { direction: ltr; display: inline-flex; gap: 5px; }
         .star { font-size: 1.4rem; cursor: pointer; color: #ccc; transition: 0.1s; }
         .star:hover, .star.hover { color: #ffc107; }
         .star.active { color: #ffc107; }
         .rating-stats { font-size: 0.85rem; color: #ddd; display: flex; align-items: center; gap: 10px; }
-        .already-rated { font-size: 0.75rem; color: #aaa; }
         @media (max-width: 700px) { .rating-box { flex-direction: column; align-items: stretch; text-align: center; } .stars { justify-content: center; } }
     </style>
 </head>
@@ -276,7 +284,7 @@
         tryLoad();
     }
 
-    // ========== Lightbox مع التقييم والمشاهدات وإيقاف السلايدر ==========
+    // ========== Lightbox مع التقييم والمشاهدات ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -367,56 +375,95 @@
         document.getElementById('zoomHint').style.opacity = '1';
         setTimeout(() => document.getElementById('zoomHint').style.opacity = '0', 2000);
     }
-    function bindLightboxEvents() { /* كما هي */ }
-    function unbindLightboxEvents() { /* كما هي */ }
+    function bindLightboxEvents() {
+        imgElement.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        imgElement.addEventListener('touchstart', onTouchStart, { passive: false });
+        imgElement.addEventListener('touchmove', onTouchMove, { passive: false });
+        imgElement.addEventListener('touchend', onTouchEnd);
+        imgElement.addEventListener('wheel', onWheel, { passive: false });
+    }
+    function unbindLightboxEvents() {
+        imgElement.removeEventListener('mousedown', onMouseDown);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        imgElement.removeEventListener('touchstart', onTouchStart);
+        imgElement.removeEventListener('touchmove', onTouchMove);
+        imgElement.removeEventListener('touchend', onTouchEnd);
+        imgElement.removeEventListener('wheel', onWheel);
+    }
     function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
     
+    // زيادة المشاهدات (مرة لكل جلسة)
     async function incrementAlbumViews(albumId) {
         if (!albumId) return;
         const sessionKey = `viewed_${albumId}`;
         if (sessionStorage.getItem(sessionKey)) return;
         const albumRef = db.ref(`${DB_PATH}/albums/${albumId}`);
         await albumRef.transaction(album => {
-            if (album) album.views = (album.views || 0) + 1;
+            if (album) {
+                album.views = (album.views || 0) + 1;
+            }
             return album;
         });
         sessionStorage.setItem(sessionKey, '1');
+        if (currentData.albums && currentData.albums[albumId]) {
+            currentData.albums[albumId].views = (currentData.albums[albumId].views || 0) + 1;
+        }
     }
 
-    function updateRatingUI(albumId, ratingAvg, ratingCount, userRating = null) {
-        if (!ratingDiv || !ratingStarsDiv || !ratingStatsDiv) return;
+    // تحديث واجهة التقييم
+    async function updateRatingUI(albumId) {
+        if (!albumId || !ratingDiv) return;
+        const album = currentData.albums?.[albumId];
+        if (!album) {
+            ratingDiv.style.display = 'none';
+            return;
+        }
         ratingDiv.style.display = 'flex';
-        const avg = ratingAvg || 0;
-        const count = ratingCount || 0;
-        ratingStatsDiv.innerHTML = `⭐ ${avg.toFixed(1)} (${count} تقييم) | 👁️ ${currentData.albums?.[albumId]?.views || 0} مشاهدة`;
+        const avg = (album.rating_sum && album.rating_count) ? (album.rating_sum / album.rating_count) : 0;
+        const count = album.rating_count || 0;
+        const views = album.views || 0;
+        ratingStatsDiv.innerHTML = `⭐ ${avg.toFixed(1)} (${count} تقييم) | 👁️ ${views} مشاهدة`;
+        
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
             let starClass = 'star';
-            if (userRating && i <= userRating) starClass += ' active';
-            else if (!userRating && i <= Math.round(avg)) starClass += ' active';
+            if (i <= Math.round(avg)) starClass += ' active';
             starsHtml += `<i class="fas fa-star ${starClass}" data-value="${i}"></i>`;
         }
         ratingStarsDiv.innerHTML = starsHtml;
+        
         document.querySelectorAll('#ratingStars .star').forEach(star => {
             star.style.cursor = 'pointer';
-            star.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                const value = parseInt(star.getAttribute('data-value'));
-                await submitRating(albumId, value);
-            });
-            star.addEventListener('mouseenter', (e) => {
-                const val = parseInt(star.getAttribute('data-value'));
-                document.querySelectorAll('#ratingStars .star').forEach((s, idx) => {
-                    if (idx < val) s.classList.add('hover');
-                    else s.classList.remove('hover');
-                });
-            });
-            star.addEventListener('mouseleave', () => {
-                document.querySelectorAll('#ratingStars .star').forEach(s => s.classList.remove('hover'));
-            });
+            star.removeEventListener('click', handleStarClick);
+            star.addEventListener('click', handleStarClick);
+            star.addEventListener('mouseenter', handleStarHover);
+            star.addEventListener('mouseleave', handleStarLeave);
         });
     }
-
+    
+    async function handleStarClick(e) {
+        e.stopPropagation();
+        const star = e.currentTarget;
+        const ratingValue = parseInt(star.getAttribute('data-value'));
+        await submitRating(currentAlbumId, ratingValue);
+    }
+    
+    function handleStarHover(e) {
+        const star = e.currentTarget;
+        const val = parseInt(star.getAttribute('data-value'));
+        document.querySelectorAll('#ratingStars .star').forEach((s, idx) => {
+            if (idx < val) s.classList.add('hover');
+            else s.classList.remove('hover');
+        });
+    }
+    
+    function handleStarLeave() {
+        document.querySelectorAll('#ratingStars .star').forEach(s => s.classList.remove('hover'));
+    }
+    
     async function submitRating(albumId, rating) {
         if (!albumId) return;
         const storageKey = `rated_${albumId}`;
@@ -435,23 +482,22 @@
         localStorage.setItem(storageKey, '1');
         const snap = await albumRef.once('value');
         const updated = snap.val();
-        if (updated) {
-            const avg = updated.rating_sum / updated.rating_count;
-            updateRatingUI(albumId, avg, updated.rating_count, rating);
+        if (updated && currentData.albums) {
+            currentData.albums[albumId] = updated;
+            await updateRatingUI(albumId);
             showToast(`شكراً لتقييمك (${rating} نجوم)`);
         }
     }
 
-    // دالة فتح اللايت بوكس مع إيقاف السلايدر
-    function openLightbox(images, index, albumId = null) {
+    async function openLightbox(images, index, albumId = null) {
         if (!images.length) return;
-        // إيقاف السلايدر التلقائي إذا كان موجوداً
         if (sliderInterval) {
             clearInterval(sliderInterval);
             sliderInterval = null;
             isSliderPaused = true;
         }
-        currentImageList = images; currentIndex = index;
+        currentImageList = images;
+        currentIndex = index;
         setImageWithRetry(imgElement, images[index], 3);
         resetTransform();
         updateCounter();
@@ -461,14 +507,8 @@
         
         currentAlbumId = albumId;
         if (albumId) {
-            incrementAlbumViews(albumId);
-            const album = currentData.albums?.[albumId];
-            if (album) {
-                const avg = (album.rating_sum && album.rating_count) ? album.rating_sum / album.rating_count : 0;
-                updateRatingUI(albumId, avg, album.rating_count || 0);
-            } else {
-                ratingDiv.style.display = 'none';
-            }
+            await incrementAlbumViews(albumId);
+            await updateRatingUI(albumId);
         } else {
             ratingDiv.style.display = 'none';
         }
@@ -481,16 +521,31 @@
         resetTransform();
         currentAlbumId = null;
         ratingDiv.style.display = 'none';
-        // استئناف السلايدر إذا كان موجوداً
         if (isSliderPaused && window.resumeSlider) {
             window.resumeSlider();
             isSliderPaused = false;
         }
     }
     
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 3); resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 3); resetTransform(); updateCounter(); }
-    function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
+    function nextImage() {
+        if (!currentImageList.length) return;
+        currentIndex = (currentIndex + 1) % currentImageList.length;
+        setImageWithRetry(imgElement, currentImageList[currentIndex], 3);
+        resetTransform();
+        updateCounter();
+    }
+    function prevImage() {
+        if (!currentImageList.length) return;
+        currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length;
+        setImageWithRetry(imgElement, currentImageList[currentIndex], 3);
+        resetTransform();
+        updateCounter();
+    }
+    function sendWhatsapp() {
+        if (!currentImageList.length) return;
+        const url = currentImageList[currentIndex];
+        window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank');
+    }
     document.getElementById('lightboxPrev').onclick = prevImage;
     document.getElementById('lightboxNext').onclick = nextImage;
     document.getElementById('lightboxClose').onclick = closeLightbox;
@@ -501,7 +556,7 @@
     let currentSlideIndex = 0;
     let sliderImages = [];
     let sliderTrack = null;
-    let autoDuration = 5000; // 5 ثواني افتراضياً
+    let autoDuration = 5000;
 
     function buildHomeSlider() {
         const container = document.getElementById('homeSliderContainer');
@@ -580,15 +635,9 @@
             }, autoDuration);
         }
 
-        function pauseSlider() {
-            isSliderPaused = true;
-        }
+        function pauseSlider() { isSliderPaused = true; }
+        function resumeSlider() { isSliderPaused = false; }
 
-        function resumeSlider() {
-            isSliderPaused = false;
-        }
-
-        // ربط النقر على الصور لفتح اللايت بوكس مع إيقاف السلايدر
         sliderItems.forEach((item, idx) => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -602,7 +651,6 @@
         startAutoSlide();
         window.resumeSlider = resumeSlider;
         window.pauseSlider = pauseSlider;
-        window.goToSlide = goToSlide;
     }
 
     function buildAlbumsBackup(container) {
@@ -626,7 +674,7 @@
         });
     }
 
-    // باقي الدوال المساعدة (openAlbum, etc.)
+    // ========== دوال الألبومات والمنتجات ==========
     function openAlbum(id) {
         const alb = currentData.albums?.[id];
         if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
@@ -634,17 +682,22 @@
         if (urls.length) openLightbox(urls, 0, id);
         else showToast('لا توجد صور صالحة');
     }
-    function openCatalogModal(code) { const modal = document.getElementById('catalogModal'), iframe = document.getElementById('catalogIframe'); iframe.srcdoc = code; modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-    function closeCatalogModal() { document.getElementById('catalogModal').style.display = 'none'; document.getElementById('catalogIframe').srcdoc = ''; document.body.style.overflow = ''; }
-    document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
-    function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast('الكتالوج غير متاح'); }
-    function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
-    function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
-    function getGroupedScheduleHtml(d) { /* كما هي */ }
-    function getAllStoreProducts() { let imgs = []; if (currentData.store_categories) { Object.keys(currentData.store_categories).forEach(cid => { const cat = currentData.store_categories[cid]; if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) imgs.push(img.url); }); }); } return imgs; }
-    function getAlbumsList() { if (!currentData.albums) return []; return Object.keys(currentData.albums).map(id => ({ id, ...currentData.albums[id] })); }
 
-    function renderPartnersMarquee() { /* كما هي */ }
+    function getAlbumsList() {
+        if (!currentData.albums) return [];
+        return Object.keys(currentData.albums).map(id => ({ id, ...currentData.albums[id] }));
+    }
+
+    function getAllStoreProducts() {
+        let imgs = [];
+        if (currentData.store_categories) {
+            Object.keys(currentData.store_categories).forEach(cid => {
+                const cat = currentData.store_categories[cid];
+                if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) imgs.push(img.url); });
+            });
+        }
+        return imgs;
+    }
 
     function buildWorksGrid() {
         const cont = document.getElementById('worksGrid');
@@ -667,7 +720,9 @@
         });
         html += '</div>';
         cont.innerHTML = html;
-        document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
+        document.querySelectorAll('#worksGrid .card').forEach(c => {
+            c.addEventListener('click', () => openAlbum(c.getAttribute('data-album')));
+        });
     }
 
     function buildAllProductsGrid() {
@@ -703,6 +758,37 @@
         document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); });
     }
 
+    function openCatalogModal(code) { const modal = document.getElementById('catalogModal'), iframe = document.getElementById('catalogIframe'); iframe.srcdoc = code; modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    function closeCatalogModal() { document.getElementById('catalogModal').style.display = 'none'; document.getElementById('catalogIframe').srcdoc = ''; document.body.style.overflow = ''; }
+    document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
+    function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast('الكتالوج غير متاح'); }
+
+    function getGroupedScheduleHtml(d) {
+        if (!d.work_schedule) return '<p>لم تحدد المواعيد</p>';
+        const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+        const order = [6,0,1,2,3,4,5];
+        let groups = [], off = [];
+        order.forEach(jsDay => {
+            const s = d.work_schedule[jsDay];
+            if (s && s.active) {
+                const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}`;
+                let g = groups.find(g => g.key === key);
+                if (g) g.days.push(days[jsDay]);
+                else groups.push({ key, days: [days[jsDay]], data: s });
+            } else off.push(days[jsDay]);
+        });
+        let html = '';
+        groups.forEach(g => {
+            const dTxt = g.days.length === 1 ? g.days[0] : `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
+            html += `<div class="schedule-item"><strong>${dTxt}</strong><br>${formatTime12(g.data.s1_s)} - ${formatTime12(g.data.s1_e)}`;
+            if (g.data.s2_a) html += `<br>${formatTime12(g.data.s2_s)} - ${formatTime12(g.data.s2_e)}`;
+            html += `</div>`;
+        });
+        if (off.length) html += `<div class="schedule-item"><strong>عطلة:</strong> ${off.join('، ')}</div>`;
+        return html;
+    }
+    function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
+
     function updateFooterData() {
         const d = currentData;
         currentWhatsappNum = d.whatsapp_num || '966500000000';
@@ -716,6 +802,19 @@
         if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
         if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
         else document.getElementById('footerCopyright').innerHTML = '© 2025 بصمة غير - جميع الحقوق محفوظة';
+    }
+
+    function renderPartnersMarquee() {
+        const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack');
+        if (!cont || !track) return;
+        if (currentData.partners && Object.keys(currentData.partners).length) {
+            cont.style.display = 'block';
+            let logos = '';
+            Object.values(currentData.partners).forEach(p => {
+                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" onerror="this.src='https://placehold.co/200x60?text=شريك'"></div>`;
+            });
+            track.innerHTML = logos + logos;
+        } else cont.style.display = 'none';
     }
 
     // ========== التنقل ==========
@@ -741,6 +840,8 @@
     function changePage(page) { if (currentPage === page) return; currentPage = page; loadPage(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
     function bindHeroButtons() { document.querySelectorAll('.btn[data-page]').forEach(btn => { btn.removeEventListener('click', heroClickHandler); btn.addEventListener('click', heroClickHandler); }); }
     function heroClickHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
+    function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
+
     function loadPage() {
         const main = document.getElementById('mainContent');
         if (!main) return;
@@ -767,22 +868,94 @@
 
     // ========== إدارة الشاشة الافتتاحية والصيانة ==========
     let splashTimeout, maintenanceInterval, popupTimeout;
-    function showSplash(settings) { /* كما هي */ }
-    function updateMaintenanceMode() { /* كما هي */ }
-    function updatePopup() { /* كما هي */ }
-    window.closePopup = function() { /* كما هي */ };
+    function showSplash(settings) {
+        const splashDiv = document.getElementById('splash');
+        if (!splashDiv) return;
+        splashDiv.innerHTML = '';
+        if (!settings.enabled) { splashDiv.style.display = 'none'; return; }
+        const mediaUrl = settings.media_url;
+        const duration = (settings.duration || 5) * 1000;
+        const showSkip = settings.show_skip === true;
+        const img = document.createElement('img');
+        img.src = mediaUrl || '';
+        img.className = 'splash-media';
+        img.alt = 'Splash';
+        img.oncontextmenu = (e) => e.preventDefault();
+        img.ondragstart = (e) => e.preventDefault();
+        splashDiv.appendChild(img);
+        if (showSkip) {
+            const skipBtn = document.createElement('button');
+            skipBtn.innerText = 'تخطي ←';
+            skipBtn.className = 'splash-skip';
+            skipBtn.onclick = () => { clearTimeout(splashTimeout); splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); };
+            splashDiv.appendChild(skipBtn);
+        }
+        splashDiv.style.display = 'flex';
+        splashDiv.style.opacity = '1';
+        if (splashTimeout) clearTimeout(splashTimeout);
+        splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration);
+    }
+    function updateMaintenanceMode() {
+        const d = currentData, screen = document.getElementById('maintenanceScreen');
+        if (!d.maintenance_mode) { if (screen.style.display !== 'none') screen.style.display = 'none'; if (maintenanceInterval) clearInterval(maintenanceInterval); return; }
+        const until = d.maintenance_until;
+        const title = d.maintenance_title || 'الموقع في صيانة', msg = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً';
+        if (until && until <= Date.now()) { db.ref(DB_PATH).update({ maintenance_mode: false, maintenance_until: null }); return; }
+        screen.innerHTML = `<div style="background:white; border-radius:48px; padding:40px; max-width:500px; text-align:center;"><i class="fas fa-tools fa-4x" style="color:var(--primary);"></i><h2 style="margin:15px 0;">${title}</h2><p>${msg}</p>${until ? `<div id="maintenanceCountdown" style="font-size:2rem; font-weight:bold;"></div>` : ''}</div>`;
+        screen.style.display = 'flex'; document.body.style.overflow = 'hidden';
+        if (until) {
+            const countdownEl = document.getElementById('maintenanceCountdown');
+            const updateCountdown = () => {
+                let diff = until - Date.now();
+                if (diff <= 0) { clearInterval(maintenanceInterval); window.location.reload(); return; }
+                const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+                if (countdownEl) countdownEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            };
+            updateCountdown(); maintenanceInterval = setInterval(updateCountdown, 1000);
+        }
+    }
+    function updatePopup() {
+        const bubble = document.getElementById('popupBubble'), msgSpan = document.getElementById('popupMessage');
+        if (!currentData.popup_enabled || !currentData.popup_message) { if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); return; }
+        if (bubble.style.display === 'none' || bubble.style.display === '') {
+            msgSpan.innerText = currentData.popup_message;
+            bubble.style.display = 'block';
+            if (popupTimeout) clearTimeout(popupTimeout);
+            popupTimeout = setTimeout(() => { bubble.style.display = 'none'; }, (currentData.popup_duration || 7) * 1000);
+        }
+    }
+    window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
     function refreshAll() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
 
     // ========== بدء التطبيق ==========
     let forceHideTimer = null;
-    function forceHideSplash() { /* كما هي */ }
+    function forceHideSplash() {
+        const splashDiv = document.getElementById('splash');
+        if (splashDiv && splashDiv.style.display !== 'none') {
+            splashDiv.style.opacity = '0';
+            setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
+        }
+        if (forceHideTimer) clearTimeout(forceHideTimer);
+    }
     const splashDurationSetting = (currentData && currentData.splash_duration) ? currentData.splash_duration : 5;
     const maxWaitTime = Math.max(splashDurationSetting * 1000, 5000);
-    forceHideTimer = setTimeout(() => { /* كما هي */ }, maxWaitTime);
+    forceHideTimer = setTimeout(() => {
+        console.warn('⚠️ Firebase response timeout, forcing splash hide');
+        forceHideSplash();
+        if (!currentData || Object.keys(currentData).length === 0) {
+            currentData = { splash_enabled: false };
+            refreshAll();
+        }
+    }, maxWaitTime);
     db.ref(DB_PATH).once('value').then(snap => {
         clearTimeout(forceHideTimer);
         currentData = snap.val() || {};
-        const splashSettings = { enabled: currentData.splash_enabled !== false, media_url: currentData.splash_media_url || '', duration: currentData.splash_duration || 5, show_skip: currentData.splash_show_skip === true };
+        const splashSettings = {
+            enabled: currentData.splash_enabled !== false,
+            media_url: currentData.splash_media_url || '',
+            duration: currentData.splash_duration || 5,
+            show_skip: currentData.splash_show_skip === true
+        };
         showSplash(splashSettings);
         refreshAll();
     }).catch(err => {
