@@ -38,6 +38,10 @@
         @media (max-width: 700px) { .toast { white-space: normal; width: 80%; text-align: center; } .list-item-row { flex-direction: column; align-items: stretch; } .list-item-row input { margin-bottom: 8px; } }
         hr { margin: 15px 0; border-color: #e9e2d8; }
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .image-list-grid { display: flex; flex-direction: column; gap: 12px; margin: 15px 0; }
+        .slider-image-item { display: flex; gap: 10px; align-items: center; background: #fefaf5; padding: 8px 12px; border-radius: 20px; border: 1px solid #e9e2d8; }
+        .slider-image-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; }
+        .slider-image-item input { flex: 1; margin: 0; }
     </style>
 </head>
 <body>
@@ -113,7 +117,7 @@
     function toggleCollapse(btn,id) { const content=btn.nextElementSibling; const isOpen=content.style.display==='block'; content.style.display=isOpen?'none':'block'; openSections[id]=!isOpen; btn.querySelector('span').innerHTML=isOpen?'▾':'▴'; }
     function restoreOpen() { document.querySelectorAll('.collapse-section').forEach(s=>{ const id=s.dataset.sectionId; if(openSections[id]){ s.querySelector('.collapse-content').style.display='block'; s.querySelector('.collapse-btn span').innerHTML='▴'; } }); }
 
-    // ========== إدارة الصور ==========
+    // ========== إدارة الصور للألبومات والمتجر ==========
     async function addImagesToTarget(target, urlsArray, clearTextareaId) {
         if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط صالحة');
         const unique = [...new Set(urlsArray)];
@@ -151,6 +155,33 @@
         try { await db.ref(DB_PATH+'/'+type+'/'+id).remove(); showToast(`✅ تم حذف "${name}" بنجاح`); loadData(); } 
         catch(e) { showToast('❌ فشل الحذف: '+e.message); }
     }
+
+    // ========== إدارة السلايدر الرئيسي ==========
+    window.saveHomeSlider = function() {
+        const enabled = document.getElementById('sliderEnabled').checked;
+        const title = document.getElementById('sliderTitle').value;
+        const direction = document.getElementById('sliderDirection').value;
+        const duration = parseInt(document.getElementById('sliderDuration').value) || 5;
+        // جمع الصور من الحقول
+        const imageInputs = document.querySelectorAll('.slider-image-url');
+        const images = [];
+        imageInputs.forEach(input => {
+            let url = input.value.trim();
+            if (url) images.push({ url });
+        });
+        db.ref(DB_PATH+'/home_slider').set({ enabled, title, direction, duration, images })
+            .then(() => { showToast('تم حفظ إعدادات السلايدر'); loadData(); })
+            .catch(e => showToast('خطأ: '+e.message));
+    };
+
+    window.addSliderImage = function() {
+        const container = document.getElementById('sliderImagesList');
+        const newId = Date.now();
+        const div = document.createElement('div');
+        div.className = 'slider-image-item';
+        div.innerHTML = `<input type="text" class="slider-image-url" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+        container.appendChild(div);
+    };
 
     // ========== دوال الحفظ العامة ==========
     window.saveGeneral = function() {
@@ -242,9 +273,11 @@
     window.deleteSection = deleteSection;
     window.toggleCollapse = toggleCollapse;
 
-    // بناء الواجهة (بنفس هيكل الكود القديم مع ربط الدوال)
+    // بناء الواجهة الرئيسية للوحة التحكم
     function buildAdmin() {
         const d = currentData;
+        const slider = d.home_slider || { enabled: false, title: 'أحدث أعمالنا', direction: 'rtl', duration: 5, images: [] };
+        
         const getAlbumOptions = () => {
             let o = '<option value="">-- اختر ألبوم --</option>';
             if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">📁 ${(d.albums[id].name||'').replace(/"/g,'&quot;')}</option>`);
@@ -271,6 +304,18 @@
             return html;
         };
 
+        // قائمة صور السلايدر
+        let sliderImagesHtml = '';
+        if (slider.images && slider.images.length) {
+            slider.images.forEach((img, idx) => {
+                sliderImagesHtml += `<div class="slider-image-item">
+                                        <img src="${img.url}" onerror="this.style.display='none'">
+                                        <input type="text" class="slider-image-url" value="${(img.url||'').replace(/"/g,'&quot;')}" placeholder="رابط الصورة" style="flex:1;">
+                                        <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>
+                                    </div>`;
+            });
+        }
+
         const html = `
             <div class="collapse-section" data-section-id="general">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ الإعدادات العامة والنصوص <span>▾</span></button>
@@ -284,6 +329,27 @@
                     <input id="tiktokUrl" value="${(d.tiktok_url||'').replace(/"/g,'&quot;')}">
                     <input id="snapUrl" value="${(d.snap_url||'').replace(/"/g,'&quot;')}">
                     <button class="btn-gold" onclick="saveGeneral()">حفظ</button>
+                </div>
+            </div>
+            <!-- قسم إدارة الرئيسية (السلايدر) -->
+            <div class="collapse-section" data-section-id="homeslider">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'homeslider')">🏠 إدارة الرئيسية (السلايدر) <span>▾</span></button>
+                <div class="collapse-content">
+                    <div class="checkbox-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل عرض السلايدر في الصفحة الرئيسية</label></div>
+                    <div class="input-group"><label>عنوان القسم</label><input id="sliderTitle" value="${(slider.title||'').replace(/"/g,'&quot;')}"></div>
+                    <div class="input-group"><label>اتجاه الحركة</label>
+                        <select id="sliderDirection">
+                            <option value="rtl" ${slider.direction === 'rtl' ? 'selected' : ''}>يمين ← يسار</option>
+                            <option value="ltr" ${slider.direction === 'ltr' ? 'selected' : ''}>يسار ← يمين</option>
+                        </select>
+                    </div>
+                    <div class="input-group"><label>مدة عرض الصورة (ثانية)</label><input type="number" id="sliderDuration" value="${slider.duration}"></div>
+                    <hr>
+                    <h4>🖼️ صور السلايدر</h4>
+                    <div id="sliderImagesList" class="image-list-grid">${sliderImagesHtml}</div>
+                    <button class="btn-green" onclick="addSliderImage()">➕ إضافة صورة جديدة</button>
+                    <hr>
+                    <button class="btn-gold" onclick="saveHomeSlider()">💾 حفظ إعدادات السلايدر</button>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="albums">
