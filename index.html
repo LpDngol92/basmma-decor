@@ -121,42 +121,42 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
 
-        /* ====== ستايل السلايدر الجديد ====== */
+        /* ====== ستايل السلايدر المتناسق ====== */
         .slider-container {
             position: relative;
             width: 100%;
             overflow: hidden;
-            padding: 20px 0;
+            padding: 30px 0;
             direction: ltr;
         }
         .slider-track {
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.5s ease;
+            transition: transform 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             gap: 30px;
         }
         .slider-item {
             flex: 0 0 auto;
-            width: 260px;
-            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            cursor: pointer;
-            border-radius: 24px;
+            width: 300px;
+            aspect-ratio: 16 / 9;
+            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            background: #fff;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
             transform: scale(0.85);
-            opacity: 0.6;
+            opacity: 0.7;
         }
         .slider-item.active {
-            transform: scale(1.1);
+            transform: scale(1.05);
             opacity: 1;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+            box-shadow: 0 20px 35px rgba(0,0,0,0.25);
             z-index: 2;
         }
         .slider-item img {
             width: 100%;
-            aspect-ratio: 4 / 3;
+            height: 100%;
             object-fit: cover;
             display: block;
             transition: transform 0.3s;
@@ -165,8 +165,8 @@
             transform: scale(1.02);
         }
         @media (max-width: 700px) {
-            .slider-item { width: 180px; }
-            .slider-item.active { transform: scale(1.05); }
+            .slider-item { width: 220px; }
+            .slider-item.active { transform: scale(1.02); }
             .slider-track { gap: 15px; }
         }
         .slider-nav {
@@ -234,13 +234,14 @@
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
     let sliderInterval = null;
+    let isSliderPaused = false;
 
     function getWatermarkedImage(src, alt) {
         if (!src) return '<div class="empty-state">صورة غير متوفرة</div>';
         return `<div class="img-square"><img src="${src}" loading="lazy" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false"></div>`;
     }
 
-    // ========== Lightbox (full zoom) ==========
+    // ========== Lightbox (full zoom) مع إمكانية إيقاف السلايدر ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -346,8 +347,12 @@
         imgElement.removeEventListener('wheel', onWheel);
     }
     function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
+    
+    // تعديل دالة openLightbox لإيقاف السلايدر
     function openLightbox(images, index) {
         if (!images.length) return;
+        // إيقاف السلايدر التلقائي
+        if (sliderInterval) { clearInterval(sliderInterval); sliderInterval = null; isSliderPaused = true; }
         currentImageList = images; currentIndex = index;
         imgElement.src = images[index];
         resetTransform();
@@ -356,12 +361,20 @@
         document.body.style.overflow = 'hidden';
         bindLightboxEvents();
     }
+    
+    // تعديل دالة closeLightbox لاستئناف السلايدر
     function closeLightbox() {
         lightbox.style.display = 'none';
         document.body.style.overflow = '';
         unbindLightboxEvents();
         resetTransform();
+        // استئناف السلايدر إذا كان موجودًا ولم يتم إلغاؤه نهائيًا
+        if (isSliderPaused && window.resumeSlider) {
+            window.resumeSlider();
+            isSliderPaused = false;
+        }
     }
+    
     function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
     function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
@@ -434,11 +447,13 @@
         } else cont.style.display = 'none';
     }
 
-    // ========== السلايدر الجديد ==========
+    // ========== السلايدر المتناسق مع إمكانية الإيقاف والاستئناف ==========
     let currentSlideIndex = 0;
     let sliderImages = [];
     let sliderDirection = 'rtl';
     let slideTimer = null;
+    let sliderTrack = null;
+    let sliderItems = [];
 
     function buildHomeSlider() {
         const container = document.getElementById('homeSliderContainer');
@@ -479,30 +494,25 @@
             });
         }
 
-        const track = document.getElementById('sliderTrack');
-        const items = document.querySelectorAll('.slider-item');
-        if (!track || items.length === 0) return;
+        sliderTrack = document.getElementById('sliderTrack');
+        sliderItems = document.querySelectorAll('.slider-item');
+        if (!sliderTrack || sliderItems.length === 0) return;
 
-        // دالة تحديث موضع السلايدر وتكبير النشطة
         function updateSlider(animate = true) {
-            if (!track) return;
+            if (!sliderTrack) return;
             const activeIndex = currentSlideIndex;
-            // حساب المركز: نريد أن تكون الصورة النشطة في منتصف العرض المرئي
-            const containerWidth = track.parentElement.clientWidth;
-            const activeItem = items[activeIndex];
+            const containerWidth = sliderTrack.parentElement.clientWidth;
+            const activeItem = sliderItems[activeIndex];
             if (!activeItem) return;
             const activeRect = activeItem.getBoundingClientRect();
-            const trackRect = track.getBoundingClientRect();
             const offset = activeRect.left + activeRect.width/2 - containerWidth/2;
-            track.style.transition = animate ? 'transform 0.5s ease' : 'none';
-            track.style.transform = `translateX(${-offset}px)`;
+            sliderTrack.style.transition = animate ? 'transform 0.5s ease' : 'none';
+            sliderTrack.style.transform = `translateX(${-offset}px)`;
 
-            // تحديث التكبير
-            items.forEach((item, idx) => {
+            sliderItems.forEach((item, idx) => {
                 if (idx === activeIndex) item.classList.add('active');
                 else item.classList.remove('active');
             });
-            // تحديث النقاط
             const dots = document.querySelectorAll('.dot');
             dots.forEach((dot, idx) => {
                 if (idx === activeIndex) dot.classList.add('active');
@@ -528,31 +538,46 @@
 
         function resetAutoSlide() {
             if (slideTimer) clearInterval(slideTimer);
-            slideTimer = setInterval(() => {
-                nextSlide();
-            }, duration);
+            if (!isSliderPaused) {
+                slideTimer = setInterval(() => {
+                    nextSlide();
+                }, duration);
+            }
         }
 
-        // ربط النقر على الصور لفتح اللايت بوكس
-        items.forEach((item, idx) => {
+        function pauseSlider() {
+            if (slideTimer) { clearInterval(slideTimer); slideTimer = null; }
+            isSliderPaused = true;
+        }
+
+        function resumeSlider() {
+            if (isSliderPaused) {
+                isSliderPaused = false;
+                resetAutoSlide();
+            }
+        }
+
+        // ربط النقر على الصور لفتح اللايت بوكس مع إيقاف السلايدر مؤقتًا
+        sliderItems.forEach((item, idx) => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
+                pauseSlider();           // إيقاف الحركة عند الضغط
                 openLightbox(sliderImages, idx);
             });
         });
 
         window.addEventListener('resize', () => updateSlider(false));
         setTimeout(() => updateSlider(false), 100);
+        
+        // تعيين الدوال للنطاق العام لاستخدامها من اللايت بوكس
+        window.resumeSlider = resumeSlider;
+        window.pauseSlider = pauseSlider;
+        
         resetAutoSlide();
         window.goToSlide = goToSlide;
     }
 
     // ========== دوال بناء المحتوى الأصلية (تم تعديل الصفحة الرئيسية) ==========
-    function buildHomepageWorksGrid() {
-        // تم استبدالها بالسلايدر، لذا نتركها فارغة أو نستخدمها لشيء آخر إن أردت
-        // لكن لتجنب الأخطاء نضع دالة فارغة
-    }
-
     function buildWorksGrid() {
         const cont = document.getElementById('worksGrid');
         if (!cont) return;
