@@ -38,15 +38,21 @@
         @media (max-width: 700px) { .toast { white-space: normal; width: 80%; text-align: center; } .list-item-row { flex-direction: column; align-items: stretch; } .list-item-row input { margin-bottom: 8px; } }
         hr { margin: 15px 0; border-color: #e9e2d8; }
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-        .image-list-grid { display: flex; flex-direction: column; gap: 12px; margin: 15px 0; }
+        .image-list-grid { display: flex; flex-direction: column; gap: 12px; margin: 15px 0; max-height: 500px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 20px; }
         .slider-image-item { display: flex; gap: 10px; align-items: center; background: #fefaf5; padding: 8px 12px; border-radius: 20px; border: 1px solid #e9e2d8; }
         .slider-image-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; }
         .slider-image-item input { flex: 1; margin: 0; }
+        .slider-image-item .checkbox-select { width: 20px; margin: 0 5px; }
         .bulk-add-area { margin: 15px 0; padding: 12px; background: #fefaf5; border-radius: 20px; border: 1px dashed #b88b4a; }
         .bulk-add-area textarea { direction: ltr; font-family: monospace; }
         .hint { font-size: 0.8rem; color: #6c757d; display: block; margin-top: 5px; }
         .bulk-delete-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
         .toggle-images-btn { background: #6c757d; margin-left: 10px; }
+        .maintenance-time-inputs { display: flex; gap: 15px; flex-wrap: wrap; margin: 15px 0; }
+        .maintenance-time-inputs input { width: auto; flex: 1; min-width: 70px; }
+        .maintenance-preview { background: #fefaf5; padding: 15px; border-radius: 20px; margin: 15px 0; border-right: 4px solid #b88b4a; }
+        .maintenance-preview h5 { margin-bottom: 8px; color: #b88b4a; }
+        #maintenanceCountdownPreview { font-size: 1.2rem; font-weight: bold; direction: ltr; }
     </style>
 </head>
 <body>
@@ -180,7 +186,7 @@
         const container = document.getElementById('sliderImagesList');
         const div = document.createElement('div');
         div.className = 'slider-image-item';
-        div.innerHTML = `<input type="text" class="slider-image-url" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+        div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> <input type="text" class="slider-image-url" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
         container.appendChild(div);
     };
 
@@ -196,7 +202,7 @@
         urls.forEach(url => {
             const div = document.createElement('div');
             div.className = 'slider-image-item';
-            div.innerHTML = `<input type="text" class="slider-image-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+            div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> <input type="text" class="slider-image-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
             container.appendChild(div);
         });
         textarea.value = '';
@@ -230,12 +236,13 @@
 
     window.toggleImagesVisibility = function() {
         const list = document.getElementById('sliderImagesList');
+        const btn = document.getElementById('toggleImagesBtn');
         if (list.style.display === 'none') {
             list.style.display = 'flex';
-            document.getElementById('toggleImagesBtn').innerHTML = '👁️ إخفاء الصور';
+            btn.innerHTML = '👁️ إخفاء الصور';
         } else {
             list.style.display = 'none';
-            document.getElementById('toggleImagesBtn').innerHTML = '👁️ إظهار الصور';
+            btn.innerHTML = '👁️ إظهار الصور';
         }
     };
 
@@ -259,16 +266,55 @@
     window.savePopupSettings = function() {
         db.ref(DB_PATH).update({ popup_enabled: document.getElementById('popupEnabled').checked, popup_message: document.getElementById('popupMessage').value, popup_duration: parseInt(document.getElementById('popupDuration').value)||8 }).then(()=>{ showToast('تم حفظ الفقاعة'); loadData(); });
     };
+    
     window.saveMaintenance = function() {
-        const active=document.getElementById('maintenanceMode').checked;
-        let until=null;
-        if(active){
-            let h=parseInt(document.getElementById('hoursInput').value)||0, m=parseInt(document.getElementById('minutesInput').value)||0, s=parseInt(document.getElementById('secondsInput').value)||0;
-            let total=(h*3600+m*60+s)*1000;
-            if(total>0) until=Date.now()+total;
+        const active = document.getElementById('maintenanceMode').checked;
+        let until = null;
+        if (active) {
+            let h = parseInt(document.getElementById('hoursInput').value) || 0;
+            let m = parseInt(document.getElementById('minutesInput').value) || 0;
+            let s = parseInt(document.getElementById('secondsInput').value) || 0;
+            let totalMs = (h * 3600 + m * 60 + s) * 1000;
+            if (totalMs > 0) {
+                until = Date.now() + totalMs;
+            }
         }
-        db.ref(DB_PATH).update({ maintenance_mode: active, maintenance_title: document.getElementById('maintenanceTitle').value, maintenance_message: document.getElementById('maintenanceMsg').value, maintenance_until: until }).then(()=>{ showToast('تم حفظ إعدادات الصيانة'); loadData(); });
+        const title = document.getElementById('maintenanceTitle').value;
+        const message = document.getElementById('maintenanceMsg').value;
+        db.ref(DB_PATH).update({
+            maintenance_mode: active,
+            maintenance_title: title,
+            maintenance_message: message,
+            maintenance_until: until
+        }).then(() => {
+            showToast('تم حفظ إعدادات الصيانة');
+            loadData();
+        }).catch(e => showToast('خطأ: ' + e.message));
     };
+    
+    function updateMaintenancePreview() {
+        const active = document.getElementById('maintenanceMode').checked;
+        const previewBox = document.getElementById('maintenancePreviewBox');
+        if (!active) {
+            if (previewBox) previewBox.style.display = 'none';
+            return;
+        }
+        if (previewBox) previewBox.style.display = 'block';
+        let h = parseInt(document.getElementById('hoursInput').value) || 0;
+        let m = parseInt(document.getElementById('minutesInput').value) || 0;
+        let s = parseInt(document.getElementById('secondsInput').value) || 0;
+        let totalSec = h * 3600 + m * 60 + s;
+        const previewSpan = document.getElementById('maintenanceCountdownPreview');
+        if (totalSec <= 0) {
+            previewSpan.innerHTML = 'بدون وقت محدد (سيستمر الصيانة حتى إلغائها يدوياً)';
+        } else {
+            const hours = Math.floor(totalSec / 3600);
+            const minutes = Math.floor((totalSec % 3600) / 60);
+            const seconds = totalSec % 60;
+            previewSpan.innerHTML = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+        }
+    }
+
     window.saveSplashSettings = function() {
         db.ref(DB_PATH).update({
             splash_enabled: document.getElementById('splashEnabled').checked,
@@ -369,6 +415,20 @@
             });
         }
 
+        const maintenanceUntil = d.maintenance_until;
+        let previewTime = '';
+        if (maintenanceUntil && maintenanceUntil > Date.now()) {
+            const diff = maintenanceUntil - Date.now();
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            previewTime = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        } else if (maintenanceUntil && maintenanceUntil <= Date.now()) {
+            previewTime = 'انتهى الوقت (سيتم إلغاء الصيانة تلقائياً)';
+        } else {
+            previewTime = 'غير مضبوط';
+        }
+
         const html = `
             <div class="collapse-section" data-section-id="general">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ الإعدادات العامة والنصوص <span>▾</span></button>
@@ -387,30 +447,22 @@
             <div class="collapse-section" data-section-id="homeslider">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'homeslider')">🏠 إدارة الرئيسية (السلايدر) <span>▾</span></button>
                 <div class="collapse-content">
-                    <div class="checkbox-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل عرض السلايدر في الصفحة الرئيسية</label></div>
+                    <div class="checkbox-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل عرض السلايدر</label></div>
                     <div class="input-group"><label>عنوان القسم</label><input id="sliderTitle" value="${(slider.title||'').replace(/"/g,'&quot;')}"></div>
-                    <div class="input-group"><label>اتجاه الحركة (ليس له تأثير الآن لأن السلايدر يدوي)</label>
-                        <select id="sliderDirection">
-                            <option value="rtl" ${slider.direction === 'rtl' ? 'selected' : ''}>يمين ← يسار</option>
-                            <option value="ltr" ${slider.direction === 'ltr' ? 'selected' : ''}>يسار ← يمين</option>
-                        </select>
-                    </div>
-                    <div class="input-group"><label>مدة العرض (ليس لها تأثير الآن)</label><input type="number" id="sliderDuration" value="${slider.duration}"></div>
+                    <div class="input-group"><label>اتجاه الحركة (تأثير بصري)</label><select id="sliderDirection"><option value="rtl" ${slider.direction === 'rtl' ? 'selected' : ''}>يمين ← يسار</option><option value="ltr" ${slider.direction === 'ltr' ? 'selected' : ''}>يسار ← يمين</option></select></div>
+                    <div class="input-group"><label>مدة العرض (ثانية) - ليس له تأثير الآن</label><input type="number" id="sliderDuration" value="${slider.duration}"></div>
                     <hr>
                     <div class="bulk-delete-bar">
                         <button class="btn-red" onclick="deleteSelectedSliderImages()">🗑️ حذف المحدد</button>
                         <button class="btn-red" onclick="deleteAllSliderImages()">⚠️ حذف الكل</button>
                         <button id="toggleImagesBtn" class="toggle-images-btn" onclick="toggleImagesVisibility()">👁️ إخفاء الصور</button>
                     </div>
-                    <h4>🖼️ صور السلايدر (يمكنك تحديد مربعات الاختيار لحذف عدة صور دفعة واحدة)</h4>
                     <div id="sliderImagesList" class="image-list-grid">${sliderImagesHtml}</div>
                     <button class="btn-green" onclick="addSliderImage()">➕ إضافة صورة فردية</button>
-                    
                     <div class="bulk-add-area">
-                        <label><strong>📎 إضافة روابط متعددة دفعة واحدة</strong> (كل رابط في سطر)</label>
-                        <textarea id="bulkUrls" rows="6" placeholder="https://example.com/image1.jpg\nhttps://example.com/image2.png\nhttps://example.com/image3.jpg"></textarea>
+                        <label><strong>📎 إضافة روابط متعددة</strong></label>
+                        <textarea id="bulkUrls" rows="4" placeholder="رابط صورة\nرابط آخر"></textarea>
                         <button class="btn-gold" onclick="addMultipleSliderImages()">➕ إضافة روابط متعددة</button>
-                        <div class="hint">* سيتم إضافة الروابط كعناصر جديدة في القائمة أعلاه. لا تنس الضغط على "حفظ إعدادات السلايدر" بعد الانتهاء.</div>
                     </div>
                     <hr>
                     <button class="btn-gold" onclick="saveHomeSlider()">💾 حفظ إعدادات السلايدر</button>
@@ -488,11 +540,20 @@
             <div class="collapse-section" data-section-id="maintenance">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'maintenance')">🛡️ وضع الصيانة <span>▾</span></button>
                 <div class="collapse-content">
-                    <div class="checkbox-row"><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode?'checked':''}> <label>تفعيل</label></div>
-                    <input id="maintenanceTitle" value="${(d.maintenance_title||'').replace(/"/g,'&quot;')}">
-                    <textarea id="maintenanceMsg" rows="2">${(d.maintenance_message||'').replace(/"/g,'&quot;')}</textarea>
-                    <div style="display:flex; gap:10px;"><input type="number" id="hoursInput" placeholder="ساعات" value="0"><input type="number" id="minutesInput" placeholder="دقائق" value="0"><input type="number" id="secondsInput" placeholder="ثواني" value="0"></div>
-                    <button class="btn-gold" onclick="saveMaintenance()">حفظ</button>
+                    <div class="checkbox-row"><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode ? 'checked' : ''} onchange="updateMaintenancePreview()"> <label>تفعيل وضع الصيانة</label></div>
+                    <div class="input-group"><label>عنوان الصيانة</label><input id="maintenanceTitle" value="${(d.maintenance_title||'').replace(/"/g,'&quot;')}"></div>
+                    <div class="input-group"><label>رسالة الصيانة</label><textarea id="maintenanceMsg" rows="2">${(d.maintenance_message||'').replace(/"/g,'&quot;')}</textarea></div>
+                    <div class="maintenance-time-inputs">
+                        <input type="number" id="hoursInput" placeholder="ساعات" value="0" oninput="updateMaintenancePreview()">
+                        <input type="number" id="minutesInput" placeholder="دقائق" value="0" oninput="updateMaintenancePreview()">
+                        <input type="number" id="secondsInput" placeholder="ثواني" value="0" oninput="updateMaintenancePreview()">
+                    </div>
+                    <div id="maintenancePreviewBox" class="maintenance-preview" style="${d.maintenance_mode ? 'display:block' : 'display:none'}">
+                        <h5><i class="fas fa-clock"></i> معاينة العد التنازلي (بعد الحفظ)</h5>
+                        <div id="maintenanceCountdownPreview">${previewTime}</div>
+                        <small>سيتم عرض هذا الوقت للزوار عند تفعيل الصيانة.</small>
+                    </div>
+                    <button class="btn-gold" onclick="saveMaintenance()">💾 حفظ إعدادات الصيانة</button>
                 </div>
             </div>
         `;
