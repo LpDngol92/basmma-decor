@@ -42,9 +42,11 @@
         .slider-image-item { display: flex; gap: 10px; align-items: center; background: #fefaf5; padding: 8px 12px; border-radius: 20px; border: 1px solid #e9e2d8; }
         .slider-image-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; }
         .slider-image-item input { flex: 1; margin: 0; }
+        .slider-image-item .checkbox-select { width: 20px; margin: 0 5px; }
         .bulk-add-area { margin: 15px 0; padding: 12px; background: #fefaf5; border-radius: 20px; border: 1px dashed #b88b4a; }
         .bulk-add-area textarea { direction: ltr; font-family: monospace; }
         .hint { font-size: 0.8rem; color: #6c757d; display: block; margin-top: 5px; }
+        .bulk-delete-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
     </style>
 </head>
 <body>
@@ -158,7 +160,7 @@
         catch(e) { showToast('❌ فشل الحذف: '+e.message); }
     }
 
-    // إدارة السلايدر
+    // ========== إدارة السلايدر مع حذف متعدد ==========
     window.saveHomeSlider = function() {
         const enabled = document.getElementById('sliderEnabled').checked;
         const title = document.getElementById('sliderTitle').value;
@@ -179,7 +181,7 @@
         const container = document.getElementById('sliderImagesList');
         const div = document.createElement('div');
         div.className = 'slider-image-item';
-        div.innerHTML = `<input type="text" class="slider-image-url" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+        div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> <input type="text" class="slider-image-url" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
         container.appendChild(div);
     };
 
@@ -195,14 +197,41 @@
         urls.forEach(url => {
             const div = document.createElement('div');
             div.className = 'slider-image-item';
-            div.innerHTML = `<input type="text" class="slider-image-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+            div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> <input type="text" class="slider-image-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
             container.appendChild(div);
         });
         textarea.value = '';
         showToast(`✅ تمت إضافة ${urls.length} صورة جديدة إلى القائمة (لا تنس حفظ التغييرات)`);
     };
 
-    // دوال الحفظ العامة
+    // حذف العناصر المحددة
+    window.deleteSelectedSliderImages = function() {
+        const checkboxes = document.querySelectorAll('#sliderImagesList .checkbox-select');
+        const selected = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const parent = cb.parentElement;
+                if (parent) parent.remove();
+                selected.push(true);
+            }
+        });
+        if (selected.length === 0) {
+            showToast('لم يتم تحديد أي صورة للحذف');
+        } else {
+            showToast(`✅ تم حذف ${selected.length} صورة من القائمة (لم يتم حفظ التغييرات بعد، اضغط حفظ لحذفها نهائياً)`);
+        }
+    };
+
+    // حذف الكل
+    window.deleteAllSliderImages = function() {
+        if (confirm('⚠️ هل أنت متأكد من حذف جميع الصور من القائمة؟ لن يتم حذفها من قاعدة البيانات إلا بعد الضغط على حفظ.')) {
+            const container = document.getElementById('sliderImagesList');
+            container.innerHTML = '';
+            showToast('تم حذف جميع الصور من القائمة (لم يتم الحفظ بعد)');
+        }
+    };
+
+    // ========== دوال الحفظ العامة ==========
     window.saveGeneral = function() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
@@ -325,6 +354,7 @@
         if (slider.images && slider.images.length) {
             slider.images.forEach((img, idx) => {
                 sliderImagesHtml += `<div class="slider-image-item">
+                                        <input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> 
                                         <img src="${img.url}" onerror="this.style.display='none'">
                                         <input type="text" class="slider-image-url" value="${(img.url||'').replace(/"/g,'&quot;')}" placeholder="رابط الصورة" style="flex:1;">
                                         <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>
@@ -360,7 +390,11 @@
                     </div>
                     <div class="input-group"><label>مدة عرض الصورة (ثانية)</label><input type="number" id="sliderDuration" value="${slider.duration}"></div>
                     <hr>
-                    <h4>🖼️ صور السلايدر (يفضل استخدام صور بنفس الأبعاد للحصول على أفضل عرض)</h4>
+                    <div class="bulk-delete-bar">
+                        <button class="btn-red" onclick="deleteSelectedSliderImages()">🗑️ حذف المحدد</button>
+                        <button class="btn-red" onclick="deleteAllSliderImages()">⚠️ حذف الكل</button>
+                    </div>
+                    <h4>🖼️ صور السلايدر (يمكنك تحديد مربعات الاختيار لحذف عدة صور دفعة واحدة)</h4>
                     <div id="sliderImagesList" class="image-list-grid">${sliderImagesHtml}</div>
                     <button class="btn-green" onclick="addSliderImage()">➕ إضافة صورة فردية</button>
                     
