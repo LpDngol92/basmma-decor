@@ -10,6 +10,7 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://basmmaghyrdecor.com/">
     
+    <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
     <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
     <link rel="apple-touch-icon" href="https://cdn.jsdelivr.net/gh/LpDngol92/my-images/images/20260504_203712_%D8%AA%D8%B5%D9%85%D9%8A%D9%85%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%B9%D9%86%D9%88%D8%A7%D9%86%20(3).png">
@@ -120,7 +121,7 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
 
-        /* سلايدر قابل للسحب يدويًا (بدون حركة تلقائية) */
+        /* سلايدر سلس (سحب يدوي) */
         .slider-container {
             position: relative;
             width: 100%;
@@ -128,17 +129,19 @@
             padding: 30px 0;
             direction: ltr;
             user-select: none;
+            touch-action: pan-y;
         }
         .slider-track {
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1);
             gap: 30px;
+            will-change: transform;
             cursor: grab;
         }
-        .slider-track:active {
+        .slider-track.dragging {
             cursor: grabbing;
+            transition: none;
         }
         .slider-item {
             flex: 0 0 auto;
@@ -152,7 +155,6 @@
             transform: scale(0.85);
             opacity: 0.7;
             background: #f0f0f0;
-            position: relative;
         }
         .slider-item.active {
             transform: scale(1.05);
@@ -213,7 +215,16 @@
 </header>
 <div class="partners-marquee" id="partnersMarquee" style="display:none;"><div class="marquee-track" id="marqueeTrack"></div></div>
 <main id="mainContent"></main>
-<footer class="footer"><div class="container"><div class="footer-grid"><div><h4>بصمة غير</h4><p>ديكورات معارض ومحلات تجارية - ديكور خشب، دواليب، ارفف، كاونترات.</p><div class="social-icons" id="socialIcons"></div></div><div><h4>أوقات العمل</h4><div id="footerHours"></div></div><div><h4>تواصل معنا</h4><p><i class="fas fa-phone"></i> <span id="footerPhone"></span></p><p><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp"></span></p><p><i class="fas fa-map-marker-alt"></i> <span id="footerLocation"></span></p></div></div><div class="copyright" id="footerCopyright">© 2025 بصمة غير - جميع الحقوق محفوظة</div></div></footer>
+<footer class="footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div><h4>بصمة غير</h4><p>ديكورات معارض ومحلات تجارية - ديكور خشب، دواليب، ارفف، كاونترات.</p><div class="social-icons" id="socialIcons"></div></div>
+            <div><h4>أوقات العمل</h4><div id="footerHours"></div></div>
+            <div><h4>تواصل معنا</h4><p><i class="fas fa-phone"></i> <span id="footerPhone"></span></p><p><i class="fab fa-whatsapp"></i> <span id="footerWhatsapp"></span></p><p><i class="fas fa-map-marker-alt"></i> <span id="footerLocation"></span></p></div>
+        </div>
+        <div class="copyright" id="footerCopyright">© 2025 بصمة غير - جميع الحقوق محفوظة</div>
+    </div>
+</footer>
 
 <div id="lightbox" class="lightbox">
     <div class="lightbox-container"><div class="lightbox-image-wrapper"><img id="lightboxImg" class="lightbox-img" draggable="false"></div></div>
@@ -236,8 +247,30 @@
     let currentImageList = [];
     let currentIndex = 0;
     let currentWhatsappNum = '966500000000';
+    let sliderTrack = null;
+    let isDragging = false;
+    let startDragX = 0;
+    let startTranslate = 0;
+    let velocity = 0;
+    let lastX = 0;
+    let dragStartTime = 0;
+    let currentSlideIndex = 0;
+    let sliderImages = [];
 
-    // ========== Lightbox (بدون تغيير) ==========
+    // تحميل الصورة مع إعادة محاولة
+    function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
+        if (!imgElement) return;
+        if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
+        let attempts = 0;
+        const tryLoad = () => { imgElement.src = src; };
+        imgElement.onerror = () => {
+            if (attempts < retries) { attempts++; setTimeout(tryLoad, 500 * attempts); }
+            else { imgElement.src = fallbackUrl; imgElement.style.objectFit = 'contain'; }
+        };
+        tryLoad();
+    }
+
+    // ========== Lightbox ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -346,7 +379,7 @@
     function openLightbox(images, index) {
         if (!images.length) return;
         currentImageList = images; currentIndex = index;
-        imgElement.src = images[index];
+        setImageWithRetry(imgElement, images[index], 3);
         resetTransform();
         updateCounter();
         lightbox.style.display = 'flex';
@@ -359,8 +392,8 @@
         unbindLightboxEvents();
         resetTransform();
     }
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
+    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 3); resetTransform(); updateCounter(); }
+    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 3); resetTransform(); updateCounter(); }
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage;
     document.getElementById('lightboxNext').onclick = nextImage;
@@ -425,27 +458,18 @@
             cont.style.display = 'block';
             let logos = '';
             Object.values(currentData.partners).forEach(p => {
-                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" oncontextmenu="return false" ondragstart="return false"></div>`;
+                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" oncontextmenu="return false" ondragstart="return false" onerror="this.src='https://placehold.co/200x60?text=شريك'"></div>`;
             });
             track.innerHTML = logos + logos;
         } else cont.style.display = 'none';
     }
 
-    // ========== سلايدر يدوي (سحب فقط، بدون حركة تلقائية) ==========
-    let currentSlideIndex = 0;
-    let sliderImages = [];
-    let sliderTrack = null;
-    let startDragX = 0;
-    let startTranslate = 0;
-    let isDragging = false;
-    let currentTranslateVal = 0;
-
+    // ========== سلايدر سلس (سحب يدوي) ==========
     function buildHomeSlider() {
         const container = document.getElementById('homeSliderContainer');
         if (!container) return;
         const sliderData = currentData.home_slider;
         if (!sliderData || !sliderData.enabled || !sliderData.images || sliderData.images.length === 0) {
-            // إذا لم توجد صور في السلايدر، نعرض ألبومات أعمالنا كبديل (كما كان يفعل الموقع الأصلي)
             buildAlbumsBackup(container);
             return;
         }
@@ -454,123 +478,165 @@
             buildAlbumsBackup(container);
             return;
         }
-        
-        // بناء واجهة السلايدر
-        let html = `<div class="slider-container" style="direction: ltr;">
-                        <div class="slider-track" id="sliderTrack">`;
+        // بناء الهيكل
+        let html = `<div class="slider-container"><div class="slider-track" id="sliderTrack">`;
         sliderImages.forEach((url, idx) => {
-            html += `<div class="slider-item" data-index="${idx}">
-                        <img src="${url}" loading="lazy" onerror="this.src='https://placehold.co/600x1067?text=خطأ+تحميل';">
-                    </div>`;
+            html += `<div class="slider-item" data-index="${idx}"><img src="${url}" loading="lazy" onerror="this.src='https://placehold.co/600x1067?text=خطأ+تحميل';"></div>`;
         });
         html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div></div>`;
         container.innerHTML = html;
 
-        // النقاط
         const dotsDiv = document.getElementById('sliderDots');
         if (dotsDiv) {
             dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
             dotsDiv.querySelectorAll('.dot').forEach(dot => {
                 dot.addEventListener('click', (e) => {
                     const idx = parseInt(dot.getAttribute('data-dot'));
-                    if (!isNaN(idx)) goToSlide(idx);
+                    if (!isNaN(idx)) smoothSnapToIndex(idx);
                 });
             });
         }
 
         sliderTrack = document.getElementById('sliderTrack');
-        const sliderItems = document.querySelectorAll('.slider-item');
-        if (!sliderTrack || sliderItems.length === 0) return;
+        if (!sliderTrack) return;
 
-        // دالة تحديث الموضع بناءً على الصورة النشطة
-        function updateSliderPosition(animate = true) {
-            const containerWidth = sliderTrack.parentElement.clientWidth;
-            const activeItem = sliderItems[currentSlideIndex];
-            if (!activeItem) return;
-            const activeRect = activeItem.getBoundingClientRect();
-            const offset = activeRect.left + activeRect.width/2 - containerWidth/2;
-            sliderTrack.style.transition = animate ? 'transform 0.3s ease' : 'none';
-            sliderTrack.style.transform = `translateX(${-offset}px)`;
-            // تحديث التكبير
-            sliderItems.forEach((item, idx) => {
-                if (idx === currentSlideIndex) item.classList.add('active');
-                else item.classList.remove('active');
-            });
-            // تحديث النقاط
+        function getOffsetForIndex(index) {
+            const items = sliderTrack.children;
+            if (!items.length) return 0;
+            const targetItem = items[index];
+            if (!targetItem) return 0;
+            const targetRect = targetItem.getBoundingClientRect();
+            const containerRect = sliderTrack.parentElement.getBoundingClientRect();
+            const targetCenter = targetRect.left + targetRect.width / 2;
+            const containerCenter = containerRect.left + containerRect.width / 2;
+            const diff = targetCenter - containerCenter;
+            const currentTransform = getCurrentTranslate();
+            return currentTransform - diff;
+        }
+
+        function getCurrentTranslate() {
+            const transform = sliderTrack.style.transform;
+            const match = transform.match(/translateX\(([-\d.]+)px\)/);
+            return match ? parseFloat(match[1]) : 0;
+        }
+
+        function setTranslate(value, animate = false) {
+            if (animate) sliderTrack.style.transition = 'transform 0.3s cubic-bezier(0.2, 0.9, 0.4, 1.1)';
+            else sliderTrack.style.transition = 'none';
+            sliderTrack.style.transform = `translateX(${value}px)`;
+        }
+
+        function snapToNearest() {
+            const items = sliderTrack.children;
+            if (!items.length) return;
+            let minDist = Infinity, nearestIndex = currentSlideIndex;
+            for (let i = 0; i < items.length; i++) {
+                const targetOffset = getOffsetForIndex(i);
+                const currentOffset = getCurrentTranslate();
+                const dist = Math.abs(targetOffset - currentOffset);
+                if (dist < minDist) { minDist = dist; nearestIndex = i; }
+            }
+            if (nearestIndex !== currentSlideIndex) {
+                currentSlideIndex = nearestIndex;
+                updateActiveAndDots();
+            }
+            setTranslate(getOffsetForIndex(currentSlideIndex), true);
+        }
+
+        function smoothSnapToIndex(index) {
+            if (index < 0) index = 0;
+            if (index >= sliderImages.length) index = sliderImages.length - 1;
+            currentSlideIndex = index;
+            updateActiveAndDots();
+            setTranslate(getOffsetForIndex(currentSlideIndex), true);
+        }
+
+        function updateActiveAndDots() {
+            const items = sliderTrack.children;
+            for (let i = 0; i < items.length; i++) {
+                if (i === currentSlideIndex) items[i].classList.add('active');
+                else items[i].classList.remove('active');
+            }
             const dots = document.querySelectorAll('.dot');
-            dots.forEach((dot, idx) => {
-                if (idx === currentSlideIndex) dot.classList.add('active');
+            dots.forEach((dot, i) => {
+                if (i === currentSlideIndex) dot.classList.add('active');
                 else dot.classList.remove('active');
             });
         }
 
-        function goToSlide(newIndex) {
-            if (newIndex < 0) newIndex = 0;
-            if (newIndex >= sliderImages.length) newIndex = sliderImages.length - 1;
-            if (newIndex === currentSlideIndex) return;
-            currentSlideIndex = newIndex;
-            updateSliderPosition(true);
-        }
-
-        // أحداث السحب (يدوي)
+        // أحداث السحب
+        let dragStartX = 0, startTrans = 0;
         function onDragStart(e) {
             e.preventDefault();
             isDragging = true;
-            startDragX = (e.type === 'mousedown') ? e.clientX : e.touches[0].clientX;
-            // الحصول على الترجمة الحالية
-            const transform = sliderTrack.style.transform;
-            const match = transform.match(/translateX\(([-\d.]+)px\)/);
-            currentTranslateVal = match ? parseFloat(match[1]) : 0;
+            dragStartX = (e.type === 'mousedown') ? e.clientX : e.touches[0].clientX;
+            startTrans = getCurrentTranslate();
             sliderTrack.style.transition = 'none';
+            sliderTrack.classList.add('dragging');
         }
-
         function onDragMove(e) {
             if (!isDragging) return;
             const currentX = (e.type === 'mousemove') ? e.clientX : e.touches[0].clientX;
-            const diff = currentX - startDragX;
-            let newTranslate = currentTranslateVal + diff;
+            const dx = currentX - dragStartX;
+            let newTranslate = startTrans + dx;
+            const maxOffset = getOffsetForIndex(0);
+            const minOffset = getOffsetForIndex(sliderImages.length - 1);
+            newTranslate = Math.min(maxOffset, Math.max(minOffset, newTranslate));
             sliderTrack.style.transform = `translateX(${newTranslate}px)`;
         }
-
         function onDragEnd(e) {
             if (!isDragging) return;
             isDragging = false;
-            const endX = (e.type === 'mouseup') ? e.clientX : (e.changedTouches ? e.changedTouches[0].clientX : startDragX);
-            const diff = endX - startDragX;
+            sliderTrack.classList.remove('dragging');
+            const endX = (e.type === 'mouseup') ? e.clientX : (e.changedTouches ? e.changedTouches[0].clientX : dragStartX);
+            const diff = endX - dragStartX;
             const threshold = 50;
+            let targetIndex = currentSlideIndex;
             if (Math.abs(diff) > threshold) {
-                if (diff > 0 && currentSlideIndex > 0) goToSlide(currentSlideIndex - 1);
-                else if (diff < 0 && currentSlideIndex < sliderImages.length - 1) goToSlide(currentSlideIndex + 1);
-                else updateSliderPosition(true);
+                if (diff > 0) targetIndex--;
+                else targetIndex++;
+                targetIndex = Math.max(0, Math.min(sliderImages.length - 1, targetIndex));
             } else {
-                updateSliderPosition(true);
+                const items = sliderTrack.children;
+                let minDist = Infinity;
+                for (let i = 0; i < items.length; i++) {
+                    const targetOffset = getOffsetForIndex(i);
+                    const currentOffset = getCurrentTranslate();
+                    const dist = Math.abs(targetOffset - currentOffset);
+                    if (dist < minDist) { minDist = dist; targetIndex = i; }
+                }
             }
+            if (targetIndex !== currentSlideIndex) {
+                currentSlideIndex = targetIndex;
+                updateActiveAndDots();
+            }
+            setTranslate(getOffsetForIndex(currentSlideIndex), true);
         }
 
         sliderTrack.addEventListener('mousedown', onDragStart);
         window.addEventListener('mousemove', onDragMove);
         window.addEventListener('mouseup', onDragEnd);
-        sliderTrack.addEventListener('touchstart', onDragStart);
-        window.addEventListener('touchmove', onDragMove);
+        sliderTrack.addEventListener('touchstart', onDragStart, { passive: false });
+        window.addEventListener('touchmove', onDragMove, { passive: false });
         window.addEventListener('touchend', onDragEnd);
 
-        // النقر على الصورة لفتح اللايت بوكس
-        sliderItems.forEach((item, idx) => {
-            item.addEventListener('click', (e) => {
+        // النقر على الصورة
+        const items = sliderTrack.children;
+        for (let i = 0; i < items.length; i++) {
+            items[i].addEventListener('click', (e) => {
                 e.stopPropagation();
-                openLightbox(sliderImages, idx);
+                openLightbox(sliderImages, i);
             });
-        });
+        }
 
-        window.addEventListener('resize', () => updateSliderPosition(false));
-        updateSliderPosition(false);
+        window.addEventListener('resize', () => snapToNearest());
+        setTimeout(() => snapToNearest(), 50);
     }
 
-    // دالة احتياطية لعرض ألبومات أعمالنا عند عدم وجود سلايدر
     function buildAlbumsBackup(container) {
         let albums = getAlbumsList();
         if (albums.length === 0) {
-            container.innerHTML = '<div class="empty-state">لا توجد صور في السلايدر ولا في ألبومات أعمالنا. قم بإضافة صور من لوحة التحكم.</div>';
+            container.innerHTML = '<div class="empty-state">⚠️ لا توجد صور للعرض. قم بإضافة صور في إدارة الرئيسية أو أضف ألبومات في أعمالنا.</div>';
             return;
         }
         let html = '<div class="grid-auto">';
@@ -578,10 +644,7 @@
             let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
             html += `<div class="card" data-album="${alb.id}">
                         ${cover ? `<div class="img-square"><img src="${cover}" loading="lazy" onerror="this.src='https://placehold.co/400x400?text=خطأ'"></div>` : '<div class="img-square" style="background:#f0f0f0;"></div>'}
-                        <div class="card-body">
-                            <div class="card-title">${alb.name || 'ألبوم'}</div>
-                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
-                        </div>
+                        <div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div>
                     </div>`;
         });
         html += '</div>';
@@ -591,7 +654,7 @@
         });
     }
 
-    // ========== بقية دوال بناء المحتوى (بدون تغيير) ==========
+    // ========== دوال بناء المحتوى الأخرى ==========
     function buildWorksGrid() {
         const cont = document.getElementById('worksGrid');
         if (!cont) return;
@@ -602,10 +665,7 @@
             let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
             html += `<div class="card" data-album="${alb.id}">
                         ${cover ? `<div class="img-square"><img src="${cover}" loading="lazy" onerror="this.src='https://placehold.co/400x400?text=خطأ'"></div>` : '<div class="img-square" style="background:#f0f0f0;"></div>'}
-                        <div class="card-body">
-                            <div class="card-title">${alb.name || 'ألبوم'}</div>
-                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
-                        </div>
+                        <div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div>
                     </div>`;
         });
         html += '</div>';
@@ -622,9 +682,7 @@
         all.forEach(url => {
             html += `<div class="product-card" data-product-url="${url}">
                         <div class="img-square"><img src="${url}" loading="lazy" onerror="this.src='https://placehold.co/400x400?text=خطأ'"></div>
-                        <div class="product-info">
-                            <button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button>
-                        </div>
+                        <div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div>
                     </div>`;
         });
         html += '</div>';
@@ -641,13 +699,7 @@
         let html = '<div class="grid-auto">';
         Object.keys(currentData.catalogs).forEach(id => {
             const cat = currentData.catalogs[id];
-            html += `<div class="card" data-catalog="${id}">
-                        <div class="card-body">
-                            <i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i>
-                            <div class="card-title">${cat.name}</div>
-                            <small style="color:var(--gray);">اضغط للعرض</small>
-                        </div>
-                    </div>`;
+            html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small style="color:var(--gray);">اضغط للعرض</small></div></div>`;
         });
         html += '</div>';
         cont.innerHTML = html;
@@ -824,7 +876,7 @@
     }, err => { console.error('Realtime listener error:', err); });
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
 
-    // ========== منع تنزيل الصور ==========
+    // منع تنزيل الصور
     (function blockImageDownload() {
         function disableContextAndDrag(img) {
             img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
