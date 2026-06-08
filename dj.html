@@ -42,6 +42,7 @@
         .slider-image-item { display: flex; gap: 10px; align-items: center; background: #fefaf5; padding: 8px 12px; border-radius: 20px; border: 1px solid #e9e2d8; }
         .slider-image-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; }
         .slider-image-item input { flex: 1; margin: 0; }
+        .bulk-add-area { margin: 15px 0; padding: 12px; background: #fefaf5; border-radius: 20px; border: 1px dashed #b88b4a; }
     </style>
 </head>
 <body>
@@ -156,7 +157,7 @@
         catch(e) { showToast('❌ فشل الحذف: '+e.message); }
     }
 
-    // ========== إدارة السلايدر الرئيسي ==========
+    // ========== إدارة السلايدر الرئيسي مع إضافة متعددة ==========
     window.saveHomeSlider = function() {
         const enabled = document.getElementById('sliderEnabled').checked;
         const title = document.getElementById('sliderTitle').value;
@@ -176,11 +177,30 @@
 
     window.addSliderImage = function() {
         const container = document.getElementById('sliderImagesList');
-        const newId = Date.now();
         const div = document.createElement('div');
         div.className = 'slider-image-item';
         div.innerHTML = `<input type="text" class="slider-image-url" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
         container.appendChild(div);
+    };
+
+    // إضافة روابط متعددة دفعة واحدة عبر textarea
+    window.addMultipleSliderImages = function() {
+        const textarea = document.getElementById('bulkUrls');
+        const rawUrls = textarea.value.split(/\r?\n/);
+        const urls = rawUrls.filter(u => u.trim().length > 0);
+        if (urls.length === 0) {
+            showToast('الرجاء إدخال روابط صالحة (كل رابط في سطر)');
+            return;
+        }
+        const container = document.getElementById('sliderImagesList');
+        urls.forEach(url => {
+            const div = document.createElement('div');
+            div.className = 'slider-image-item';
+            div.innerHTML = `<input type="text" class="slider-image-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+            container.appendChild(div);
+        });
+        textarea.value = ''; // مسح الحقل بعد الإضافة
+        showToast(`✅ تمت إضافة ${urls.length} صورة جديدة إلى القائمة (لم يتم الحفظ بعد، اضغط حفظ لحفظ التغييرات)`);
     };
 
     // ========== دوال الحفظ العامة ==========
@@ -345,9 +365,16 @@
                     </div>
                     <div class="input-group"><label>مدة عرض الصورة (ثانية)</label><input type="number" id="sliderDuration" value="${slider.duration}"></div>
                     <hr>
-                    <h4>🖼️ صور السلايدر (يفضل استخدام صور بنفس الأبعاد للحصول على أفضل عرض)</h4>
+                    <h4>🖼️ صور السلايدر (يفضل استخدام صور بنفس الأبعاد)</h4>
                     <div id="sliderImagesList" class="image-list-grid">${sliderImagesHtml}</div>
-                    <button class="btn-green" onclick="addSliderImage()">➕ إضافة صورة جديدة</button>
+                    <button class="btn-green" onclick="addSliderImage()">➕ إضافة صورة فردية</button>
+                    
+                    <div class="bulk-add-area">
+                        <label><strong>📎 إضافة روابط متعددة دفعة واحدة</strong> (كل رابط في سطر)</label>
+                        <textarea id="bulkUrls" rows="4" placeholder="https://example.com/image1.jpg\nhttps://example.com/image2.png\nhttps://example.com/image3.jpg" style="direction:ltr;"></textarea>
+                        <button class="btn-gold" onclick="addMultipleSliderImages()">➕ إضافة روابط متعددة</button>
+                        <small class="hint">* سيتم إضافة الروابط كعناصر جديدة في القائمة أعلاه. لا تنس الضغط على "حفظ إعدادات السلايدر" بعد الانتهاء.</small>
+                    </div>
                     <hr>
                     <button class="btn-gold" onclick="saveHomeSlider()">💾 حفظ إعدادات السلايدر</button>
                 </div>
@@ -437,34 +464,63 @@
         // عرض القوائم
         if(d.albums){
             document.getElementById('albumsList').innerHTML = Object.keys(d.albums).map(id=>`
-                <div class="list-item-row"><input type="text" value="${(d.albums[id].name||'').replace(/"/g,'&quot;')}" class="album-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateAlbumName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('albums','${id}','${(d.albums[id].name||'').replace(/"/g,'&quot;')}')">حذف الألبوم</button></div>
+                <div class="list-item-row"><input type="text" value="${(d.albums[id].name||'').replace(/"/g,'&quot;')}" class="album-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateAlbumName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('albums','${id}','${(d.albums[id.albums[id].name||''].name||'').replace(/"/).replace(/"/g,'&quotg,'&quot;')}');')}')">حذف">حذف الألبوم</button></div الألبوم</button></div>
+            `).join>
             `).join('');
         }
         if(d.store_categories){
-            document.getElementById('storeCatsList').innerHTML = Object.keys(d.store_categories).map(id=>`
-                <div class="list-item-row"><input type="text" value="${(d.store_categories[id].name||'').replace(/"/g,'&quot;')}" class="storecat-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateStoreCatName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('store_categories','${id}','${(d.store_categories[id].name||'').replace(/"/g,'&quot;')}')">حذف القسم</button></div>
+            document('');
+        }
+        if(d.store_categories){
+            document.getElementById('storeC.getElementById('storeCatsList').inneratsList').innerHTML = Object.keysHTML = Object.keys(d.store_categories).map(id=>(d.store_categories).map(id=>`
+`
+                <div                <div class="list-item class="list-item-row"><input type-row"><input type="text" value="text" value="${(d.store="${(d.store_categories[id]._categories[id].name||'').replace(/"/g,'&quot;')}" class="name||''storecat-name-).replace(/"/g,'&quot;')}" class="${id}" stylestorecat-name-${id}" style="flex:2="flex:2;"><button class="btn-gold";"><button class="btn-gold" onclick="updateStore onclick="updateStoreCatName('${CatName('${id}', this.previousElementSiblingid}', this.previousElementSibling.value)">تحديث</button.value)">تحديث</button><button class="btn-red" onclick><button class="btn-red" onclick="deleteSection('store_categories','${id}','${(d.store_categories[id].name||'').replace(/"/g="deleteSection('store_categories','${id}','${(d.store_categories[id].name||'').replace(/"/g,'&quot;,'&quot;')}')">')}')">حذف القسم</button></حذف القسم</button></div>
+            `div>
             `).join('');
         }
-        if(d.catalogs){
-            document.getElementById('catalogsList').innerHTML = Object.keys(d.catalogs).map(id=>`
-                <div style="border:1px solid #e9e2d8; border-radius:20px; padding:12px; margin-bottom:12px;">
-                    <div class="list-item-row"><input type="text" value="${(d.catalogs[id].name||'').replace(/"/g,'&quot;')}" class="catalog-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateCatalogName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('catalogs','${id}','${(d.catalogs[id].name||'').replace(/"/g,'&quot;')}')">حذف الكتالوج</button></div>
-                    <textarea class="catalog-code-${id}" rows="2" style="width:100%;">${(d.catalogs[id].code||'').replace(/"/g,'&quot;')}</textarea>
-                    <button class="btn-gold" style="margin-top:8px;" onclick="updateCatalogCode('${id}', document.querySelector('.catalog-code-${id}').value)">تحديث الكود</button>
+        if(d).join('');
+        }
+        if(d.catalogs.catalogs){
+            document.getElementById('){
+            document.getElementById('catalogsListcatalogsList').innerHTML =').innerHTML = Object.keys(d.c Object.keys(d.catalogs).mapatalogs).map(id=>`
+               (id=>`
+                <div style=" <div style="border:1pxborder:1px solid solid #e9 #e9e2d8e2d8; border-radius:; border-radius:20px; padding:12px;20px; padding:12px; margin-bottom:12 margin-bottom:12px;">
+                   px;">
+                    <div class="list <div class="list-item-row"><input-item-row"><input type="text" value="${(d type="text" value="${(d.catalogs[id.catalogs[id].name||''].name||'').replace(/"/).replace(/"/g,'&quotg,'&quot;')}" class="catalog-name;')}" class="catalog-name-${id}"-${id}" style="flex: style="flex:2;"><button class2;"><button class="btn-gold="btn-gold" onclick="updateCatalogName('${" onclick="updateCatalogName('${id}', this.preid}', this.previousElementSiblingviousElementSibling.value)">ت.value)">تحديث</buttonحديث</button><button class="btn-red" onclick><button class="btn-red" onclick="deleteSection('="deleteSection('catalogs','catalogs','${id}','${id}','${${(d.catalogs[id].name||'').(d.catalogs[id].name||'').replace(/"/greplace(/"/g,'&quot;,'&quot;')}')">حذف الك')}')">حذف الكتالوج</تالوج</button></divbutton></div>
+                    <textarea class>
+                    <textarea class="c="catalog-codeatalog-code-${id}" rows="2"-${id}" rows="2" style="width: style="width:100%;">${100%;">${(d.catal(d.catalogs[id].codeogs[id].code||'').replace||'').replace(/"/g,'&quot;')(/"/g,'}</textarea>
+                   &quot;')}</textarea>
+                    <button class=" <button class="btn-gold"btn-gold" style="margin-top style="margin-top:8px;" onclick="updateCatalog:8px;" onclick="updateCatalogCode('${idCode('${id}', document.querySelector('.catalog}', document.querySelector('.catalog-code--code-${id}').${id}').value)">تvalue)">تحديث الكودحديث الكود</button>
+               </button>
                 </div>
-            `).join('');
+            </div>
+            `).join `).join('');
+        }
+        if('');
         }
         if(d.partners){
-            document.getElementById('partnersList').innerHTML = Object.keys(d.partners).map(id=>`
-                <div class="list-item-row"><input type="text" value="${(d.partners[id].url||'').replace(/"/g,'&quot;')}" class="partner-url-${id}" placeholder="رابط الصورة" style="flex:2;"><input type="text" value="${(d.partners[id].link||'').replace(/"/g,'&quot;')}" class="partner-link-${id}" placeholder="الرابط" style="flex:1;"><button class="btn-gold" onclick="updatePartner('${id}', document.querySelector('.partner-url-${id}').value, document.querySelector('.partner-link-${id}').value)">تحديث</button><button class="btn-red" onclick="deleteSection('partners','${id}','')">حذف</button></div>
+            document.getElementById(d.partners){
+            document.getElementById('partnersList').innerHTML =('partnersList').innerHTML = Object.keys(d.p Object.keys(d.partners).mapartners).map(id=>`
+               (id=>`
+                <div class="list-item-row <div class=""><input type="textlist-item-row"><input type="text" value="${(" value="${(d.partnersd.partners[id].url||[id].url||'').replace(/'').replace(/"/g,'&quot;')}""/g,'& class="partner-urlquot;')}" class="partner-url-${id}" placeholder="رابط الصورة" style="-${id}" placeholder="رابط الصورة" style="flex:2;"><input type="text" value="${(d.pflex:2;"><input type="text" value="${(d.partartners[id].linkners[id].link||'').replace||'').replace(/"/g,'(/"/g,'&quot;')&quot;')}" class="partner}" class="partner-link-${id-link-${id}" placeholder="ال}" placeholder="الرابط" style="flex:1رابط" style="flex:1;"><button class=";"><button class="btn-gold"btn-gold" onclick="updatePartner onclick="updatePartner('${id}',('${id}', document.querySelector('.partner document.querySelector('.partner-url-${id}').value,-url-${id document.querySelector('.partner-link-${id}').value, document.querySelector('.partner-link-${id}').value)}').value)">تحديث">تحديث</button><button</button><button class="btn-red" onclick="delete class="btn-red" onclick="deleteSection('partSection('partners','${idners','${id}','')">حذف</}','')">حذف</button></divbutton></div>
+            `).join>
             `).join('');
         }
-        if(d.reviews){
-            document.getElementById('reviewsList').innerHTML = Object.keys(d.reviews).map(id=>`
-                <div style="border-bottom:1px solid #eee; padding:8px;"><b>${d.reviews[id].name}</b> ${'★'.repeat(d.reviews[id].rating)}<p>${d.reviews[id].message}</p><button class="btn-red" onclick="deleteReview('${id}')">حذف التقييم</button></div>
-            `).join('');
+       ('');
+        }
+        if(d.reviews if(d.reviews){
+            document.getElementById){
+            document.getElementById('reviewsList('reviewsList').innerHTML =').innerHTML = Object.keys(d.re Object.keys(d.reviews).map(id=>`
+               views).map(id=>`
+                <div style="border-bottom:1px solid #eee; padding: <div style="border-bottom:1px solid #eee; padding:8px8px;"><b>${;"><b>${d.reviews[idd.reviews[id].name}</b].name}</b> ${'★> ${'★'.repeat(d.re'.repeat(d.reviews[id].rating)}<pviews[id].rating>${d.re)}<pviews[id].message}</p>${d.reviews[id].message}</p><button class="btn><button class="btn-red" onclick="-red" onclick="deleteReview('${id}')">حذف التdeleteReview('${id}')">قييم</buttonحذف الت></div>
+           قييم</button></div>
+            ` `).join('');
+        }
+   ).join('');
         }
     }
+</script>
+</ }
 </script>
 </body>
 </html>
