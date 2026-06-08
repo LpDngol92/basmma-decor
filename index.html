@@ -243,16 +243,22 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
+    // وظيفة قوية لتحميل الصور مع إعادة المحاولة
     function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
+        if (!src || src.trim() === '') {
+            imgElement.src = fallbackUrl;
+            return;
+        }
         let attempts = 0;
         const tryLoad = () => {
             imgElement.src = src;
         };
         imgElement.onerror = () => {
+            console.warn(`فشل تحميل الصورة: ${src}, المحاولة ${attempts + 1}`);
             if (attempts < retries) {
                 attempts++;
-                setTimeout(tryLoad, 300 * attempts);
+                setTimeout(tryLoad, 500 * attempts);
             } else {
                 imgElement.src = fallbackUrl;
                 imgElement.style.objectFit = 'contain';
@@ -468,46 +474,49 @@
         } else cont.style.display = 'none';
     }
 
-    // ========== السلايدر المحسن بحجم ريلز ==========
+    // ========== السلايدر المحسن - نسخة تعمل بشكل مؤكد ==========
     let currentSlideIndex = 0;
     let sliderImages = [];
     let sliderDirection = 'rtl';
     let slideTimer = null;
     let sliderTrack = null;
     let sliderItems = [];
-    let isLoadingMore = false;
 
     function buildHomeSlider() {
         const container = document.getElementById('homeSliderContainer');
         if (!container) return;
+        
+        // التحقق من وجود بيانات السلايدر
+        console.log('بناء السلايدر، currentData.home_slider:', currentData.home_slider);
         const sliderData = currentData.home_slider;
         if (!sliderData || !sliderData.enabled || !sliderData.images || sliderData.images.length === 0) {
-            container.innerHTML = '<div class="empty-state">لا توجد صور في السلايدر</div>';
+            container.innerHTML = '<div class="empty-state">لا توجد صور في السلايدر. قم بإضافة صور من لوحة التحكم.</div>';
             return;
         }
+        
+        // استخراج الروابط
         sliderImages = sliderData.images.map(img => img.url).filter(url => url && url.trim() !== '');
+        console.log('عدد الصور المستخرجة:', sliderImages.length);
         if (sliderImages.length === 0) {
-            container.innerHTML = '<div class="empty-state">لا توجد روابط صالحة</div>';
+            container.innerHTML = '<div class="empty-state">لا توجد روابط صالحة. تأكد من إضافة روابط صور صحيحة.</div>';
             return;
         }
+        
         sliderDirection = sliderData.direction === 'ltr' ? 'ltr' : 'rtl';
         const duration = (sliderData.duration || 5) * 1000;
 
-        const initialBatch = sliderImages.slice(0, 15);
+        // بناء واجهة السلايدر (جميع الصور دفعة واحدة لكن مع تحميل بطيء للصور)
         let html = `<div class="slider-container" style="direction: ltr;">
                         <div class="slider-track" id="sliderTrack">`;
-        initialBatch.forEach((url, idx) => {
-            html += `<div class="slider-item" data-index="${idx}" data-url="${url}">
-                        <img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/600x1067?text=خطأ+تحميل';">
+        sliderImages.forEach((url, idx) => {
+            html += `<div class="slider-item" data-index="${idx}">
+                        <img src="${url}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='https://placehold.co/600x1067?text=خطأ+تحميل';">
                     </div>`;
         });
-        html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div>`;
-        if (sliderImages.length > initialBatch.length) {
-            html += `<div class="loading-indicator" id="sliderLoading">جاري تحميل المزيد من الصور...</div>`;
-        }
-        html += `</div>`;
+        html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div></div>`;
         container.innerHTML = html;
 
+        // إضافة النقاط
         const dotsDiv = document.getElementById('sliderDots');
         if (dotsDiv) {
             dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
@@ -523,68 +532,17 @@
         sliderItems = document.querySelectorAll('.slider-item');
         if (!sliderTrack || sliderItems.length === 0) return;
 
-        let currentBatchSize = initialBatch.length;
-        function loadNextBatch() {
-            if (currentBatchSize >= sliderImages.length) {
-                const loadingDiv = document.getElementById('sliderLoading');
-                if (loadingDiv) loadingDiv.style.display = 'none';
-                return;
-            }
-            if (isLoadingMore) return;
-            isLoadingMore = true;
-            const nextBatch = sliderImages.slice(currentBatchSize, currentBatchSize + 10);
-            nextBatch.forEach((url, idx) => {
-                const newIndex = currentBatchSize + idx;
-                const newItem = document.createElement('div');
-                newItem.className = 'slider-item';
-                newItem.setAttribute('data-index', newIndex);
-                newItem.setAttribute('data-url', url);
-                newItem.innerHTML = `<img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/600x1067?text=خطأ+تحميل';">`;
-                newItem.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (window.pauseSlider) window.pauseSlider();
-                    openLightbox(sliderImages, newIndex);
-                });
-                sliderTrack.appendChild(newItem);
-            });
-            currentBatchSize += nextBatch.length;
-            sliderItems = document.querySelectorAll('.slider-item');
-            isLoadingMore = false;
-            const newDotsDiv = document.getElementById('sliderDots');
-            if (newDotsDiv) {
-                newDotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
-                newDotsDiv.querySelectorAll('.dot').forEach(dot => {
-                    dot.addEventListener('click', (e) => {
-                        const idx = parseInt(dot.getAttribute('data-dot'));
-                        if (!isNaN(idx)) goToSlide(idx);
-                    });
-                });
-            }
-            if (currentBatchSize < sliderImages.length) {
-                setTimeout(loadNextBatch, 500);
-            } else {
-                const loadingDiv = document.getElementById('sliderLoading');
-                if (loadingDiv) loadingDiv.style.display = 'none';
-            }
-        }
-
-        if (sliderImages.length > initialBatch.length) {
-            setTimeout(loadNextBatch, 2000);
-        }
-
         function updateSlider(animate = true) {
             if (!sliderTrack) return;
             const activeIndex = currentSlideIndex;
-            const currentItems = document.querySelectorAll('.slider-item');
-            if (currentItems.length === 0) return;
-            const activeItem = currentItems[activeIndex];
-            if (!activeItem) return;
             const containerWidth = sliderTrack.parentElement.clientWidth;
+            const activeItem = sliderItems[activeIndex];
+            if (!activeItem) return;
             const activeRect = activeItem.getBoundingClientRect();
             const offset = activeRect.left + activeRect.width/2 - containerWidth/2;
             sliderTrack.style.transition = animate ? 'transform 0.5s ease' : 'none';
             sliderTrack.style.transform = `translateX(${-offset}px)`;
-            currentItems.forEach((item, idx) => {
+            sliderItems.forEach((item, idx) => {
                 if (idx === activeIndex) item.classList.add('active');
                 else item.classList.remove('active');
             });
@@ -630,12 +588,12 @@
             }
         }
 
-        document.querySelectorAll('.slider-item').forEach((item, idx) => {
+        // ربط النقر على الصور لفتح اللايت بوكس
+        sliderItems.forEach((item, idx) => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
                 pauseSlider();
-                const realIndex = parseInt(item.getAttribute('data-index'));
-                openLightbox(sliderImages, isNaN(realIndex) ? idx : realIndex);
+                openLightbox(sliderImages, idx);
             });
         });
 
@@ -856,6 +814,7 @@
     db.ref(DB_PATH).once('value').then(snap => {
         clearTimeout(forceHideTimer);
         currentData = snap.val() || {};
+        console.log('تم تحميل البيانات من Firebase:', currentData);
         const splashSettings = {
             enabled: currentData.splash_enabled !== false,
             media_url: currentData.splash_media_url || '',
@@ -875,6 +834,7 @@
     db.ref(DB_PATH).on('value', snap => {
         if (snap.exists()) {
             currentData = snap.val();
+            console.log('تحديث البيانات المباشر من Firebase');
             refreshAll();
         }
     }, err => { console.error('Realtime listener error:', err); });
