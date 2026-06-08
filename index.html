@@ -120,7 +120,7 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
 
-        /* سلايدر متناسق */
+        /* سلايدر محسن لأعداد ضخمة من الصور */
         .slider-container {
             position: relative;
             width: 100%;
@@ -137,21 +137,22 @@
         }
         .slider-item {
             flex: 0 0 auto;
-            width: 300px;
+            width: 380px;  /* حجم أكبر ليتناسب مع الصور العريضة */
             aspect-ratio: 16 / 9;
-            border-radius: 20px;
+            border-radius: 24px;
             overflow: hidden;
             cursor: pointer;
             transition: all 0.4s ease;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 12px 25px rgba(0,0,0,0.15);
             transform: scale(0.85);
             opacity: 0.7;
             background: #f0f0f0;
+            position: relative;
         }
         .slider-item.active {
-            transform: scale(1.05);
+            transform: scale(1.08);
             opacity: 1;
-            box-shadow: 0 20px 35px rgba(0,0,0,0.25);
+            box-shadow: 0 25px 40px rgba(0,0,0,0.3);
             z-index: 2;
         }
         .slider-item img {
@@ -165,8 +166,8 @@
             transform: scale(1.02);
         }
         @media (max-width: 700px) {
-            .slider-item { width: 220px; }
-            .slider-item.active { transform: scale(1.02); }
+            .slider-item { width: 260px; }
+            .slider-item.active { transform: scale(1.03); }
             .slider-track { gap: 15px; }
         }
         .slider-nav {
@@ -192,6 +193,12 @@
             background: var(--primary);
             width: 28px;
             border-radius: 20px;
+        }
+        .loading-indicator {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            color: var(--primary);
         }
     </style>
 </head>
@@ -236,24 +243,23 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
-    // Helper: تحميل الصور مع إعادة المحاولة
-    function setImageWithRetry(imgElement, src, retries = 2) {
+    // دالة قوية لتحميل الصورة مع إعادة المحاولة
+    function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/800x450?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
-        const attempt = () => {
+        let attempts = 0;
+        const tryLoad = () => {
             imgElement.src = src;
         };
         imgElement.onerror = () => {
-            if (retries > 0) {
-                setTimeout(() => {
-                    attempt();
-                }, 500);
-                retries--;
+            if (attempts < retries) {
+                attempts++;
+                setTimeout(tryLoad, 300 * attempts);
             } else {
-                imgElement.src = 'https://placehold.co/600x400?text=صورة+غير+متوفرة';
+                imgElement.src = fallbackUrl;
                 imgElement.style.objectFit = 'contain';
             }
         };
-        attempt();
+        tryLoad();
     }
 
     function getWatermarkedImage(src, alt) {
@@ -261,7 +267,7 @@
         return `<div class="img-square"><img src="${src}" loading="lazy" decoding="async" alt="${alt.replace(/"/g, '&quot;')}" oncontextmenu="return false" ondragstart="return false" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=خطأ+تحميل';"></div>`;
     }
 
-    // ========== Lightbox معدل لإيقاف السلايدر ==========
+    // ========== Lightbox ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -372,7 +378,7 @@
         if (!images.length) return;
         if (sliderInterval) { clearInterval(sliderInterval); sliderInterval = null; isSliderPaused = true; }
         currentImageList = images; currentIndex = index;
-        setImageWithRetry(imgElement, images[index], 2);
+        setImageWithRetry(imgElement, images[index], 3);
         resetTransform();
         updateCounter();
         lightbox.style.display = 'flex';
@@ -391,8 +397,8 @@
         }
     }
     
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 2); resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 2); resetTransform(); updateCounter(); }
+    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 3); resetTransform(); updateCounter(); }
+    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 3); resetTransform(); updateCounter(); }
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage;
     document.getElementById('lightboxNext').onclick = nextImage;
@@ -463,13 +469,14 @@
         } else cont.style.display = 'none';
     }
 
-    // ========== السلايدر المحسن ==========
+    // ========== السلايدر المحسن لأعداد ضخمة (تحميل تدريجي) ==========
     let currentSlideIndex = 0;
     let sliderImages = [];
     let sliderDirection = 'rtl';
     let slideTimer = null;
     let sliderTrack = null;
     let sliderItems = [];
+    let isLoadingMore = false;
 
     function buildHomeSlider() {
         const container = document.getElementById('homeSliderContainer');
@@ -487,16 +494,23 @@
         sliderDirection = sliderData.direction === 'ltr' ? 'ltr' : 'rtl';
         const duration = (sliderData.duration || 5) * 1000;
 
+        // نعرض في البداية 15 صورة فقط لتجنب التجميد
+        const initialBatch = sliderImages.slice(0, 15);
         let html = `<div class="slider-container" style="direction: ltr;">
                         <div class="slider-track" id="sliderTrack">`;
-        sliderImages.forEach((url, idx) => {
-            html += `<div class="slider-item" data-index="${idx}">
-                        <img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/600x400?text=خطأ+تحميل';this.style.objectFit='contain';">
+        initialBatch.forEach((url, idx) => {
+            html += `<div class="slider-item" data-index="${idx}" data-url="${url}">
+                        <img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/800x450?text=خطأ+تحميل';">
                     </div>`;
         });
-        html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div></div>`;
+        html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div>`;
+        if (sliderImages.length > initialBatch.length) {
+            html += `<div class="loading-indicator" id="sliderLoading">جاري تحميل المزيد من الصور...</div>`;
+        }
+        html += `</div>`;
         container.innerHTML = html;
 
+        // إعادة إنشاء النقاط
         const dotsDiv = document.getElementById('sliderDots');
         if (dotsDiv) {
             dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
@@ -512,17 +526,71 @@
         sliderItems = document.querySelectorAll('.slider-item');
         if (!sliderTrack || sliderItems.length === 0) return;
 
+        // وظيفة تحميل الدفعة التالية بشكل غير متزامن
+        let currentBatchSize = initialBatch.length;
+        function loadNextBatch() {
+            if (currentBatchSize >= sliderImages.length) {
+                const loadingDiv = document.getElementById('sliderLoading');
+                if (loadingDiv) loadingDiv.style.display = 'none';
+                return;
+            }
+            if (isLoadingMore) return;
+            isLoadingMore = true;
+            const nextBatch = sliderImages.slice(currentBatchSize, currentBatchSize + 10);
+            nextBatch.forEach((url, idx) => {
+                const newIndex = currentBatchSize + idx;
+                const newItem = document.createElement('div');
+                newItem.className = 'slider-item';
+                newItem.setAttribute('data-index', newIndex);
+                newItem.setAttribute('data-url', url);
+                newItem.innerHTML = `<img src="${url}" loading="lazy" decoding="async" onerror="this.src='https://placehold.co/800x450?text=خطأ+تحميل';">`;
+                newItem.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (window.pauseSlider) window.pauseSlider();
+                    openLightbox(sliderImages, newIndex);
+                });
+                sliderTrack.appendChild(newItem);
+            });
+            currentBatchSize += nextBatch.length;
+            sliderItems = document.querySelectorAll('.slider-item'); // تحديث القائمة
+            isLoadingMore = false;
+            // إعادة حساب النقاط
+            const newDotsDiv = document.getElementById('sliderDots');
+            if (newDotsDiv) {
+                newDotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
+                newDotsDiv.querySelectorAll('.dot').forEach(dot => {
+                    dot.addEventListener('click', (e) => {
+                        const idx = parseInt(dot.getAttribute('data-dot'));
+                        if (!isNaN(idx)) goToSlide(idx);
+                    });
+                });
+            }
+            if (currentBatchSize < sliderImages.length) {
+                setTimeout(loadNextBatch, 500); // تحميل الدفعة التالية بعد نصف ثانية
+            } else {
+                const loadingDiv = document.getElementById('sliderLoading');
+                if (loadingDiv) loadingDiv.style.display = 'none';
+            }
+        }
+
+        // بدء التحميل التدريجي بعد ثانيتين من بدء السلايدر
+        if (sliderImages.length > initialBatch.length) {
+            setTimeout(loadNextBatch, 2000);
+        }
+
         function updateSlider(animate = true) {
             if (!sliderTrack) return;
             const activeIndex = currentSlideIndex;
-            const containerWidth = sliderTrack.parentElement.clientWidth;
-            const activeItem = sliderItems[activeIndex];
+            const currentItems = document.querySelectorAll('.slider-item');
+            if (currentItems.length === 0) return;
+            const activeItem = currentItems[activeIndex];
             if (!activeItem) return;
+            const containerWidth = sliderTrack.parentElement.clientWidth;
             const activeRect = activeItem.getBoundingClientRect();
             const offset = activeRect.left + activeRect.width/2 - containerWidth/2;
             sliderTrack.style.transition = animate ? 'transform 0.5s ease' : 'none';
             sliderTrack.style.transform = `translateX(${-offset}px)`;
-            sliderItems.forEach((item, idx) => {
+            currentItems.forEach((item, idx) => {
                 if (idx === activeIndex) item.classList.add('active');
                 else item.classList.remove('active');
             });
@@ -568,11 +636,13 @@
             }
         }
 
-        sliderItems.forEach((item, idx) => {
+        // ربط النقر على الصور الموجودة حالياً
+        document.querySelectorAll('.slider-item').forEach((item, idx) => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
                 pauseSlider();
-                openLightbox(sliderImages, idx);
+                const realIndex = parseInt(item.getAttribute('data-index'));
+                openLightbox(sliderImages, isNaN(realIndex) ? idx : realIndex);
             });
         });
 
@@ -711,7 +781,7 @@
 
     // ========== إدارة الشاشة الافتتاحية والصيانة ==========
     let splashTimeout, maintenanceInterval, popupTimeout;
-    function showSplash(settings) { /* كما هي دون تغيير */ 
+    function showSplash(settings) { 
         const splashDiv = document.getElementById('splash');
         if (!splashDiv) return;
         splashDiv.innerHTML = '';
@@ -738,7 +808,7 @@
         if (splashTimeout) clearTimeout(splashTimeout);
         splashTimeout = setTimeout(() => { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); }, duration);
     }
-    function updateMaintenanceMode() { /* كما هي */ 
+    function updateMaintenanceMode() { 
         const d = currentData, screen = document.getElementById('maintenanceScreen');
         if (!d.maintenance_mode) { if (screen.style.display !== 'none') screen.style.display = 'none'; if (maintenanceInterval) clearInterval(maintenanceInterval); return; }
         const until = d.maintenance_until;
@@ -757,7 +827,7 @@
             updateCountdown(); maintenanceInterval = setInterval(updateCountdown, 1000);
         }
     }
-    function updatePopup() { /* كما هي */ 
+    function updatePopup() { 
         const bubble = document.getElementById('popupBubble'), msgSpan = document.getElementById('popupMessage');
         if (!currentData.popup_enabled || !currentData.popup_message) { if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); return; }
         if (bubble.style.display === 'none' || bubble.style.display === '') {
