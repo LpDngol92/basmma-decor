@@ -467,48 +467,37 @@
         } else cont.style.display = 'none';
     }
 
-    // ========== السلايدر الرئيسي مع دعم الصور الاحتياطي ==========
+    // ========== السلايدر / شبكة الألبومات ==========
     let currentSlideIndex = 0;
     let sliderImages = [];
     let sliderDirection = 'rtl';
     let slideTimer = null;
 
-    function buildHomeSlider() {
+    function buildHomeSliderOrAlbums() {
         const container = document.getElementById('homeSliderContainer');
         if (!container) return;
-        
-        // جلب صور السلايدر من قاعدة البيانات
+
+        // محاولة جلب صور السلايدر من home_slider
         const sliderData = currentData.home_slider;
-        let images = [];
+        let sliderImagesArray = [];
         if (sliderData && sliderData.enabled && sliderData.images && sliderData.images.length) {
-            images = sliderData.images.map(img => img.url).filter(url => url && url.trim() !== '');
+            sliderImagesArray = sliderData.images.map(img => img.url).filter(url => url && url.trim() !== '');
         }
-        
-        // إذا لم توجد صور في السلايدر، نستخدم صور الألبومات كاحتياطي
-        if (images.length === 0) {
-            // نحاول استخراج صور من أول ألبومين كعرض
-            const albums = getAlbumsList();
-            if (albums.length) {
-                for (let alb of albums) {
-                    if (alb.imgs && Object.keys(alb.imgs).length) {
-                        const albumImages = Object.values(alb.imgs).map(i => i.url).filter(u => u);
-                        images.push(...albumImages.slice(0, 10)); // نأخذ أول 10 صور من كل ألبوم
-                        if (images.length >= 20) break;
-                    }
-                }
-            }
+
+        if (sliderImagesArray.length > 0) {
+            // عرض السلايدر
+            renderSlider(container, sliderImagesArray, sliderData);
+        } else {
+            // عرض شبكة الألبومات (أعمالنا) كبديل
+            renderAlbumsGrid(container);
         }
-        
-        if (images.length === 0) {
-            container.innerHTML = '<div class="empty-state">⚠️ لا توجد صور للعرض. قم بإضافة صور من لوحة التحكم أو أضف صوراً في ألبومات أعمالنا.</div>';
-            return;
-        }
-        
+    }
+
+    function renderSlider(container, images, sliderData) {
         sliderImages = images;
         sliderDirection = (sliderData && sliderData.direction === 'ltr') ? 'ltr' : 'rtl';
         const duration = (sliderData && sliderData.duration) ? sliderData.duration * 1000 : 5000;
         
-        // بناء واجهة السلايدر
         let html = `<div class="slider-container" style="direction: ltr;">
                         <div class="slider-track" id="sliderTrack">`;
         sliderImages.forEach((url, idx) => {
@@ -519,7 +508,6 @@
         html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div></div>`;
         container.innerHTML = html;
         
-        // النقاط
         const dotsDiv = document.getElementById('sliderDots');
         if (dotsDiv) {
             dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
@@ -590,7 +578,6 @@
             }
         }
         
-        // ربط النقر على الصور
         sliderItems.forEach((item, idx) => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -605,6 +592,30 @@
         window.pauseSlider = pauseSlider;
         resetAutoSlide();
         window.goToSlide = goToSlide;
+    }
+
+    function renderAlbumsGrid(container) {
+        let albums = getAlbumsList();
+        if (albums.length === 0) {
+            container.innerHTML = '<div class="empty-state">⚠️ لا توجد أعمال لعرضها. قم بإضافة ألبومات وصور من لوحة التحكم.</div>';
+            return;
+        }
+        let html = '<div class="grid-auto">';
+        albums.forEach(alb => {
+            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
+            html += `<div class="card" data-album="${alb.id}">
+                        ${cover ? getWatermarkedImage(cover, alb.name || 'ألبوم') : '<div class="img-square" style="background:#f0f0f0;"></div>'}
+                        <div class="card-body">
+                            <div class="card-title">${alb.name || 'ألبوم'}</div>
+                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
+                        </div>
+                    </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+        document.querySelectorAll('#homeSliderContainer .card').forEach(c => {
+            c.addEventListener('click', () => openAlbum(c.getAttribute('data-album')));
+        });
     }
 
     // ========== دوال بناء المحتوى الأخرى ==========
@@ -712,9 +723,9 @@
         const main = document.getElementById('mainContent');
         if (!main) return;
         if (currentPage === 'home') {
-            const sliderTitle = (currentData.home_slider && currentData.home_slider.title) ? currentData.home_slider.title : 'أحدث أعمالنا';
-            main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">${sliderTitle}</h2><div id="homeSliderContainer"></div></div>`;
-            buildHomeSlider();
+            const sectionTitle = (currentData.home_slider && currentData.home_slider.title) ? currentData.home_slider.title : 'أحدث أعمالنا';
+            main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">${sectionTitle}</h2><div id="homeSliderContainer"></div></div>`;
+            buildHomeSliderOrAlbums();
         } else if (currentPage === 'store') {
             main.innerHTML = `<div class="container section"><h2 class="section-title">جميع المنتجات</h2><div id="allProductsGrid"></div></div>`;
             buildAllProductsGrid();
@@ -816,7 +827,7 @@
     db.ref(DB_PATH).once('value').then(snap => {
         clearTimeout(forceHideTimer);
         currentData = snap.val() || {};
-        console.log('تم تحميل البيانات:', currentData);
+        console.log('✅ تم تحميل البيانات من Firebase:', currentData);
         const splashSettings = {
             enabled: currentData.splash_enabled !== false,
             media_url: currentData.splash_media_url || '',
@@ -826,7 +837,7 @@
         showSplash(splashSettings);
         refreshAll();
     }).catch(err => {
-        console.error('❌ Firebase read error:', err);
+        console.error('❌ خطأ في Firebase:', err);
         clearTimeout(forceHideTimer);
         currentData = { splash_enabled: false };
         forceHideSplash();
