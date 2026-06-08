@@ -38,7 +38,7 @@
         @media (max-width: 700px) { .toast { white-space: normal; width: 80%; text-align: center; } .list-item-row { flex-direction: column; align-items: stretch; } .list-item-row input { margin-bottom: 8px; } }
         hr { margin: 15px 0; border-color: #e9e2d8; }
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-        .image-list-grid { display: flex; flex-direction: column; gap: 12px; margin: 15px 0; }
+        .image-list-grid { display: flex; flex-direction: column; gap: 12px; margin: 15px 0; max-height: 500px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 20px; }
         .slider-image-item { display: flex; gap: 10px; align-items: center; background: #fefaf5; padding: 8px 12px; border-radius: 20px; border: 1px solid #e9e2d8; }
         .slider-image-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; }
         .slider-image-item input { flex: 1; margin: 0; }
@@ -47,6 +47,7 @@
         .bulk-add-area textarea { direction: ltr; font-family: monospace; }
         .hint { font-size: 0.8rem; color: #6c757d; display: block; margin-top: 5px; }
         .bulk-delete-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .toggle-images-btn { background: #6c757d; margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -160,7 +161,6 @@
         catch(e) { showToast('❌ فشل الحذف: '+e.message); }
     }
 
-    // ========== إدارة السلايدر مع حذف متعدد ==========
     window.saveHomeSlider = function() {
         const enabled = document.getElementById('sliderEnabled').checked;
         const title = document.getElementById('sliderTitle').value;
@@ -204,7 +204,6 @@
         showToast(`✅ تمت إضافة ${urls.length} صورة جديدة إلى القائمة (لا تنس حفظ التغييرات)`);
     };
 
-    // حذف العناصر المحددة
     window.deleteSelectedSliderImages = function() {
         const checkboxes = document.querySelectorAll('#sliderImagesList .checkbox-select');
         const selected = [];
@@ -222,7 +221,6 @@
         }
     };
 
-    // حذف الكل
     window.deleteAllSliderImages = function() {
         if (confirm('⚠️ هل أنت متأكد من حذف جميع الصور من القائمة؟ لن يتم حذفها من قاعدة البيانات إلا بعد الضغط على حفظ.')) {
             const container = document.getElementById('sliderImagesList');
@@ -231,7 +229,18 @@
         }
     };
 
-    // ========== دوال الحفظ العامة ==========
+    // إظهار/إخفاء قائمة الصور
+    window.toggleImagesVisibility = function() {
+        const list = document.getElementById('sliderImagesList');
+        if (list.style.display === 'none') {
+            list.style.display = 'flex';
+            document.getElementById('toggleImagesBtn').innerHTML = '👁️ إخفاء الصور';
+        } else {
+            list.style.display = 'none';
+            document.getElementById('toggleImagesBtn').innerHTML = '👁️ إظهار الصور';
+        }
+    };
+
     window.saveGeneral = function() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
@@ -393,6 +402,7 @@
                     <div class="bulk-delete-bar">
                         <button class="btn-red" onclick="deleteSelectedSliderImages()">🗑️ حذف المحدد</button>
                         <button class="btn-red" onclick="deleteAllSliderImages()">⚠️ حذف الكل</button>
+                        <button id="toggleImagesBtn" class="toggle-images-btn" onclick="toggleImagesVisibility()">👁️ إخفاء الصور</button>
                     </div>
                     <h4>🖼️ صور السلايدر (يمكنك تحديد مربعات الاختيار لحذف عدة صور دفعة واحدة)</h4>
                     <div id="sliderImagesList" class="image-list-grid">${sliderImagesHtml}</div>
