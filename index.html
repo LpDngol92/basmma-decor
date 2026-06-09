@@ -46,11 +46,22 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Cairo', sans-serif; background: #fefaf5; color: #2d2a2a; line-height: 1.5; }
+        body { font-family: 'Cairo', sans-serif; background: #fff; color: #2d2a2a; line-height: 1.5; }
         :root { --primary: #c8a165; --primary-dark: #a47e44; --gray: #6f6a64; --shadow: 0 8px 25px rgba(0,0,0,0.05); --shadow-hover: 0 15px 35px rgba(0,0,0,0.1); }
         
-        /* سبلاش ستوري فيديو */
-        #splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        /* سبلاش ستوري فيديو - مع تحسين احتواء الوسائط */
+        #splash { 
+            position: fixed; inset: 0; background: #000; z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; 
+            transition: opacity 0.5s; 
+        }
+        /* جعل الصورة أو الفيديو داخل السبلاش يظهر كامل بدون قص */
+        #splash img, #splash video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;   /* يحافظ على نسبة الأبعاد ويملأ الفراغ بخلفية سوداء */
+            background: #000;
+        }
         .stories-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; }
         .story-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s ease; }
         .story-video.active { opacity: 1; z-index: 2; }
@@ -64,97 +75,28 @@
         .story-counter { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); padding: 5px 14px; border-radius: 30px; color: white; font-size: 0.8rem; z-index: 20; backdrop-filter: blur(4px); }
         @media (max-width: 700px) { .story-nav { width: 20%; } }
         
-        /* ---------- السلايدر الأسود ثلاثي الأبعاد (الجديد) ---------- */
-        .hero-slider-3d {
-            position: relative;
-            width: 100%;
-            min-height: 90vh;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .slider-bg-blur {
-            position: absolute;
-            inset: 0;
-            filter: blur(40px);
-            opacity: 0.6;
-            background-size: cover;
-            background-position: center;
-            transition: 0.5s;
-            z-index: 0;
-        }
-        .slider-stage {
-            position: relative;
-            z-index: 2;
-            width: 90%;
-            max-width: 1100px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .slider-image-card {
-            width: 100%;
-            max-width: 380px;
-            aspect-ratio: 9 / 16;
-            border-radius: 32px;
-            overflow: hidden;
-            box-shadow: 0 30px 50px rgba(0,0,0,0.5);
-            transition: 0.4s;
-            cursor: pointer;
-            margin: 0 auto;
-            border: 2px solid rgba(200,161,101,0.6);
-        }
-        .slider-image-card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .slider-nav-buttons {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            z-index: 10;
-        }
-        .slider-nav-buttons button {
-            background: rgba(0,0,0,0.6);
-            border: none;
-            color: var(--primary);
-            font-size: 1.2rem;
-            padding: 8px 20px;
-            border-radius: 40px;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            transition: 0.2s;
-        }
-        .slider-nav-buttons button:hover {
-            background: var(--primary);
-            color: #000;
-        }
-        .slider-progress-ring {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0,0,0,0.6);
-            backdrop-filter: blur(8px);
-            padding: 8px 14px;
-            border-radius: 40px;
-            color: var(--primary);
-            font-weight: bold;
-            font-size: 0.9rem;
-            z-index: 10;
-        }
-        @media (max-width: 700px) {
-            .slider-image-card { max-width: 280px; }
-            .hero-slider-3d { min-height: 70vh; }
-        }
+        /* سلايدر تلقائي - يعرض كل الصور */
+        .slider-container { position: relative; width: 100%; overflow: hidden; padding: 30px 0; direction: ltr; }
+        .slider-track { display: flex; align-items: center; justify-content: center; transition: transform 0.5s ease; gap: 30px; }
+        .slider-item { flex: 0 0 auto; width: 360px; aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 12px 25px rgba(0,0,0,0.15); transform: scale(0.85); opacity: 0.7; background: #f0f0f0; }
+        .slider-item.active { transform: scale(1.05); opacity: 1; box-shadow: 0 25px 40px rgba(0,0,0,0.3); z-index: 2; }
+        .slider-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        @media (max-width: 700px) { .slider-item { width: 260px; } .slider-item.active { transform: scale(1.03); } .slider-track { gap: 15px; } }
+        .slider-nav { text-align: center; margin-top: 30px; }
+        .slider-dots { display: inline-flex; gap: 12px; background: rgba(0,0,0,0.05); padding: 8px 20px; border-radius: 60px; }
+        .dot { width: 10px; height: 10px; background: #ccc; border-radius: 50%; cursor: pointer; transition: 0.2s; }
+        .dot.active { background: var(--primary); width: 28px; border-radius: 20px; }
         
-        /* باقي الأنماط الأصلية */
+        /* تقييم ومشاهدات */
+        .rating-box { background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); border-radius: 28px; padding: 12px 20px; margin-top: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+        .stars { direction: ltr; display: inline-flex; gap: 5px; }
+        .star { font-size: 1.4rem; cursor: pointer; color: #ccc; transition: 0.1s; }
+        .star:hover, .star.hover { color: #ffc107; }
+        .star.active { color: #ffc107; }
+        .rating-stats { font-size: 0.85rem; color: #ddd; display: flex; align-items: center; gap: 10px; }
+        @media (max-width: 700px) { .rating-box { flex-direction: column; align-items: stretch; text-align: center; } .stars { justify-content: center; } }
+        
+        /* باقي الأنماط الأساسية */
         .header { background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 1000; }
         .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; flex-wrap: wrap; gap: 1rem; }
@@ -295,7 +237,7 @@
         tryLoad();
     }
 
-    // ========== ستوريز سبلاش (فيديوهات قصصية) ==========
+    // ========== ستوريز سبلاش ==========
     let storiesVideos = [];
     let currentStoryIndex = 0;
     let storyInterval = null;
@@ -427,7 +369,7 @@
         }, 500);
     }
 
-    // ========== Lightbox مع التقييم والمشاهدات (الأصلي) ==========
+    // ========== Lightbox مع التقييم والمشاهدات ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -643,9 +585,10 @@
     waBtn.onclick = sendWhatsapp;
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 
-    // ========== السلايدر الأسود الجديد ==========
+    // ========== السلايدر التلقائي ==========
     let currentSlideIndex = 0;
-    let sliderImagesArray = [];
+    let sliderImages = [];
+    let sliderTrack = null;
     let autoDuration = 5000;
 
     function buildHomeSlider() {
@@ -656,78 +599,50 @@
             buildAlbumsBackup(container);
             return;
         }
-        sliderImagesArray = sliderData.images.map(img => img.url).filter(url => url);
-        if (sliderImagesArray.length === 0) {
-            buildAlbumsBackup(container);
-            return;
-        }
+        sliderImages = sliderData.images.map(img => img.url).filter(url => url);
+        if (sliderImages.length === 0) { buildAlbumsBackup(container); return; }
         autoDuration = (sliderData.duration || 5) * 1000;
-        currentSlideIndex = 0;
-        let slideInterval;
-        let isPaused = false;
-
-        container.innerHTML = `
-            <div class="hero-slider-3d">
-                <div class="slider-bg-blur" id="sliderBgBlur" style="background-image: url('${sliderImagesArray[0]}')"></div>
-                <div class="slider-stage">
-                    <div class="slider-image-card" id="sliderMainCard">
-                        <img src="${sliderImagesArray[0]}" id="sliderMainImg">
-                    </div>
-                </div>
-                <div class="slider-nav-buttons">
-                    <button id="sliderPrev"><i class="fas fa-chevron-right"></i> السابق</button>
-                    <button id="sliderNext">التالي <i class="fas fa-chevron-left"></i></button>
-                </div>
-                <div class="slider-progress-ring" id="sliderProgress">${autoDuration/1000}s</div>
-            </div>
-        `;
-
-        const bgBlur = document.getElementById('sliderBgBlur');
-        const mainImg = document.getElementById('sliderMainImg');
-        const prevBtn = document.getElementById('sliderPrev');
-        const nextBtn = document.getElementById('sliderNext');
-        const progressSpan = document.getElementById('sliderProgress');
-        const card = document.getElementById('sliderMainCard');
-
-        function updateSlide(index, resetTimer = true) {
-            if (index < 0) index = sliderImagesArray.length - 1;
-            if (index >= sliderImagesArray.length) index = 0;
-            currentSlideIndex = index;
-            mainImg.src = sliderImagesArray[currentSlideIndex];
-            bgBlur.style.backgroundImage = `url('${sliderImagesArray[currentSlideIndex]}')`;
-            if (resetTimer) restartTimer();
+        let html = `<div class="slider-container"><div class="slider-track" id="sliderTrack">`;
+        sliderImages.forEach((url, idx) => { html += `<div class="slider-item" data-index="${idx}"><img src="${url}" loading="lazy" onerror="this.src='https://placehold.co/600x1067?text=خطأ+تحميل';"></div>`; });
+        html += `</div><div class="slider-nav"><div class="slider-dots" id="sliderDots"></div></div></div>`;
+        container.innerHTML = html;
+        const dotsDiv = document.getElementById('sliderDots');
+        if (dotsDiv) {
+            dotsDiv.innerHTML = sliderImages.map((_, i) => `<div class="dot ${i === currentSlideIndex ? 'active' : ''}" data-dot="${i}"></div>`).join('');
+            dotsDiv.querySelectorAll('.dot').forEach(dot => { dot.addEventListener('click', (e) => { const idx = parseInt(dot.getAttribute('data-dot')); if (!isNaN(idx)) goToSlide(idx); }); });
         }
-
-        function restartTimer() {
-            if (slideInterval) clearInterval(slideInterval);
-            let startTime = Date.now();
-            slideInterval = setInterval(() => {
-                if (isPaused) return;
-                let elapsed = Date.now() - startTime;
-                let remaining = Math.max(0, autoDuration - elapsed);
-                progressSpan.innerText = Math.ceil(remaining / 1000) + 's';
-                if (elapsed >= autoDuration) {
-                    clearInterval(slideInterval);
-                    nextSlide();
-                }
-            }, 100);
+        sliderTrack = document.getElementById('sliderTrack');
+        const sliderItems = document.querySelectorAll('.slider-item');
+        if (!sliderTrack || sliderItems.length === 0) return;
+        function updateSliderPosition(animate = true) {
+            const containerWidth = sliderTrack.parentElement.clientWidth;
+            const activeItem = sliderItems[currentSlideIndex];
+            if (!activeItem) return;
+            const activeRect = activeItem.getBoundingClientRect();
+            const offset = activeRect.left + activeRect.width/2 - containerWidth/2;
+            sliderTrack.style.transition = animate ? 'transform 0.5s ease' : 'none';
+            sliderTrack.style.transform = `translateX(${-offset}px)`;
+            sliderItems.forEach((item, idx) => { if (idx === currentSlideIndex) item.classList.add('active'); else item.classList.remove('active'); });
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, idx) => { if (idx === currentSlideIndex) dot.classList.add('active'); else dot.classList.remove('active'); });
         }
-
-        function nextSlide() {
-            updateSlide(currentSlideIndex + 1, true);
+        function goToSlide(newIndex) {
+            if (newIndex < 0) newIndex = sliderImages.length - 1;
+            if (newIndex >= sliderImages.length) newIndex = 0;
+            if (newIndex === currentSlideIndex) return;
+            currentSlideIndex = newIndex;
+            updateSliderPosition(true);
         }
-        function prevSlide() {
-            updateSlide(currentSlideIndex - 1, true);
-        }
-
-        prevBtn.onclick = () => { isPaused = false; prevSlide(); };
-        nextBtn.onclick = () => { isPaused = false; nextSlide(); };
-        card.onclick = () => {
-            isPaused = true;
-            openLightbox(sliderImagesArray, currentSlideIndex);
-        };
-
-        updateSlide(0, true);
+        function nextSlide() { let next = currentSlideIndex + 1; if (next >= sliderImages.length) next = 0; goToSlide(next); }
+        function startAutoSlide() { if (sliderInterval) clearInterval(sliderInterval); sliderInterval = setInterval(() => { if (!isSliderPaused) nextSlide(); }, autoDuration); }
+        function pauseSlider() { isSliderPaused = true; }
+        function resumeSlider() { isSliderPaused = false; }
+        sliderItems.forEach((item, idx) => { item.addEventListener('click', (e) => { e.stopPropagation(); pauseSlider(); openLightbox(sliderImages, idx); }); });
+        window.addEventListener('resize', () => updateSliderPosition(false));
+        setTimeout(() => updateSliderPosition(false), 100);
+        startAutoSlide();
+        window.resumeSlider = resumeSlider;
+        window.pauseSlider = pauseSlider;
     }
 
     function buildAlbumsBackup(container) {
