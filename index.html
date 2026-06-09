@@ -49,8 +49,19 @@
         body { font-family: 'Cairo', sans-serif; background: #fff; color: #2d2a2a; line-height: 1.5; }
         :root { --primary: #c8a165; --primary-dark: #a47e44; --gray: #6f6a64; --shadow: 0 8px 25px rgba(0,0,0,0.05); --shadow-hover: 0 15px 35px rgba(0,0,0,0.1); }
         
-        /* سبلاش ستوري فيديو */
-        #splash { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        /* سبلاش ستوري فيديو - مع تحسين احتواء الوسائط */
+        #splash { 
+            position: fixed; inset: 0; background: #000; z-index: 9999; 
+            display: flex; align-items: center; justify-content: center; 
+            transition: opacity 0.5s; 
+        }
+        /* جعل الصورة أو الفيديو داخل السبلاش يظهر كامل بدون قص */
+        #splash img, #splash video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;   /* يحافظ على نسبة الأبعاد ويملأ الفراغ بخلفية سوداء */
+            background: #000;
+        }
         .stories-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; }
         .story-video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s ease; }
         .story-video.active { opacity: 1; z-index: 2; }
@@ -867,12 +878,25 @@
             const splashDiv = document.getElementById('splash');
             splashDiv.innerHTML = '';
             if (!currentData.splash_enabled) { splashDiv.style.display = 'none'; return; }
-            const img = document.createElement('img');
-            img.src = currentData.splash_media_url;
-            img.className = 'splash-media';
-            img.oncontextmenu = (e) => e.preventDefault();
-            img.ondragstart = (e) => e.preventDefault();
-            splashDiv.appendChild(img);
+            const isVideo = currentData.splash_type === 'video' && currentData.splash_video_url;
+            let mediaElement;
+            if (isVideo) {
+                mediaElement = document.createElement('video');
+                mediaElement.src = currentData.splash_video_url;
+                mediaElement.muted = true;
+                mediaElement.playsInline = true;
+                mediaElement.autoplay = true;
+                mediaElement.loop = false;
+                mediaElement.onerror = () => { console.warn('فيديو السبلاش فاشل، تحويل لصورة'); showImageFallback(splashDiv); };
+                splashDiv.appendChild(mediaElement);
+                mediaElement.play().catch(e => { console.warn('تشغيل الفيديو تلقائياً عثر'); showImageFallback(splashDiv); });
+            } else {
+                mediaElement = document.createElement('img');
+                mediaElement.src = currentData.splash_media_url;
+                mediaElement.alt = 'شاشة بداية';
+                mediaElement.onerror = () => { mediaElement.src = 'https://placehold.co/1080x1920?text=Basma+Ghyr'; };
+                splashDiv.appendChild(mediaElement);
+            }
             if (currentData.splash_show_skip) {
                 const skipBtn = document.createElement('button');
                 skipBtn.innerText = 'تخطي ←';
@@ -891,6 +915,25 @@
                 splashDiv.style.opacity = '0';
                 setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
             }, (currentData.splash_duration || 5) * 1000);
+
+            function showImageFallback(container) {
+                container.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = currentData.splash_media_url || 'https://placehold.co/1080x1920?text=Basma+Ghyr';
+                img.alt = 'شاشة بداية';
+                container.appendChild(img);
+                if (currentData.splash_show_skip) {
+                    const skipBtn = document.createElement('button');
+                    skipBtn.innerText = 'تخطي ←';
+                    skipBtn.className = 'splash-skip';
+                    skipBtn.onclick = () => {
+                        clearTimeout(splashTimeout);
+                        splashDiv.style.opacity = '0';
+                        setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
+                    };
+                    container.appendChild(skipBtn);
+                }
+            }
         } else {
             document.getElementById('splash').style.display = 'none';
         }
