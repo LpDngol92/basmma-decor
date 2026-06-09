@@ -28,17 +28,31 @@
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; margin-bottom: 6px; font-weight: 600; color: #5a5a5a; }
         input, textarea, select { width: 100%; padding: 12px; border: 1px solid #e0d6cc; border-radius: 20px; font-family: inherit; font-size: 0.9rem; margin-bottom: 8px; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #b88b4a; box-shadow: 0 0 0 2px rgba(184,139,74,0.2); }
         .list-item-row { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; background: #fefaf5; padding: 12px; border-radius: 20px; border: 1px solid #e9e2d8; flex-wrap: wrap; }
         .list-item-row input { flex: 1; margin: 0; }
+        .image-delete-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-top: 15px; }
+        .image-delete-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px; border: 1px solid #ddd; }
+        .urls-textarea { font-family: monospace; height: 100px; }
         .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e2a3a; color: white; padding: 10px 24px; border-radius: 50px; z-index: 9999; display: none; font-size: 0.85rem; white-space: nowrap; }
         @media (max-width: 700px) { .toast { white-space: normal; width: 80%; text-align: center; } .list-item-row { flex-direction: column; align-items: stretch; } .list-item-row input { margin-bottom: 8px; } }
         hr { margin: 15px 0; border-color: #e9e2d8; }
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-        .splash-item-row { display: flex; gap: 10px; align-items: center; background: #fefaf5; padding: 8px 12px; border-radius: 20px; border: 1px solid #e9e2d8; margin-bottom: 10px; }
-        .splash-item-row input { flex: 1; margin: 0; }
-        .splash-item-row .checkbox-select { width: 20px; margin: 0 5px; }
+        .image-list-grid { display: flex; flex-direction: column; gap: 12px; margin: 15px 0; max-height: 500px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 20px; }
+        .slider-image-item, .splash-item-row { display: flex; gap: 10px; align-items: center; background: #fefaf5; padding: 8px 12px; border-radius: 20px; border: 1px solid #e9e2d8; margin-bottom: 10px; }
+        .slider-image-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; }
+        .slider-image-item input, .splash-item-row input { flex: 1; margin: 0; }
+        .slider-image-item .checkbox-select, .splash-item-row .checkbox-select { width: 20px; margin: 0 5px; }
         .bulk-add-area { margin: 15px 0; padding: 12px; background: #fefaf5; border-radius: 20px; border: 1px dashed #b88b4a; }
         .bulk-add-area textarea { direction: ltr; font-family: monospace; }
+        .hint { font-size: 0.8rem; color: #6c757d; display: block; margin-top: 5px; }
+        .bulk-delete-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        .maintenance-time-inputs { display: flex; gap: 15px; flex-wrap: wrap; margin: 15px 0; }
+        .maintenance-time-inputs input { width: auto; flex: 1; min-width: 70px; }
+        .maintenance-preview { background: #fefaf5; padding: 15px; border-radius: 20px; margin: 15px 0; border-right: 4px solid #b88b4a; }
+        .maintenance-preview h5 { margin-bottom: 8px; color: #b88b4a; }
+        #maintenanceCountdownPreview { font-size: 1.2rem; font-weight: bold; direction: ltr; }
+        /* تمت إزالة أنماط القصص القديمة غير المستخدمة */
     </style>
 </head>
 <body>
@@ -114,7 +128,46 @@
     function toggleCollapse(btn,id) { const content=btn.nextElementSibling; const isOpen=content.style.display==='block'; content.style.display=isOpen?'none':'block'; openSections[id]=!isOpen; btn.querySelector('span').innerHTML=isOpen?'▾':'▴'; }
     function restoreOpen() { document.querySelectorAll('.collapse-section').forEach(s=>{ const id=s.dataset.sectionId; if(openSections[id]){ s.querySelector('.collapse-content').style.display='block'; s.querySelector('.collapse-btn span').innerHTML='▴'; } }); }
 
-    // ========== إدارة السلايدر (كما هو) ==========
+    // إدارة الصور للألبومات والمتجر
+    async function addImagesToTarget(target, urlsArray, clearTextareaId) {
+        if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط صالحة');
+        const unique = [...new Set(urlsArray)];
+        if(unique.length !== urlsArray.length) showToast('تمت إزالة الروابط المكررة تلقائياً');
+        const promises = unique.map(url => db.ref(DB_PATH+'/'+target+'/imgs').push({ url }));
+        await Promise.all(promises);
+        showToast(`✅ تمت إضافة ${unique.length} صورة بنجاح`);
+        if(clearTextareaId) document.getElementById(clearTextareaId).value = '';
+        loadData();
+    }
+
+    window.deleteImage = function(path, imgId, gridId) {
+        db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{
+            showToast('🗑️ تم حذف الصورة');
+            loadData();
+        }).catch(e=>showToast('خطأ في الحذف: '+e.message));
+    }
+
+    function loadImagesForDelete(path, gridId) {
+        const grid = document.getElementById(gridId);
+        if(!grid) return;
+        const [type, id] = path.split('/');
+        const folder = currentData[type]?.[id];
+        if(!folder || !folder.imgs) { grid.innerHTML='<p class="empty-state">لا توجد صور</p>'; return; }
+        grid.innerHTML = Object.keys(folder.imgs).map(imgId=>`
+            <div style="text-align:center;">
+                <img src="${folder.imgs[imgId].url}" style="width:100%; aspect-ratio:1; object-fit:cover; border-radius:12px;">
+                <button class="btn-red" style="margin-top:4px; padding:4px 8px; font-size:0.75rem;" onclick="deleteImage('${path}','${imgId}','${gridId}')">حذف</button>
+            </div>
+        `).join('');
+    }
+
+    async function deleteSection(type, id, name) {
+        if(!confirm(`⚠️ هل أنت متأكد من حذف "${name}" بالكامل؟ سيتم حذف جميع الصور المرتبطة به.`)) return;
+        try { await db.ref(DB_PATH+'/'+type+'/'+id).remove(); showToast(`✅ تم حذف "${name}" بنجاح`); loadData(); } 
+        catch(e) { showToast('❌ فشل الحذف: '+e.message); }
+    }
+
+    // ========== إدارة السلايدر ==========
     window.saveHomeSlider = function() {
         const enabled = document.getElementById('sliderEnabled').checked;
         const title = document.getElementById('sliderTitle').value;
@@ -135,7 +188,7 @@
         const container = document.getElementById('sliderImagesList');
         const div = document.createElement('div');
         div.className = 'slider-image-item';
-        div.innerHTML = `<input type="checkbox" class="checkbox-select"> <input type="text" class="slider-image-url" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+        div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> <input type="text" class="slider-image-url" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
         container.appendChild(div);
     };
 
@@ -143,33 +196,60 @@
         const textarea = document.getElementById('bulkUrls');
         const rawUrls = textarea.value.split(/\r?\n/);
         const urls = rawUrls.filter(u => u.trim().length > 0);
-        if (urls.length === 0) { showToast('الرجاء إدخال روابط صالحة'); return; }
+        if (urls.length === 0) {
+            showToast('الرجاء إدخال روابط صالحة (كل رابط في سطر)');
+            return;
+        }
         const container = document.getElementById('sliderImagesList');
         urls.forEach(url => {
             const div = document.createElement('div');
             div.className = 'slider-image-item';
-            div.innerHTML = `<input type="checkbox" class="checkbox-select"> <input type="text" class="slider-image-url" value="${url.replace(/"/g, '&quot;')}" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+            div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> <input type="text" class="slider-image-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
             container.appendChild(div);
         });
         textarea.value = '';
-        showToast(`✅ تمت إضافة ${urls.length} صورة`);
+        showToast(`✅ تمت إضافة ${urls.length} صورة جديدة إلى القائمة (لا تنس حفظ التغييرات)`);
     };
 
     window.deleteSelectedSliderImages = function() {
-        document.querySelectorAll('#sliderImagesList .checkbox-select:checked').forEach(cb => cb.parentElement.remove());
-        showToast('تم حذف المحدد (لم يتم الحفظ بعد)');
+        const checkboxes = document.querySelectorAll('#sliderImagesList .checkbox-select');
+        const selected = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const parent = cb.parentElement;
+                if (parent) parent.remove();
+                selected.push(true);
+            }
+        });
+        if (selected.length === 0) showToast('لم يتم تحديد أي صورة للحذف');
+        else showToast(`✅ تم حذف ${selected.length} صورة من القائمة (لم يتم حفظ التغييرات بعد، اضغط حفظ لحذفها نهائياً)`);
     };
 
     window.deleteAllSliderImages = function() {
-        if (confirm('حذف كل الصور؟')) document.getElementById('sliderImagesList').innerHTML = '';
+        if (confirm('⚠️ هل أنت متأكد من حذف جميع الصور من القائمة؟ لن يتم حذفها من قاعدة البيانات إلا بعد الضغط على حفظ.')) {
+            document.getElementById('sliderImagesList').innerHTML = '';
+            showToast('تم حذف جميع الصور من القائمة (لم يتم الحفظ بعد)');
+        }
     };
 
-    // ========== إدارة السبلاش المتعدد (القصة) ==========
+    window.toggleImagesVisibility = function() {
+        const list = document.getElementById('sliderImagesList');
+        const btn = document.getElementById('toggleImagesBtn');
+        if (list.style.display === 'none') {
+            list.style.display = 'flex';
+            btn.innerHTML = '👁️ إخفاء الصور';
+        } else {
+            list.style.display = 'none';
+            btn.innerHTML = '👁️ إظهار الصور';
+        }
+    };
+
+    // ========== إدارة سبلاش متعدد (ستوري) ==========
     window.addSplashItem = function() {
         const container = document.getElementById('splashItemsList');
         const div = document.createElement('div');
         div.className = 'splash-item-row';
-        div.innerHTML = `<input type="checkbox" class="checkbox-select"> <input type="text" class="splash-item-url" placeholder="رابط الصورة أو الفيديو" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+        div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> <input type="text" class="splash-item-url" placeholder="رابط الصورة أو الفيديو" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
         container.appendChild(div);
     };
 
@@ -177,25 +257,40 @@
         const textarea = document.getElementById('bulkSplashUrls');
         const rawUrls = textarea.value.split(/\r?\n/);
         const urls = rawUrls.filter(u => u.trim().length > 0);
-        if (urls.length === 0) { showToast('الرجاء إدخال روابط'); return; }
+        if (urls.length === 0) {
+            showToast('الرجاء إدخال روابط صالحة (كل رابط في سطر)');
+            return;
+        }
         const container = document.getElementById('splashItemsList');
         urls.forEach(url => {
             const div = document.createElement('div');
             div.className = 'splash-item-row';
-            div.innerHTML = `<input type="checkbox" class="checkbox-select"> <input type="text" class="splash-item-url" value="${url.replace(/"/g, '&quot;')}" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+            div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> <input type="text" class="splash-item-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة أو الفيديو" style="flex:1;"><button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
             container.appendChild(div);
         });
         textarea.value = '';
-        showToast(`✅ تمت إضافة ${urls.length} عنصر`);
+        showToast(`✅ تمت إضافة ${urls.length} عنصر إلى القائمة (لا تنس حفظ التغييرات)`);
     };
 
     window.deleteSelectedSplashItems = function() {
-        document.querySelectorAll('#splashItemsList .checkbox-select:checked').forEach(cb => cb.parentElement.remove());
-        showToast('تم حذف المحدد');
+        const checkboxes = document.querySelectorAll('#splashItemsList .checkbox-select');
+        const selected = [];
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const parent = cb.parentElement;
+                if (parent) parent.remove();
+                selected.push(true);
+            }
+        });
+        if (selected.length === 0) showToast('لم يتم تحديد أي عنصر للحذف');
+        else showToast(`✅ تم حذف ${selected.length} عنصر من القائمة (لم يتم الحفظ بعد)`);
     };
 
     window.deleteAllSplashItems = function() {
-        if (confirm('حذف جميع عناصر السبلاش؟')) document.getElementById('splashItemsList').innerHTML = '';
+        if (confirm('⚠️ هل أنت متأكد من حذف جميع عناصر السبلاش؟')) {
+            document.getElementById('splashItemsList').innerHTML = '';
+            showToast('تم حذف جميع العناصر من القائمة (لم يتم الحفظ بعد)');
+        }
     };
 
     window.saveSplashSettings = function() {
@@ -211,7 +306,6 @@
                 items.push({ url, type: isVideo ? 'video' : 'image' });
             }
         });
-        // تحديث البيانات في Firebase
         db.ref(DB_PATH).update({
             splash_enabled: enabled,
             splash_show_skip: showSkip,
@@ -221,73 +315,7 @@
           .catch(e => showToast('خطأ: '+e.message));
     };
 
-    // ========== باقي الدوال (مختصرة) ==========
-    // الألبومات، المتجر، الكتالوجات، الشركاء، أوقات العمل، التقييمات، الصيانة، الفقاعة...
-    // (تم الاحتفاظ بها من الكود السابق لكن اختصرتها للمساحة، لكنها موجودة في الكود الكامل الأصلي)
-    // لضمان اكتمال الكود، سأضيف دوال أساسية لإدارة الألبومات والمتجر والكتالوجات والشركاء.
-
-    async function addImagesToTarget(target, urlsArray, clearTextareaId) {
-        if(!target || urlsArray.length===0) return showToast('اختر الوجهة وأدخل روابط');
-        const unique = [...new Set(urlsArray)];
-        const promises = unique.map(url => db.ref(DB_PATH+'/'+target+'/imgs').push({ url }));
-        await Promise.all(promises);
-        showToast(`✅ تمت إضافة ${unique.length} صورة`);
-        if(clearTextareaId) document.getElementById(clearTextareaId).value = '';
-        loadData();
-    }
-
-    window.addImagesToAlbum = async () => {
-        const target = document.getElementById('addToAlbumSelect').value;
-        const urls = document.getElementById('albumUrls').value.split('\n').filter(u=>u.trim());
-        if(!target || !urls.length) return showToast('اختر ألبوم وأدخل روابط');
-        await addImagesToTarget(target, urls, 'albumUrls');
-    };
-    window.addImagesToStore = async () => {
-        const target = document.getElementById('addToStoreSelect').value;
-        const urls = document.getElementById('storeUrls').value.split('\n').filter(u=>u.trim());
-        if(!target || !urls.length) return showToast('اختر قسم وأدخل روابط');
-        await addImagesToTarget(target, urls, 'storeUrls');
-    };
-    window.deleteImage = function(path, imgId, gridId) {
-        db.ref(`${DB_PATH}/${path}/imgs/${imgId}`).remove().then(()=>{ showToast('تم حذف الصورة'); loadData(); });
-    };
-    window.deleteSection = async (type, id, name) => {
-        if(!confirm(`حذف "${name}" بالكامل؟`)) return;
-        await db.ref(DB_PATH+'/'+type+'/'+id).remove();
-        showToast(`تم حذف "${name}"`);
-        loadData();
-    };
-    window.addAlbumNow = () => {
-        const name = document.getElementById('newAlbumName').value.trim();
-        if(!name) return showToast('أدخل اسم الألبوم');
-        db.ref(DB_PATH+'/albums/'+Date.now()).set({ name }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
-        document.getElementById('newAlbumName').value = '';
-    };
-    window.addStoreCatNow = () => {
-        const name = document.getElementById('newStoreCatName').value.trim();
-        if(!name) return showToast('أدخل اسم القسم');
-        db.ref(DB_PATH+'/store_categories/'+Date.now()).set({ name }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
-        document.getElementById('newStoreCatName').value = '';
-    };
-    window.addCatalogNow = () => {
-        const name = document.getElementById('newCatalogName').value.trim();
-        const code = document.getElementById('newCatalogCode').value.trim();
-        if(!name||!code) return showToast('أدخل الاسم والكود');
-        db.ref(DB_PATH+'/catalogs/'+Date.now()).set({ name, code }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
-        document.getElementById('newCatalogName').value = ''; document.getElementById('newCatalogCode').value = '';
-    };
-    window.addPartnerNow = () => {
-        const url = document.getElementById('newPartnerUrl').value.trim(); const link = document.getElementById('newPartnerLink').value.trim();
-        if(!url) return showToast('أدخل رابط الصورة');
-        db.ref(DB_PATH+'/partners/'+Date.now()).set({ url, link: link||null }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
-        document.getElementById('newPartnerUrl').value = ''; document.getElementById('newPartnerLink').value = '';
-    };
-    window.updateAlbumName = (id, newName) => { if(newName) db.ref(DB_PATH+'/albums/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
-    window.updateStoreCatName = (id, newName) => { if(newName) db.ref(DB_PATH+'/store_categories/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
-    window.updateCatalogName = (id, newName) => { if(newName) db.ref(DB_PATH+'/catalogs/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
-    window.updateCatalogCode = (id, newCode) => { db.ref(DB_PATH+'/catalogs/'+id+'/code').set(newCode).then(()=>{ showToast('تم تحديث الكود'); loadData(); }); };
-    window.updatePartner = (id, url, link) => { if(url) db.ref(DB_PATH+'/partners/'+id).update({ url, link: link||null }).then(()=>{ showToast('تم التحديث'); loadData(); }); };
-    window.deleteReview = (id) => db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>{ showToast('تم حذف التقييم'); loadData(); });
+    // ========== الإعدادات العامة ==========
     window.saveGeneral = function() {
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
@@ -323,17 +351,80 @@
             maintenance_title: document.getElementById('maintenanceTitle').value,
             maintenance_message: document.getElementById('maintenanceMsg').value,
             maintenance_until: until
-        }).then(() => { showToast('تم حفظ إعدادات الصيانة'); loadData(); });
+        }).then(() => { showToast('تم حفظ إعدادات الصيانة'); loadData(); }).catch(e => showToast('خطأ: ' + e.message));
     };
-    function updateMaintenancePreview() { /* تبقى كما هي */ }
+    function updateMaintenancePreview() {
+        const active = document.getElementById('maintenanceMode').checked;
+        const previewBox = document.getElementById('maintenancePreviewBox');
+        if (!active) { if(previewBox) previewBox.style.display = 'none'; return; }
+        if(previewBox) previewBox.style.display = 'block';
+        let h = parseInt(document.getElementById('hoursInput').value) || 0;
+        let m = parseInt(document.getElementById('minutesInput').value) || 0;
+        let s = parseInt(document.getElementById('secondsInput').value) || 0;
+        let totalSec = h * 3600 + m * 60 + s;
+        const previewSpan = document.getElementById('maintenanceCountdownPreview');
+        if (totalSec <= 0) previewSpan.innerHTML = 'بدون وقت محدد';
+        else {
+            const hours = Math.floor(totalSec / 3600);
+            const minutes = Math.floor((totalSec % 3600) / 60);
+            const seconds = totalSec % 60;
+            previewSpan.innerHTML = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
+        }
+    }
 
-    // بناء واجهة الإدارة
+    // دوال الإضافة والتحديث للألبومات والمتجر والكتالوجات والشركاء
+    window.addAlbumNow = () => {
+        const name = document.getElementById('newAlbumName').value.trim();
+        if(!name) return showToast('أدخل اسم الألبوم');
+        db.ref(DB_PATH+'/albums/'+Date.now()).set({ name }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
+        document.getElementById('newAlbumName').value = '';
+    };
+    window.addStoreCatNow = () => {
+        const name = document.getElementById('newStoreCatName').value.trim();
+        if(!name) return showToast('أدخل اسم القسم');
+        db.ref(DB_PATH+'/store_categories/'+Date.now()).set({ name }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
+        document.getElementById('newStoreCatName').value = '';
+    };
+    window.addCatalogNow = () => {
+        const name = document.getElementById('newCatalogName').value.trim();
+        const code = document.getElementById('newCatalogCode').value.trim();
+        if(!name||!code) return showToast('أدخل الاسم والكود');
+        db.ref(DB_PATH+'/catalogs/'+Date.now()).set({ name, code }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
+        document.getElementById('newCatalogName').value = ''; document.getElementById('newCatalogCode').value = '';
+    };
+    window.addPartnerNow = () => {
+        const url = document.getElementById('newPartnerUrl').value.trim(); const link = document.getElementById('newPartnerLink').value.trim();
+        if(!url) return showToast('أدخل رابط الصورة');
+        db.ref(DB_PATH+'/partners/'+Date.now()).set({ url, link: link||null }).then(()=>{ showToast('تمت الإضافة'); loadData(); });
+        document.getElementById('newPartnerUrl').value = ''; document.getElementById('newPartnerLink').value = '';
+    };
+    window.updateAlbumName = (id, newName) => { if(newName) db.ref(DB_PATH+'/albums/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
+    window.updateStoreCatName = (id, newName) => { if(newName) db.ref(DB_PATH+'/store_categories/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
+    window.updateCatalogName = (id, newName) => { if(newName) db.ref(DB_PATH+'/catalogs/'+id+'/name').set(newName).then(()=>{ showToast('تم التحديث'); loadData(); }); };
+    window.updateCatalogCode = (id, newCode) => { db.ref(DB_PATH+'/catalogs/'+id+'/code').set(newCode).then(()=>{ showToast('تم تحديث الكود'); loadData(); }); };
+    window.updatePartner = (id, url, link) => { if(url) db.ref(DB_PATH+'/partners/'+id).update({ url, link: link||null }).then(()=>{ showToast('تم التحديث'); loadData(); }); };
+    window.deleteReview = (id) => db.ref(DB_PATH+'/reviews/'+id).remove().then(()=>{ showToast('تم حذف التقييم'); loadData(); });
+    window.addImagesToAlbum = async () => {
+        const target = document.getElementById('addToAlbumSelect').value;
+        const urls = document.getElementById('albumUrls').value.split('\n').filter(u=>u.trim());
+        if(!target || !urls.length) return showToast('اختر ألبوم وأدخل روابط');
+        await addImagesToTarget(target, urls, 'albumUrls');
+    };
+    window.addImagesToStore = async () => {
+        const target = document.getElementById('addToStoreSelect').value;
+        const urls = document.getElementById('storeUrls').value.split('\n').filter(u=>u.trim());
+        if(!target || !urls.length) return showToast('اختر قسم وأدخل روابط');
+        await addImagesToTarget(target, urls, 'storeUrls');
+    };
+    window.loadImagesForDelete = loadImagesForDelete;
+    window.deleteSection = deleteSection;
+    window.toggleCollapse = toggleCollapse;
+
     function buildAdmin() {
         const d = currentData;
         const slider = d.home_slider || { enabled: false, title: 'أحدث أعمالنا', direction: 'rtl', duration: 5, images: [] };
         const splashItems = d.splash_items || [];
         
-        // قوائم الخيارات
         const getAlbumOptions = () => {
             let o = '<option value="">-- اختر ألبوم --</option>';
             if(d.albums) Object.keys(d.albums).forEach(id=>o+=`<option value="albums/${id}">📁 ${(d.albums[id].name||'').replace(/"/g,'&quot;')}</option>`);
@@ -344,64 +435,92 @@
             if(d.store_categories) Object.keys(d.store_categories).forEach(id=>o+=`<option value="store_categories/${id}">🛒 ${(d.store_categories[id].name||'').replace(/"/g,'&quot;')}</option>`);
             return o;
         };
-        
-        // بناء قائمة السلايدر
+        const scheduleHTML = () => {
+            const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+            let html='';
+            for(let i=0;i<=6;i++){
+                const s=d.work_schedule?.[i]||{active:false,s1_s:'09:00',s1_e:'17:00',s2_a:false};
+                html+=`<div style="border:1px solid #e9e2d8;border-radius:16px;padding:12px;margin-bottom:12px;">
+                        <label><input type="checkbox" id="dayActive_${i}" ${s.active?'checked':''}> ${days[i]}</label>
+                        <div class="input-group"><input type="time" id="s1s_${i}" value="${s.s1_s}"> — <input type="time" id="s1e_${i}" value="${s.s1_e}"></div>
+                        <label><input type="checkbox" id="s2a_${i}" ${s.s2_a?'checked':''}> فترة مسائية</label>
+                        <div id="evening_${i}" style="${s.s2_a?'':'display:none'};margin-top:8px;"><input type="time" id="s2s_${i}" value="${s.s2_s||''}"> — <input type="time" id="s2e_${i}" value="${s.s2_e||''}"></div>
+                    </div>`;
+            }
+            setTimeout(()=>{ for(let i=0;i<=6;i++){ const cb=document.getElementById(`s2a_${i}`); if(cb) cb.onchange=()=>document.getElementById(`evening_${i}`).style.display=cb.checked?'block':'none'; } },100);
+            return html;
+        };
+
         let sliderImagesHtml = '';
         if (slider.images && slider.images.length) {
-            slider.images.forEach(img => {
+            slider.images.forEach((img, idx) => {
                 sliderImagesHtml += `<div class="slider-image-item">
-                                        <input type="checkbox" class="checkbox-select"> 
-                                        <img src="${img.url}" width="50" onerror="this.style.display='none'">
-                                        <input type="text" class="slider-image-url" value="${(img.url||'').replace(/"/g,'&quot;')}" style="flex:1;">
+                                        <input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> 
+                                        <img src="${img.url}" onerror="this.style.display='none'">
+                                        <input type="text" class="slider-image-url" value="${(img.url||'').replace(/"/g,'&quot;')}" placeholder="رابط الصورة" style="flex:1;">
                                         <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>
                                     </div>`;
             });
         }
-        
-        // بناء قائمة السبلاش
+
         let splashItemsHtml = '';
         if (splashItems.length) {
-            splashItems.forEach(item => {
+            splashItems.forEach((item, idx) => {
                 splashItemsHtml += `<div class="splash-item-row">
-                                        <input type="checkbox" class="checkbox-select"> 
-                                        <input type="text" class="splash-item-url" value="${(item.url||'').replace(/"/g,'&quot;')}" style="flex:1;">
+                                        <input type="checkbox" class="checkbox-select" style="width:20px; margin:0;"> 
+                                        <input type="text" class="splash-item-url" value="${(item.url||'').replace(/"/g,'&quot;')}" placeholder="رابط الصورة أو الفيديو" style="flex:1;">
                                         <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>
                                     </div>`;
             });
         }
-        
+
+        const maintenanceUntil = d.maintenance_until;
+        let previewTime = '';
+        if (maintenanceUntil && maintenanceUntil > Date.now()) {
+            const diff = maintenanceUntil - Date.now();
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            previewTime = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        } else previewTime = 'غير مضبوط';
+
         const html = `
             <div class="collapse-section" data-section-id="general">
-                <button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ الإعدادات العامة <span>▾</span></button>
+                <button class="collapse-btn" onclick="toggleCollapse(this,'general')">⚙️ الإعدادات العامة والنصوص <span>▾</span></button>
                 <div class="collapse-content">
-                    <input id="siteName" value="${(d.site_name||'').replace(/"/g,'&quot;')}" placeholder="اسم الموقع">
-                    <input id="whatsappNum" value="${d.whatsapp_num||''}" placeholder="رقم واتساب">
-                    <textarea id="aboutText" rows="3" placeholder="نص عن الشركة">${(d.about_text||'').replace(/"/g,'&quot;')}</textarea>
-                    <input id="footerText" value="${(d.footer_text||'').replace(/"/g,'&quot;')}" placeholder="نص التذييل">
-                    <input id="locationUrl" value="${(d.location_url||'').replace(/"/g,'&quot;')}" placeholder="رابط الموقع على الخريطة">
-                    <input id="instaUrl" value="${(d.insta_url||'').replace(/"/g,'&quot;')}" placeholder="رابط انستقرام">
-                    <input id="tiktokUrl" value="${(d.tiktok_url||'').replace(/"/g,'&quot;')}" placeholder="رابط تيك توك">
-                    <input id="snapUrl" value="${(d.snap_url||'').replace(/"/g,'&quot;')}" placeholder="رابط سناب شات">
+                    <input id="siteName" value="${(d.site_name||'').replace(/"/g,'&quot;')}">
+                    <input id="whatsappNum" value="${d.whatsapp_num||''}">
+                    <textarea id="aboutText" rows="4">${(d.about_text||'').replace(/"/g,'&quot;')}</textarea>
+                    <input id="footerText" value="${(d.footer_text||'').replace(/"/g,'&quot;')}">
+                    <input id="locationUrl" value="${(d.location_url||'').replace(/"/g,'&quot;')}">
+                    <input id="instaUrl" value="${(d.insta_url||'').replace(/"/g,'&quot;')}">
+                    <input id="tiktokUrl" value="${(d.tiktok_url||'').replace(/"/g,'&quot;')}">
+                    <input id="snapUrl" value="${(d.snap_url||'').replace(/"/g,'&quot;')}">
                     <button class="btn-gold" onclick="saveGeneral()">حفظ</button>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="homeslider">
-                <button class="collapse-btn" onclick="toggleCollapse(this,'homeslider')">🏠 إدارة السلايدر الرئيسي <span>▾</span></button>
+                <button class="collapse-btn" onclick="toggleCollapse(this,'homeslider')">🏠 إدارة الرئيسية (السلايدر) <span>▾</span></button>
                 <div class="collapse-content">
-                    <div class="checkbox-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل السلايدر</label></div>
-                    <input id="sliderTitle" value="${(slider.title||'').replace(/"/g,'&quot;')}" placeholder="عنوان القسم">
-                    <select id="sliderDirection"><option value="rtl" ${slider.direction==='rtl'?'selected':''}>يمين → يسار</option><option value="ltr" ${slider.direction==='ltr'?'selected':''}>يسار → يمين</option></select>
-                    <input type="number" id="sliderDuration" value="${slider.duration}" placeholder="مدة العرض (ثانية)">
+                    <div class="checkbox-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل عرض السلايدر</label></div>
+                    <div class="input-group"><label>عنوان القسم</label><input id="sliderTitle" value="${(slider.title||'').replace(/"/g,'&quot;')}"></div>
+                    <div class="input-group"><label>اتجاه الحركة</label><select id="sliderDirection"><option value="rtl" ${slider.direction === 'rtl' ? 'selected' : ''}>يمين ← يسار</option><option value="ltr" ${slider.direction === 'ltr' ? 'selected' : ''}>يسار ← يمين</option></select></div>
+                    <div class="input-group"><label>مدة العرض (ثانية)</label><input type="number" id="sliderDuration" value="${slider.duration}"></div>
                     <hr>
-                    <button class="btn-red" onclick="deleteSelectedSliderImages()">حذف المحدد</button>
-                    <button class="btn-red" onclick="deleteAllSliderImages()">حذف الكل</button>
-                    <div id="sliderImagesList" style="margin:10px 0;">${sliderImagesHtml}</div>
-                    <button class="btn-green" onclick="addSliderImage()">➕ إضافة صورة</button>
-                    <div class="bulk-add-area">
-                        <textarea id="bulkUrls" rows="3" placeholder="روابط صور (كل رابط في سطر)"></textarea>
-                        <button class="btn-gold" onclick="addMultipleSliderImages()">➕ إضافة عدة روابط</button>
+                    <div class="bulk-delete-bar">
+                        <button class="btn-red" onclick="deleteSelectedSliderImages()">🗑️ حذف المحدد</button>
+                        <button class="btn-red" onclick="deleteAllSliderImages()">⚠️ حذف الكل</button>
+                        <button id="toggleImagesBtn" class="toggle-images-btn" onclick="toggleImagesVisibility()">👁️ إخفاء الصور</button>
                     </div>
-                    <button class="btn-gold" onclick="saveHomeSlider()">💾 حفظ السلايدر</button>
+                    <div id="sliderImagesList" class="image-list-grid">${sliderImagesHtml}</div>
+                    <button class="btn-green" onclick="addSliderImage()">➕ إضافة صورة فردية</button>
+                    <div class="bulk-add-area">
+                        <label><strong>📎 إضافة روابط متعددة</strong></label>
+                        <textarea id="bulkUrls" rows="4" placeholder="رابط صورة\nرابط آخر"></textarea>
+                        <button class="btn-gold" onclick="addMultipleSliderImages()">➕ إضافة روابط متعددة</button>
+                    </div>
+                    <hr>
+                    <button class="btn-gold" onclick="saveHomeSlider()">💾 حفظ إعدادات السلايدر</button>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="splash">
@@ -411,41 +530,130 @@
                     <div class="checkbox-row"><input type="checkbox" id="splashShowSkip" ${d.splash_show_skip===true?'checked':''}> <label>إظهار زر "تخطي"</label></div>
                     <div class="input-group"><label>مدة عرض كل عنصر (ثانية)</label><input type="number" id="splashDuration" value="${d.splash_duration||5}"></div>
                     <hr>
-                    <button class="btn-red" onclick="deleteSelectedSplashItems()">🗑️ حذف المحدد</button>
-                    <button class="btn-red" onclick="deleteAllSplashItems()">⚠️ حذف الكل</button>
-                    <div id="splashItemsList" style="margin:10px 0;">${splashItemsHtml}</div>
+                    <div class="bulk-delete-bar">
+                        <button class="btn-red" onclick="deleteSelectedSplashItems()">🗑️ حذف المحدد</button>
+                        <button class="btn-red" onclick="deleteAllSplashItems()">⚠️ حذف الكل</button>
+                    </div>
+                    <div id="splashItemsList" class="image-list-grid">${splashItemsHtml}</div>
                     <button class="btn-green" onclick="addSplashItem()">➕ إضافة عنصر (صورة/فيديو)</button>
                     <div class="bulk-add-area">
-                        <textarea id="bulkSplashUrls" rows="4" placeholder="روابط صور أو فيديوهات (كل رابط في سطر)"></textarea>
-                        <button class="btn-gold" onclick="addMultipleSplashItems()">➕ إضافة عدة روابط</button>
+                        <label><strong>📎 إضافة روابط متعددة (صور/فيديوهات)</strong></label>
+                        <textarea id="bulkSplashUrls" rows="4" placeholder="رابط صورة أو فيديو\nرابط آخر"></textarea>
+                        <button class="btn-gold" onclick="addMultipleSplashItems()">➕ إضافة روابط متعددة</button>
                         <div class="hint">* الروابط التي تنتهي بـ .mp4 .webm .mov تعتبر فيديو، والباقي صور.</div>
                     </div>
+                    <hr>
                     <button class="btn-gold" onclick="saveSplashSettings()">💾 حفظ إعدادات السبلاش</button>
                 </div>
             </div>
-            <!-- أقسام أخرى (ألبومات، متجر، كتالوجات، شركاء، أوقات العمل، تقييمات، صيانة، فقاعة) -->
             <div class="collapse-section" data-section-id="albums">
                 <button class="collapse-btn" onclick="toggleCollapse(this,'albums')">📁 ألبومات أعمالنا <span>▾</span></button>
-                <div class="collapse-content"><div id="albumsList"></div><div style="display:flex; gap:8px;"><input id="newAlbumName" placeholder="اسم الألبوم"><button class="btn-green" onclick="addAlbumNow()">إضافة ألبوم</button></div>
-                <hr><h4>➕ إضافة صور</h4><select id="addToAlbumSelect">${getAlbumOptions()}</select><textarea id="albumUrls" rows="4" placeholder="روابط الصور (كل رابط في سطر)"></textarea><button class="btn-gold" onclick="addImagesToAlbum()">إضافة صور</button>
-                <hr><h4>🗑️ حذف الصور</h4><select id="albumDeleteSelect" onchange="loadImagesForDelete(this.value,'albumDeleteGrid')">${getAlbumOptions()}</select><div id="albumDeleteGrid" class="image-delete-grid"></div></div>
+                <div class="collapse-content">
+                    <div id="albumsList"></div>
+                    <div style="display:flex; gap:8px; margin:10px 0;"><input id="newAlbumName" placeholder="اسم الألبوم الجديد"><button class="btn-green" onclick="addAlbumNow()">إضافة ألبوم</button></div>
+                    <hr>
+                    <h4>➕ إضافة صور (روابط)</h4>
+                    <select id="addToAlbumSelect">${getAlbumOptions()}</select>
+                    <textarea id="albumUrls" class="urls-textarea" placeholder="روابط الصور (كل رابط في سطر)"></textarea>
+                    <button class="btn-gold" onclick="addImagesToAlbum()">إضافة صور</button>
+                    <hr>
+                    <h4 style="color:#dc3545;">🗑️ حذف الصور من الألبوم</h4>
+                    <select id="albumDeleteSelect" onchange="loadImagesForDelete(this.value, 'albumDeleteGrid')">${getAlbumOptions()}</select>
+                    <div id="albumDeleteGrid" class="image-delete-grid"><p>اختر ألبوم لعرض الصور</p></div>
+                </div>
             </div>
-            <!-- باقي الأقسام مكتوبة ولكن تم اختصارها للمساحة، وهي تعمل كما في الكود الأصلي -->
+            <div class="collapse-section" data-section-id="store">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'store')">🛍️ أقسام المتجر <span>▾</span></button>
+                <div class="collapse-content">
+                    <div id="storeCatsList"></div>
+                    <div style="display:flex; gap:8px;"><input id="newStoreCatName" placeholder="اسم القسم الجديد"><button class="btn-green" onclick="addStoreCatNow()">إضافة قسم</button></div>
+                    <hr>
+                    <h4>➕ إضافة منتجات (روابط)</h4>
+                    <select id="addToStoreSelect">${getStoreOptions()}</select>
+                    <textarea id="storeUrls" class="urls-textarea" placeholder="روابط المنتجات (كل رابط في سطر)"></textarea>
+                    <button class="btn-gold" onclick="addImagesToStore()">إضافة منتجات</button>
+                    <hr>
+                    <h4 style="color:#dc3545;">🗑️ حذف المنتجات من القسم</h4>
+                    <select id="storeDeleteSelect" onchange="loadImagesForDelete(this.value, 'storeDeleteGrid')">${getStoreOptions()}</select>
+                    <div id="storeDeleteGrid" class="image-delete-grid"><p>اختر قسم لعرض المنتجات</p></div>
+                </div>
+            </div>
+            <div class="collapse-section" data-section-id="catalogs">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'catalogs')">📚 الكتالوجات <span>▾</span></button>
+                <div class="collapse-content"><div id="catalogsList"></div><div><input id="newCatalogName" placeholder="اسم الكتالوج"><textarea id="newCatalogCode" rows="3" placeholder="كود iFrame"></textarea><button class="btn-green" onclick="addCatalogNow()">إضافة كتالوج</button></div></div>
+            </div>
+            <div class="collapse-section" data-section-id="partners">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'partners')">🤝 شركاء النجاح <span>▾</span></button>
+                <div class="collapse-content"><div id="partnersList"></div><div style="display:flex; gap:8px;"><input id="newPartnerUrl" placeholder="رابط الصورة"><input id="newPartnerLink" placeholder="الرابط (اختياري)"><button class="btn-green" onclick="addPartnerNow()">إضافة شريك</button></div></div>
+            </div>
+            <div class="collapse-section" data-section-id="schedule">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'schedule')">🕒 أوقات العمل <span>▾</span></button>
+                <div class="collapse-content">${scheduleHTML()}<button class="btn-gold" onclick="saveSchedule()">حفظ</button></div>
+            </div>
+            <div class="collapse-section" data-section-id="reviews">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'reviews')">⭐ التقييمات <span>▾</span></button>
+                <div class="collapse-content"><div id="reviewsList"></div></div>
+            </div>
+            <div class="collapse-section" data-section-id="popup">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'popup')">💬 فقاعة الترحيب <span>▾</span></button>
+                <div class="collapse-content">
+                    <div class="checkbox-row"><input type="checkbox" id="popupEnabled" ${d.popup_enabled?'checked':''}> <label>تفعيل</label></div>
+                    <input id="popupMessage" value="${(d.popup_message||'').replace(/"/g,'&quot;')}">
+                    <input id="popupDuration" type="number" value="${d.popup_duration||8}">
+                    <button class="btn-gold" onclick="savePopupSettings()">حفظ</button>
+                </div>
+            </div>
+            <div class="collapse-section" data-section-id="maintenance">
+                <button class="collapse-btn" onclick="toggleCollapse(this,'maintenance')">🛡️ وضع الصيانة <span>▾</span></button>
+                <div class="collapse-content">
+                    <div class="checkbox-row"><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode ? 'checked' : ''} onchange="updateMaintenancePreview()"> <label>تفعيل وضع الصيانة</label></div>
+                    <div class="input-group"><label>عنوان الصيانة</label><input id="maintenanceTitle" value="${(d.maintenance_title||'').replace(/"/g,'&quot;')}"></div>
+                    <div class="input-group"><label>رسالة الصيانة</label><textarea id="maintenanceMsg" rows="2">${(d.maintenance_message||'').replace(/"/g,'&quot;')}</textarea></div>
+                    <div class="maintenance-time-inputs">
+                        <input type="number" id="hoursInput" placeholder="ساعات" value="0" oninput="updateMaintenancePreview()">
+                        <input type="number" id="minutesInput" placeholder="دقائق" value="0" oninput="updateMaintenancePreview()">
+                        <input type="number" id="secondsInput" placeholder="ثواني" value="0" oninput="updateMaintenancePreview()">
+                    </div>
+                    <div id="maintenancePreviewBox" class="maintenance-preview" style="${d.maintenance_mode ? 'display:block' : 'display:none'}">
+                        <h5><i class="fas fa-clock"></i> معاينة العد التنازلي (بعد الحفظ)</h5>
+                        <div id="maintenanceCountdownPreview">${previewTime}</div>
+                        <small>سيتم عرض هذا الوقت للزوار عند تفعيل الصيانة.</small>
+                    </div>
+                    <button class="btn-gold" onclick="saveMaintenance()">💾 حفظ إعدادات الصيانة</button>
+                </div>
+            </div>
         `;
         document.getElementById('adminSections').innerHTML = html;
-        // إضافة قوائم الألبومات والمتجر الخ...
+
         if(d.albums){
-            document.getElementById('albumsList').innerHTML = Object.keys(d.albums).map(id=>`<div class="list-item-row"><input type="text" value="${(d.albums[id].name||'').replace(/"/g,'&quot;')}" class="album-name-${id}"><button class="btn-gold" onclick="updateAlbumName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('albums','${id}','${(d.albums[id].name||'').replace(/"/g,'&quot;')}')">حذف</button></div>`).join('');
+            document.getElementById('albumsList').innerHTML = Object.keys(d.albums).map(id=>`
+                <div class="list-item-row"><input type="text" value="${(d.albums[id].name||'').replace(/"/g,'&quot;')}" class="album-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateAlbumName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('albums','${id}','${(d.albums[id].name||'').replace(/"/g,'&quot;')}')">حذف الألبوم</button></div>
+            `).join('');
         }
-        // دوال تحميل الصور للحذف
-        window.loadImagesForDelete = function(path, gridId) {
-            const grid = document.getElementById(gridId);
-            if(!grid) return;
-            const [type, id] = path.split('/');
-            const folder = currentData[type]?.[id];
-            if(!folder || !folder.imgs) { grid.innerHTML='<p>لا توجد صور</p>'; return; }
-            grid.innerHTML = Object.keys(folder.imgs).map(imgId=>`<div><img src="${folder.imgs[imgId].url}" style="width:100px;height:100px;object-fit:cover;"><button class="btn-red" onclick="deleteImage('${path}','${imgId}','${gridId}')">حذف</button></div>`).join('');
-        };
+        if(d.store_categories){
+            document.getElementById('storeCatsList').innerHTML = Object.keys(d.store_categories).map(id=>`
+                <div class="list-item-row"><input type="text" value="${(d.store_categories[id].name||'').replace(/"/g,'&quot;')}" class="storecat-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateStoreCatName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('store_categories','${id}','${(d.store_categories[id].name||'').replace(/"/g,'&quot;')}')">حذف القسم</button></div>
+            `).join('');
+        }
+        if(d.catalogs){
+            document.getElementById('catalogsList').innerHTML = Object.keys(d.catalogs).map(id=>`
+                <div style="border:1px solid #e9e2d8; border-radius:20px; padding:12px; margin-bottom:12px;">
+                    <div class="list-item-row"><input type="text" value="${(d.catalogs[id].name||'').replace(/"/g,'&quot;')}" class="catalog-name-${id}" style="flex:2;"><button class="btn-gold" onclick="updateCatalogName('${id}', this.previousElementSibling.value)">تحديث</button><button class="btn-red" onclick="deleteSection('catalogs','${id}','${(d.catalogs[id].name||'').replace(/"/g,'&quot;')}')">حذف الكتالوج</button></div>
+                    <textarea class="catalog-code-${id}" rows="2" style="width:100%;">${(d.catalogs[id].code||'').replace(/"/g,'&quot;')}</textarea>
+                    <button class="btn-gold" style="margin-top:8px;" onclick="updateCatalogCode('${id}', document.querySelector('.catalog-code-${id}').value)">تحديث الكود</button>
+                </div>
+            `).join('');
+        }
+        if(d.partners){
+            document.getElementById('partnersList').innerHTML = Object.keys(d.partners).map(id=>`
+                <div class="list-item-row"><input type="text" value="${(d.partners[id].url||'').replace(/"/g,'&quot;')}" class="partner-url-${id}" placeholder="رابط الصورة" style="flex:2;"><input type="text" value="${(d.partners[id].link||'').replace(/"/g,'&quot;')}" class="partner-link-${id}" placeholder="الرابط" style="flex:1;"><button class="btn-gold" onclick="updatePartner('${id}', document.querySelector('.partner-url-${id}').value, document.querySelector('.partner-link-${id}').value)">تحديث</button><button class="btn-red" onclick="deleteSection('partners','${id}','')">حذف</button></div>
+            `).join('');
+        }
+        if(d.reviews){
+            document.getElementById('reviewsList').innerHTML = Object.keys(d.reviews).map(id=>`
+                <div style="border-bottom:1px solid #eee; padding:8px;"><b>${d.reviews[id].name}</b> ${'★'.repeat(d.reviews[id].rating)}<p>${d.reviews[id].message}</p><button class="btn-red" onclick="deleteReview('${id}')">حذف التقييم</button></div>
+            `).join('');
+        }
     }
 </script>
 </body>
