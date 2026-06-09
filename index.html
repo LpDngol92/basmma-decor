@@ -58,7 +58,7 @@
         #splash img, #splash video {
             width: 100%;
             height: 100%;
-            object-fit: cover;   /* ✅ تملأ الشاشة بالكامل بدون فراغات (الأصلي الذي تحبه) */
+            object-fit: cover;   /* ✅ كما كان في الأصل ممتازاً */
             background: #000;
         }
         .stories-container { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; }
@@ -166,7 +166,7 @@
             .hero-slider-beige { min-height: 70vh; }
         }
         
-        /* باقي الأنماط (نفس الكود الأصلي) */
+        /* باقي الأنماط (بدون تغيير) */
         .header { background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 1000; }
         .container { max-width: 1300px; margin: 0 auto; padding: 0 20px; }
         .nav-bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; flex-wrap: wrap; gap: 1rem; }
@@ -281,11 +281,805 @@
 <div id="toastMsg" class="toast"></div>
 
 <script>
-    // نفس الـ JavaScript الأصلي الذي كان يعمل بشكل كامل (بدون تغيير)
-    // ... (سأضعه كاملاً لكنه طويل جداً، لكنه موجود في الكود السابق الذي أرسلته لك ويعمل)
-    // للتأكيد، هذا الكود يحتفظ بجميع دوال Firebase، الألبومات، التقييمات، السلايدر الجديد، إلخ.
-    // بما أن المساحة لا تسمح بإعادة كتابة الـ JavaScript بالكامل هنا، سأعتمد على أن الكود الذي أرسلته آخر مرة كان كاملاً ويحتوي على الـ JavaScript السليم.
-    // فقط تأكد من أنك استخدمت الكود الذي أرسلته في الرد السابق (ذاك الذي يعمل) مع تعديل CSS للسبلاش كما هو موضح أعلاه.
+    const firebaseConfig = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", authDomain: "mydecor-b29bd.firebaseapp.com", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd", storageBucket: "mydecor-b29bd.firebasestorage.app", messagingSenderId: "302609299720", appId: "1:302609299720:web:e086b600c3ee824acd54bd" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const DB_PATH = 'site_v28';
+
+    let currentData = {};
+    let currentPage = 'home';
+    let currentImageList = [];
+    let currentIndex = 0;
+    let currentWhatsappNum = '966500000000';
+    let currentAlbumId = null;
+    let sliderInterval = null;
+    let isSliderPaused = false;
+
+    function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
+        if (!imgElement) return;
+        if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
+        let attempts = 0;
+        const tryLoad = () => { imgElement.src = src; };
+        imgElement.onerror = () => {
+            if (attempts < retries) { attempts++; setTimeout(tryLoad, 500 * attempts); }
+            else { imgElement.src = fallbackUrl; imgElement.style.objectFit = 'contain'; }
+        };
+        tryLoad();
+    }
+
+    // ========== ستوريز سبلاش ==========
+    let storiesVideos = [];
+    let currentStoryIndex = 0;
+    let storyInterval = null;
+    let storyVideoElements = [];
+    let isStoryPlaying = true;
+
+    function isValidVideoUrl(url) {
+        if (!url) return false;
+        return url.includes('.mp4') || url.includes('.webm') || url.includes('.ogg') || 
+               url.includes('cloudinary.com') || url.includes('raw.githubusercontent.com');
+    }
+
+    function showStorySplash(videos, durationPerVideo = 7) {
+        const splashDiv = document.getElementById('splash');
+        if (!splashDiv) return;
+        if (!videos || videos.length === 0) {
+            splashDiv.style.display = 'none';
+            return;
+        }
+        if (storyInterval) clearInterval(storyInterval);
+        if (storyVideoElements.length) storyVideoElements.forEach(v => { v.pause(); v.remove(); });
+        
+        storiesVideos = videos.filter(v => isValidVideoUrl(v));
+        if (storiesVideos.length === 0) {
+            splashDiv.style.display = 'none';
+            return;
+        }
+        currentStoryIndex = 0;
+        splashDiv.innerHTML = `
+            <div class="stories-container" id="storiesContainer">
+                <div class="story-progress-bar" id="storyProgressBar"></div>
+                <div class="story-counter" id="storyCounter">1/${storiesVideos.length}</div>
+                <div class="story-nav prev" id="storyPrev"></div>
+                <div class="story-nav next" id="storyNext"></div>
+                <button class="splash-skip" id="splashSkipBtn">تخطي ←</button>
+            </div>
+        `;
+        const container = document.getElementById('storiesContainer');
+        storyVideoElements = [];
+        storiesVideos.forEach((videoUrl, idx) => {
+            const video = document.createElement('video');
+            video.className = 'story-video';
+            if (idx === 0) video.classList.add('active');
+            video.src = videoUrl;
+            video.loop = false;
+            video.muted = true;
+            video.playsInline = true;
+            video.setAttribute('playsinline', '');
+            video.preload = 'auto';
+            video.onerror = () => { console.error('فيديو فاشل:', videoUrl); };
+            container.appendChild(video);
+            storyVideoElements.push(video);
+        });
+        const progressBar = document.getElementById('storyProgressBar');
+        for (let i = 0; i < storiesVideos.length; i++) {
+            const segment = document.createElement('div');
+            segment.className = 'progress-segment';
+            segment.innerHTML = '<div class="progress-fill" id="progressFill_' + i + '"></div>';
+            progressBar.appendChild(segment);
+        }
+        document.getElementById('storyPrev').addEventListener('click', () => navigateStory(-1));
+        document.getElementById('storyNext').addEventListener('click', () => navigateStory(1));
+        document.getElementById('splashSkipBtn').addEventListener('click', closeStorySplash);
+        let touchStartX = 0;
+        container.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+        container.addEventListener('touchend', (e) => {
+            const diff = e.changedTouches[0].clientX - touchStartX;
+            if (Math.abs(diff) > 50) diff > 0 ? navigateStory(-1) : navigateStory(1);
+        });
+        splashDiv.style.display = 'flex';
+        splashDiv.style.opacity = '1';
+        startCurrentVideo();
+    }
+    
+    function startCurrentVideo() {
+        if (storyInterval) clearInterval(storyInterval);
+        const counterSpan = document.getElementById('storyCounter');
+        if (counterSpan) counterSpan.innerText = `${currentStoryIndex+1}/${storiesVideos.length}`;
+        storyVideoElements.forEach((vid, idx) => {
+            vid.pause();
+            vid.currentTime = 0;
+            idx === currentStoryIndex ? vid.classList.add('active') : vid.classList.remove('active');
+        });
+        const currentVideo = storyVideoElements[currentStoryIndex];
+        if (!currentVideo) return;
+        for (let i = 0; i < storiesVideos.length; i++) {
+            const fill = document.getElementById(`progressFill_${i}`);
+            if (fill) fill.style.width = (i < currentStoryIndex) ? '100%' : (i === currentStoryIndex) ? '0%' : '0%';
+        }
+        const currentFill = document.getElementById(`progressFill_${currentStoryIndex}`);
+        let startTime = Date.now();
+        const duration = 7000;
+        const updateProgress = () => {
+            if (!isStoryPlaying) return;
+            const elapsed = Date.now() - startTime;
+            let percent = Math.min(100, (elapsed / duration) * 100);
+            if (currentFill) currentFill.style.width = percent + '%';
+            if (elapsed >= duration) {
+                clearInterval(storyInterval);
+                if (currentStoryIndex + 1 < storiesVideos.length) navigateStory(1);
+                else closeStorySplash();
+            }
+        };
+        currentVideo.play().catch(e => console.log("Auto-play prevented"));
+        storyInterval = setInterval(updateProgress, 50);
+        isStoryPlaying = true;
+    }
+    
+    function navigateStory(direction) {
+        if (!isStoryPlaying) return;
+        let newIndex = currentStoryIndex + direction;
+        if (newIndex < 0) newIndex = 0;
+        if (newIndex >= storiesVideos.length) { closeStorySplash(); return; }
+        if (newIndex === currentStoryIndex) return;
+        currentStoryIndex = newIndex;
+        startCurrentVideo();
+    }
+    
+    function closeStorySplash() {
+        if (storyInterval) clearInterval(storyInterval);
+        isStoryPlaying = false;
+        storyVideoElements.forEach(vid => vid.pause());
+        const splashDiv = document.getElementById('splash');
+        splashDiv.style.opacity = '0';
+        setTimeout(() => {
+            splashDiv.style.display = 'none';
+            splashDiv.innerHTML = '';
+            storyVideoElements = [];
+        }, 500);
+    }
+
+    // ========== Lightbox مع التقييم والمشاهدات ==========
+    const imgElement = document.getElementById('lightboxImg');
+    const lightbox = document.getElementById('lightbox');
+    const counterSpan = document.getElementById('lightboxCounter');
+    const waBtn = document.getElementById('lightboxWhatsappBtn');
+    const ratingDiv = document.getElementById('lightboxRating');
+    const ratingStarsDiv = document.getElementById('ratingStars');
+    const ratingStatsDiv = document.getElementById('ratingStats');
+    
+    let scale = 1, translateX = 0, translateY = 0, startX = 0, startY = 0, isPanning = false;
+    let initialPinchDist = 0, startScale = 1, pinchCenterX = 0, pinchCenterY = 0, touchStartX = 0;
+
+    function setTransform() { imgElement.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`; }
+    function resetTransform() { scale = 1; translateX = 0; translateY = 0; setTransform(); }
+    function clampMovement() {
+        const containerRect = imgElement.parentElement.getBoundingClientRect();
+        const imgRect = imgElement.getBoundingClientRect();
+        const maxX = Math.max(0, (imgRect.width * scale - containerRect.width) / 2);
+        const maxY = Math.max(0, (imgRect.height * scale - containerRect.height) / 2);
+        translateX = Math.min(Math.max(translateX, -maxX), maxX);
+        translateY = Math.min(Math.max(translateY, -maxY), maxY);
+        setTransform();
+    }
+    function onMouseDown(e) { if (scale <= 1) return; e.preventDefault(); isPanning = true; startX = e.clientX - translateX; startY = e.clientY - translateY; imgElement.style.cursor = 'grabbing'; }
+    function onMouseMove(e) { if (!isPanning) return; translateX = e.clientX - startX; translateY = e.clientY - startY; clampMovement(); }
+    function onMouseUp() { isPanning = false; imgElement.style.cursor = 'grab'; }
+    function getDistance(touches) { return Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY); }
+    function onTouchStart(e) {
+        if (e.touches.length === 2) {
+            e.preventDefault();
+            initialPinchDist = getDistance(e.touches);
+            startScale = scale;
+            pinchCenterX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            pinchCenterY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            document.getElementById('zoomHint').style.opacity = '1';
+            setTimeout(() => document.getElementById('zoomHint').style.opacity = '0', 2000);
+        } else if (e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            if (scale > 1) { isPanning = true; startX = e.touches[0].clientX - translateX; startY = e.touches[0].clientY - translateY; }
+        }
+    }
+    function onTouchMove(e) {
+        if (e.touches.length === 2 && initialPinchDist > 0) {
+            e.preventDefault();
+            const newDist = getDistance(e.touches);
+            let newScale = startScale * (newDist / initialPinchDist);
+            newScale = Math.min(4, Math.max(1, newScale));
+            if (newScale !== scale) {
+                const rect = imgElement.getBoundingClientRect();
+                const offsetX = pinchCenterX - rect.left;
+                const offsetY = pinchCenterY - rect.top;
+                const ratio = newScale / scale;
+                translateX = pinchCenterX - rect.left - (offsetX - translateX) * ratio;
+                translateY = pinchCenterY - rect.top - (offsetY - translateY) * ratio;
+                scale = newScale;
+                clampMovement();
+            }
+        } else if (e.touches.length === 1 && isPanning && scale > 1) {
+            e.preventDefault();
+            translateX = e.touches[0].clientX - startX;
+            translateY = e.touches[0].clientY - startY;
+            clampMovement();
+        }
+    }
+    function onTouchEnd(e) {
+        if (e.touches.length < 2) initialPinchDist = 0;
+        if (e.touches.length === 0) {
+            if (touchStartX && e.changedTouches[0] && scale <= 1) {
+                const diff = e.changedTouches[0].clientX - touchStartX;
+                if (Math.abs(diff) > 50) { if (diff > 0) prevImage(); else nextImage(); }
+            }
+            touchStartX = 0; isPanning = false;
+        }
+    }
+    function onWheel(e) {
+        e.preventDefault();
+        let delta = e.deltaY > 0 ? -0.1 : 0.1;
+        let newScale = scale + delta;
+        newScale = Math.min(4, Math.max(1, newScale));
+        if (newScale === scale) return;
+        const rect = imgElement.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const ratio = newScale / scale;
+        translateX = e.clientX - rect.left - (mouseX - translateX) * ratio;
+        translateY = e.clientY - rect.top - (mouseY - translateY) * ratio;
+        scale = newScale;
+        clampMovement();
+        document.getElementById('zoomHint').style.opacity = '1';
+        setTimeout(() => document.getElementById('zoomHint').style.opacity = '0', 2000);
+    }
+    function bindLightboxEvents() {
+        imgElement.addEventListener('mousedown', onMouseDown);
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+        imgElement.addEventListener('touchstart', onTouchStart, { passive: false });
+        imgElement.addEventListener('touchmove', onTouchMove, { passive: false });
+        imgElement.addEventListener('touchend', onTouchEnd);
+        imgElement.addEventListener('wheel', onWheel, { passive: false });
+    }
+    function unbindLightboxEvents() {
+        imgElement.removeEventListener('mousedown', onMouseDown);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+        imgElement.removeEventListener('touchstart', onTouchStart);
+        imgElement.removeEventListener('touchmove', onTouchMove);
+        imgElement.removeEventListener('touchend', onTouchEnd);
+        imgElement.removeEventListener('wheel', onWheel);
+    }
+    function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
+    
+    async function incrementAlbumViews(albumId) {
+        if (!albumId) return;
+        const sessionKey = `viewed_${albumId}`;
+        if (sessionStorage.getItem(sessionKey)) return;
+        const albumRef = db.ref(`${DB_PATH}/albums/${albumId}`);
+        await albumRef.transaction(album => { if (album) album.views = (album.views || 0) + 1; return album; });
+        sessionStorage.setItem(sessionKey, '1');
+        if (currentData.albums && currentData.albums[albumId]) currentData.albums[albumId].views = (currentData.albums[albumId].views || 0) + 1;
+    }
+
+    async function updateRatingUI(albumId) {
+        if (!albumId || !ratingDiv) return;
+        const album = currentData.albums?.[albumId];
+        if (!album) { ratingDiv.style.display = 'none'; return; }
+        ratingDiv.style.display = 'flex';
+        const avg = (album.rating_sum && album.rating_count) ? (album.rating_sum / album.rating_count) : 0;
+        const count = album.rating_count || 0;
+        const views = album.views || 0;
+        ratingStatsDiv.innerHTML = `⭐ ${avg.toFixed(1)} (${count} تقييم) | 👁️ ${views} مشاهدة`;
+        let starsHtml = '';
+        for (let i = 1; i <= 5; i++) {
+            let starClass = 'star';
+            if (i <= Math.round(avg)) starClass += ' active';
+            starsHtml += `<i class="fas fa-star ${starClass}" data-value="${i}"></i>`;
+        }
+        ratingStarsDiv.innerHTML = starsHtml;
+        document.querySelectorAll('#ratingStars .star').forEach(star => {
+            star.style.cursor = 'pointer';
+            star.removeEventListener('click', handleStarClick);
+            star.addEventListener('click', handleStarClick);
+            star.addEventListener('mouseenter', handleStarHover);
+            star.addEventListener('mouseleave', handleStarLeave);
+        });
+    }
+    
+    async function handleStarClick(e) {
+        e.stopPropagation();
+        const ratingValue = parseInt(e.currentTarget.getAttribute('data-value'));
+        await submitRating(currentAlbumId, ratingValue);
+    }
+    
+    function handleStarHover(e) {
+        const val = parseInt(e.currentTarget.getAttribute('data-value'));
+        document.querySelectorAll('#ratingStars .star').forEach((s, idx) => { idx < val ? s.classList.add('hover') : s.classList.remove('hover'); });
+    }
+    function handleStarLeave() { document.querySelectorAll('#ratingStars .star').forEach(s => s.classList.remove('hover')); }
+    
+    async function submitRating(albumId, rating) {
+        if (!albumId) return;
+        const storageKey = `rated_${albumId}`;
+        if (localStorage.getItem(storageKey)) { showToast('لقد قمت بتقييم هذا الألبوم مسبقاً'); return; }
+        const albumRef = db.ref(`${DB_PATH}/albums/${albumId}`);
+        await albumRef.transaction(album => {
+            if (album) {
+                album.rating_sum = (album.rating_sum || 0) + rating;
+                album.rating_count = (album.rating_count || 0) + 1;
+            }
+            return album;
+        });
+        localStorage.setItem(storageKey, '1');
+        const snap = await albumRef.once('value');
+        const updated = snap.val();
+        if (updated && currentData.albums) {
+            currentData.albums[albumId] = updated;
+            await updateRatingUI(albumId);
+            showToast(`شكراً لتقييمك (${rating} نجوم)`);
+        }
+    }
+
+    async function openLightbox(images, index, albumId = null) {
+        if (!images.length) return;
+        if (sliderInterval) { clearInterval(sliderInterval); sliderInterval = null; isSliderPaused = true; }
+        currentImageList = images; currentIndex = index;
+        setImageWithRetry(imgElement, images[index], 3);
+        resetTransform();
+        updateCounter();
+        lightbox.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        bindLightboxEvents();
+        currentAlbumId = albumId;
+        if (albumId) {
+            await incrementAlbumViews(albumId);
+            await updateRatingUI(albumId);
+        } else { ratingDiv.style.display = 'none'; }
+    }
+    
+    function closeLightbox() {
+        lightbox.style.display = 'none';
+        document.body.style.overflow = '';
+        unbindLightboxEvents();
+        resetTransform();
+        currentAlbumId = null;
+        ratingDiv.style.display = 'none';
+        if (isSliderPaused && window.resumeSlider) { window.resumeSlider(); isSliderPaused = false; }
+    }
+    
+    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 3); resetTransform(); updateCounter(); }
+    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 3); resetTransform(); updateCounter(); }
+    function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
+    document.getElementById('lightboxPrev').onclick = prevImage;
+    document.getElementById('lightboxNext').onclick = nextImage;
+    document.getElementById('lightboxClose').onclick = closeLightbox;
+    waBtn.onclick = sendWhatsapp;
+    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
+
+    // ========== السلايدر الجديد (خلفية بيج) ==========
+    let currentSlideIndex = 0;
+    let sliderImagesArray = [];
+    let autoDuration = 5000;
+
+    function buildHomeSlider() {
+        const container = document.getElementById('homeSliderContainer');
+        if (!container) return;
+        const sliderData = currentData.home_slider;
+        if (!sliderData || !sliderData.enabled || !sliderData.images || sliderData.images.length === 0) {
+            buildAlbumsBackup(container);
+            return;
+        }
+        sliderImagesArray = sliderData.images.map(img => img.url).filter(url => url);
+        if (sliderImagesArray.length === 0) {
+            buildAlbumsBackup(container);
+            return;
+        }
+        autoDuration = (sliderData.duration || 5) * 1000;
+        currentSlideIndex = 0;
+        let slideInterval;
+        let isPaused = false;
+
+        container.innerHTML = `
+            <div class="hero-slider-beige">
+                <div class="slider-bg-blur" id="sliderBgBlur" style="background-image: url('${sliderImagesArray[0]}')"></div>
+                <div class="slider-stage">
+                    <div class="slider-image-card" id="sliderMainCard">
+                        <img src="${sliderImagesArray[0]}" id="sliderMainImg">
+                    </div>
+                </div>
+                <div class="slider-nav-buttons">
+                    <button id="sliderPrev"><i class="fas fa-chevron-right"></i> السابق</button>
+                    <button id="sliderNext">التالي <i class="fas fa-chevron-left"></i></button>
+                </div>
+                <div class="slider-progress-ring" id="sliderProgress">${autoDuration/1000}s</div>
+            </div>
+        `;
+
+        const bgBlur = document.getElementById('sliderBgBlur');
+        const mainImg = document.getElementById('sliderMainImg');
+        const prevBtn = document.getElementById('sliderPrev');
+        const nextBtn = document.getElementById('sliderNext');
+        const progressSpan = document.getElementById('sliderProgress');
+        const card = document.getElementById('sliderMainCard');
+
+        function updateSlide(index, resetTimer = true) {
+            if (index < 0) index = sliderImagesArray.length - 1;
+            if (index >= sliderImagesArray.length) index = 0;
+            currentSlideIndex = index;
+            mainImg.src = sliderImagesArray[currentSlideIndex];
+            bgBlur.style.backgroundImage = `url('${sliderImagesArray[currentSlideIndex]}')`;
+            if (resetTimer) restartTimer();
+        }
+
+        function restartTimer() {
+            if (slideInterval) clearInterval(slideInterval);
+            let startTime = Date.now();
+            slideInterval = setInterval(() => {
+                if (isPaused) return;
+                let elapsed = Date.now() - startTime;
+                let remaining = Math.max(0, autoDuration - elapsed);
+                progressSpan.innerText = Math.ceil(remaining / 1000) + 's';
+                if (elapsed >= autoDuration) {
+                    clearInterval(slideInterval);
+                    nextSlide();
+                }
+            }, 100);
+        }
+
+        function nextSlide() {
+            updateSlide(currentSlideIndex + 1, true);
+        }
+        function prevSlide() {
+            updateSlide(currentSlideIndex - 1, true);
+        }
+
+        prevBtn.onclick = () => { isPaused = false; prevSlide(); };
+        nextBtn.onclick = () => { isPaused = false; nextSlide(); };
+        card.onclick = () => {
+            isPaused = true;
+            openLightbox(sliderImagesArray, currentSlideIndex);
+        };
+
+        updateSlide(0, true);
+    }
+
+    function buildAlbumsBackup(container) {
+        let albums = getAlbumsList();
+        if (albums.length === 0) { container.innerHTML = '<div class="empty-state">⚠️ لا توجد صور للعرض. قم بإضافة صور في إدارة الرئيسية أو أضف ألبومات في أعمالنا.</div>'; return; }
+        let html = '<div class="grid-auto">';
+        albums.forEach(alb => {
+            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
+            html += `<div class="card" data-album="${alb.id}">
+                        ${cover ? `<div class="img-square"><img src="${cover}" loading="lazy" onerror="this.src='https://placehold.co/400x400?text=خطأ'"></div>` : '<div class="img-square" style="background:#f0f0f0;"></div>'}
+                        <div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div>
+                    </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+        document.querySelectorAll('#homeSliderContainer .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
+    }
+
+    // ========== دوال الألبومات والمتجر والكتالوجات ==========
+    function openAlbum(id) {
+        const alb = currentData.albums?.[id];
+        if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
+        const urls = Object.values(alb.imgs).map(i => i.url).filter(u => u);
+        if (urls.length) openLightbox(urls, 0, id);
+        else showToast('لا توجد صور صالحة');
+    }
+    function getAlbumsList() { if (!currentData.albums) return []; return Object.keys(currentData.albums).map(id => ({ id, ...currentData.albums[id] })); }
+    function getAllStoreProducts() { let imgs = []; if (currentData.store_categories) { Object.keys(currentData.store_categories).forEach(cid => { const cat = currentData.store_categories[cid]; if (cat.imgs) Object.values(cat.imgs).forEach(img => { if (img.url) imgs.push(img.url); }); }); } return imgs; }
+    function buildWorksGrid() {
+        const cont = document.getElementById('worksGrid');
+        if (!cont) return;
+        let albums = getAlbumsList();
+        if (albums.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد أعمال</div>'; return; }
+        let html = '<div class="grid-auto">';
+        albums.forEach(alb => {
+            let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
+            let avgRating = (alb.rating_sum && alb.rating_count) ? (alb.rating_sum / alb.rating_count).toFixed(1) : '0';
+            let views = alb.views || 0;
+            html += `<div class="card" data-album="${alb.id}">
+                        ${cover ? `<div class="img-square"><img src="${cover}" loading="lazy" onerror="this.src='https://placehold.co/400x400?text=خطأ'"></div>` : '<div class="img-square" style="background:#f0f0f0;"></div>'}
+                        <div class="card-body">
+                            <div class="card-title">${alb.name || 'ألبوم'}</div>
+                            <div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">⭐ ${avgRating} (${alb.rating_count||0}) | 👁️ ${views}</div>
+                            <small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small>
+                        </div>
+                    </div>`;
+        });
+        html += '</div>';
+        cont.innerHTML = html;
+        document.querySelectorAll('#worksGrid .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
+    }
+    function buildAllProductsGrid() {
+        const cont = document.getElementById('allProductsGrid');
+        if (!cont) return;
+        let all = getAllStoreProducts();
+        if (all.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد منتجات</div>'; return; }
+        let html = '<div class="grid-auto">';
+        all.forEach(url => {
+            html += `<div class="product-card" data-product-url="${url}">
+                        <div class="img-square"><img src="${url}" loading="lazy" onerror="this.src='https://placehold.co/400x400?text=خطأ'"></div>
+                        <div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div>
+                    </div>`;
+        });
+        html += '</div>';
+        cont.innerHTML = html;
+        document.querySelectorAll('#allProductsGrid .product-card').forEach(card => {
+            card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } });
+        });
+    }
+    function buildCatalogsPageGrid() {
+        const cont = document.getElementById('catalogsPageGrid');
+        if (!cont) return;
+        if (!currentData.catalogs || Object.keys(currentData.catalogs).length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد كتالوجات</div>'; return; }
+        let html = '<div class="grid-auto">';
+        Object.keys(currentData.catalogs).forEach(id => {
+            const cat = currentData.catalogs[id];
+            html += `<div class="card" data-catalog="${id}"><div class="card-body"><i class="fas fa-book-open fa-3x" style="color:var(--primary);"></i><div class="card-title">${cat.name}</div><small style="color:var(--gray);">اضغط للعرض</small></div></div>`;
+        });
+        html += '</div>';
+        cont.innerHTML = html;
+        document.querySelectorAll('#catalogsPageGrid .card').forEach(c => { c.addEventListener('click', () => openCatalog(c.getAttribute('data-catalog'))); });
+    }
+    function openCatalogModal(code) { const modal = document.getElementById('catalogModal'), iframe = document.getElementById('catalogIframe'); iframe.srcdoc = code; modal.style.display = 'flex'; document.body.style.overflow = 'hidden'; }
+    function closeCatalogModal() { document.getElementById('catalogModal').style.display = 'none'; document.getElementById('catalogIframe').srcdoc = ''; document.body.style.overflow = ''; }
+    document.querySelector('.catalog-modal-close').onclick = closeCatalogModal;
+    function openCatalog(id) { const cat = currentData.catalogs?.[id]; if (cat && cat.code) openCatalogModal(cat.code); else showToast('الكتالوج غير متاح'); }
+    function formatTime12(t) { if (!t) return ''; let [h, m] = t.split(':'); h = parseInt(h); return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`; }
+    function getGroupedScheduleHtml(d) {
+        if (!d.work_schedule) return '<p>لم تحدد المواعيد</p>';
+        const days = ["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+        const order = [6,0,1,2,3,4,5];
+        let groups = [], off = [];
+        order.forEach(jsDay => {
+            const s = d.work_schedule[jsDay];
+            if (s && s.active) {
+                const key = `${s.s1_s}-${s.s1_e}-${s.s2_a}`;
+                let g = groups.find(g => g.key === key);
+                if (g) g.days.push(days[jsDay]);
+                else groups.push({ key, days: [days[jsDay]], data: s });
+            } else off.push(days[jsDay]);
+        });
+        let html = '';
+        groups.forEach(g => {
+            const dTxt = g.days.length === 1 ? g.days[0] : `من ${g.days[0]} إلى ${g.days[g.days.length-1]}`;
+            html += `<div class="schedule-item"><strong>${dTxt}</strong><br>${formatTime12(g.data.s1_s)} - ${formatTime12(g.data.s1_e)}`;
+            if (g.data.s2_a) html += `<br>${formatTime12(g.data.s2_s)} - ${formatTime12(g.data.s2_e)}`;
+            html += `</div>`;
+        });
+        if (off.length) html += `<div class="schedule-item"><strong>عطلة:</strong> ${off.join('، ')}</div>`;
+        return html;
+    }
+    function updateFooterData() {
+        const d = currentData;
+        currentWhatsappNum = d.whatsapp_num || '966500000000';
+        document.getElementById('siteTitle').innerText = d.site_name || 'بصمة غير';
+        document.getElementById('footerPhone').innerHTML = `<a href="tel:0541780995" style="color:inherit;">0541780995</a>`;
+        document.getElementById('footerWhatsapp').innerHTML = `<a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="color:#25D366;">${currentWhatsappNum}</a>`;
+        document.getElementById('footerLocation').innerHTML = d.location_url ? `<a href="${d.location_url}" target="_blank">جدة</a>` : 'جدة';
+        const soc = document.getElementById('socialIcons');
+        if (soc) { let s = ''; if (d.insta_url) s += `<a href="${d.insta_url}" target="_blank"><i class="fab fa-instagram"></i></a>`; if (d.tiktok_url) s += `<a href="${d.tiktok_url}" target="_blank"><i class="fab fa-tiktok"></i></a>`; if (d.snap_url) s += `<a href="${d.snap_url}" target="_blank"><i class="fab fa-snapchat"></i></a>`; soc.innerHTML = s; }
+        const hoursDiv = document.getElementById('footerHours');
+        if (hoursDiv) hoursDiv.innerHTML = getGroupedScheduleHtml(d);
+        if (d.footer_text) document.getElementById('footerCopyright').innerHTML = d.footer_text;
+        else document.getElementById('footerCopyright').innerHTML = '© 2025 بصمة غير - جميع الحقوق محفوظة';
+    }
+    function renderPartnersMarquee() {
+        const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack');
+        if (!cont || !track) return;
+        if (currentData.partners && Object.keys(currentData.partners).length) {
+            cont.style.display = 'block';
+            let logos = '';
+            Object.values(currentData.partners).forEach(p => {
+                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" onerror="this.src='https://placehold.co/200x60?text=شريك'"></div>`;
+            });
+            track.innerHTML = logos + logos;
+        } else cont.style.display = 'none';
+    }
+
+    // ========== التنقل ==========
+    function navHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
+    function renderNavLinks() {
+        const container = document.getElementById('navLinks');
+        if (!container) return;
+        const pages = [
+            { id: 'home', name: 'الرئيسية', icon: 'fas fa-home' },
+            { id: 'store', name: 'المتجر', icon: 'fas fa-store' },
+            { id: 'works', name: 'أعمالنا', icon: 'fas fa-images' },
+            { id: 'catalogs', name: 'الكتالوجات', icon: 'fas fa-book-open' },
+            { id: 'contact', name: 'اتصل بنا', icon: 'fas fa-phone-alt' }
+        ];
+        let html = '';
+        pages.forEach(p => { html += `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`; });
+        container.innerHTML = html;
+        container.querySelectorAll('[data-page]').forEach(link => { link.removeEventListener('click', navHandler); link.addEventListener('click', navHandler); });
+    }
+    function changePage(page) { if (currentPage === page) return; currentPage = page; loadPage(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    function bindHeroButtons() { document.querySelectorAll('.btn[data-page]').forEach(btn => { btn.removeEventListener('click', heroClickHandler); btn.addEventListener('click', heroClickHandler); }); }
+    function heroClickHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
+    function showToast(msg) { const t = document.getElementById('toastMsg'); t.innerText = msg; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 2500); }
+    function loadPage() {
+        const main = document.getElementById('mainContent');
+        if (!main) return;
+        if (currentPage === 'home') {
+            const sliderTitle = (currentData.home_slider && currentData.home_slider.title) ? currentData.home_slider.title : 'أحدث أعمالنا';
+            main.innerHTML = `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">${sliderTitle}</h2><div id="homeSliderContainer"></div></div>`;
+            buildHomeSlider();
+        } else if (currentPage === 'store') {
+            main.innerHTML = `<div class="container section"><h2 class="section-title">جميع المنتجات</h2><div id="allProductsGrid"></div></div>`;
+            buildAllProductsGrid();
+        } else if (currentPage === 'works') {
+            main.innerHTML = `<div class="container section"><h2 class="section-title">أعمالنا</h2><div id="worksGrid"></div></div>`;
+            buildWorksGrid();
+        } else if (currentPage === 'catalogs') {
+            main.innerHTML = `<div class="container section"><h2 class="section-title">الكتالوجات</h2><div id="catalogsPageGrid"></div></div>`;
+            buildCatalogsPageGrid();
+        } else if (currentPage === 'contact') {
+            main.innerHTML = `<div class="container section"><h2 class="section-title">اتصل بنا</h2><div style="display:flex; justify-content:center; gap:2rem; flex-wrap:wrap; text-align:center;"><a href="tel:0541780995" style="text-decoration:none;"><div><i class="fas fa-phone fa-2x" style="color:var(--primary);"></i><p>اتصل بنا</p></div></a><a href="https://wa.me/${currentWhatsappNum}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-whatsapp fa-2x" style="color:#25D366;"></i><p>واتساب</p></div></a>${currentData.insta_url ? `<a href="${currentData.insta_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-instagram fa-2x" style="color:var(--primary);"></i><p>انستقرام</p></div></a>` : ''}${currentData.tiktok_url ? `<a href="${currentData.tiktok_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-tiktok fa-2x" style="color:var(--primary);"></i><p>تيك توك</p></div></a>` : ''}${currentData.snap_url ? `<a href="${currentData.snap_url}" target="_blank" style="text-decoration:none;"><div><i class="fab fa-snapchat fa-2x" style="color:var(--primary);"></i><p>سناب شات</p></div></a>` : ''}<a href="${currentData.location_url || '#'}" target="_blank" style="text-decoration:none;"><div><i class="fas fa-map-marker-alt fa-2x" style="color:var(--primary);"></i><p>الموقع</p></div></a></div><div style="text-align:center; margin-top:20px;"><p>📞 0541780995</p></div></div>`;
+        }
+        updateFooterData();
+        renderNavLinks();
+        bindHeroButtons();
+    }
+
+    // ========== الصيانة والإشعارات ==========
+    let splashTimeout, maintenanceInterval, popupTimeout;
+    function updateMaintenanceMode() {
+        const d = currentData, screen = document.getElementById('maintenanceScreen');
+        if (!d.maintenance_mode) { if (screen.style.display !== 'none') screen.style.display = 'none'; if (maintenanceInterval) clearInterval(maintenanceInterval); return; }
+        const until = d.maintenance_until;
+        const title = d.maintenance_title || 'الموقع في صيانة', msg = d.maintenance_message || 'نعمل على تحسين تجربتك، سنعود قريباً';
+        if (until && until <= Date.now()) { db.ref(DB_PATH).update({ maintenance_mode: false, maintenance_until: null }); return; }
+        screen.innerHTML = `<div style="background:white; border-radius:48px; padding:40px; max-width:500px; text-align:center;"><i class="fas fa-tools fa-4x" style="color:var(--primary);"></i><h2 style="margin:15px 0;">${title}</h2><p>${msg}</p>${until ? `<div id="maintenanceCountdown" style="font-size:2rem; font-weight:bold;"></div>` : ''}</div>`;
+        screen.style.display = 'flex'; document.body.style.overflow = 'hidden';
+        if (until) {
+            const countdownEl = document.getElementById('maintenanceCountdown');
+            const updateCountdown = () => {
+                let diff = until - Date.now();
+                if (diff <= 0) { clearInterval(maintenanceInterval); window.location.reload(); return; }
+                const h = Math.floor(diff / 3600000), m = Math.floor((diff % 3600000) / 60000), s = Math.floor((diff % 60000) / 1000);
+                if (countdownEl) countdownEl.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+            };
+            updateCountdown(); maintenanceInterval = setInterval(updateCountdown, 1000);
+        }
+    }
+    function updatePopup() {
+        const bubble = document.getElementById('popupBubble'), msgSpan = document.getElementById('popupMessage');
+        if (!currentData.popup_enabled || !currentData.popup_message) { if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); return; }
+        if (bubble.style.display === 'none' || bubble.style.display === '') {
+            msgSpan.innerText = currentData.popup_message;
+            bubble.style.display = 'block';
+            if (popupTimeout) clearTimeout(popupTimeout);
+            popupTimeout = setTimeout(() => { bubble.style.display = 'none'; }, (currentData.popup_duration || 7) * 1000);
+        }
+    }
+    window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
+    function refreshAll() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
+
+    // ========== بدء التطبيق ==========
+    let forceHideTimer = null;
+    function forceHideSplash() {
+        const splashDiv = document.getElementById('splash');
+        if (splashDiv && splashDiv.style.display !== 'none') {
+            splashDiv.style.opacity = '0';
+            setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
+        }
+        if (forceHideTimer) clearTimeout(forceHideTimer);
+    }
+    function initSplash() {
+        const storiesVideosData = currentData.splash_stories_videos || [];
+        if (storiesVideosData.length > 0) {
+            showStorySplash(storiesVideosData, 7);
+        } else if (currentData.splash_media_url) {
+            const splashDiv = document.getElementById('splash');
+            splashDiv.innerHTML = '';
+            if (!currentData.splash_enabled) { splashDiv.style.display = 'none'; return; }
+            const isVideo = currentData.splash_type === 'video' && currentData.splash_video_url;
+            let mediaElement;
+            if (isVideo) {
+                mediaElement = document.createElement('video');
+                mediaElement.src = currentData.splash_video_url;
+                mediaElement.muted = true;
+                mediaElement.playsInline = true;
+                mediaElement.autoplay = true;
+                mediaElement.loop = false;
+                mediaElement.onerror = () => { console.warn('فيديو السبلاش فاشل، تحويل لصورة'); showImageFallback(splashDiv); };
+                splashDiv.appendChild(mediaElement);
+                mediaElement.play().catch(e => { console.warn('تشغيل الفيديو تلقائياً عثر'); showImageFallback(splashDiv); });
+            } else {
+                mediaElement = document.createElement('img');
+                mediaElement.src = currentData.splash_media_url;
+                mediaElement.alt = 'شاشة بداية';
+                mediaElement.onerror = () => { mediaElement.src = 'https://placehold.co/1080x1920?text=Basma+Ghyr'; };
+                splashDiv.appendChild(mediaElement);
+            }
+            if (currentData.splash_show_skip) {
+                const skipBtn = document.createElement('button');
+                skipBtn.innerText = 'تخطي ←';
+                skipBtn.className = 'splash-skip';
+                skipBtn.onclick = () => {
+                    clearTimeout(splashTimeout);
+                    splashDiv.style.opacity = '0';
+                    setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
+                };
+                splashDiv.appendChild(skipBtn);
+            }
+            splashDiv.style.display = 'flex';
+            splashDiv.style.opacity = '1';
+            if (splashTimeout) clearTimeout(splashTimeout);
+            splashTimeout = setTimeout(() => {
+                splashDiv.style.opacity = '0';
+                setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
+            }, (currentData.splash_duration || 5) * 1000);
+
+            function showImageFallback(container) {
+                container.innerHTML = '';
+                const img = document.createElement('img');
+                img.src = currentData.splash_media_url || 'https://placehold.co/1080x1920?text=Basma+Ghyr';
+                img.alt = 'شاشة بداية';
+                container.appendChild(img);
+                if (currentData.splash_show_skip) {
+                    const skipBtn = document.createElement('button');
+                    skipBtn.innerText = 'تخطي ←';
+                    skipBtn.className = 'splash-skip';
+                    skipBtn.onclick = () => {
+                        clearTimeout(splashTimeout);
+                        splashDiv.style.opacity = '0';
+                        setTimeout(() => { splashDiv.style.display = 'none'; }, 500);
+                    };
+                    container.appendChild(skipBtn);
+                }
+            }
+        } else {
+            document.getElementById('splash').style.display = 'none';
+        }
+    }
+
+    const maxWaitTime = 5000;
+    forceHideTimer = setTimeout(() => {
+        console.warn('⚠️ Firebase timeout, forcing splash hide');
+        forceHideSplash();
+        if (!currentData || Object.keys(currentData).length === 0) { currentData = {}; refreshAll(); }
+    }, maxWaitTime);
+    db.ref(DB_PATH).once('value').then(snap => {
+        clearTimeout(forceHideTimer);
+        currentData = snap.val() || {};
+        initSplash();
+        refreshAll();
+    }).catch(err => {
+        console.error('❌ Firebase read error:', err);
+        clearTimeout(forceHideTimer);
+        currentData = {};
+        forceHideSplash();
+        refreshAll();
+        showToast('حدث خطأ في الاتصال، يتم عرض بيانات تجريبية');
+    });
+    db.ref(DB_PATH).on('value', snap => { if (snap.exists()) { currentData = snap.val(); refreshAll(); } });
+    window.openAlbum = openAlbum; window.openCatalog = openCatalog;
+
+    // منع تنزيل الصور
+    (function blockImageDownload() {
+        function disableContextAndDrag(img) {
+            img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
+            img.addEventListener('dragstart', (e) => { e.preventDefault(); return false; });
+        }
+        document.querySelectorAll('img').forEach(disableContextAndDrag);
+        const observer = new MutationObserver(() => {
+            document.querySelectorAll('img').forEach(img => {
+                if (!img.hasAttribute('data-blocked')) {
+                    img.setAttribute('data-blocked', 'true');
+                    disableContextAndDrag(img);
+                }
+            });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S')) { e.preventDefault(); showToast('❌ تم تعطيل حفظ الصور'); return false; }
+            if (e.key === 'F12') { e.preventDefault(); return false; }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); return false; }
+        });
+    })();
 </script>
 </body>
 </html>
