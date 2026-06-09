@@ -377,15 +377,80 @@
             previewSpan.innerHTML = `${hours.toString().padStart(2,'0')}:${minutes.toString().padStart(2,'0')}:${seconds.toString().padStart(2,'0')}`;
         }
     }
+    
+    // ========== شاشة البداية (وسائط متعددة) ==========
+    window.addSplashItem = function() {
+        const container = document.getElementById('splashItemsList');
+        const div = document.createElement('div');
+        div.className = 'slider-image-item';
+        div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;">
+                         <input type="text" class="splash-item-url" placeholder="رابط الصورة أو الفيديو" style="flex:1;">
+                         <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+        container.appendChild(div);
+    };
+    
+    window.addMultipleSplashItems = function() {
+        const textarea = document.getElementById('bulkSplashUrls');
+        const rawUrls = textarea.value.split(/\r?\n/);
+        const urls = rawUrls.filter(u => u.trim().length > 0);
+        if (urls.length === 0) {
+            showToast('الرجاء إدخال روابط صالحة (كل رابط في سطر)');
+            return;
+        }
+        const container = document.getElementById('splashItemsList');
+        urls.forEach(url => {
+            const div = document.createElement('div');
+            div.className = 'slider-image-item';
+            div.innerHTML = `<input type="checkbox" class="checkbox-select" style="width:20px; margin:0;">
+                             <input type="text" class="splash-item-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الصورة أو الفيديو" style="flex:1;">
+                             <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>`;
+            container.appendChild(div);
+        });
+        textarea.value = '';
+        showToast(`✅ تمت إضافة ${urls.length} عنصر إلى القائمة (لا تنس حفظ التغييرات)`);
+    };
+    
+    window.deleteSelectedSplashItems = function() {
+        const checkboxes = document.querySelectorAll('#splashItemsList .checkbox-select');
+        let count = 0;
+        checkboxes.forEach(cb => {
+            if (cb.checked) {
+                const parent = cb.parentElement;
+                if (parent) parent.remove();
+                count++;
+            }
+        });
+        if (count === 0) showToast('لم يتم تحديد أي عنصر للحذف');
+        else showToast(`✅ تم حذف ${count} عنصر من القائمة (لم يتم الحفظ بعد)`);
+    };
+    
+    window.deleteAllSplashItems = function() {
+        if (confirm('⚠️ هل أنت متأكد من حذف جميع عناصر السبلاش؟')) {
+            document.getElementById('splashItemsList').innerHTML = '';
+            showToast('تم حذف جميع العناصر من القائمة (لم يتم الحفظ بعد)');
+        }
+    };
+    
     window.saveSplashSettings = function() {
+        const enabled = document.getElementById('splashEnabled').checked;
+        const showSkip = document.getElementById('splashShowSkip').checked;
+        const duration = parseInt(document.getElementById('splashDuration').value) || 5;
+        const urlInputs = document.querySelectorAll('#splashItemsList .splash-item-url');
+        const items = [];
+        urlInputs.forEach(input => {
+            let url = input.value.trim();
+            if (url) {
+                const isVideo = /\.(mp4|webm|mov|ogg|mkv)$/i.test(url);
+                items.push({ url, type: isVideo ? 'video' : 'image' });
+            }
+        });
         db.ref(DB_PATH).update({
-            splash_enabled: document.getElementById('splashEnabled').checked,
-            splash_show_skip: document.getElementById('splashShowSkip').checked,
-            splash_type: document.getElementById('splashType').value,
-            splash_media_url: document.getElementById('splashMediaUrl').value,
-            splash_video_url: document.getElementById('splashVideoUrl').value,
-            splash_duration: parseInt(document.getElementById('splashDuration').value)||5
-        }).then(()=>{ showToast('تم حفظ إعدادات شاشة البداية'); loadData(); });
+            splash_enabled: enabled,
+            splash_show_skip: showSkip,
+            splash_duration: duration,
+            splash_items: items
+        }).then(() => { showToast('تم حفظ إعدادات السبلاش'); loadData(); })
+          .catch(e => showToast('خطأ: ' + e.message));
     };
 
     // دوال الإضافة والتحديث للألبومات والمتجر والكتالوجات والشركاء
@@ -440,6 +505,7 @@
         const d = currentData;
         const slider = d.home_slider || { enabled: false, title: 'أحدث أعمالنا', direction: 'rtl', duration: 5, images: [] };
         const storiesVideos = d.splash_stories_videos || [];
+        const splashItems = d.splash_items || [];   // مصفوفة {url, type}
         
         const getAlbumOptions = () => {
             let o = '<option value="">-- اختر ألبوم --</option>';
@@ -488,6 +554,17 @@
                                     <input type="text" class="story-video-url" value="${url.replace(/"/g, '&quot;')}" placeholder="رابط الفيديو" style="flex:1;">
                                     <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>
                                 </div>`;
+            });
+        }
+        
+        let splashItemsHtml = '';
+        if (splashItems.length) {
+            splashItems.forEach((item, idx) => {
+                splashItemsHtml += `<div class="slider-image-item">
+                                        <input type="checkbox" class="checkbox-select" style="width:20px; margin:0;">
+                                        <input type="text" class="splash-item-url" value="${(item.url||'').replace(/"/g,'&quot;')}" placeholder="رابط الصورة أو الفيديو" style="flex:1;">
+                                        <button class="btn-red" onclick="this.parentElement.remove()">حذف</button>
+                                    </div>`;
             });
         }
 
@@ -608,17 +685,27 @@
                 <button class="collapse-btn" onclick="toggleCollapse(this,'reviews')">⭐ التقييمات <span>▾</span></button>
                 <div class="collapse-content"><div id="reviewsList"></div></div>
             </div>
+            <!-- قسم شاشة البداية المعدل ليدعم عدة روابط -->
             <div class="collapse-section" data-section-id="splash">
-                <button class="collapse-btn" onclick="toggleCollapse(this,'splash')">🎬 شاشة البداية (صورة/فيديو قديم) <span>▾</span></button>
+                <button class="collapse-btn" onclick="toggleCollapse(this,'splash')">🎬 شاشة البداية (وسائط متعددة) <span>▾</span></button>
                 <div class="collapse-content">
                     <div class="checkbox-row"><input type="checkbox" id="splashEnabled" ${d.splash_enabled!==false?'checked':''}> <label>تفعيل</label></div>
                     <div class="checkbox-row"><input type="checkbox" id="splashShowSkip" ${d.splash_show_skip===true?'checked':''}> <label>إظهار زر "تخطي"</label></div>
-                    <select id="splashType"><option value="image" ${d.splash_type==='image'?'selected':''}>صورة ثابتة</option><option value="gif" ${d.splash_type==='gif'?'selected':''}>GIF</option><option value="video" ${d.splash_type==='video'?'selected':''}>فيديو</option></select>
-                    <input id="splashMediaUrl" value="${(d.splash_media_url||'').replace(/"/g,'&quot;')}">
-                    <input id="splashVideoUrl" value="${(d.splash_video_url||'').replace(/"/g,'&quot;')}">
-                    <input id="splashDuration" type="number" value="${d.splash_duration||5}">
-                    <button class="btn-gold" onclick="saveSplashSettings()">حفظ</button>
-                    <div class="hint">* هذا القسم للتوافق مع الإصدارات القديمة. استخدم قسم "سبلاش الفيديو (قصص)" للفيديوهات المتعددة.</div>
+                    <div class="input-group"><label>مدة العرض لكل عنصر (ثانية)</label><input type="number" id="splashDuration" value="${d.splash_duration||5}"></div>
+                    <hr>
+                    <div class="bulk-delete-bar">
+                        <button class="btn-red" onclick="deleteSelectedSplashItems()">🗑️ حذف المحدد</button>
+                        <button class="btn-red" onclick="deleteAllSplashItems()">⚠️ حذف الكل</button>
+                    </div>
+                    <div id="splashItemsList" class="image-list-grid">${splashItemsHtml}</div>
+                    <button class="btn-green" onclick="addSplashItem()">➕ إضافة وسيط (صورة أو فيديو)</button>
+                    <div class="bulk-add-area">
+                        <label><strong>📎 إضافة روابط متعددة (صورة أو فيديو)</strong></label>
+                        <textarea id="bulkSplashUrls" rows="4" placeholder="رابط 1 (صورة أو فيديو)\nرابط 2"></textarea>
+                        <button class="btn-gold" onclick="addMultipleSplashItems()">➕ إضافة روابط متعددة</button>
+                    </div>
+                    <hr>
+                    <button class="btn-gold" onclick="saveSplashSettings()">💾 حفظ إعدادات السبلاش</button>
                 </div>
             </div>
             <div class="collapse-section" data-section-id="popup">
