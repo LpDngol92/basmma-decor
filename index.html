@@ -442,7 +442,6 @@
     // ========== Lightbox مع التقييم والمشاهدات ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
-    const counterSpan = document.getElementById('lightboxCounter');
     const waBtn = document.getElementById('lightboxWhatsappBtn');
     const ratingDiv = document.getElementById('lightboxRating');
     const ratingStarsDiv = document.getElementById('ratingStars');
@@ -548,17 +547,26 @@
         imgElement.removeEventListener('touchend', onTouchEnd);
         imgElement.removeEventListener('wheel', onWheel);
     }
-    function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
+    function updateCounter() { document.getElementById('lightboxCounter').innerText = `${currentIndex+1} / ${currentImageList.length}`; }
     
     async function incrementAlbumViews(albumId) {
         if (!albumId) return;
         const sessionKey = `viewed_${albumId}`;
         if (sessionStorage.getItem(sessionKey)) return;
         const albumRef = db.ref(`${DB_PATH}/albums/${albumId}`);
-        await albumRef.transaction(album => { if (album) album.views = (album.views || 0) + 1; return album; });
+        await albumRef.transaction(album => { 
+            if (album) {
+                if (album.views === undefined) album.views = 0;
+                album.views++;
+            }
+            return album; 
+        });
         sessionStorage.setItem(sessionKey, '1');
-        if (currentData.albums && currentData.albums[albumId]) currentData.albums[albumId].views = (currentData.albums[albumId].views || 0) + 1;
-        buildWorksGrid(); // تحديث الشبكة فوراً
+        if (currentData.albums && currentData.albums[albumId]) {
+            if (currentData.albums[albumId].views === undefined) currentData.albums[albumId].views = 0;
+            currentData.albums[albumId].views++;
+        }
+        buildWorksGrid(); // تحديث الشبكة
     }
 
     async function updateRatingUI(albumId) {
@@ -605,8 +613,10 @@
         const albumRef = db.ref(`${DB_PATH}/albums/${albumId}`);
         await albumRef.transaction(album => {
             if (album) {
-                album.rating_sum = (album.rating_sum || 0) + rating;
-                album.rating_count = (album.rating_count || 0) + 1;
+                if (album.rating_sum === undefined) album.rating_sum = 0;
+                if (album.rating_count === undefined) album.rating_count = 0;
+                album.rating_sum += rating;
+                album.rating_count++;
             }
             return album;
         });
@@ -616,7 +626,7 @@
         if (updated && currentData.albums) {
             currentData.albums[albumId] = updated;
             await updateRatingUI(albumId);
-            buildWorksGrid(); // تحديث الشبكة فوراً
+            buildWorksGrid(); // تحديث الشبكة
             showToast(`شكراً لتقييمك (${rating} نجوم)`);
         }
     }
