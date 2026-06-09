@@ -64,19 +64,15 @@
         .story-counter { position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.6); padding: 5px 14px; border-radius: 30px; color: white; font-size: 0.8rem; z-index: 20; backdrop-filter: blur(4px); }
         .unmute-btn { position: absolute; bottom: 100px; right: 20px; background: rgba(0,0,0,0.6); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 1.2rem; cursor: pointer; z-index: 25; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         
-        /* سلايدر محسن - الآن تلقائي فقط بدون أزرار أو سحب أو فتح صور */
+        /* سلايدر - تلقائي فقط بدون تفاعل */
         .slider-section { overflow: hidden; position: relative; padding: 40px 0; }
         .slider-container { position: relative; width: 100%; overflow: hidden; }
-        .slider-wrapper { display: flex; transition: transform 0.5s ease-in-out; gap: 30px; }
-        .slider-item { flex: 0 0 auto; width: clamp(260px, 25vw, 360px); aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; background: #f0f0f0; pointer-events: none; /* منع أي تفاعل */ }
+        .slider-wrapper { display: flex; transition: transform 0.5s ease-in-out; gap: 30px; will-change: transform; }
+        .slider-item { flex: 0 0 auto; width: clamp(260px, 25vw, 360px); aspect-ratio: 9 / 16; border-radius: 28px; overflow: hidden; background: #f0f0f0; pointer-events: none; }
         .slider-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
         @media (max-width: 700px) { .slider-wrapper { gap: 15px; } .slider-item { width: clamp(200px, 40vw, 260px); } }
         @media (min-width: 1200px) { .slider-item { width: clamp(300px, 22vw, 400px); } }
-        
-        /* إخفاء أزرار التنقل تمامًا */
         .slider-btn { display: none; }
-        
-        /* النقاط - للعرض فقط بدون تفاعل */
         .slider-dots { text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 12px; pointer-events: none; }
         .dot { width: 10px; height: 10px; background: #ccc; border-radius: 50%; transition: 0.2s; }
         .dot.active { background: var(--primary); width: 28px; border-radius: 20px; }
@@ -217,7 +213,7 @@
     let autoSlideInterval = null;
     let isSliderPlaying = true;
 
-    // ========== سبلاش ستوري فيديو (نسخة كاملة تعمل) ==========
+    // ========== سبلاش ستوري (كامل يعمل) ==========
     let storiesVideos = [];
     let currentStoryIndex = 0;
     let storyInterval = null;
@@ -225,10 +221,7 @@
     let isStoryPlaying = true;
     let isMuted = true;
 
-    function isValidVideoUrl(url) {
-        if (!url) return false;
-        return url.includes('.mp4') || url.includes('.webm') || url.includes('.ogg') || url.includes('cloudinary.com');
-    }
+    function isValidVideoUrl(url) { return url && (url.includes('.mp4') || url.includes('.webm') || url.includes('.ogg') || url.includes('cloudinary.com')); }
 
     function showStorySplash(videos, durationPerVideo = 7) {
         const splashDiv = document.getElementById('splash');
@@ -259,9 +252,6 @@
             video.loop = false;
             video.muted = true;
             video.playsInline = true;
-            video.setAttribute('playsinline', '');
-            video.setAttribute('webkit-playsinline', '');
-            video.preload = 'auto';
             container.appendChild(video);
             storyVideoElements.push(video);
         });
@@ -351,7 +341,7 @@
         setTimeout(() => { splashDiv.style.display = 'none'; splashDiv.innerHTML = ''; storyVideoElements = []; }, 500);
     }
 
-    // ========== لايت بوكس محسن (نسخة كاملة) ==========
+    // ========== لايت بوكس (كامل) ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -523,14 +513,14 @@
     
     function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
     function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; imgElement.src = currentImageList[currentIndex]; resetTransform(); updateCounter(); }
-    function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
+    function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage;
     document.getElementById('lightboxNext').onclick = nextImage;
     document.getElementById('lightboxClose').onclick = closeLightbox;
     waBtn.onclick = sendWhatsapp;
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 
-    // ========== السلايدر التلقائي فقط (بدون أي تفاعل يدوي) ==========
+    // ========== السلايدر التلقائي الذي يعرض جميع الصور ==========
     let slidesUrls = [];
     let currentSlide = 0;
     let sliderWrapper = null;
@@ -546,6 +536,7 @@
         slidesUrls = sliderData.images.map(img => img.url).filter(url => url);
         if (slidesUrls.length === 0) { buildAlbumsBackup(container); return; }
         const duration = (sliderData.duration || 5) * 1000;
+        currentSlide = 0;
         
         let html = `
             <div class="slider-section">
@@ -573,10 +564,30 @@
             dotsContainer.appendChild(dot);
         }
         
+        // دقة في حساب عرض العنصر
+        function getItemWidth() {
+            const firstItem = sliderWrapper?.querySelector('.slider-item');
+            if (firstItem) {
+                const rect = firstItem.getBoundingClientRect();
+                if (rect.width > 0) return rect.width;
+            }
+            // fallback: احسب من CSS
+            const style = getComputedStyle(sliderWrapper);
+            const gap = parseFloat(style.gap) || 30;
+            const containerWidth = sliderWrapper.parentElement.clientWidth;
+            // العرض التقريبي = (عرض الحاوية - gap * (عدد العناصر - 1)) / عدد العناصر لكن صعب، نرجع قيمة افتراضية
+            return window.innerWidth < 700 ? 215 : (window.innerWidth < 1200 ? 260 : 330);
+        }
+        
+        function getGap() {
+            const style = getComputedStyle(sliderWrapper);
+            return parseFloat(style.gap) || 30;
+        }
+        
         function updateSliderPosition() {
             if (!sliderWrapper) return;
-            const itemWidth = sliderWrapper.children[0]?.offsetWidth || 300;
-            const gap = 30;
+            const itemWidth = getItemWidth();
+            const gap = getGap();
             const offset = -currentSlide * (itemWidth + gap);
             sliderWrapper.style.transform = `translateX(${offset}px)`;
             document.querySelectorAll('.dot').forEach((dot, idx) => {
@@ -604,7 +615,22 @@
             startAutoSlide();
         };
         
-        window.addEventListener('resize', () => setTimeout(updateSliderPosition, 100));
+        // مراقبة تحميل الصور لتحديث الموضع
+        const images = sliderWrapper.querySelectorAll('img');
+        let loadedCount = 0;
+        const checkAllLoaded = () => {
+            loadedCount++;
+            if (loadedCount === images.length) {
+                updateSliderPosition();
+            }
+        };
+        images.forEach(img => {
+            if (img.complete) checkAllLoaded();
+            else img.addEventListener('load', checkAllLoaded);
+            img.addEventListener('error', checkAllLoaded);
+        });
+        
+        window.addEventListener('resize', () => { updateSliderPosition(); });
         setTimeout(updateSliderPosition, 100);
         startAutoSlide();
     }
@@ -810,7 +836,7 @@
     }
 
     // ========== الصيانة والإشعارات ==========
-    let splashTimeout, maintenanceInterval, popupTimeout;
+    let maintenanceInterval, popupTimeout;
     
     function updateMaintenanceMode() {
         const d = currentData, screen = document.getElementById('maintenanceScreen');
@@ -869,7 +895,6 @@
             if (!currentData.splash_enabled) { splashDiv.style.display = 'none'; return; }
             const img = document.createElement('img');
             img.src = currentData.splash_media_url;
-            img.className = 'splash-media';
             img.style.width = '100%';
             img.style.height = '100%';
             img.style.objectFit = 'cover';
