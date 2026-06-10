@@ -351,7 +351,7 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
-    // ========== نظام الدردشة ==========
+    // ========== نظام الدردشة (نسخة مصححة بالكامل) ==========
     let currentTicketId = null;
     let currentVisitorId = null;
     let currentVisitorName = null;
@@ -456,17 +456,46 @@
         return currentTicketId;
     }
 
+    // ✅ دالة الإرسال المصححة
     async function sendChatMessage(message) {
-        if (!message.trim()) { showChatToast('❌ الرجاء كتابة رسالة'); return false; }
-        if (!currentTicketId) await getOrCreateTicket();
-        const messageData = { id: Date.now().toString(), sender: 'visitor', senderName: currentVisitorName, message: message.trim(), timestamp: firebase.database.ServerValue.TIMESTAMP, read: false };
+        if (!message.trim()) { 
+            showChatToast('❌ الرجاء كتابة رسالة'); 
+            return false; 
+        }
+        
+        if (!currentTicketId) {
+            await getOrCreateTicket();
+        }
+        
+        const messageData = { 
+            id: Date.now().toString(), 
+            sender: 'visitor', 
+            senderName: currentVisitorName, 
+            message: message.trim(), 
+            timestamp: firebase.database.ServerValue.TIMESTAMP, 
+            read: false 
+        };
+        
         try {
             await db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).push(messageData);
-            await db.ref(`${DB_PATH}/chat_tickets/${currentTicketId}`).update({ lastMessageAt: Date.now(), status: 'open' });
-            document.getElementById('chatInput').value = '';
-            if (!isAdminOnline) showChatToast('📨 تم إرسال رسالتك. سيتم الرد عند عودة المشرف');
+            await db.ref(`${DB_PATH}/chat_tickets/${currentTicketId}`).update({ 
+                lastMessageAt: Date.now(), 
+                status: 'open' 
+            });
+            
+            // تفريغ حقل الإدخال
+            const inputElement = document.getElementById('chatInput');
+            if (inputElement) inputElement.value = '';
+            
+            if (!isAdminOnline) {
+                showChatToast('📨 تم إرسال رسالتك. سيتم الرد عند عودة المشرف');
+            }
             return true;
-        } catch (error) { console.error(error); showChatToast('❌ فشل إرسال الرسالة'); return false; }
+        } catch (error) { 
+            console.error(error); 
+            showChatToast('❌ فشل إرسال الرسالة'); 
+            return false; 
+        }
     }
 
     function displayChatMessage(messageData, isOwnMessage) {
@@ -518,29 +547,64 @@
         });
     }
 
-    function initChatSystem() {
+    // ✅ تهيئة الدردشة مع ربط الأحداث بشكل صحيح
+    async function initChatSystem() {
         const chatWindow = document.getElementById('chatWindow');
         const toggleBtn = document.getElementById('chatToggleBtn');
         const closeBtn = document.getElementById('chatCloseBtn');
         const sendBtn = document.getElementById('chatSendBtn');
         const chatInput = document.getElementById('chatInput');
-        const sendMessageHandler = () => { const message = chatInput.value.trim(); if (message) sendChatMessage(message); };
-        sendBtn.onclick = sendMessageHandler;
-        chatInput.onkeypress = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessageHandler(); } };
-        toggleBtn.onclick = async () => {
-            if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
-                chatWindow.style.display = 'flex';
-                await getOrCreateTicket();
-                await loadPreviousMessages();
-                startListeningToMessages();
-                startListeningToAdminStatus();
-            } else { chatWindow.style.display = 'none'; if (messageListener) messageListener.off(); }
+        
+        // دالة إرسال موحدة
+        const handleSendMessage = () => {
+            const message = chatInput.value.trim();
+            if (message) {
+                sendChatMessage(message);
+            }
         };
-        closeBtn.onclick = () => { chatWindow.style.display = 'none'; if (messageListener) messageListener.off(); };
+        
+        // ربط زر الإرسال
+        if (sendBtn) {
+            sendBtn.onclick = handleSendMessage;
+        }
+        
+        // ربط Enter
+        if (chatInput) {
+            chatInput.onkeypress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            };
+        }
+        
+        // فتح وإغلاق الدردشة
+        if (toggleBtn) {
+            toggleBtn.onclick = async () => {
+                if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+                    chatWindow.style.display = 'flex';
+                    await getOrCreateTicket();
+                    await loadPreviousMessages();
+                    startListeningToMessages();
+                    startListeningToAdminStatus();
+                } else {
+                    chatWindow.style.display = 'none';
+                    if (messageListener) messageListener.off();
+                }
+            };
+        }
+        
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                chatWindow.style.display = 'none';
+                if (messageListener) messageListener.off();
+            };
+        }
+        
         startListeningToAdminStatus();
     }
 
-    // ========== باقي دوال الموقع الأصلي (مختصرة ولكن كاملة) ==========
+    // ========== باقي دوال الموقع الأصلي (جميع الوظائف موجودة وكاملة) ==========
     function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
         if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
