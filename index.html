@@ -351,7 +351,7 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
-    // ========== نظام الدردشة (نسخة مصححة بالكامل) ==========
+    // ========== نظام الدردشة (نسخة مصححة بالكامل مع عرض فوري للرسائل) ==========
     let currentTicketId = null;
     let currentVisitorId = null;
     let currentVisitorName = null;
@@ -456,7 +456,7 @@
         return currentTicketId;
     }
 
-    // ✅ دالة الإرسال المصححة
+    // ✅ دالة الإرسال المصححة - الآن تعرض الرسالة فوراً
     async function sendChatMessage(message) {
         if (!message.trim()) { 
             showChatToast('❌ الرجاء كتابة رسالة'); 
@@ -467,21 +467,28 @@
             await getOrCreateTicket();
         }
         
+        // استخدام timestamp من العميل للعرض الفوري (سيتم استبداله من الخادم لاحقاً)
+        const localTimestamp = Date.now();
+        
         const messageData = { 
             id: Date.now().toString(), 
             sender: 'visitor', 
             senderName: currentVisitorName, 
             message: message.trim(), 
-            timestamp: firebase.database.ServerValue.TIMESTAMP, 
+            timestamp: localTimestamp, 
             read: false 
         };
         
         try {
+            // إرسال إلى Firebase
             await db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).push(messageData);
             await db.ref(`${DB_PATH}/chat_tickets/${currentTicketId}`).update({ 
                 lastMessageAt: Date.now(), 
                 status: 'open' 
             });
+            
+            // ✅ عرض الرسالة فوراً في واجهة الدردشة (الإصلاح المهم)
+            displayChatMessage(messageData, true);
             
             // تفريغ حقل الإدخال
             const inputElement = document.getElementById('chatInput');
@@ -492,8 +499,8 @@
             }
             return true;
         } catch (error) { 
-            console.error(error); 
-            showChatToast('❌ فشل إرسال الرسالة'); 
+            console.error('Send error:', error); 
+            showChatToast('❌ فشل إرسال الرسالة: ' + error.message); 
             return false; 
         }
     }
@@ -604,7 +611,7 @@
         startListeningToAdminStatus();
     }
 
-    // ========== باقي دوال الموقع الأصلي (جميع الوظائف موجودة وكاملة) ==========
+    // ========== باقي دوال الموقع الأصلي ==========
     function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
         if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
