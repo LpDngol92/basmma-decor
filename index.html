@@ -227,6 +227,62 @@
         .popup-bubble { position: fixed; bottom: 20px; right: 20px; max-width: 280px; background: white; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; z-index: 10000; border-right: 4px solid var(--primary); animation: slideIn 0.3s ease; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 2002; opacity: 0; transition: opacity 0.3s; }
+        
+        /* ========== ستايلات الدردشة الجديدة ========== */
+        .admin-status-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        .admin-status-badge.online {
+            background: #28a745;
+            color: white;
+        }
+        .admin-status-badge.offline {
+            background: #6c757d;
+            color: white;
+        }
+        .chat-message {
+            max-width: 80%;
+            margin-bottom: 10px;
+        }
+        .chat-message.user {
+            align-self: flex-end;
+        }
+        .chat-message.user .message-bubble {
+            background: var(--primary);
+            color: white;
+            border-radius: 20px 20px 5px 20px;
+        }
+        .chat-message.admin .message-bubble {
+            background: white;
+            color: #333;
+            border-radius: 20px 20px 20px 5px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .message-bubble {
+            padding: 10px 15px;
+            word-wrap: break-word;
+        }
+        .message-time {
+            font-size: 0.65rem;
+            opacity: 0.7;
+            margin-top: 4px;
+            padding: 0 5px;
+        }
+        .admin-offline-banner {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            text-align: center;
+            font-size: 0.8rem;
+            border-bottom: 1px solid #f5c6cb;
+        }
+        .chat-input-disabled {
+            background: #e9ecef !important;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -274,6 +330,46 @@
 <div id="popupBubble" class="popup-bubble"><div style="padding:14px; display:flex; gap:10px; align-items:center;"><div style="background:var(--primary); border-radius:50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center; color:white;"><i class="fas fa-gift"></i></div><div id="popupMessage" style="flex:1; font-size:0.85rem;"></div><button onclick="closePopup()" style="background:none; border:none; font-size:1.2rem; cursor:pointer;"><i class="fas fa-times"></i></button></div></div>
 <div id="toastMsg" class="toast"></div>
 
+<!-- ========== واجهة الدردشة الجديدة ========== -->
+<!-- زر فتح الدردشة -->
+<button id="chatToggleBtn" style="position: fixed; bottom: 20px; left: 20px; width: 60px; height: 60px; border-radius: 50%; background: var(--primary); border: none; color: white; cursor: pointer; z-index: 9999; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+    <i class="fas fa-comment-dots" style="font-size: 24px;"></i>
+</button>
+
+<!-- نافذة الدردشة -->
+<div id="chatWindow" style="position: fixed; bottom: 90px; left: 20px; width: 360px; height: 520px; background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); display: none; flex-direction: column; z-index: 9998; overflow: hidden; direction: rtl; font-family: 'Cairo', sans-serif;">
+    <!-- رأس الدردشة -->
+    <div style="background: var(--primary); padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <span style="font-weight: bold;">💬 خدمة العملاء</span>
+            <span id="adminStatusBadge" class="admin-status-badge offline">جاري التحقق...</span>
+        </div>
+        <button id="chatCloseBtn" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+    
+    <!-- رسالة عدم الاتصال (تظهر فقط عندما يكون المشرف غير متصل) -->
+    <div id="offlineBanner" class="admin-offline-banner" style="display: none;">
+        ⚠️ المشرف غير متصل حالياً. سيتم الرد عليك عند العودة.
+    </div>
+    
+    <!-- منطقة الرسائل -->
+    <div id="chatMessages" style="flex: 1; overflow-y: auto; padding: 15px; background: #f8f9fa; display: flex; flex-direction: column; gap: 8px;"></div>
+    
+    <!-- مؤشر الكتابة -->
+    <div id="chatTypingIndicator" style="padding: 5px 15px; font-size: 0.7rem; color: #888; display: none;">✍️ المشرف يكتب...</div>
+    
+    <!-- منطقة الإدخال -->
+    <div style="padding: 10px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px;">
+        <input type="text" id="chatInput" placeholder="اكتب رسالتك..." style="flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-family: 'Cairo', sans-serif;">
+        <button id="chatSendBtn" style="background: var(--primary); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Toast صغير للدردشة -->
+<div id="chatToast" style="position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 20px; border-radius: 50px; font-size: 0.8rem; z-index: 10000; display: none;"></div>
+
 <script>
     const firebaseConfig = { apiKey: "AIzaSyC0hGvWzpb0UxA_RrYn-0PQKyaATXavEGY", authDomain: "mydecor-b29bd.firebaseapp.com", databaseURL: "https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app", projectId: "mydecor-b29bd", storageBucket: "mydecor-b29bd.firebasestorage.app", messagingSenderId: "302609299720", appId: "1:302609299720:web:e086b600c3ee824acd54bd" };
     firebase.initializeApp(firebaseConfig);
@@ -289,6 +385,336 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
+    // ========== نظام الدردشة الخاص (تذاكر دعم - كل زائر محادثة مستقلة) ==========
+    let currentTicketId = null;
+    let currentVisitorId = null;
+    let currentVisitorName = null;
+    let messageListenerRef = null;
+    let typingListenerRef = null;
+    let adminStatusListenerRef = null;
+    let isAdminOnline = false;
+    let isChatWindowOpen = false;
+    
+    function showChatToast(message, isError = false) {
+        const toast = document.getElementById('chatToast');
+        if (!toast) return;
+        toast.style.backgroundColor = isError ? '#dc3545' : '#333';
+        toast.innerText = message;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3000);
+    }
+    
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    function formatTime(timestamp) {
+        if (!timestamp) return '';
+        const date = new Date(timestamp);
+        return `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+    }
+    
+    // الحصول على معرف فريد للزائر
+    function getOrCreateVisitorId() {
+        let visitorId = localStorage.getItem('chat_visitor_id');
+        if (!visitorId) {
+            visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+            localStorage.setItem('chat_visitor_id', visitorId);
+        }
+        return visitorId;
+    }
+    
+    // الحصول على اسم الزائر أو طلبه
+    function getOrAskVisitorName() {
+        let name = localStorage.getItem('chat_visitor_name');
+        if (name && name !== 'زائر_') return name;
+        
+        const asked = sessionStorage.getItem('chat_name_asked');
+        if (!asked) {
+            sessionStorage.setItem('chat_name_asked', 'true');
+            const userName = prompt('مرحباً بك في خدمة العملاء! الرجاء إدخال اسمك لبدء المحادثة:');
+            if (userName && userName.trim()) {
+                name = userName.trim();
+                localStorage.setItem('chat_visitor_name', name);
+                return name;
+            }
+        }
+        return 'زائر';
+    }
+    
+    // إنشاء تذكرة محادثة جديدة أو جلب التذكرة الموجودة
+    async function getOrCreateTicket() {
+        const visitorId = getOrCreateVisitorId();
+        const visitorName = getOrAskVisitorName();
+        
+        // البحث عن تذكرة مفتوحة لهذا الزائر
+        const ticketsRef = db.ref(`${DB_PATH}/chat_tickets`);
+        const snapshot = await ticketsRef.orderByChild('visitorId').equalTo(visitorId).once('value');
+        
+        let existingTicket = null;
+        snapshot.forEach(child => {
+            const ticket = child.val();
+            if (ticket.status === 'open') {
+                existingTicket = { id: child.key, ...ticket };
+            }
+        });
+        
+        if (existingTicket) {
+            currentTicketId = existingTicket.id;
+            currentVisitorId = visitorId;
+            currentVisitorName = visitorName;
+            return currentTicketId;
+        }
+        
+        // إنشاء تذكرة جديدة
+        const newTicket = {
+            ticketId: null,
+            visitorId: visitorId,
+            visitorName: visitorName,
+            status: 'open',
+            createdAt: Date.now(),
+            lastMessageAt: Date.now()
+        };
+        
+        const newRef = ticketsRef.push();
+        newTicket.ticketId = newRef.key;
+        await newRef.set(newTicket);
+        
+        currentTicketId = newRef.key;
+        currentVisitorId = visitorId;
+        currentVisitorName = visitorName;
+        
+        return currentTicketId;
+    }
+    
+    // إرسال رسالة
+    async function sendChatMessage(message) {
+        if (!message.trim()) return;
+        if (!currentTicketId) await getOrCreateTicket();
+        
+        const messageData = {
+            id: Date.now().toString(),
+            sender: 'visitor',
+            senderName: currentVisitorName,
+            message: message.trim(),
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            read: false
+        };
+        
+        try {
+            await db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).push(messageData);
+            // تحديث lastMessageAt في التذكرة
+            await db.ref(`${DB_PATH}/chat_tickets/${currentTicketId}`).update({
+                lastMessageAt: Date.now(),
+                status: 'open'
+            });
+            document.getElementById('chatInput').value = '';
+        } catch (error) {
+            console.error('خطأ في إرسال الرسالة:', error);
+            showChatToast('❌ فشل إرسال الرسالة', true);
+        }
+    }
+    
+    // عرض رسالة في الواجهة
+    function displayMessage(messageData, isOwnMessage = false) {
+        const messagesContainer = document.getElementById('chatMessages');
+        if (!messagesContainer) return;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${isOwnMessage ? 'user' : 'admin'}`;
+        messageDiv.style.cssText = `display: flex; flex-direction: column; align-items: ${isOwnMessage ? 'flex-end' : 'flex-start'};`;
+        
+        messageDiv.innerHTML = `
+            <div class="message-bubble">
+                <div style="font-size: 0.7rem; margin-bottom: 4px; opacity: 0.7;">
+                    ${isOwnMessage ? 'أنت' : (messageData.senderName || 'الدعم')}
+                </div>
+                <div>${escapeHtml(messageData.message)}</div>
+            </div>
+            <div class="message-time">${formatTime(messageData.timestamp)}</div>
+        `;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    // تحميل الرسائل السابقة
+    async function loadPreviousMessages() {
+        if (!currentTicketId) return;
+        
+        const messagesContainer = document.getElementById('chatMessages');
+        if (messagesContainer) messagesContainer.innerHTML = '';
+        
+        const messagesRef = db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).orderByChild('timestamp').limitToLast(50);
+        const snapshot = await messagesRef.once('value');
+        
+        const messages = [];
+        snapshot.forEach(child => {
+            messages.push(child.val());
+        });
+        
+        messages.forEach(msg => {
+            const isOwn = (msg.sender === 'visitor');
+            displayMessage(msg, isOwn);
+        });
+    }
+    
+    // الاستماع للرسائل الجديدة
+    function startListeningToMessages() {
+        if (messageListenerRef) messageListenerRef.off();
+        if (!currentTicketId) return;
+        
+        const messagesRef = db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).orderByChild('timestamp').limitToLast(1);
+        
+        messageListenerRef = messagesRef.on('child_added', (snapshot) => {
+            const msg = snapshot.val();
+            if (msg && msg.sender === 'admin') {
+                displayMessage(msg, false);
+                // تحديث حالة القراءة
+                if (msg.id) {
+                    db.ref(`${DB_PATH}/chat_messages/${currentTicketId}/${snapshot.key}`).update({ read: true });
+                }
+                // تشغيل صوت الإشعار (اختياري)
+                try {
+                    const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3');
+                    audio.play().catch(e => console.log('صوت:', e));
+                } catch(e) {}
+            }
+        });
+    }
+    
+    // الاستماع لحالة المشرف
+    function startListeningToAdminStatus() {
+        if (adminStatusListenerRef) adminStatusListenerRef.off();
+        
+        const statusRef = db.ref(`${DB_PATH}/chat_admin_status`);
+        adminStatusListenerRef = statusRef.on('value', (snapshot) => {
+            const status = snapshot.val();
+            isAdminOnline = status ? status.isOnline : false;
+            
+            const badge = document.getElementById('adminStatusBadge');
+            const offlineBanner = document.getElementById('offlineBanner');
+            const chatInput = document.getElementById('chatInput');
+            const chatSendBtn = document.getElementById('chatSendBtn');
+            
+            if (badge) {
+                badge.className = `admin-status-badge ${isAdminOnline ? 'online' : 'offline'}`;
+                badge.innerText = isAdminOnline ? '🟢 متصل' : '⚪ غير متصل';
+            }
+            
+            if (offlineBanner) {
+                offlineBanner.style.display = isAdminOnline ? 'none' : 'block';
+            }
+            
+            if (chatInput && chatSendBtn) {
+                if (isAdminOnline) {
+                    chatInput.disabled = false;
+                    chatInput.classList.remove('chat-input-disabled');
+                    chatSendBtn.disabled = false;
+                } else {
+                    chatInput.disabled = true;
+                    chatInput.classList.add('chat-input-disabled');
+                    chatSendBtn.disabled = true;
+                }
+            }
+        });
+    }
+    
+    // الاستماع لمؤشر الكتابة من المشرف
+    function startListeningToTyping() {
+        if (typingListenerRef) typingListenerRef.off();
+        if (!currentTicketId) return;
+        
+        const typingRef = db.ref(`${DB_PATH}/chat_typing/${currentTicketId}`);
+        typingListenerRef = typingRef.on('value', (snapshot) => {
+            const isTyping = snapshot.val();
+            const indicator = document.getElementById('chatTypingIndicator');
+            if (indicator) {
+                indicator.style.display = isTyping ? 'block' : 'none';
+            }
+        });
+    }
+    
+    // إرسال مؤشر كتابة من الزائر
+    let typingTimeout = null;
+    function sendTypingIndicator(isTyping) {
+        if (!currentTicketId) return;
+        const typingRef = db.ref(`${DB_PATH}/chat_typing/${currentTicketId}`);
+        if (isTyping) {
+            typingRef.set(true);
+            if (typingTimeout) clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                typingRef.remove();
+            }, 1000);
+        } else {
+            typingRef.remove();
+        }
+    }
+    
+    // تهيئة الدردشة
+    async function initChat() {
+        const chatWindow = document.getElementById('chatWindow');
+        const chatToggleBtn = document.getElementById('chatToggleBtn');
+        const chatCloseBtn = document.getElementById('chatCloseBtn');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatInput = document.getElementById('chatInput');
+        
+        chatToggleBtn.onclick = async () => {
+            if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+                chatWindow.style.display = 'flex';
+                isChatWindowOpen = true;
+                
+                await getOrCreateTicket();
+                await loadPreviousMessages();
+                startListeningToMessages();
+                startListeningToTyping();
+                
+                // تحديث حالة التذكرة إلى open إذا كانت مغلقة
+                if (currentTicketId) {
+                    db.ref(`${DB_PATH}/chat_tickets/${currentTicketId}`).update({ status: 'open' });
+                }
+            } else {
+                chatWindow.style.display = 'none';
+                isChatWindowOpen = false;
+                if (messageListenerRef) messageListenerRef.off();
+                if (typingListenerRef) typingListenerRef.off();
+            }
+        };
+        
+        chatCloseBtn.onclick = () => {
+            chatWindow.style.display = 'none';
+            isChatWindowOpen = false;
+            if (messageListenerRef) messageListenerRef.off();
+            if (typingListenerRef) typingListenerRef.off();
+        };
+        
+        chatSendBtn.onclick = () => {
+            const message = chatInput.value.trim();
+            if (message) sendChatMessage(message);
+        };
+        
+        chatInput.onkeypress = (e) => {
+            if (e.key === 'Enter') {
+                sendChatMessage(chatInput.value.trim());
+            }
+        };
+        
+        chatInput.onkeydown = () => {
+            sendTypingIndicator(true);
+        };
+        
+        chatInput.onblur = () => {
+            sendTypingIndicator(false);
+        };
+        
+        // بدء الاستماع لحالة المشرف
+        startListeningToAdminStatus();
+    }
+    
+    // ========== باقي دوال الموقع الأصلي ==========
     function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
         if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
@@ -301,7 +727,6 @@
         tryLoad();
     }
 
-    // ========== سبلاش متعدد (ستوري) ==========
     let currentStoryItems = [];
     let currentStoryIdx = 0;
     let storyTimer = null;
@@ -437,7 +862,6 @@
         }, 500);
     }
 
-    // ========== Lightbox مع التقييم والمشاهدات ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -653,7 +1077,6 @@
     waBtn.onclick = sendWhatsapp;
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
 
-    // ========== السلايدر التلقائي ==========
     let currentSlideIndex = 0;
     let sliderImagesArray = [];
     let autoDuration = 5000;
@@ -756,7 +1179,6 @@
         document.querySelectorAll('#homeSliderContainer .card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
 
-    // ========== دوال الألبومات والمتجر والكتالوجات ==========
     function openAlbum(id) {
         const alb = currentData.albums?.[id];
         if (!alb || !alb.imgs) { showToast('لا توجد صور'); return; }
@@ -876,7 +1298,6 @@
         } else cont.style.display = 'none';
     }
 
-    // ========== التنقل ==========
     function navHandler(e) { e.preventDefault(); const page = this.getAttribute('data-page'); if (page) changePage(page); }
     function renderNavLinks() {
         const container = document.getElementById('navLinks');
@@ -921,7 +1342,6 @@
         bindHeroButtons();
     }
 
-    // ========== الصيانة والإشعارات ==========
     let splashTimeout, maintenanceInterval, popupTimeout;
     function updateMaintenanceMode() {
         const d = currentData, screen = document.getElementById('maintenanceScreen');
@@ -955,7 +1375,6 @@
     window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
     function refreshAll() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
 
-    // ========== بدء التطبيق ==========
     let forceHideTimer = null;
     function forceHideSplash() {
         const splashDiv = document.getElementById('splash');
@@ -966,17 +1385,14 @@
         if (forceHideTimer) clearTimeout(forceHideTimer);
     }
     function initSplash() {
-        // استخدام splash_items أولاً
         const splashItemsData = currentData.splash_items || [];
         if (splashItemsData.length > 0) {
             showStorySplash(splashItemsData, currentData.splash_duration || 5);
         } 
-        // ثم التراجع splash_stories_videos (للتوافق مع الإصدارات القديمة)
         else if (currentData.splash_stories_videos && currentData.splash_stories_videos.length) {
             const items = currentData.splash_stories_videos.map(url => ({ url, type: 'video' }));
             showStorySplash(items, 7);
         }
-        // ثم splash_media_url القديم
         else if (currentData.splash_media_url) {
             const items = [{ url: currentData.splash_media_url, type: (currentData.splash_type === 'video' ? 'video' : 'image') }];
             showStorySplash(items, currentData.splash_duration || 5);
@@ -997,18 +1413,20 @@
         currentData = snap.val() || {};
         initSplash();
         refreshAll();
+        // تهيئة الدردشة بعد تحميل الموقع
+        initChat();
     }).catch(err => {
         console.error('❌ Firebase read error:', err);
         clearTimeout(forceHideTimer);
         currentData = {};
         forceHideSplash();
         refreshAll();
+        initChat();
         showToast('حدث خطأ في الاتصال، يتم عرض بيانات تجريبية');
     });
     db.ref(DB_PATH).on('value', snap => { if (snap.exists()) { currentData = snap.val(); refreshAll(); } });
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
 
-    // منع تنزيل الصور
     (function blockImageDownload() {
         function disableContextAndDrag(img) {
             img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; });
