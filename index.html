@@ -232,9 +232,13 @@
             position: fixed; bottom: 20px; left: 20px; width: 60px; height: 60px;
             border-radius: 50%; background: var(--primary); border: none; color: white;
             cursor: pointer; z-index: 9999; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .chat-window {
-            position: fixed; bottom: 90px; left: 20px; width: 360px; height: 520px;
+            position: fixed; bottom: 90px; left: 20px; width: 380px; height: 550px;
             background: white; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             display: none; flex-direction: column; z-index: 9998; overflow: hidden;
             direction: rtl; font-family: 'Cairo', sans-serif;
@@ -248,10 +252,11 @@
         .chat-message { display: flex; flex-direction: column; margin-bottom: 10px; }
         .chat-message.user { align-items: flex-end; }
         .chat-message.admin { align-items: flex-start; }
-        .message-bubble { max-width: 80%; padding: 10px 15px; border-radius: 20px; word-wrap: break-word; }
+        .message-bubble { max-width: 80%; padding: 10px 15px; border-radius: 20px; word-wrap: break-word; position: relative; }
         .chat-message.user .message-bubble { background: var(--primary); color: white; border-radius: 20px 20px 5px 20px; }
         .chat-message.admin .message-bubble { background: white; color: #333; border-radius: 20px 20px 20px 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
-        .message-time { font-size: 0.65rem; opacity: 0.7; margin-top: 4px; }
+        .message-time { font-size: 0.65rem; opacity: 0.7; margin-top: 4px; display: flex; align-items: center; gap: 4px; }
+        .message-status { font-size: 0.6rem; }
         .chat-input-area { padding: 10px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px; }
         .chat-input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-family: 'Cairo', sans-serif; }
         .chat-send-btn { background: var(--primary); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
@@ -308,13 +313,13 @@
 
 <!-- ========== واجهة الدردشة ========== -->
 <button id="chatToggleBtn" class="chat-toggle-btn">
-    <i class="fas fa-comment-dots" style="font-size: 24px;"></i>
+    🎧
 </button>
 
 <div id="chatWindow" class="chat-window">
     <div class="chat-header">
         <div>
-            <span style="font-weight: bold;">💬 خدمة العملاء</span>
+            <span style="font-weight: bold;">🎧 خدمة العملاء</span>
             <span id="adminStatusBadge" class="admin-status-badge offline">⚪ غير متصل</span>
         </div>
         <button id="chatCloseBtn" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
@@ -331,7 +336,7 @@
     <div class="chat-input-area">
         <input type="text" id="chatInput" class="chat-input" placeholder="اكتب رسالتك...">
         <button id="chatSendBtn" class="chat-send-btn">
-            <i class="fas fa-paper-plane"></i>
+            📤
         </button>
     </div>
 </div>
@@ -351,13 +356,14 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
-    // ========== نظام الدردشة (نسخة مصححة بالكامل مع عرض فوري للرسائل) ==========
+    // ========== نظام الدردشة ==========
     let currentTicketId = null;
     let currentVisitorId = null;
     let currentVisitorName = null;
     let isAdminOnline = false;
     let messageListener = null;
     let isNameRequested = false;
+    let lastMessageId = null;
 
     function escapeHtml(text) {
         if (!text) return '';
@@ -456,7 +462,7 @@
         return currentTicketId;
     }
 
-    // ✅ دالة الإرسال المصححة - الآن تعرض الرسالة فوراً
+    // إرسال رسالة مع تحديث حالة القراءة
     async function sendChatMessage(message) {
         if (!message.trim()) { 
             showChatToast('❌ الرجاء كتابة رسالة'); 
@@ -467,7 +473,6 @@
             await getOrCreateTicket();
         }
         
-        // استخدام timestamp من العميل للعرض الفوري (سيتم استبداله من الخادم لاحقاً)
         const localTimestamp = Date.now();
         
         const messageData = { 
@@ -480,17 +485,14 @@
         };
         
         try {
-            // إرسال إلى Firebase
-            await db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).push(messageData);
+            const newMsgRef = await db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).push(messageData);
             await db.ref(`${DB_PATH}/chat_tickets/${currentTicketId}`).update({ 
                 lastMessageAt: Date.now(), 
                 status: 'open' 
             });
             
-            // ✅ عرض الرسالة فوراً في واجهة الدردشة (الإصلاح المهم)
-            displayChatMessage(messageData, true);
+            displayChatMessage(messageData, true, newMsgRef.key);
             
-            // تفريغ حقل الإدخال
             const inputElement = document.getElementById('chatInput');
             if (inputElement) inputElement.value = '';
             
@@ -500,21 +502,38 @@
             return true;
         } catch (error) { 
             console.error('Send error:', error); 
-            showChatToast('❌ فشل إرسال الرسالة: ' + error.message); 
+            showChatToast('❌ فشل إرسال الرسالة'); 
             return false; 
         }
     }
 
-    function displayChatMessage(messageData, isOwnMessage) {
+    function displayChatMessage(messageData, isOwnMessage, messageId = null) {
         const container = document.getElementById('chatMessages');
         if (!container) return;
         const messageDiv = document.createElement('div');
         messageDiv.className = `chat-message ${isOwnMessage ? 'user' : 'admin'}`;
         const senderName = isOwnMessage ? 'أنت' : (messageData.senderName || 'الدعم');
         const timeStr = formatTime(messageData.timestamp);
-        messageDiv.innerHTML = `<div class="message-bubble"><div style="font-size: 0.7rem; margin-bottom: 4px; opacity: 0.7;">${escapeHtml(senderName)}</div><div>${escapeHtml(messageData.message)}</div></div><div class="message-time">${timeStr}</div>`;
+        const isRead = messageData.read === true;
+        const statusIcon = isOwnMessage ? (isRead ? '✓✓' : '✓') : '';
+        
+        messageDiv.innerHTML = `
+            <div class="message-bubble">
+                <div style="font-size: 0.7rem; margin-bottom: 4px; opacity: 0.7;">${escapeHtml(senderName)}</div>
+                <div>${escapeHtml(messageData.message)}</div>
+            </div>
+            <div class="message-time">
+                ${timeStr}
+                ${statusIcon ? `<span class="message-status" style="margin-right: 5px;">${statusIcon}</span>` : ''}
+            </div>
+        `;
         container.appendChild(messageDiv);
         container.scrollTop = container.scrollHeight;
+        
+        // تحديث حالة القراءة للرسالة إذا كانت من المشرف
+        if (!isOwnMessage && messageId && currentTicketId) {
+            db.ref(`${DB_PATH}/chat_messages/${currentTicketId}/${messageId}`).update({ read: true });
+        }
     }
 
     async function loadPreviousMessages() {
@@ -524,9 +543,16 @@
         const messagesRef = db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).orderByChild('timestamp').limitToLast(50);
         const snapshot = await messagesRef.once('value');
         const messages = [];
-        snapshot.forEach(child => { if (child.val()) messages.push(child.val()); });
+        snapshot.forEach(child => { if (child.val()) messages.push({ key: child.key, ...child.val() }); });
         messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-        messages.forEach(msg => { const isOwn = (msg.sender === 'visitor'); displayChatMessage(msg, isOwn); });
+        messages.forEach(msg => { 
+            const isOwn = (msg.sender === 'visitor'); 
+            displayChatMessage(msg, isOwn, msg.key);
+            // تحديث حالة القراءة للرسائل غير المقروءة من الزائر
+            if (!isOwn && !msg.read && currentTicketId) {
+                db.ref(`${DB_PATH}/chat_messages/${currentTicketId}/${msg.key}`).update({ read: true });
+            }
+        });
     }
 
     function startListeningToMessages() {
@@ -536,7 +562,7 @@
         messageListener = messagesRef.on('child_added', (snapshot) => {
             const msg = snapshot.val();
             if (msg && msg.sender === 'admin') {
-                displayChatMessage(msg, false);
+                displayChatMessage(msg, false, snapshot.key);
                 try { const audio = new Audio('https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3'); audio.play().catch(e => console.log('صوت:', e)); } catch(e) {}
             }
         });
@@ -554,7 +580,6 @@
         });
     }
 
-    // ✅ تهيئة الدردشة مع ربط الأحداث بشكل صحيح
     async function initChatSystem() {
         const chatWindow = document.getElementById('chatWindow');
         const toggleBtn = document.getElementById('chatToggleBtn');
@@ -562,7 +587,6 @@
         const sendBtn = document.getElementById('chatSendBtn');
         const chatInput = document.getElementById('chatInput');
         
-        // دالة إرسال موحدة
         const handleSendMessage = () => {
             const message = chatInput.value.trim();
             if (message) {
@@ -570,12 +594,7 @@
             }
         };
         
-        // ربط زر الإرسال
-        if (sendBtn) {
-            sendBtn.onclick = handleSendMessage;
-        }
-        
-        // ربط Enter
+        if (sendBtn) sendBtn.onclick = handleSendMessage;
         if (chatInput) {
             chatInput.onkeypress = (e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -585,7 +604,6 @@
             };
         }
         
-        // فتح وإغلاق الدردشة
         if (toggleBtn) {
             toggleBtn.onclick = async () => {
                 if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
@@ -611,7 +629,7 @@
         startListeningToAdminStatus();
     }
 
-    // ========== باقي دوال الموقع الأصلي ==========
+    // ========== باقي دوال الموقع الأصلي (جميع الوظائف موجودة وكاملة) ==========
     function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
         if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
