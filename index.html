@@ -216,7 +216,6 @@
         .lightbox-img { max-width: 95%; max-height: 70vh; object-fit: contain; transform-origin: center center; cursor: grab; user-select: none; transition: transform 0.05s linear; }
         .lightbox-img:active { cursor: grabbing; }
         
-        /* شريط التحكم السفلي */
         .lightbox-controls {
             position: fixed; bottom: 0; left: 0; right: 0;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
@@ -232,27 +231,18 @@
         .lightbox-close { position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.7); color: white; font-size: 1.4rem; padding: 10px 15px; border-radius: 50%; cursor: pointer; z-index: 10002; }
         .zoom-hint { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; pointer-events: none; z-index: 10002; opacity: 0; transition: opacity 0.3s; }
         
-        /* ========== بطاقة التقييم في Lightbox (واضحة وسهلة النقر) ========== */
         .rating-card {
             background: rgba(0,0,0,0.75); backdrop-filter: blur(8px);
             border-radius: 50px; padding: 12px 25px;
             display: inline-flex; align-items: center; gap: 20px;
             direction: ltr;
         }
-        .rating-stars {
-            display: flex; gap: 8px;
-        }
-        .rating-stars i {
-            font-size: 28px; cursor: pointer; transition: 0.1s;
-            color: #ffc107; text-shadow: 0 0 2px rgba(0,0,0,0.5);
-        }
-        .rating-stars i.star { color: #ffc107; opacity: 0.3; }
-        .rating-stars i.star.active { color: #ffc107; opacity: 1; }
+        .rating-stars { display: flex; gap: 8px; }
+        .rating-stars i { font-size: 28px; cursor: pointer; transition: 0.1s; color: #ffc107; }
+        .rating-stars i.star { opacity: 0.3; }
+        .rating-stars i.star.active { opacity: 1; }
         .rating-stars i.star.hover { transform: scale(1.15); opacity: 0.9; }
-        .rating-info {
-            font-size: 0.85rem; color: white; padding-right: 15px;
-            border-right: 1px solid rgba(255,255,255,0.3);
-        }
+        .rating-info { font-size: 0.85rem; color: white; padding-right: 15px; border-right: 1px solid rgba(255,255,255,0.3); }
         
         /* ========== ستايلات الدردشة ========== */
         .chat-toggle-btn {
@@ -268,6 +258,7 @@
             direction: rtl; font-family: 'Cairo', sans-serif;
         }
         .chat-header { background: var(--primary); padding: 15px; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .chat-header.blocked { background: #dc3545; }
         .admin-status-badge { font-size: 11px; padding: 4px 10px; border-radius: 20px; margin-right: 10px; }
         .admin-status-badge.online { background: #28a745; color: white; }
         .admin-status-badge.offline { background: #6c757d; color: white; }
@@ -288,6 +279,9 @@
         .name-request-input { padding: 12px; border: 2px solid var(--primary); border-radius: 30px; width: 80%; font-family: 'Cairo', sans-serif; font-size: 1rem; margin-top: 15px; text-align: center; }
         .name-request-btn { margin-top: 15px; background: var(--primary); color: white; border: none; padding: 10px 30px; border-radius: 30px; cursor: pointer; font-family: 'Cairo', sans-serif; font-size: 1rem; }
         .typing-indicator { padding: 5px 15px; font-size: 0.7rem; color: #888; display: none; }
+        .blocked-message { flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 20px; text-align: center; }
+        .blocked-message i { font-size: 64px; color: #dc3545; margin-bottom: 20px; }
+        .blocked-message h3 { margin-bottom: 10px; }
         
         .catalog-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 20000; display: none; align-items: center; justify-content: center; padding: 20px; }
         .catalog-modal-content { background: white; width: 90%; max-width: 1000px; height: 80vh; border-radius: 28px; overflow: hidden; position: relative; }
@@ -326,7 +320,7 @@
     </div>
 </footer>
 
-<!-- ========== Lightbox جديد مع تقييم واضح ========== -->
+<!-- ========== Lightbox ========== -->
 <div id="lightbox" class="lightbox">
     <div class="lightbox-container">
         <div class="lightbox-image-wrapper">
@@ -357,7 +351,7 @@
 <button id="chatToggleBtn" class="chat-toggle-btn">🎧</button>
 
 <div id="chatWindow" class="chat-window">
-    <div class="chat-header">
+    <div class="chat-header" id="chatHeader">
         <div>
             <span style="font-weight: bold;">🎧 خدمة العملاء</span>
             <span id="adminStatusBadge" class="admin-status-badge offline">⚪ غير متصل</span>
@@ -367,7 +361,7 @@
     <div id="offlineBanner" class="offline-banner">⚠️ المشرف غير متصل حالياً. يمكنك كتابة رسالتك وسيتم الرد عند العودة.</div>
     <div id="chatMessages" class="chat-messages"></div>
     <div id="typingIndicator" class="typing-indicator">✍️ المشرف يكتب...</div>
-    <div class="chat-input-area">
+    <div class="chat-input-area" id="chatInputArea">
         <input type="text" id="chatInput" class="chat-input" placeholder="اكتب رسالتك...">
         <button id="chatSendBtn" class="chat-send-btn">📤</button>
     </div>
@@ -387,6 +381,7 @@
     let currentAlbumId = null;
     let sliderInterval = null;
     let isSliderPaused = false;
+    let isBlocked = false;
 
     // ========== نظام الدردشة ==========
     let currentTicketId = null;
@@ -429,6 +424,51 @@
             localStorage.setItem('chat_visitor_id', visitorId);
         }
         return visitorId;
+    }
+
+    // ========== التحقق من الحظر ==========
+    async function checkIfBlocked() {
+        const visitorId = getOrCreateVisitorId();
+        const visitorName = localStorage.getItem('chat_visitor_name') || '';
+        
+        try {
+            const blockedSnap = await db.ref(`${DB_PATH}/blocked_list/list`).once('value');
+            const blockedList = blockedSnap.val() || [];
+            
+            isBlocked = blockedList.some(b => b.visitor_id === visitorId || b.name === visitorName);
+            
+            if (isBlocked) {
+                const chatWindow = document.getElementById('chatWindow');
+                const chatHeader = document.getElementById('chatHeader');
+                const chatMessages = document.getElementById('chatMessages');
+                const chatInputArea = document.getElementById('chatInputArea');
+                const offlineBanner = document.getElementById('offlineBanner');
+                
+                chatHeader.classList.add('blocked');
+                if (chatMessages) chatMessages.style.display = 'none';
+                if (offlineBanner) offlineBanner.style.display = 'none';
+                if (chatInputArea) chatInputArea.style.display = 'none';
+                
+                const blockedDiv = document.createElement('div');
+                blockedDiv.className = 'blocked-message';
+                blockedDiv.innerHTML = `
+                    <i class="fas fa-ban"></i>
+                    <h3>تم حظرك من الدردشة</h3>
+                    <p>لقد تم إضافتك إلى قائمة المزعجين. لا يمكنك إرسال رسائل.</p>
+                    <p style="margin-top:10px; font-size:12px; color:#666;">للتواصل، يرجى استخدام وسائل التواصل الأخرى.</p>
+                    <p style="margin-top:15px;">📞 0541780995</p>
+                `;
+                
+                const existingBlocked = chatWindow.querySelector('.blocked-message');
+                if (!existingBlocked) {
+                    chatWindow.appendChild(blockedDiv);
+                }
+                return true;
+            }
+        } catch (error) {
+            console.error('خطأ في التحقق من الحظر:', error);
+        }
+        return false;
     }
 
     function requestUserName() {
@@ -494,18 +534,52 @@
     }
 
     async function sendChatMessage(message) {
-        if (!message.trim()) { showChatToast('❌ الرجاء كتابة رسالة'); return false; }
-        if (!currentTicketId) await getOrCreateTicket();
-        const messageData = { id: Date.now().toString(), sender: 'visitor', senderName: currentVisitorName, message: message.trim(), timestamp: firebase.database.ServerValue.TIMESTAMP, read: false };
+        if (isBlocked) {
+            showChatToast('🚫 لا يمكنك إرسال رسائل، تم حظرك من الدردشة');
+            return false;
+        }
+        
+        if (!message.trim()) { 
+            showChatToast('❌ الرجاء كتابة رسالة'); 
+            return false; 
+        }
+        
+        if (!currentTicketId) {
+            await getOrCreateTicket();
+        }
+        
+        const localTimestamp = Date.now();
+        
+        const messageData = { 
+            id: Date.now().toString(), 
+            sender: 'visitor', 
+            senderName: currentVisitorName, 
+            message: message.trim(), 
+            timestamp: localTimestamp, 
+            read: false 
+        };
+        
         try {
             await db.ref(`${DB_PATH}/chat_messages/${currentTicketId}`).push(messageData);
-            await db.ref(`${DB_PATH}/chat_tickets/${currentTicketId}`).update({ lastMessageAt: Date.now(), status: 'open' });
+            await db.ref(`${DB_PATH}/chat_tickets/${currentTicketId}`).update({ 
+                lastMessageAt: Date.now(), 
+                status: 'open' 
+            });
+            
             displayChatMessage(messageData, true);
+            
             const inputElement = document.getElementById('chatInput');
             if (inputElement) inputElement.value = '';
-            if (!isAdminOnline) showChatToast('📨 تم إرسال رسالتك. سيتم الرد عند عودة المشرف');
+            
+            if (!isAdminOnline) {
+                showChatToast('📨 تم إرسال رسالتك. سيتم الرد عند عودة المشرف');
+            }
             return true;
-        } catch (error) { console.error(error); showChatToast('❌ فشل إرسال الرسالة'); return false; }
+        } catch (error) { 
+            console.error('Send error:', error); 
+            showChatToast('❌ فشل إرسال الرسالة'); 
+            return false; 
+        }
     }
 
     function displayChatMessage(messageData, isOwnMessage, messageId = null) {
@@ -517,9 +591,20 @@
         const timeStr = formatTime(messageData.timestamp);
         const isRead = messageData.read === true;
         const statusIcon = isOwnMessage ? (isRead ? '✓✓' : '✓') : '';
-        messageDiv.innerHTML = `<div class="message-bubble"><div style="font-size: 0.7rem; margin-bottom: 4px; opacity: 0.7;">${escapeHtml(senderName)}</div><div>${escapeHtml(messageData.message)}</div></div><div class="message-time">${timeStr}${statusIcon ? `<span class="message-status" style="margin-right: 5px;">${statusIcon}</span>` : ''}</div>`;
+        
+        messageDiv.innerHTML = `
+            <div class="message-bubble">
+                <div style="font-size: 0.7rem; margin-bottom: 4px; opacity: 0.7;">${escapeHtml(senderName)}</div>
+                <div>${escapeHtml(messageData.message)}</div>
+            </div>
+            <div class="message-time">
+                ${timeStr}
+                ${statusIcon ? `<span class="message-status" style="margin-right: 5px;">${statusIcon}</span>` : ''}
+            </div>
+        `;
         container.appendChild(messageDiv);
         container.scrollTop = container.scrollHeight;
+        
         if (!isOwnMessage && messageId && currentTicketId) {
             db.ref(`${DB_PATH}/chat_messages/${currentTicketId}/${messageId}`).update({ read: true });
         }
@@ -534,7 +619,13 @@
         const messages = [];
         snapshot.forEach(child => { if (child.val()) messages.push({ key: child.key, ...child.val() }); });
         messages.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-        messages.forEach(msg => { const isOwn = (msg.sender === 'visitor'); displayChatMessage(msg, isOwn, msg.key); if (!isOwn && !msg.read && currentTicketId) { db.ref(`${DB_PATH}/chat_messages/${currentTicketId}/${msg.key}`).update({ read: true }); } });
+        messages.forEach(msg => { 
+            const isOwn = (msg.sender === 'visitor'); 
+            displayChatMessage(msg, isOwn, msg.key);
+            if (!isOwn && !msg.read && currentTicketId) {
+                db.ref(`${DB_PATH}/chat_messages/${currentTicketId}/${msg.key}`).update({ read: true });
+            }
+        });
     }
 
     function startListeningToMessages() {
@@ -568,23 +659,119 @@
         const closeBtn = document.getElementById('chatCloseBtn');
         const sendBtn = document.getElementById('chatSendBtn');
         const chatInput = document.getElementById('chatInput');
-        const handleSendMessage = () => { const message = chatInput.value.trim(); if (message) sendChatMessage(message); };
-        if (sendBtn) sendBtn.onclick = handleSendMessage;
-        if (chatInput) chatInput.onkeypress = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } };
-        if (toggleBtn) toggleBtn.onclick = async () => {
-            if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
-                chatWindow.style.display = 'flex';
-                await getOrCreateTicket();
-                await loadPreviousMessages();
-                startListeningToMessages();
-                startListeningToAdminStatus();
-            } else { chatWindow.style.display = 'none'; if (messageListener) messageListener.off(); }
+        
+        const handleSendMessage = () => {
+            const message = chatInput.value.trim();
+            if (message && !isBlocked) {
+                sendChatMessage(message);
+            } else if (isBlocked) {
+                showChatToast('🚫 تم حظرك من الدردشة');
+            }
         };
-        if (closeBtn) closeBtn.onclick = () => { chatWindow.style.display = 'none'; if (messageListener) messageListener.off(); };
+        
+        if (sendBtn) sendBtn.onclick = handleSendMessage;
+        if (chatInput) {
+            chatInput.onkeypress = (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                }
+            };
+        }
+        
+        if (toggleBtn) {
+            toggleBtn.onclick = async () => {
+                // التحقق من الحظر أولاً
+                const blocked = await checkIfBlocked();
+                if (blocked) {
+                    chatWindow.style.display = 'flex';
+                    return;
+                }
+                
+                if (chatWindow.style.display === 'none' || chatWindow.style.display === '') {
+                    chatWindow.style.display = 'flex';
+                    await getOrCreateTicket();
+                    await loadPreviousMessages();
+                    startListeningToMessages();
+                    startListeningToAdminStatus();
+                } else {
+                    chatWindow.style.display = 'none';
+                    if (messageListener) messageListener.off();
+                }
+            };
+        }
+        
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                chatWindow.style.display = 'none';
+                if (messageListener) messageListener.off();
+            };
+        }
+        
         startListeningToAdminStatus();
     }
 
-    // ========== دوال الـ Lightbox مع التكبير والتصغير ==========
+    // ========== باقي دوال الموقع الأصلي ==========
+    function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
+        if (!imgElement) return;
+        if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
+        let attempts = 0;
+        const tryLoad = () => { imgElement.src = src; };
+        imgElement.onerror = () => {
+            if (attempts < retries) { attempts++; setTimeout(tryLoad, 500 * attempts); }
+            else { imgElement.src = fallbackUrl; imgElement.style.objectFit = 'contain'; }
+        };
+        tryLoad();
+    }
+
+    let currentStoryItems = [], currentStoryIdx = 0, storyTimer = null, storyMediaElements = [], storyPlaying = true;
+    function isVideoUrl(url) { return /\.(mp4|webm|mov|ogg|mkv)$/i.test(url); }
+    function showStorySplash(items, durationSec = 5) {
+        const splashDiv = document.getElementById('splash');
+        if (!splashDiv) return;
+        if (!items || items.length === 0) { splashDiv.style.display = 'none'; return; }
+        if (storyTimer) clearInterval(storyTimer);
+        if (storyMediaElements.length) { storyMediaElements.forEach(el => { if (el.tagName === 'VIDEO') el.pause(); el.remove(); }); storyMediaElements = []; }
+        currentStoryItems = items; currentStoryIdx = 0;
+        splashDiv.innerHTML = `<div class="stories-container" id="storiesContainer"><div class="story-progress-bar" id="storyProgressBar"></div><div class="story-counter" id="storyCounter">1/${items.length}</div><div class="story-nav prev" id="storyPrev"></div><div class="story-nav next" id="storyNext"></div><button class="splash-skip" id="splashSkipBtn">تخطي ←</button></div>`;
+        const container = document.getElementById('storiesContainer');
+        items.forEach((item, idx) => {
+            let media;
+            if (item.type === 'video' || isVideoUrl(item.url)) { media = document.createElement('video'); media.src = item.url; media.muted = true; media.playsInline = true; media.preload = 'auto'; media.loop = false; media.onerror = () => console.warn('خطأ في تحميل الفيديو:', item.url); } 
+            else { media = document.createElement('img'); media.src = item.url; media.alt = 'صورة سبلاش'; media.onerror = () => { media.src = 'https://placehold.co/1080x1920?text=خطأ+تحميل'; }; }
+            media.className = 'story-media';
+            if (idx === 0) media.classList.add('active');
+            container.appendChild(media);
+            storyMediaElements.push(media);
+        });
+        const progressBar = document.getElementById('storyProgressBar');
+        for (let i = 0; i < items.length; i++) { const segment = document.createElement('div'); segment.className = 'progress-segment'; segment.innerHTML = '<div class="progress-fill" id="progressFill_' + i + '"></div>'; progressBar.appendChild(segment); }
+        document.getElementById('storyPrev').addEventListener('click', () => navigateStory(-1));
+        document.getElementById('storyNext').addEventListener('click', () => navigateStory(1));
+        document.getElementById('splashSkipBtn').addEventListener('click', closeSplash);
+        let touchStartX = 0;
+        container.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+        container.addEventListener('touchend', (e) => { const diff = e.changedTouches[0].clientX - touchStartX; if (Math.abs(diff) > 50) diff > 0 ? navigateStory(-1) : navigateStory(1); });
+        splashDiv.style.display = 'flex'; splashDiv.style.opacity = '1';
+        startCurrentStoryItem(durationSec * 1000);
+    }
+    function startCurrentStoryItem(durationMs) {
+        if (storyTimer) clearInterval(storyTimer);
+        const counterSpan = document.getElementById('storyCounter');
+        if (counterSpan) counterSpan.innerText = `${currentStoryIdx+1}/${currentStoryItems.length}`;
+        storyMediaElements.forEach((el, idx) => { if (el.tagName === 'VIDEO') { el.pause(); el.currentTime = 0; } if (idx === currentStoryIdx) el.classList.add('active'); else el.classList.remove('active'); });
+        for (let i = 0; i < currentStoryItems.length; i++) { const fill = document.getElementById(`progressFill_${i}`); if (fill) fill.style.width = (i < currentStoryIdx) ? '100%' : (i === currentStoryIdx) ? '0%' : '0%'; }
+        const currentFill = document.getElementById(`progressFill_${currentStoryIdx}`);
+        const startTime = Date.now();
+        const currentMedia = storyMediaElements[currentStoryIdx];
+        if (currentMedia.tagName === 'VIDEO') currentMedia.play().catch(e => console.log('تشغيل الفيديو تلقائياً عثر:', e));
+        storyTimer = setInterval(() => { if (!storyPlaying) return; const elapsed = Date.now() - startTime; const percent = Math.min(100, (elapsed / durationMs) * 100); if (currentFill) currentFill.style.width = percent + '%'; if (elapsed >= durationMs) { clearInterval(storyTimer); if (currentStoryIdx + 1 < currentStoryItems.length) navigateStory(1); else closeSplash(); } }, 50);
+        storyPlaying = true;
+    }
+    function navigateStory(direction) { if (!storyPlaying) return; let newIdx = currentStoryIdx + direction; if (newIdx < 0) newIdx = 0; if (newIdx >= currentStoryItems.length) { closeSplash(); return; } if (newIdx === currentStoryIdx) return; currentStoryIdx = newIdx; startCurrentStoryItem((currentData.splash_duration || 5) * 1000); }
+    function closeSplash() { if (storyTimer) clearInterval(storyTimer); storyPlaying = false; storyMediaElements.forEach(el => { if (el.tagName === 'VIDEO') el.pause(); }); const splashDiv = document.getElementById('splash'); splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; splashDiv.innerHTML = ''; storyMediaElements = []; }, 500); }
+
+    // ========== Lightbox والتصغير والتكبير ==========
     const imgElement = document.getElementById('lightboxImg');
     const lightbox = document.getElementById('lightbox');
     const counterSpan = document.getElementById('lightboxCounter');
@@ -695,7 +882,6 @@
     }
     function updateCounter() { counterSpan.innerText = `${currentIndex+1} / ${currentImageList.length}`; }
     
-    // ========== نظام التقييم (النجوم) المصحح والواضح ==========
     async function incrementAlbumViews(albumId) {
         if (!albumId) return;
         const sessionKey = `viewed_${albumId}`;
@@ -716,7 +902,6 @@
         const views = album.views || 0;
         ratingInfo.innerHTML = `⭐ ${avg.toFixed(1)} (${count} تقييم) | 👁️ ${views}`;
         
-        // بناء النجوم بشكل واضح وكبير
         let starsHtml = '';
         for (let i = 1; i <= 5; i++) {
             let starClass = 'star';
@@ -725,7 +910,6 @@
         }
         ratingStarsDiv.innerHTML = starsHtml;
         
-        // ربط أحداث النقر والتمرير
         document.querySelectorAll('#ratingStars .star').forEach(star => {
             star.removeEventListener('click', handleStarClick);
             star.removeEventListener('mouseenter', handleStarHover);
@@ -814,7 +998,6 @@
     waBtn.onclick = sendWhatsapp;
     lightbox.addEventListener('click', (e) => { if (e.target === lightbox || e.target.classList.contains('lightbox-container')) closeLightbox(); });
 
-    // ========== السلايدر ==========
     let currentSlideIndex = 0, sliderImagesArray = [], autoDuration = 5000;
     function buildHomeSlider() {
         const container = document.getElementById('homeSliderContainer');
@@ -870,79 +1053,16 @@
     window.closePopup = function() { const bubble = document.getElementById('popupBubble'); if (bubble) bubble.style.display = 'none'; if (popupTimeout) clearTimeout(popupTimeout); };
     function refreshAll() { renderPartnersMarquee(); loadPage(); updateMaintenanceMode(); updatePopup(); }
     
-    // ========== دوال السبلاش ==========
     let forceHideTimer = null;
     function forceHideSplash() { const splashDiv = document.getElementById('splash'); if (splashDiv && splashDiv.style.display !== 'none') { splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; }, 500); } if (forceHideTimer) clearTimeout(forceHideTimer); }
-    
-    function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
-        if (!imgElement) return;
-        if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
-        let attempts = 0;
-        const tryLoad = () => { imgElement.src = src; };
-        imgElement.onerror = () => {
-            if (attempts < retries) { attempts++; setTimeout(tryLoad, 500 * attempts); }
-            else { imgElement.src = fallbackUrl; imgElement.style.objectFit = 'contain'; }
-        };
-        tryLoad();
-    }
-
-    let currentStoryItems = [], currentStoryIdx = 0, storyTimer = null, storyMediaElements = [], storyPlaying = true;
-    function isVideoUrl(url) { return /\.(mp4|webm|mov|ogg|mkv)$/i.test(url); }
-    function showStorySplash(items, durationSec = 5) {
-        const splashDiv = document.getElementById('splash');
-        if (!splashDiv) return;
-        if (!items || items.length === 0) { splashDiv.style.display = 'none'; return; }
-        if (storyTimer) clearInterval(storyTimer);
-        if (storyMediaElements.length) { storyMediaElements.forEach(el => { if (el.tagName === 'VIDEO') el.pause(); el.remove(); }); storyMediaElements = []; }
-        currentStoryItems = items; currentStoryIdx = 0;
-        splashDiv.innerHTML = `<div class="stories-container" id="storiesContainer"><div class="story-progress-bar" id="storyProgressBar"></div><div class="story-counter" id="storyCounter">1/${items.length}</div><div class="story-nav prev" id="storyPrev"></div><div class="story-nav next" id="storyNext"></div><button class="splash-skip" id="splashSkipBtn">تخطي ←</button></div>`;
-        const container = document.getElementById('storiesContainer');
-        items.forEach((item, idx) => {
-            let media;
-            if (item.type === 'video' || isVideoUrl(item.url)) { media = document.createElement('video'); media.src = item.url; media.muted = true; media.playsInline = true; media.preload = 'auto'; media.loop = false; media.onerror = () => console.warn('خطأ في تحميل الفيديو:', item.url); } 
-            else { media = document.createElement('img'); media.src = item.url; media.alt = 'صورة سبلاش'; media.onerror = () => { media.src = 'https://placehold.co/1080x1920?text=خطأ+تحميل'; }; }
-            media.className = 'story-media';
-            if (idx === 0) media.classList.add('active');
-            container.appendChild(media);
-            storyMediaElements.push(media);
-        });
-        const progressBar = document.getElementById('storyProgressBar');
-        for (let i = 0; i < items.length; i++) { const segment = document.createElement('div'); segment.className = 'progress-segment'; segment.innerHTML = '<div class="progress-fill" id="progressFill_' + i + '"></div>'; progressBar.appendChild(segment); }
-        document.getElementById('storyPrev').addEventListener('click', () => navigateStory(-1));
-        document.getElementById('storyNext').addEventListener('click', () => navigateStory(1));
-        document.getElementById('splashSkipBtn').addEventListener('click', closeSplash);
-        let touchStartX = 0;
-        container.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
-        container.addEventListener('touchend', (e) => { const diff = e.changedTouches[0].clientX - touchStartX; if (Math.abs(diff) > 50) diff > 0 ? navigateStory(-1) : navigateStory(1); });
-        splashDiv.style.display = 'flex'; splashDiv.style.opacity = '1';
-        startCurrentStoryItem(durationSec * 1000);
-    }
-    function startCurrentStoryItem(durationMs) {
-        if (storyTimer) clearInterval(storyTimer);
-        const counterSpan = document.getElementById('storyCounter');
-        if (counterSpan) counterSpan.innerText = `${currentStoryIdx+1}/${currentStoryItems.length}`;
-        storyMediaElements.forEach((el, idx) => { if (el.tagName === 'VIDEO') { el.pause(); el.currentTime = 0; } if (idx === currentStoryIdx) el.classList.add('active'); else el.classList.remove('active'); });
-        for (let i = 0; i < currentStoryItems.length; i++) { const fill = document.getElementById(`progressFill_${i}`); if (fill) fill.style.width = (i < currentStoryIdx) ? '100%' : (i === currentStoryIdx) ? '0%' : '0%'; }
-        const currentFill = document.getElementById(`progressFill_${currentStoryIdx}`);
-        const startTime = Date.now();
-        const currentMedia = storyMediaElements[currentStoryIdx];
-        if (currentMedia.tagName === 'VIDEO') currentMedia.play().catch(e => console.log('تشغيل الفيديو تلقائياً عثر:', e));
-        storyTimer = setInterval(() => { if (!storyPlaying) return; const elapsed = Date.now() - startTime; const percent = Math.min(100, (elapsed / durationMs) * 100); if (currentFill) currentFill.style.width = percent + '%'; if (elapsed >= durationMs) { clearInterval(storyTimer); if (currentStoryIdx + 1 < currentStoryItems.length) navigateStory(1); else closeSplash(); } }, 50);
-        storyPlaying = true;
-    }
-    function navigateStory(direction) { if (!storyPlaying) return; let newIdx = currentStoryIdx + direction; if (newIdx < 0) newIdx = 0; if (newIdx >= currentStoryItems.length) { closeSplash(); return; } if (newIdx === currentStoryIdx) return; currentStoryIdx = newIdx; startCurrentStoryItem((currentData.splash_duration || 5) * 1000); }
-    function closeSplash() { if (storyTimer) clearInterval(storyTimer); storyPlaying = false; storyMediaElements.forEach(el => { if (el.tagName === 'VIDEO') el.pause(); }); const splashDiv = document.getElementById('splash'); splashDiv.style.opacity = '0'; setTimeout(() => { splashDiv.style.display = 'none'; splashDiv.innerHTML = ''; storyMediaElements = []; }, 500); }
-
     function initSplash() { const splashItemsData = currentData.splash_items || []; if (splashItemsData.length > 0) showStorySplash(splashItemsData, currentData.splash_duration || 5); else if (currentData.splash_stories_videos && currentData.splash_stories_videos.length) { const items = currentData.splash_stories_videos.map(url => ({ url, type: 'video' })); showStorySplash(items, 7); } else if (currentData.splash_media_url) { const items = [{ url: currentData.splash_media_url, type: (currentData.splash_type === 'video' ? 'video' : 'image') }]; showStorySplash(items, currentData.splash_duration || 5); } else { document.getElementById('splash').style.display = 'none'; } }
 
-    // ========== بدء التطبيق ==========
     const maxWaitTime = 5000;
     forceHideTimer = setTimeout(() => { console.warn('⚠️ Firebase timeout, forcing splash hide'); forceHideSplash(); if (!currentData || Object.keys(currentData).length === 0) { currentData = {}; refreshAll(); } }, maxWaitTime);
     db.ref(DB_PATH).once('value').then(snap => { clearTimeout(forceHideTimer); currentData = snap.val() || {}; initSplash(); refreshAll(); initChatSystem(); }).catch(err => { console.error('❌ Firebase read error:', err); clearTimeout(forceHideTimer); currentData = {}; forceHideSplash(); refreshAll(); initChatSystem(); showToast('حدث خطأ في الاتصال، يتم عرض بيانات تجريبية'); });
     db.ref(DB_PATH).on('value', snap => { if (snap.exists()) { currentData = snap.val(); refreshAll(); } });
     window.openAlbum = openAlbum; window.openCatalog = openCatalog;
     
-    // منع تنزيل الصور
     (function blockImageDownload() { 
         function disableContextAndDrag(img) { img.addEventListener('contextmenu', (e) => { e.preventDefault(); return false; }); img.addEventListener('dragstart', (e) => { e.preventDefault(); return false; }); } 
         document.querySelectorAll('img').forEach(disableContextAndDrag); 
