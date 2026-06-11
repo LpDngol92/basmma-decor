@@ -356,6 +356,74 @@
     let sliderInterval = null;
     let isSliderPaused = false;
 
+    // ========== تسجيل زيارات الموقع ==========
+    function trackVisitor() {
+        const visitorId = localStorage.getItem('visitor_id');
+        const today = new Date().toISOString().split('T')[0];
+        
+        if (!visitorId) {
+            // زائر جديد
+            const newVisitorId = 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 8);
+            localStorage.setItem('visitor_id', newVisitorId);
+            localStorage.setItem('first_visit', Date.now().toString());
+            localStorage.setItem('last_visit_date', today);
+            
+            // تسجيل الزيارة في Firebase
+            const visitData = {
+                visitorId: newVisitorId,
+                firstVisit: Date.now(),
+                lastVisit: Date.now(),
+                visitCount: 1,
+                userAgent: navigator.userAgent,
+                language: navigator.language,
+                referrer: document.referrer || 'direct',
+                page: window.location.pathname
+            };
+            
+            db.ref(`${DB_PATH}/visitors/${newVisitorId}`).set(visitData);
+            
+            // زيادة العدد الإجمالي
+            db.ref(`${DB_PATH}/stats/total_visitors`).transaction(current => (current || 0) + 1);
+            
+            // تسجيل زيارة اليوم
+            db.ref(`${DB_PATH}/stats/daily/${today}/${newVisitorId}`).set({
+                timestamp: Date.now(),
+                page: window.location.pathname
+            });
+            
+        } else {
+            // زائر عائد
+            const lastVisitDate = localStorage.getItem('last_visit_date');
+            let visitCount = parseInt(localStorage.getItem('visit_count') || '1') + 1;
+            localStorage.setItem('visit_count', visitCount);
+            localStorage.setItem('last_visit_date', today);
+            
+            // تحديث آخر زيارة
+            db.ref(`${DB_PATH}/visitors/${visitorId}`).update({
+                lastVisit: Date.now(),
+                visitCount: visitCount
+            });
+            
+            // إذا كان اليوم مختلف، سجل زيارة جديدة لليوم
+            if (lastVisitDate !== today) {
+                db.ref(`${DB_PATH}/stats/daily/${today}/${visitorId}`).set({
+                    timestamp: Date.now(),
+                    page: window.location.pathname
+                });
+            }
+        }
+        
+        // تحديث عدد الزيارات اليومية
+        db.ref(`${DB_PATH}/stats/daily_count/${today}`).transaction(current => (current || 0) + 1);
+        
+        // تحديث الصفحات الأكثر زيارة
+        const currentPage = window.location.pathname || '/';
+        db.ref(`${DB_PATH}/stats/page_views/${currentPage}`).transaction(current => (current || 0) + 1);
+    }
+    
+    // بدء تتبع الزوار
+    setTimeout(trackVisitor, 1000);
+
     // ========== نظام الدردشة ==========
     let currentTicketId = null;
     let currentVisitorId = null;
@@ -462,7 +530,6 @@
         return currentTicketId;
     }
 
-    // إرسال رسالة مع تحديث حالة القراءة
     async function sendChatMessage(message) {
         if (!message.trim()) { 
             showChatToast('❌ الرجاء كتابة رسالة'); 
@@ -530,7 +597,6 @@
         container.appendChild(messageDiv);
         container.scrollTop = container.scrollHeight;
         
-        // تحديث حالة القراءة للرسالة إذا كانت من المشرف
         if (!isOwnMessage && messageId && currentTicketId) {
             db.ref(`${DB_PATH}/chat_messages/${currentTicketId}/${messageId}`).update({ read: true });
         }
@@ -548,7 +614,6 @@
         messages.forEach(msg => { 
             const isOwn = (msg.sender === 'visitor'); 
             displayChatMessage(msg, isOwn, msg.key);
-            // تحديث حالة القراءة للرسائل غير المقروءة من الزائر
             if (!isOwn && !msg.read && currentTicketId) {
                 db.ref(`${DB_PATH}/chat_messages/${currentTicketId}/${msg.key}`).update({ read: true });
             }
@@ -629,7 +694,7 @@
         startListeningToAdminStatus();
     }
 
-    // ========== باقي دوال الموقع الأصلي (جميع الوظائف موجودة وكاملة) ==========
+    // ========== باقي دوال الموقع الأصلي ==========
     function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = 'https://placehold.co/600x1067?text=صورة+غير+متوفرة') {
         if (!imgElement) return;
         if (!src || src.trim() === '') { imgElement.src = fallbackUrl; return; }
