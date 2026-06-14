@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير - نظام عمودي كامل</title>
+    <title>بصمة غير - إضافة جماعية في كل مكان</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -12,15 +12,15 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
         body { background: #f0f2f5; padding: 15px; }
-        .login-container { max-width: 400px; margin: 80px auto; background: white; border-radius: 24px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .login-container { max-width: 400px; margin: 80px auto; background: white; border-radius: 24px; padding: 25px; text-align: center; }
         .login-container input { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 12px; }
         .login-container button { width: 100%; padding: 12px; background: #b88b4a; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; }
         
-        .admin-container { max-width: 1000px; margin: 0 auto; }
-        .header { background: white; border-radius: 16px; padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .admin-container { max-width: 1100px; margin: 0 auto; }
+        .header { background: white; border-radius: 16px; padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .header h1 { color: #b88b4a; font-size: 1.2rem; }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
         .stat-card { background: white; border-radius: 14px; padding: 12px; text-align: center; }
         .stat-card i { font-size: 24px; color: #b88b4a; }
         .stat-card h3 { font-size: 22px; }
@@ -38,45 +38,15 @@
         .image-card img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
         .delete-img-btn { position: absolute; top: 2px; right: 2px; background: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         
-        /* كل شيء عمودي - ممنوع الافقي */
-        .vertical-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .vertical-group input, 
-        .vertical-group textarea,
-        .vertical-group button {
-            width: 100%;
-            margin: 0;
-        }
+        .vertical-group { display: flex; flex-direction: column; gap: 12px; }
+        .vertical-group input, .vertical-group textarea, .vertical-group button { width: 100%; }
         
-        .link-item {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            background: #f8f9fa;
-            padding: 12px;
-            border-radius: 12px;
-            margin-bottom: 12px;
-            border: 1px solid #e9ecef;
-        }
-        .link-item input { width: 100%; margin: 0 0 8px 0; }
-        .link-item button { align-self: flex-start; }
+        .link-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .link-card input, .link-card textarea { width: 100%; margin: 0; }
+        .link-card button { align-self: flex-start; }
         
-        .add-box {
-            background: #fef8e7;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px dashed #b88b4a;
-            margin: 15px 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .add-box input { width: 100%; margin: 0; }
-        .add-box button { align-self: flex-start; }
+        .add-box { background: #fef8e7; border: 1px dashed #b88b4a; border-radius: 12px; padding: 15px; margin: 15px 0; display: flex; flex-direction: column; gap: 10px; }
+        .add-box textarea { width: 100%; min-height: 120px; font-family: monospace; direction: ltr; }
         
         input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
         button { background: #b88b4a; color: white; padding: 8px 16px; border: none; border-radius: 30px; cursor: pointer; font-weight: 600; }
@@ -86,12 +56,14 @@
         .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; }
         .lightbox img { max-width: 90%; max-height: 90%; border-radius: 16px; }
         .lightbox .close { position: absolute; top: 20px; left: 30px; color: white; font-size: 40px; cursor: pointer; }
+        textarea { direction: ltr; text-align: left; }
+        .bulk-textarea { font-family: monospace; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div id="loginScreen" class="login-container">
-    <h2 style="text-align:center; margin-bottom:20px;">🔐 دخول لوحة التحكم</h2>
+    <h2 style="margin-bottom:20px;">🔐 دخول لوحة التحكم</h2>
     <input type="email" id="loginEmail" placeholder="البريد الإلكتروني">
     <input type="password" id="loginPassword" placeholder="كلمة المرور">
     <button onclick="doLogin()">دخول</button>
@@ -100,7 +72,7 @@
 <div id="adminPanel" style="display:none;">
     <div class="admin-container">
         <div class="header">
-            <h1>⚙️ بصمة غير - نظام عمودي كامل</h1>
+            <h1>⚙️ بصمة غير - إضافة جماعية في كل قسم</h1>
             <button onclick="doLogout()" class="btn-red">🚪 خروج</button>
         </div>
         <div class="stats-grid" id="statsContainer"></div>
@@ -170,11 +142,12 @@
         const sections = [
             { id: 'general', title: '⚙️ الإعدادات العامة', icon: 'fas fa-cog', render: renderGeneral },
             { id: 'slider', title: '🏠 السلايدر', icon: 'fas fa-images', render: renderSlider },
-            { id: 'albums', title: '📁 الألبومات', icon: 'fas fa-folder-open', render: renderAlbums },
-            { id: 'store', title: '🛍️ المتجر', icon: 'fas fa-store', render: renderStore },
-            { id: 'social', title: '🔗 الروابط الاجتماعية (كل رابط بسطر)', icon: 'fas fa-link', render: renderSocialLinks },
+            { id: 'albums', title: '📁 الألبومات (إضافة صور دفعة واحدة)', icon: 'fas fa-folder-open', render: renderAlbums },
+            { id: 'store', title: '🛍️ المتجر (إضافة منتجات دفعة واحدة)', icon: 'fas fa-store', render: renderStore },
+            { id: 'social', title: '🔗 الروابط الاجتماعية', icon: 'fas fa-link', render: renderSocialLinks },
             { id: 'partners', title: '🤝 الشركاء', icon: 'fas fa-handshake', render: renderPartners },
-            { id: 'catalogs', title: '📚 الكتالوجات', icon: 'fas fa-book', render: renderCatalogs }
+            { id: 'catalogs', title: '📚 الكتالوجات', icon: 'fas fa-book', render: renderCatalogs },
+            { id: 'schedule', title: '🕒 أوقات العمل', icon: 'fas fa-clock', render: renderSchedule }
         ];
         let html = '';
         sections.forEach(sec => {
@@ -186,7 +159,7 @@
     window.toggleMaster = function(id) { const el = document.getElementById(`content-${id}`); el.style.display = el.style.display === 'block' ? 'none' : 'block'; };
     window.toggleNested = function(id) { const el = document.getElementById(`nested-${id}`); if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block'; };
 
-    // ========== الإعدادات العامة (عمودي) ==========
+    // ========== الإعدادات العامة ==========
     function renderGeneral() {
         const d = currentData;
         document.getElementById('content-general').innerHTML = `
@@ -194,6 +167,7 @@
                 <input id="siteName" placeholder="اسم الموقع" value="${(d.site_name || '').replace(/"/g, '&quot;')}">
                 <input id="whatsappNum" placeholder="رقم الواتساب" value="${d.whatsapp_num || ''}">
                 <textarea id="aboutText" rows="3" placeholder="نص من نحن">${(d.about_text || '').replace(/"/g, '&quot;')}</textarea>
+                <input id="footerText" placeholder="نص التذييل" value="${(d.footer_text || '').replace(/"/g, '&quot;')}">
                 <button onclick="saveGeneral()">💾 حفظ</button>
             </div>
         `;
@@ -202,11 +176,12 @@
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
             whatsapp_num: document.getElementById('whatsappNum').value,
-            about_text: document.getElementById('aboutText').value
+            about_text: document.getElementById('aboutText').value,
+            footer_text: document.getElementById('footerText').value
         }).then(() => showToast('تم الحفظ'));
     };
 
-    // ========== السلايدر (عمودي) ==========
+    // ========== السلايدر (مع إضافة جماعية) ==========
     function renderSlider() {
         const slider = currentData.home_slider || { images: [] };
         let imagesHtml = '';
@@ -216,8 +191,14 @@
         document.getElementById('content-slider').innerHTML = `
             <div class="vertical-group">
                 <div class="images-grid">${imagesHtml || 'لا توجد صور'}</div>
-                <input type="text" id="newSliderImage" placeholder="رابط الصورة الجديدة">
-                <button onclick="addSliderImage()">➕ إضافة صورة</button>
+                <input type="text" id="newSliderImage" placeholder="رابط صورة مفردة">
+                <button onclick="addSliderImage()">➕ إضافة صورة مفردة</button>
+                <hr>
+                <label><strong>إضافة عدة صور دفعة واحدة:</strong> كل رابط في سطر لوحده</label>
+                <textarea id="bulkSliderImages" rows="8" class="bulk-textarea" placeholder="https://example.com/image1.jpg
+https://example.com/image2.jpg
+https://example.com/image3.jpg" dir="ltr"></textarea>
+                <button onclick="addBulkSliderImages()">➕ إضافة جميع الصور دفعة واحدة</button>
                 <button onclick="saveSlider()">💾 حفظ السلايدر</button>
             </div>
         `;
@@ -229,6 +210,23 @@
         db.ref(`${DB_PATH}/home_slider/images`).set(images).then(() => loadData());
         document.getElementById('newSliderImage').value = '';
     };
+    window.addBulkSliderImages = function() {
+        const text = document.getElementById('bulkSliderImages').value;
+        if(!text.trim()) { showToast('أدخل روابط الصور', true); return; }
+        const lines = text.split(/\r?\n/);
+        const newImages = [];
+        for(let line of lines) {
+            let url = line.trim();
+            if(url && (url.startsWith('http') || url.startsWith('https'))) {
+                newImages.push({ url });
+            }
+        }
+        if(newImages.length === 0) { showToast('لم يتم العثور على روابط صالحة', true); return; }
+        const current = currentData.home_slider?.images || [];
+        const all = [...current, ...newImages];
+        db.ref(`${DB_PATH}/home_slider/images`).set(all).then(() => { loadData(); showToast(`تم إضافة ${newImages.length} صورة`); });
+        document.getElementById('bulkSliderImages').value = '';
+    };
     window.removeSliderImage = function(idx) {
         const images = [...(currentData.home_slider?.images || [])];
         images.splice(idx, 1);
@@ -238,7 +236,7 @@
         db.ref(`${DB_PATH}/home_slider`).set({ images: currentData.home_slider?.images || [] }).then(() => showToast('تم الحفظ'));
     };
 
-    // ========== الألبومات (كل شيء عمودي) ==========
+    // ========== الألبومات (مع إضافة جماعية داخل كل ألبوم) ==========
     function renderAlbums() {
         const albums = currentData.albums || {};
         let html = `<div id="albumsContainer"></div><hr><div class="vertical-group"><input id="newAlbumName" placeholder="اسم الألبوم الجديد"><button onclick="addAlbum()">➕ ألبوم جديد</button></div>`;
@@ -261,8 +259,12 @@
                         <button class="btn-red" onclick="deleteAlbum('${albumId}')">حذف الألبوم</button>
                         <hr>
                         <div class="images-grid" id="albumImgs_${albumId}"></div>
-                        <input type="text" id="albumImgUrl_${albumId}" placeholder="رابط صورة جديدة">
-                        <button onclick="addImageToAlbum('${albumId}')">➕ إضافة صورة</button>
+                        <input type="text" id="albumImgUrl_${albumId}" placeholder="رابط صورة مفردة">
+                        <button onclick="addImageToAlbum('${albumId}')">➕ إضافة صورة مفردة</button>
+                        <label><strong>إضافة عدة صور دفعة واحدة:</strong> كل رابط في سطر لوحده</label>
+                        <textarea id="bulkAlbumImgs_${albumId}" rows="8" class="bulk-textarea" placeholder="https://example.com/1.jpg
+https://example.com/2.jpg" dir="ltr"></textarea>
+                        <button onclick="addBulkImagesToAlbum('${albumId}')">➕ إضافة جميع الصور دفعة واحدة</button>
                     </div>
                 </div>
             `;
@@ -281,9 +283,27 @@
     window.updateAlbumName = function(id) { db.ref(`${DB_PATH}/albums/${id}/name`).set(document.getElementById(`albumName_${id}`).value).then(() => showToast('تم التحديث')); };
     window.deleteAlbum = function(id) { if(confirm('حذف الألبوم؟')) db.ref(`${DB_PATH}/albums/${id}`).remove().then(() => loadData()); };
     window.addImageToAlbum = function(albumId) { const url = document.getElementById(`albumImgUrl_${albumId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/albums/${albumId}/imgs`).push({ url }).then(() => loadData()); document.getElementById(`albumImgUrl_${albumId}`).value = ''; };
+    window.addBulkImagesToAlbum = function(albumId) {
+        const text = document.getElementById(`bulkAlbumImgs_${albumId}`).value;
+        if(!text.trim()) { showToast('أدخل روابط الصور', true); return; }
+        const lines = text.split(/\r?\n/);
+        const updates = {};
+        let count = 0;
+        for(let line of lines) {
+            let url = line.trim();
+            if(url && (url.startsWith('http') || url.startsWith('https'))) {
+                const newKey = Date.now() + '_' + count;
+                updates[`${DB_PATH}/albums/${albumId}/imgs/${newKey}`] = { url };
+                count++;
+            }
+        }
+        if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
+        db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} صورة`); });
+        document.getElementById(`bulkAlbumImgs_${albumId}`).value = '';
+    };
     window.deleteImageFromAlbum = function(albumId, imgId) { db.ref(`${DB_PATH}/albums/${albumId}/imgs/${imgId}`).remove().then(() => loadData()); };
 
-    // ========== المتجر (عمودي) ==========
+    // ========== المتجر (إضافة جماعية للمنتجات داخل كل قسم) ==========
     function renderStore() {
         const cats = currentData.store_categories || {};
         let html = `<div id="storeContainer"></div><hr><div class="vertical-group"><input id="newCatName" placeholder="اسم القسم الجديد"><button onclick="addStoreCat()">➕ إضافة قسم</button></div>`;
@@ -306,8 +326,12 @@
                         <button class="btn-red" onclick="deleteStoreCat('${catId}')">حذف القسم</button>
                         <hr>
                         <div class="images-grid" id="catImgs_${catId}"></div>
-                        <input type="text" id="catImgUrl_${catId}" placeholder="رابط منتج جديد">
-                        <button onclick="addStoreProduct('${catId}')">➕ إضافة منتج</button>
+                        <input type="text" id="catImgUrl_${catId}" placeholder="رابط منتج مفرد">
+                        <button onclick="addStoreProduct('${catId}')">➕ إضافة منتج مفرد</button>
+                        <label><strong>إضافة عدة منتجات دفعة واحدة:</strong> كل رابط في سطر لوحده</label>
+                        <textarea id="bulkStoreImgs_${catId}" rows="8" class="bulk-textarea" placeholder="https://example.com/product1.jpg
+https://example.com/product2.jpg" dir="ltr"></textarea>
+                        <button onclick="addBulkStoreProducts('${catId}')">➕ إضافة جميع المنتجات دفعة واحدة</button>
                     </div>
                 </div>
             `;
@@ -326,15 +350,33 @@
     window.updateStoreCat = function(id) { db.ref(`${DB_PATH}/store_categories/${id}/name`).set(document.getElementById(`catName_${id}`).value).then(() => showToast('تم التحديث')); };
     window.deleteStoreCat = function(id) { if(confirm('حذف القسم؟')) db.ref(`${DB_PATH}/store_categories/${id}`).remove().then(() => loadData()); };
     window.addStoreProduct = function(catId) { const url = document.getElementById(`catImgUrl_${catId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/store_categories/${catId}/imgs`).push({ url }).then(() => loadData()); document.getElementById(`catImgUrl_${catId}`).value = ''; };
+    window.addBulkStoreProducts = function(catId) {
+        const text = document.getElementById(`bulkStoreImgs_${catId}`).value;
+        if(!text.trim()) { showToast('أدخل روابط المنتجات', true); return; }
+        const lines = text.split(/\r?\n/);
+        const updates = {};
+        let count = 0;
+        for(let line of lines) {
+            let url = line.trim();
+            if(url && (url.startsWith('http') || url.startsWith('https'))) {
+                const newKey = Date.now() + '_' + count;
+                updates[`${DB_PATH}/store_categories/${catId}/imgs/${newKey}`] = { url };
+                count++;
+            }
+        }
+        if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
+        db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} منتج`); });
+        document.getElementById(`bulkStoreImgs_${catId}`).value = '';
+    };
     window.deleteStoreProduct = function(catId, imgId) { db.ref(`${DB_PATH}/store_categories/${catId}/imgs/${imgId}`).remove().then(() => loadData()); };
 
-    // ========== الروابط الاجتماعية (كل رابط بسطر عمودي) ==========
+    // ========== الروابط الاجتماعية (إضافة جماعية) ==========
     function renderSocialLinks() {
         const links = currentData.social_links || [];
         let rowsHtml = '';
         links.forEach((link, idx) => {
             rowsHtml += `
-                <div class="link-item">
+                <div class="link-card">
                     <input type="text" id="social_plat_${idx}" value="${(link.platform || '').replace(/"/g, '&quot;')}" placeholder="اسم المنصة">
                     <input type="text" id="social_url_${idx}" value="${(link.url || '').replace(/"/g, '&quot;')}" placeholder="الرابط" dir="ltr">
                     <button class="btn-red" onclick="removeSocialLink(${idx})">✖ حذف هذا الرابط</button>
@@ -344,22 +386,37 @@
         document.getElementById('content-social').innerHTML = `
             <div id="socialLinksList">${rowsHtml || '<div style="padding:20px;text-align:center;color:#999;">لا توجد روابط</div>'}</div>
             <div class="add-box">
-                <input type="text" id="newSocialPlatform" placeholder="اسم المنصة (مثال: انستقرام)">
-                <input type="text" id="newSocialUrl" placeholder="الرابط (مثال: https://instagram.com/...)" dir="ltr">
-                <button onclick="addSocialLink()">➕ إضافة رابط جديد</button>
+                <label><strong>إضافة روابط دفعة واحدة:</strong> كل سطر بالصيغة: منصة|الرابط</label>
+                <textarea id="bulkSocialLinks" rows="8" class="bulk-textarea" placeholder="انستقرام|https://instagram.com/...
+تيك توك|https://tiktok.com/...
+سناب شات|https://snapchat.com/..." dir="ltr"></textarea>
+                <button onclick="addBulkSocialLinks()">➕ إضافة جميع الروابط دفعة واحدة</button>
             </div>
             <button onclick="saveAllSocialLinks()" style="margin-top:15px;">💾 حفظ جميع الروابط</button>
         `;
     }
-    window.addSocialLink = function() {
-        const platform = document.getElementById('newSocialPlatform').value.trim();
-        const url = document.getElementById('newSocialUrl').value.trim();
-        if(!platform || !url) { showToast('أدخل المنصة والرابط', true); return; }
+    window.addBulkSocialLinks = function() {
+        const text = document.getElementById('bulkSocialLinks').value;
+        if(!text.trim()) { showToast('أدخل الروابط', true); return; }
+        const lines = text.split(/\r?\n/);
+        const newLinks = [];
+        for(let line of lines) {
+            line = line.trim();
+            if(!line) continue;
+            const parts = line.split('|');
+            if(parts.length >= 2) {
+                let platform = parts[0].trim();
+                let url = parts.slice(1).join('|').trim();
+                if(platform && url) newLinks.push({ platform, url });
+            } else if(line.startsWith('http')) {
+                newLinks.push({ platform: 'رابط', url: line });
+            }
+        }
+        if(newLinks.length === 0) { showToast('لم يتم العثور على روابط صالحة (استخدم الصيغة: منصة|الرابط)', true); return; }
         const current = currentData.social_links || [];
-        current.push({ platform, url });
-        db.ref(`${DB_PATH}/social_links`).set(current).then(() => loadData());
-        document.getElementById('newSocialPlatform').value = '';
-        document.getElementById('newSocialUrl').value = '';
+        const all = [...current, ...newLinks];
+        db.ref(`${DB_PATH}/social_links`).set(all).then(() => { loadData(); showToast(`تمت إضافة ${newLinks.length} رابط`); });
+        document.getElementById('bulkSocialLinks').value = '';
     };
     window.removeSocialLink = function(idx) {
         const current = currentData.social_links || [];
@@ -368,7 +425,7 @@
     };
     window.saveAllSocialLinks = function() {
         const newLinks = [];
-        const items = document.querySelectorAll('#socialLinksList .link-item');
+        const items = document.querySelectorAll('#socialLinksList .link-card');
         for(let i=0; i<items.length; i++) {
             const plat = document.getElementById(`social_plat_${i}`);
             const url = document.getElementById(`social_url_${i}`);
@@ -377,14 +434,14 @@
         db.ref(`${DB_PATH}/social_links`).set(newLinks).then(() => { showToast('تم حفظ الروابط'); loadData(); });
     };
 
-    // ========== الشركاء (عمودي) ==========
+    // ========== الشركاء (إضافة جماعية) ==========
     function renderPartners() {
         const partners = currentData.partners || {};
         let rowsHtml = '';
         Object.keys(partners).forEach(pid => {
             const p = partners[pid];
             rowsHtml += `
-                <div class="link-item">
+                <div class="link-card">
                     <img src="${p.url}" style="width:60px;height:60px;object-fit:cover;border-radius:10px;align-self:center;">
                     <input type="text" id="partnerUrl_${pid}" value="${(p.url || '').replace(/"/g, '&quot;')}" placeholder="رابط الصورة" dir="ltr">
                     <input type="text" id="partnerLink_${pid}" value="${(p.link || '').replace(/"/g, '&quot;')}" placeholder="الرابط (اختياري)" dir="ltr">
@@ -395,34 +452,48 @@
         document.getElementById('content-partners').innerHTML = `
             <div id="partnersList">${rowsHtml || '<div style="padding:20px;text-align:center;color:#999;">لا يوجد شركاء</div>'}</div>
             <div class="add-box">
-                <input type="text" id="newPartnerUrl" placeholder="رابط صورة الشريك" dir="ltr">
-                <input type="text" id="newPartnerLink" placeholder="الرابط (اختياري)" dir="ltr">
-                <button onclick="addPartner()">➕ إضافة شريك جديد</button>
+                <label><strong>إضافة شركاء دفعة واحدة:</strong> كل سطر: رابط_الصورة|الرابط_الاختياري</label>
+                <textarea id="bulkPartners" rows="8" class="bulk-textarea" placeholder="https://example.com/logo1.png|https://site1.com
+https://example.com/logo2.png" dir="ltr"></textarea>
+                <button onclick="addBulkPartners()">➕ إضافة جميع الشركاء دفعة واحدة</button>
             </div>
             <button onclick="saveAllPartners()" style="margin-top:15px;">💾 حفظ جميع الشركاء</button>
         `;
     }
-    window.addPartner = function() {
-        const url = document.getElementById('newPartnerUrl').value.trim();
-        if(!url) { showToast('أدخل رابط الصورة', true); return; }
-        const link = document.getElementById('newPartnerLink').value.trim();
-        db.ref(`${DB_PATH}/partners/${Date.now()}`).set({ url, link: link || null }).then(() => loadData());
-        document.getElementById('newPartnerUrl').value = '';
-        document.getElementById('newPartnerLink').value = '';
+    window.addBulkPartners = function() {
+        const text = document.getElementById('bulkPartners').value;
+        if(!text.trim()) { showToast('أدخل بيانات الشركاء', true); return; }
+        const lines = text.split(/\r?\n/);
+        const updates = {};
+        let count = 0;
+        for(let line of lines) {
+            line = line.trim();
+            if(!line) continue;
+            const parts = line.split('|');
+            const imgUrl = parts[0].trim();
+            if(!imgUrl || !(imgUrl.startsWith('http'))) continue;
+            const linkUrl = parts.length > 1 ? parts[1].trim() : null;
+            const newId = Date.now() + '_' + count;
+            updates[`${DB_PATH}/partners/${newId}`] = { url: imgUrl, link: linkUrl };
+            count++;
+        }
+        if(count === 0) { showToast('لم يتم العثور على روابط صالحة للصور', true); return; }
+        db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} شريك`); });
+        document.getElementById('bulkPartners').value = '';
     };
     window.deletePartner = function(id) { if(confirm('حذف الشريك؟')) db.ref(`${DB_PATH}/partners/${id}`).remove().then(() => loadData()); };
     window.saveAllPartners = function() { loadData(); showToast('تم الحفظ'); };
 
-    // ========== الكتالوجات (عمودي) ==========
+    // ========== الكتالوجات ==========
     function renderCatalogs() {
         const catalogs = currentData.catalogs || {};
         let html = '';
         Object.keys(catalogs).forEach(id => {
             const c = catalogs[id];
             html += `
-                <div class="link-item">
+                <div class="link-card">
                     <input type="text" id="catalogName_${id}" value="${(c.name || '').replace(/"/g, '&quot;')}" placeholder="اسم الكتالوج">
-                    <textarea id="catalogCode_${id}" rows="3" placeholder="كود HTML">${(c.code || '').replace(/"/g, '&quot;')}</textarea>
+                    <textarea id="catalogCode_${id}" rows="4" placeholder="كود HTML">${(c.code || '').replace(/"/g, '&quot;')}</textarea>
                     <button onclick="updateCatalogName('${id}')">تحديث الاسم</button>
                     <button onclick="updateCatalogCode('${id}')">تحديث الكود</button>
                     <button class="btn-red" onclick="deleteCatalog('${id}')">حذف الكتالوج</button>
@@ -433,7 +504,7 @@
             <hr>
             <div class="add-box">
                 <input type="text" id="newCatalogName" placeholder="اسم الكتالوج الجديد">
-                <textarea id="newCatalogCode" rows="3" placeholder="كود HTML"></textarea>
+                <textarea id="newCatalogCode" rows="4" placeholder="كود HTML"></textarea>
                 <button onclick="addCatalog()">➕ إضافة كتالوج جديد</button>
             </div>
         `;
@@ -442,6 +513,40 @@
     window.updateCatalogName = function(id) { db.ref(`${DB_PATH}/catalogs/${id}/name`).set(document.getElementById(`catalogName_${id}`).value).then(()=>showToast('تم التحديث')); };
     window.updateCatalogCode = function(id) { db.ref(`${DB_PATH}/catalogs/${id}/code`).set(document.getElementById(`catalogCode_${id}`).value).then(()=>showToast('تم التحديث')); };
     window.deleteCatalog = function(id) { if(confirm('حذف الكتالوج؟')) db.ref(`${DB_PATH}/catalogs/${id}`).remove().then(()=>loadData()); };
+
+    // ========== أوقات العمل ==========
+    function renderSchedule() {
+        const sched = currentData.work_schedule || {};
+        let html = '';
+        const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        for(let i=0; i<=6; i++) {
+            const d = sched[i] || { active: false, s1_s: '09:00', s1_e: '17:00', s2_a: false, s2_s: '', s2_e: '' };
+            html += `<div style="border:1px solid #eee; border-radius:12px; padding:12px; margin-bottom:12px;">
+                        <div class="vertical-group">
+                            <div><input type="checkbox" id="dayActive_${i}" ${d.active ? 'checked' : ''}> <strong>${days[i]}</strong></div>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap;"><input type="time" id="s1s_${i}" value="${d.s1_s}"> إلى <input type="time" id="s1e_${i}" value="${d.s1_e}"></div>
+                            <div><input type="checkbox" id="s2a_${i}" ${d.s2_a ? 'checked' : ''} onchange="toggleEvening(${i})"> فترة مسائية</div>
+                            <div id="evening_${i}" style="${d.s2_a ? 'display:flex' : 'display:none'}; gap:10px; flex-wrap:wrap;"><input type="time" id="s2s_${i}" value="${d.s2_s}"> إلى <input type="time" id="s2e_${i}" value="${d.s2_e}"></div>
+                        </div>
+                    </div>`;
+        }
+        document.getElementById('content-schedule').innerHTML = html + `<button onclick="saveSchedule()">💾 حفظ أوقات العمل</button>`;
+    }
+    window.toggleEvening = function(i) { const el = document.getElementById(`evening_${i}`); if(el) el.style.display = document.getElementById(`s2a_${i}`).checked ? 'flex' : 'none'; };
+    window.saveSchedule = function() {
+        let sch = {};
+        for(let i=0; i<=6; i++) {
+            sch[i] = {
+                active: document.getElementById(`dayActive_${i}`).checked,
+                s1_s: document.getElementById(`s1s_${i}`).value,
+                s1_e: document.getElementById(`s1e_${i}`).value,
+                s2_a: document.getElementById(`s2a_${i}`).checked,
+                s2_s: document.getElementById(`s2s_${i}`).value,
+                s2_e: document.getElementById(`s2e_${i}`).value
+            };
+        }
+        db.ref(`${DB_PATH}/work_schedule`).set(sch).then(() => showToast('تم الحفظ'));
+    };
 </script>
 </body>
 </html>
