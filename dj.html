@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير - لوحة التحكم</title>
+    <title>بصمة غير - لوحة تحكم سريعة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -12,59 +12,73 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
         body { background: #f0f2f5; padding: 20px; }
-        .login-container { max-width: 400px; margin: 100px auto; background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
-        .login-container input { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 12px; }
-        .login-container button { width: 100%; padding: 12px; background: #b88b4a; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; }
-        
+        .login-container { max-width: 400px; margin: 80px auto; background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .admin-container { max-width: 1400px; margin: 0 auto; }
-        .header { background: white; border-radius: 20px; padding: 15px 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .header h1 { color: #b88b4a; font-size: 1.5rem; }
+        .header { background: white; border-radius: 20px; padding: 15px 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header h1 { color: #b88b4a; font-size: 1.3rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; border-radius: 16px; padding: 12px; text-align: center; }
+        .stat-card i { font-size: 28px; color: #b88b4a; }
+        .stat-card h3 { font-size: 24px; }
         
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; border-radius: 16px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .stat-card i { font-size: 32px; color: #b88b4a; }
-        .stat-card h3 { font-size: 28px; margin: 8px 0; }
-        
-        /* القوائم الرئيسية */
-        .master-dropdown { margin-bottom: 15px; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .master-header { background: #b88b4a; color: white; padding: 15px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
-        .master-header:hover { background: #9e6f38; }
-        .master-content { padding: 20px; display: none; background: #fff; border-top: 1px solid #eee; }
+        /* قوائم منسدلة */
+        .master-dropdown { margin-bottom: 15px; background: white; border-radius: 16px; overflow: hidden; }
+        .master-header { background: #b88b4a; color: white; padding: 14px 18px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; }
+        .master-content { padding: 20px; display: none; background: #fff; }
         
         /* القوائم الداخلية (الألبومات) */
-        .nested-dropdown { margin-bottom: 12px; border: 1px solid #e9ecef; border-radius: 12px; overflow: hidden; }
-        .nested-header { background: #f8f9fa; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
-        .nested-header:hover { background: #f0e6d8; }
-        .nested-content { padding: 16px; background: #fefcf8; display: none; border-top: 1px solid #eee; }
+        .nested-dropdown { margin-bottom: 10px; border: 1px solid #eee; border-radius: 12px; }
+        .nested-header { background: #f8f9fa; padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; }
+        .nested-content { padding: 15px; display: none; background: #fefcf8; border-top: 1px solid #eee; }
         
         /* شبكة الصور */
-        .images-grid { display: flex; flex-wrap: wrap; gap: 12px; margin: 15px 0; }
-        .image-card { position: relative; width: 100px; height: 100px; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e0d6c0; }
+        .images-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+        .image-card { position: relative; width: 90px; height: 90px; border-radius: 10px; overflow: hidden; border: 1px solid #ddd; }
         .image-card img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
-        .image-card .view-btn { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); color: white; border-radius: 20px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; z-index: 2; }
-        .image-card .delete-img-btn { position: absolute; top: 5px; right: 5px; background: #dc3545; color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+        .delete-img-btn { position: absolute; top: 3px; right: 3px; background: #dc3545; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+        .view-btn { position: absolute; bottom: 3px; left: 3px; background: rgba(0,0,0,0.6); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
         
-        /* الروابط العمودية - كل رابط بسطر مستقل */
+        /* ========== الروابط العامودية (كل رابط بسطر منفصل) ========== */
         .vertical-links-container { margin: 15px 0; }
-        .vertical-link-row { display: flex; flex-direction: row; gap: 10px; align-items: center; margin-bottom: 10px; background: #f8f9fa; padding: 10px 12px; border-radius: 12px; border: 1px solid #e9ecef; }
-        .vertical-link-row input { flex: 1; margin: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid #ddd; }
-        .vertical-link-row button { margin: 0; padding: 6px 12px; }
+        .link-row-vertical {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+        .link-row-vertical input { 
+            flex: 1; 
+            margin: 0; 
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+        .link-row-vertical button { margin: 0; padding: 6px 14px; }
         
-        .add-link-box { background: #fef8e7; padding: 15px; border-radius: 12px; border: 1px dashed #b88b4a; margin-top: 15px; }
-        .add-link-box input { margin-bottom: 10px; }
+        .add-link-area {
+            background: #fef8e7;
+            padding: 18px;
+            border-radius: 12px;
+            border: 1px dashed #b88b4a;
+            margin-top: 15px;
+        }
+        .add-link-area input { margin-bottom: 10px; }
         
         input, textarea { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 10px; }
-        button { background: #b88b4a; color: white; padding: 8px 16px; border: none; border-radius: 30px; cursor: pointer; font-weight: 600; }
-        button:hover { background: #9e6f38; }
+        button { background: #b88b4a; color: white; padding: 8px 16px; border: none; border-radius: 30px; cursor: pointer; font-weight: 600; margin: 3px; }
         .btn-red { background: #dc3545; }
-        .btn-red:hover { background: #bb2d3b; }
         .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         hr { margin: 15px 0; }
         .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 40px; display: none; z-index: 9999; }
-        
-        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; cursor: pointer; }
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; }
         .lightbox img { max-width: 90%; max-height: 90%; border-radius: 16px; }
         .lightbox .close { position: absolute; top: 20px; left: 30px; color: white; font-size: 40px; cursor: pointer; }
+        .loading { text-align: center; padding: 20px; color: #b88b4a; }
     </style>
 </head>
 <body>
@@ -79,11 +93,11 @@
 <div id="adminPanel" style="display:none;">
     <div class="admin-container">
         <div class="header">
-            <h1>⚙️ بصمة غير - الإدارة المتكاملة</h1>
+            <h1>⚙️ بصمة غير - نظام سريع | روابط عامودية</h1>
             <button onclick="doLogout()" class="btn-red">🚪 خروج</button>
         </div>
         <div class="stats-grid" id="statsContainer"></div>
-        <div id="dynamicDropdownsContainer"></div>
+        <div id="dynamicDropdownsContainer"><div class="loading">جاري التحميل...</div></div>
     </div>
 </div>
 
@@ -109,6 +123,7 @@
     const DB_PATH = 'site_v28';
 
     let currentData = {};
+    let isLoading = false;
 
     function showToast(msg, isError = false) {
         const toast = document.getElementById('toastMsg');
@@ -118,10 +133,7 @@
         setTimeout(() => toast.style.display = 'none', 3000);
     }
 
-    function openLightbox(url) {
-        document.getElementById('lightboxImg').src = url;
-        document.getElementById('lightbox').style.display = 'flex';
-    }
+    function openLightbox(url) { document.getElementById('lightboxImg').src = url; document.getElementById('lightbox').style.display = 'flex'; }
     function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
 
     window.doLogin = function() {
@@ -132,8 +144,17 @@
     window.doLogout = function() { auth.signOut().then(() => location.reload()); };
     auth.onAuthStateChanged(user => { if(user) { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadData(); } });
 
-    function loadData() { db.ref(DB_PATH).on('value', snap => { currentData = snap.val() || {}; renderStats(); renderDashboard(); }); }
-    
+    function loadData() {
+        if(isLoading) return;
+        isLoading = true;
+        db.ref(DB_PATH).once('value', (snap) => {
+            currentData = snap.val() || {};
+            renderStats();
+            renderDashboard();
+            isLoading = false;
+        }).catch(err => { showToast('خطأ في التحميل: ' + err.message, true); isLoading = false; });
+    }
+
     function renderStats() {
         document.getElementById('statsContainer').innerHTML = `
             <div class="stat-card"><i class="fas fa-folder"></i><h3>${Object.keys(currentData.albums || {}).length}</h3><p>الألبومات</p></div>
@@ -147,11 +168,10 @@
             { id: 'general', title: '⚙️ الإعدادات العامة', icon: 'fas fa-cog', render: renderGeneral },
             { id: 'slider', title: '🏠 السلايدر', icon: 'fas fa-images', render: renderSlider },
             { id: 'albums', title: '📁 الألبومات (قوائم منسدلة)', icon: 'fas fa-folder-open', render: renderAlbums },
-            { id: 'store', title: '🛍️ المتجر (أقسام منسدلة)', icon: 'fas fa-store', render: renderStore },
-            { id: 'social', title: '🔗 الروابط الاجتماعية (عامودية)', icon: 'fas fa-link', render: renderSocialLinks },
+            { id: 'store', title: '🛍️ المتجر', icon: 'fas fa-store', render: renderStore },
+            { id: 'social', title: '🔗 الروابط الاجتماعية (عامودية - كل رابط بسطر)', icon: 'fas fa-link', render: renderSocialLinks },
             { id: 'partners', title: '🤝 الشركاء', icon: 'fas fa-handshake', render: renderPartners },
-            { id: 'catalogs', title: '📚 الكتالوجات', icon: 'fas fa-book', render: renderCatalogs },
-            { id: 'schedule', title: '🕒 أوقات العمل', icon: 'fas fa-clock', render: renderSchedule }
+            { id: 'catalogs', title: '📚 الكتالوجات', icon: 'fas fa-book', render: renderCatalogs }
         ];
         let html = '';
         sections.forEach(sec => {
@@ -170,7 +190,6 @@
             <input id="siteName" placeholder="اسم الموقع" value="${(d.site_name || '').replace(/"/g, '&quot;')}">
             <input id="whatsappNum" placeholder="رقم الواتساب" value="${d.whatsapp_num || ''}">
             <textarea id="aboutText" rows="3" placeholder="نص من نحن">${(d.about_text || '').replace(/"/g, '&quot;')}</textarea>
-            <input id="footerText" placeholder="نص التذييل" value="${(d.footer_text || '').replace(/"/g, '&quot;')}">
             <button onclick="saveGeneral()">💾 حفظ</button>
         `;
     }
@@ -178,21 +197,19 @@
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
             whatsapp_num: document.getElementById('whatsappNum').value,
-            about_text: document.getElementById('aboutText').value,
-            footer_text: document.getElementById('footerText').value
+            about_text: document.getElementById('aboutText').value
         }).then(() => showToast('تم الحفظ'));
     };
 
     // ========== السلايدر ==========
     function renderSlider() {
-        const slider = currentData.home_slider || { enabled: false, images: [] };
+        const slider = currentData.home_slider || { images: [] };
         let imagesHtml = '';
         (slider.images || []).forEach((img, idx) => {
             imagesHtml += `<div class="image-card"><img src="${img.url}" onclick="openLightbox('${img.url}')"><span class="delete-img-btn" onclick="event.stopPropagation(); removeSliderImage(${idx})">✖</span></div>`;
         });
         document.getElementById('content-slider').innerHTML = `
-            <div class="flex-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل</label></div>
-            <div class="images-grid">${imagesHtml}</div>
+            <div class="images-grid">${imagesHtml || 'لا توجد صور'}</div>
             <div class="flex-row"><input type="text" id="newSliderImage" placeholder="رابط الصورة" style="flex:2"><button onclick="addSliderImage()">➕ إضافة</button></div>
             <button onclick="saveSlider()">💾 حفظ</button>
         `;
@@ -210,13 +227,10 @@
         db.ref(`${DB_PATH}/home_slider/images`).set(images).then(() => loadData());
     };
     window.saveSlider = function() {
-        db.ref(`${DB_PATH}/home_slider`).set({
-            enabled: document.getElementById('sliderEnabled').checked,
-            images: currentData.home_slider?.images || []
-        }).then(() => showToast('تم الحفظ'));
+        db.ref(`${DB_PATH}/home_slider`).set({ images: currentData.home_slider?.images || [] }).then(() => showToast('تم الحفظ'));
     };
 
-    // ========== الألبومات (قوائم منسدلة داخلية) ==========
+    // ========== الألبومات ==========
     function renderAlbums() {
         const albums = currentData.albums || {};
         let html = `<div id="albumsContainer"></div><hr><div class="flex-row"><input id="newAlbumName" placeholder="اسم الألبوم الجديد" style="flex:2"><button onclick="addAlbum()">➕ ألبوم جديد</button></div>`;
@@ -300,7 +314,7 @@
         let rowsHtml = '';
         links.forEach((link, idx) => {
             rowsHtml += `
-                <div class="vertical-link-row">
+                <div class="link-row-vertical">
                     <input type="text" id="social_plat_${idx}" value="${(link.platform || '').replace(/"/g, '&quot;')}" placeholder="المنصة" style="flex:1">
                     <input type="text" id="social_url_${idx}" value="${(link.url || '').replace(/"/g, '&quot;')}" placeholder="الرابط" style="flex:2" dir="ltr">
                     <button class="btn-red" onclick="removeSocialLink(${idx})">✖ حذف</button>
@@ -309,7 +323,7 @@
         });
         document.getElementById('content-social').innerHTML = `
             <div class="vertical-links-container" id="socialLinksList">${rowsHtml || '<div style="padding:20px;text-align:center;color:#999;">لا توجد روابط، أضف رابط جديد بالأسفل</div>'}</div>
-            <div class="add-link-box">
+            <div class="add-link-area">
                 <input type="text" id="newSocialPlatform" placeholder="اسم المنصة (مثال: انستقرام)">
                 <input type="text" id="newSocialUrl" placeholder="الرابط (مثال: https://instagram.com/...)" dir="ltr">
                 <button onclick="addSocialLink()">➕ إضافة رابط جديد</button>
@@ -334,7 +348,7 @@
     };
     window.saveAllSocialLinks = function() {
         const newLinks = [];
-        const rows = document.querySelectorAll('#socialLinksList .vertical-link-row');
+        const rows = document.querySelectorAll('#socialLinksList .link-row-vertical');
         for(let i=0; i<rows.length; i++) {
             const plat = document.getElementById(`social_plat_${i}`);
             const url = document.getElementById(`social_url_${i}`);
@@ -343,15 +357,15 @@
         db.ref(`${DB_PATH}/social_links`).set(newLinks).then(() => { showToast('تم حفظ الروابط'); loadData(); });
     };
 
-    // ========== الشركاء ==========
+    // ========== الشركاء (عامودي) ==========
     function renderPartners() {
         const partners = currentData.partners || {};
         let rowsHtml = '';
         Object.keys(partners).forEach(pid => {
             const p = partners[pid];
             rowsHtml += `
-                <div class="vertical-link-row">
-                    <img src="${p.url}" style="width:50px;height:50px;object-fit:cover;border-radius:10px;">
+                <div class="link-row-vertical">
+                    <img src="${p.url}" style="width:45px;height:45px;object-fit:cover;border-radius:10px;">
                     <input type="text" id="partnerUrl_${pid}" value="${(p.url || '').replace(/"/g, '&quot;')}" style="flex:2" dir="ltr">
                     <input type="text" id="partnerLink_${pid}" value="${(p.link || '').replace(/"/g, '&quot;')}" placeholder="الرابط" style="flex:2" dir="ltr">
                     <button class="btn-red" onclick="deletePartner('${pid}')">✖ حذف</button>
@@ -360,7 +374,7 @@
         });
         document.getElementById('content-partners').innerHTML = `
             <div class="vertical-links-container">${rowsHtml || '<div style="padding:20px;text-align:center;color:#999;">لا يوجد شركاء</div>'}</div>
-            <div class="add-link-box">
+            <div class="add-link-area">
                 <input type="text" id="newPartnerUrl" placeholder="رابط صورة الشريك" dir="ltr">
                 <input type="text" id="newPartnerLink" placeholder="الرابط (اختياري)" dir="ltr">
                 <button onclick="addPartner()">➕ إضافة شريك</button>
@@ -397,38 +411,6 @@
     window.updateCatalogName = function(id) { db.ref(`${DB_PATH}/catalogs/${id}/name`).set(document.getElementById(`catalogName_${id}`).value); };
     window.updateCatalogCode = function(id) { db.ref(`${DB_PATH}/catalogs/${id}/code`).set(document.getElementById(`catalogCode_${id}`).value); };
     window.deleteCatalog = function(id) { if(confirm('حذف الكتالوج؟')) db.ref(`${DB_PATH}/catalogs/${id}`).remove().then(()=>loadData()); };
-
-    // ========== أوقات العمل ==========
-    function renderSchedule() {
-        const sched = currentData.work_schedule || {};
-        let html = '';
-        const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
-        for(let i=0; i<=6; i++) {
-            const d = sched[i] || { active: false, s1_s: '09:00', s1_e: '17:00', s2_a: false, s2_s: '', s2_e: '' };
-            html += `<div style="border:1px solid #eee; border-radius:12px; padding:12px; margin-bottom:12px;">
-                        <div class="flex-row"><input type="checkbox" id="dayActive_${i}" ${d.active ? 'checked' : ''}> <strong>${days[i]}</strong></div>
-                        <div class="flex-row"><input type="time" id="s1s_${i}" value="${d.s1_s}"> إلى <input type="time" id="s1e_${i}" value="${d.s1_e}"></div>
-                        <div class="flex-row"><input type="checkbox" id="s2a_${i}" ${d.s2_a ? 'checked' : ''} onchange="toggleEvening(${i})"> فترة مسائية</div>
-                        <div id="evening_${i}" style="${d.s2_a ? 'display:flex' : 'display:none'}" class="flex-row"><input type="time" id="s2s_${i}" value="${d.s2_s}"> إلى <input type="time" id="s2e_${i}" value="${d.s2_e}"></div>
-                    </div>`;
-        }
-        document.getElementById('content-schedule').innerHTML = html + `<button onclick="saveSchedule()">💾 حفظ أوقات العمل</button>`;
-    }
-    window.toggleEvening = function(i) { const el = document.getElementById(`evening_${i}`); if(el) el.style.display = document.getElementById(`s2a_${i}`).checked ? 'flex' : 'none'; };
-    window.saveSchedule = function() {
-        let sch = {};
-        for(let i=0; i<=6; i++) {
-            sch[i] = {
-                active: document.getElementById(`dayActive_${i}`).checked,
-                s1_s: document.getElementById(`s1s_${i}`).value,
-                s1_e: document.getElementById(`s1e_${i}`).value,
-                s2_a: document.getElementById(`s2a_${i}`).checked,
-                s2_s: document.getElementById(`s2s_${i}`).value,
-                s2_e: document.getElementById(`s2e_${i}`).value
-            };
-        }
-        db.ref(`${DB_PATH}/work_schedule`).set(sch).then(() => showToast('تم الحفظ'));
-    };
 </script>
 </body>
 </html>
