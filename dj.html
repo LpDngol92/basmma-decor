@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بصمة غير - إضافة جماعية (نفس الكود الأصلي مع تعديل الروابط فقط)</title>
+    <title>بصمة غير - لوحة تحكم كاملة بقوائم منسدلة + إضافة جماعية</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -11,59 +11,88 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { background: #f0f2f5; padding: 20px; }
-        .login-container { max-width: 400px; margin: 100px auto; background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .admin-container { max-width: 1400px; margin: 0 auto; }
-        .header { background: white; border-radius: 20px; padding: 15px 25px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .header h1 { color: #b88b4a; font-size: 1.5rem; }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
-        .stat-card { background: white; border-radius: 16px; padding: 15px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .stat-card i { font-size: 32px; color: #b88b4a; }
-        .stat-card h3 { font-size: 28px; margin: 8px 0; }
-        .sections-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-        .section-card { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .section-header { background: #b88b4a; color: white; padding: 12px 18px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; }
-        .section-content { padding: 18px; display: none; border-top: 1px solid #eee; }
-        input, textarea, select { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 12px; font-family: inherit; }
+        body { background: #f0f2f5; padding: 15px; }
+        .login-container { max-width: 400px; margin: 80px auto; background: white; border-radius: 24px; padding: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .login-container input { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 12px; }
+        .login-container button { width: 100%; padding: 12px; background: #b88b4a; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; }
+        
+        .admin-container { max-width: 1100px; margin: 0 auto; }
+        .header { background: white; border-radius: 16px; padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .header h1 { color: #b88b4a; font-size: 1.2rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 14px; padding: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .stat-card i { font-size: 24px; color: #b88b4a; }
+        .stat-card h3 { font-size: 22px; }
+        
+        /* قوائم منسدلة رئيسية */
+        .master-dropdown { margin-bottom: 12px; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .master-header { background: #b88b4a; color: white; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; font-size: 1rem; }
+        .master-header:hover { background: #9e6f38; }
+        .master-content { padding: 16px; display: none; background: #fff; border-top: 1px solid #f0e0cc; }
+        
+        /* قوائم منسدلة داخلية (للألبومات وأقسام المتجر) */
+        .nested-dropdown { margin-bottom: 12px; border: 1px solid #eee; border-radius: 12px; overflow: hidden; }
+        .nested-header { background: #f8f9fa; padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; color: #2c3e2f; }
+        .nested-header:hover { background: #f0e6d8; }
+        .nested-content { padding: 14px; display: none; background: #fefcf8; border-top: 1px solid #eee; }
+        
+        /* شبكة الصور */
+        .images-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+        .image-card { position: relative; width: 80px; height: 80px; border-radius: 10px; overflow: hidden; border: 1px solid #ddd; background: white; }
+        .image-card img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .delete-img-btn { position: absolute; top: 2px; right: 2px; background: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+        
+        /* عامودي */
+        .vertical-group { display: flex; flex-direction: column; gap: 12px; }
+        .vertical-group input, .vertical-group textarea, .vertical-group button { width: 100%; }
+        
+        .link-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .link-card input, .link-card textarea { width: 100%; margin: 0; }
+        .link-card button { align-self: flex-start; }
+        
+        .add-box { background: #fef8e7; border: 1px dashed #b88b4a; border-radius: 12px; padding: 15px; margin: 15px 0; display: flex; flex-direction: column; gap: 10px; }
+        .add-box textarea { width: 100%; min-height: 120px; font-family: monospace; direction: ltr; }
+        
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
         button { background: #b88b4a; color: white; padding: 8px 16px; border: none; border-radius: 30px; cursor: pointer; font-weight: 600; margin: 4px; }
         .btn-red { background: #dc3545; }
-        .btn-green { background: #28a745; }
-        .btn-gray { background: #6c757d; }
-        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .image-item { display: inline-block; margin: 5px; position: relative; }
-        .image-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 10px; border: 1px solid #ddd; }
-        .delete-img-btn { position: absolute; top: -8px; right: -8px; background: red; color: white; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; }
-        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 40px; display: none; z-index: 9999; }
-        .logout-btn { background: #dc3545; }
-        .preview-img { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; margin-left: 10px; }
+        .btn-red:hover { background: #bb2d3b; }
         hr { margin: 15px 0; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 40px; display: none; z-index: 9999; }
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; cursor: pointer; }
+        .lightbox img { max-width: 90%; max-height: 90%; border-radius: 16px; }
+        .lightbox .close { position: absolute; top: 20px; left: 30px; color: white; font-size: 40px; cursor: pointer; }
+        .bulk-textarea { font-family: monospace; font-size: 13px; direction: ltr; }
+        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-        .bulk-textarea { font-family: monospace; min-height: 120px; direction: ltr; }
-        .link-item { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 12px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .link-item input { margin-bottom: 0; }
     </style>
 </head>
 <body>
 
 <div id="loginScreen" class="login-container">
-    <h2 style="text-align:center; margin-bottom:20px;">🔐 دخول لوحة التحكم</h2>
+    <h2 style="margin-bottom:20px;">🔐 دخول لوحة التحكم</h2>
     <input type="email" id="loginEmail" placeholder="البريد الإلكتروني">
     <input type="password" id="loginPassword" placeholder="كلمة المرور">
-    <button onclick="doLogin()" style="width:100%;">دخول</button>
+    <button onclick="doLogin()">دخول</button>
 </div>
 
 <div id="adminPanel" style="display:none;">
     <div class="admin-container">
         <div class="header">
-            <h1>⚙️ لوحة تحكم بصمة غير - الإدارة المتكاملة (مع إضافة جماعية)</h1>
-            <button onclick="doLogout()" class="logout-btn">🚪 خروج</button>
+            <h1>⚙️ بصمة غير - قوائم منسدلة + إضافة جماعية</h1>
+            <button onclick="doLogout()" class="btn-red">🚪 خروج</button>
         </div>
         <div class="stats-grid" id="statsContainer"></div>
-        <div class="sections-grid" id="sectionsContainer"></div>
+        <div id="dynamicDropdownsContainer"></div>
     </div>
 </div>
 
 <div id="toastMsg" class="toast"></div>
+<div id="lightbox" class="lightbox" onclick="closeLightbox()">
+    <span class="close">&times;</span>
+    <img id="lightboxImg" src="">
+</div>
 
 <script>
     const firebaseConfig = {
@@ -90,122 +119,70 @@
         setTimeout(() => toast.style.display = 'none', 3000);
     }
 
+    function openLightbox(url) { document.getElementById('lightboxImg').src = url; document.getElementById('lightbox').style.display = 'flex'; }
+    function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+
     window.doLogin = function() {
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        auth.signInWithEmailAndPassword(email, password)
-            .then(() => { loadAdminPanel(); })
-            .catch(err => showToast('خطأ في الدخول: ' + err.message, true));
+        auth.signInWithEmailAndPassword(document.getElementById('loginEmail').value, document.getElementById('loginPassword').value)
+            .then(() => { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadData(); })
+            .catch(err => showToast('خطأ: ' + err.message, true));
     };
-    window.doLogout = function() {
-        auth.signOut().then(() => {
-            document.getElementById('adminPanel').style.display = 'none';
-            document.getElementById('loginScreen').style.display = 'block';
-            currentData = {};
-        });
-    };
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('adminPanel').style.display = 'block';
-            loadData();
-        }
-    });
+    window.doLogout = function() { auth.signOut().then(() => location.reload()); };
+    auth.onAuthStateChanged(user => { if(user) { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadData(); } });
 
     function loadData() {
-        db.ref(DB_PATH).on('value', (snap) => {
+        db.ref(DB_PATH).once('value', (snap) => {
             currentData = snap.val() || {};
+            renderStats();
             renderDashboard();
-            renderSections();
-        });
+        }).catch(err => showToast('خطأ: ' + err.message, true));
     }
 
-    function loadAdminPanel() {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('adminPanel').style.display = 'block';
-        loadData();
-    }
-
-    async function renderDashboard() {
-        const visitors = currentData.visitors || {};
-        const totalVisitors = Object.keys(visitors).length;
-        const today = new Date().toISOString().split('T')[0];
-        const todayCount = (currentData.stats?.daily_count?.[today]) || 0;
-        const tickets = currentData.chat_tickets || {};
-        const activeChats = Object.values(tickets).filter(t => t.status === 'open').length;
-        
-        let unread = 0;
-        const messages = currentData.chat_messages || {};
-        Object.values(messages).forEach(chat => {
-            Object.values(chat).forEach(msg => {
-                if (msg.sender === 'visitor' && !msg.read) unread++;
-            });
-        });
-
+    function renderStats() {
         document.getElementById('statsContainer').innerHTML = `
-            <div class="stat-card"><i class="fas fa-users"></i><h3>${totalVisitors}</h3><p>إجمالي الزوار</p></div>
-            <div class="stat-card"><i class="fas fa-calendar-day"></i><h3>${todayCount}</h3><p>زوار اليوم</p></div>
-            <div class="stat-card"><i class="fas fa-comments"></i><h3>${activeChats}</h3><p>محادثات نشطة</p></div>
-            <div class="stat-card"><i class="fas fa-envelope"></i><h3>${unread}</h3><p>رسائل غير مقروءة</p></div>
             <div class="stat-card"><i class="fas fa-folder"></i><h3>${Object.keys(currentData.albums || {}).length}</h3><p>الألبومات</p></div>
-            <div class="stat-card"><i class="fas fa-store"></i><h3>${Object.keys(currentData.store_categories || {}).length}</h3><p>أقسام المتجر</p></div>
+            <div class="stat-card"><i class="fas fa-store"></i><h3>${Object.keys(currentData.store_categories || {}).length}</h3><p>المتجر</p></div>
+            <div class="stat-card"><i class="fas fa-link"></i><h3>${(currentData.social_links || []).length}</h3><p>روابط إضافية</p></div>
         `;
     }
 
-    function renderSections() {
+    function renderDashboard() {
         const sections = [
             { id: 'general', title: '⚙️ الإعدادات العامة', icon: 'fas fa-cog', render: renderGeneral },
-            { id: 'slider', title: '🏠 السلايدر الرئيسي', icon: 'fas fa-images', render: renderSlider },
-            { id: 'splash', title: '🎬 شاشة البداية (ستوري)', icon: 'fas fa-film', render: renderSplash },
-            { id: 'albums', title: '📁 ألبومات أعمالنا', icon: 'fas fa-folder-open', render: renderAlbums },
-            { id: 'store', title: '🛍️ المتجر', icon: 'fas fa-store', render: renderStore },
-            { id: 'catalogs', title: '📚 الكتالوجات', icon: 'fas fa-book', render: renderCatalogs },
+            { id: 'slider', title: '🏠 السلايدر', icon: 'fas fa-images', render: renderSlider },
+            { id: 'splash', title: '🎬 شاشة البداية', icon: 'fas fa-film', render: renderSplash },
+            { id: 'albums', title: '📁 الألبومات (قوائم منسدلة لكل ألبوم)', icon: 'fas fa-folder-open', render: renderAlbums },
+            { id: 'store', title: '🛍️ المتجر (قوائم منسدلة لكل قسم)', icon: 'fas fa-store', render: renderStore },
+            { id: 'social', title: '🔗 الروابط الاجتماعية (أساسية + إضافية)', icon: 'fas fa-link', render: renderSocialLinks },
             { id: 'partners', title: '🤝 الشركاء', icon: 'fas fa-handshake', render: renderPartners },
+            { id: 'catalogs', title: '📚 الكتالوجات', icon: 'fas fa-book', render: renderCatalogs },
             { id: 'schedule', title: '🕒 أوقات العمل', icon: 'fas fa-clock', render: renderSchedule },
             { id: 'popup', title: '💬 فقاعة الترحيب', icon: 'fas fa-comment', render: renderPopup },
             { id: 'maintenance', title: '🛡️ وضع الصيانة', icon: 'fas fa-shield-alt', render: renderMaintenance },
-            { id: 'chat', title: '💬 إعدادات الدردشة', icon: 'fas fa-comments', render: renderChatSettings }
+            { id: 'chat', title: '💬 إعدادات الدردشة', icon: 'fas fa-comments', render: renderChat }
         ];
-
         let html = '';
-        sections.forEach(section => {
-            html += `
-                <div class="section-card" data-section="${section.id}">
-                    <div class="section-header" onclick="toggleSection('${section.id}')">
-                        <span><i class="${section.icon}"></i> ${section.title}</span>
-                        <span>▼</span>
-                    </div>
-                    <div class="section-content" id="content-${section.id}"></div>
-                </div>
-            `;
+        sections.forEach(sec => {
+            html += `<div class="master-dropdown"><div class="master-header" onclick="toggleMaster('${sec.id}')"><span><i class="${sec.icon}"></i> ${sec.title}</span><span>▼</span></div><div class="master-content" id="content-${sec.id}"></div></div>`;
         });
-        document.getElementById('sectionsContainer').innerHTML = html;
-
-        sections.forEach(section => {
-            if (section.render) section.render();
-        });
+        document.getElementById('dynamicDropdownsContainer').innerHTML = html;
+        sections.forEach(sec => sec.render());
     }
-
-    window.toggleSection = function(id) {
-        const content = document.getElementById(`content-${id}`);
-        if (content.style.display === 'block') content.style.display = 'none';
-        else content.style.display = 'block';
-    };
+    window.toggleMaster = function(id) { const el = document.getElementById(`content-${id}`); el.style.display = el.style.display === 'block' ? 'none' : 'block'; };
+    window.toggleNested = function(id) { const el = document.getElementById(`nested-${id}`); if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block'; };
 
     // ========== 1. الإعدادات العامة ==========
     function renderGeneral() {
         const d = currentData;
-        const container = document.getElementById('content-general');
-        container.innerHTML = `
-            <label>اسم الموقع</label><input id="siteName" value="${(d.site_name || '').replace(/"/g, '&quot;')}">
-            <label>رقم الواتساب</label><input id="whatsappNum" value="${d.whatsapp_num || ''}">
-            <label>نص من نحن</label><textarea id="aboutText" rows="3">${(d.about_text || '').replace(/"/g, '&quot;')}</textarea>
-            <label>نص التذييل</label><input id="footerText" value="${(d.footer_text || '').replace(/"/g, '&quot;')}">
-            <label>رابط الموقع (خرائط)</label><input id="locationUrl" value="${(d.location_url || '').replace(/"/g, '&quot;')}">
-            <label>انستقرام</label><input id="instaUrl" value="${(d.insta_url || '').replace(/"/g, '&quot;')}">
-            <label>تيك توك</label><input id="tiktokUrl" value="${(d.tiktok_url || '').replace(/"/g, '&quot;')}">
-            <label>سناب شات</label><input id="snapUrl" value="${(d.snap_url || '').replace(/"/g, '&quot;')}">
-            <button onclick="saveGeneral()">💾 حفظ</button>
+        document.getElementById('content-general').innerHTML = `
+            <div class="vertical-group">
+                <input id="siteName" placeholder="اسم الموقع" value="${(d.site_name || '').replace(/"/g, '&quot;')}">
+                <input id="whatsappNum" placeholder="رقم الواتساب" value="${d.whatsapp_num || ''}">
+                <textarea id="aboutText" rows="3" placeholder="نص من نحن">${(d.about_text || '').replace(/"/g, '&quot;')}</textarea>
+                <input id="footerText" placeholder="نص التذييل" value="${(d.footer_text || '').replace(/"/g, '&quot;')}">
+                <input id="locationUrl" placeholder="رابط الموقع (خرائط)" value="${(d.location_url || '').replace(/"/g, '&quot;')}">
+                <button onclick="saveGeneral()">💾 حفظ</button>
+            </div>
         `;
     }
     window.saveGeneral = function() {
@@ -214,74 +191,67 @@
             whatsapp_num: document.getElementById('whatsappNum').value,
             about_text: document.getElementById('aboutText').value,
             footer_text: document.getElementById('footerText').value,
-            location_url: document.getElementById('locationUrl').value,
-            insta_url: document.getElementById('instaUrl').value,
-            tiktok_url: document.getElementById('tiktokUrl').value,
-            snap_url: document.getElementById('snapUrl').value
-        }).then(() => showToast('تم حفظ الإعدادات')).catch(e => showToast('خطأ: ' + e.message, true));
+            location_url: document.getElementById('locationUrl').value
+        }).then(() => showToast('تم الحفظ'));
     };
 
-    // ========== 2. السلايدر مع إضافة جماعية ==========
+    // ========== 2. السلايدر ==========
     function renderSlider() {
-        const slider = currentData.home_slider || { enabled: false, title: 'أحدث أعمالنا', duration: 5, images: [] };
+        const slider = currentData.home_slider || { enabled: false, title: '', duration: 5, images: [] };
         let imagesHtml = '';
         (slider.images || []).forEach((img, idx) => {
-            imagesHtml += `<div class="image-item"><img src="${img.url}"><span class="delete-img-btn" onclick="removeSliderImage(${idx})">✖</span></div>`;
+            imagesHtml += `<div class="image-card"><img src="${img.url}" onclick="openLightbox('${img.url}')"><span class="delete-img-btn" onclick="event.stopPropagation(); removeSliderImage(${idx})">✖</span></div>`;
         });
-        const container = document.getElementById('content-slider');
-        container.innerHTML = `
-            <div class="checkbox-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل السلايدر</label></div>
-            <label>العنوان</label><input id="sliderTitle" value="${(slider.title || '').replace(/"/g, '&quot;')}">
-            <label>مدة العرض (ثانية)</label><input type="number" id="sliderDuration" value="${slider.duration}">
-            <label>الصور الموجودة</label>
-            <div id="sliderImagesPreview">${imagesHtml}</div>
-            <div class="flex-row"><input type="text" id="newSliderImage" placeholder="رابط الصورة الجديدة" style="flex:1"><button onclick="addSliderImage()">➕ إضافة</button></div>
-            <hr>
-            <label><strong>إضافة عدة صور دفعة واحدة (كل رابط في سطر لوحده)</strong></label>
-            <textarea id="bulkSliderImages" rows="6" class="bulk-textarea" placeholder="https://example.com/1.jpg\nhttps://example.com/2.jpg"></textarea>
-            <button onclick="addBulkSliderImages()">➕ إضافة جميع الصور دفعة واحدة</button>
-            <button onclick="saveSlider()">💾 حفظ السلايدر</button>
+        document.getElementById('content-slider').innerHTML = `
+            <div class="vertical-group">
+                <div class="checkbox-row"><input type="checkbox" id="sliderEnabled" ${slider.enabled ? 'checked' : ''}> <label>تفعيل السلايدر</label></div>
+                <input id="sliderTitle" placeholder="العنوان" value="${(slider.title || '').replace(/"/g, '&quot;')}">
+                <input type="number" id="sliderDuration" placeholder="مدة العرض (ثانية)" value="${slider.duration}">
+                <div class="images-grid">${imagesHtml || 'لا توجد صور'}</div>
+                <input type="text" id="newSliderImage" placeholder="رابط صورة مفردة">
+                <button onclick="addSliderImage()">➕ إضافة صورة مفردة</button>
+                <hr>
+                <label><strong>إضافة عدة صور دفعة واحدة (كل رابط في سطر)</strong></label>
+                <textarea id="bulkSliderImages" rows="6" class="bulk-textarea" placeholder="https://example.com/1.jpg\nhttps://example.com/2.jpg"></textarea>
+                <button onclick="addBulkSliderImages()">➕ إضافة جميع الصور دفعة واحدة</button>
+                <button onclick="saveSlider()">💾 حفظ السلايدر</button>
+            </div>
         `;
     }
     window.addSliderImage = function() {
         const url = document.getElementById('newSliderImage').value.trim();
-        if (!url) { showToast('أدخل رابط الصورة', true); return; }
-        const slider = currentData.home_slider || { enabled: false, title: '', duration: 5, images: [] };
-        const images = slider.images || [];
-        images.push({ url });
+        if(!url) { showToast('أدخل رابط الصورة', true); return; }
+        const images = [...(currentData.home_slider?.images || []), { url }];
         db.ref(`${DB_PATH}/home_slider/images`).set(images).then(() => loadData());
         document.getElementById('newSliderImage').value = '';
     };
     window.addBulkSliderImages = function() {
         const text = document.getElementById('bulkSliderImages').value;
-        if (!text.trim()) { showToast('أدخل روابط الصور', true); return; }
+        if(!text.trim()) { showToast('أدخل روابط الصور', true); return; }
         const lines = text.split(/\r?\n/);
         const newImages = [];
-        for (let line of lines) {
+        for(let line of lines) {
             let url = line.trim();
-            if (url && (url.startsWith('http') || url.startsWith('https'))) {
-                newImages.push({ url });
-            }
+            if(url && (url.startsWith('http') || url.startsWith('https'))) newImages.push({ url });
         }
-        if (newImages.length === 0) { showToast('لا توجد روابط صالحة', true); return; }
+        if(newImages.length === 0) { showToast('لا توجد روابط صالحة', true); return; }
         const current = currentData.home_slider?.images || [];
         const all = [...current, ...newImages];
         db.ref(`${DB_PATH}/home_slider/images`).set(all).then(() => { loadData(); showToast(`تم إضافة ${newImages.length} صورة`); });
         document.getElementById('bulkSliderImages').value = '';
     };
-    window.removeSliderImage = function(index) {
-        const slider = currentData.home_slider || { images: [] };
-        const images = [...(slider.images || [])];
-        images.splice(index, 1);
+    window.removeSliderImage = function(idx) {
+        const images = [...(currentData.home_slider?.images || [])];
+        images.splice(idx, 1);
         db.ref(`${DB_PATH}/home_slider/images`).set(images).then(() => loadData());
     };
     window.saveSlider = function() {
-        const enabled = document.getElementById('sliderEnabled').checked;
-        const title = document.getElementById('sliderTitle').value;
-        const duration = parseInt(document.getElementById('sliderDuration').value) || 5;
-        const images = currentData.home_slider?.images || [];
-        db.ref(`${DB_PATH}/home_slider`).set({ enabled, title, duration, images })
-            .then(() => showToast('تم حفظ السلايدر')).catch(e => showToast('خطأ: ' + e.message, true));
+        db.ref(`${DB_PATH}/home_slider`).set({
+            enabled: document.getElementById('sliderEnabled').checked,
+            title: document.getElementById('sliderTitle').value,
+            duration: parseInt(document.getElementById('sliderDuration').value) || 5,
+            images: currentData.home_slider?.images || []
+        }).then(() => showToast('تم الحفظ'));
     };
 
     // ========== 3. شاشة البداية ==========
@@ -289,26 +259,27 @@
         const items = currentData.splash_items || [];
         let itemsHtml = '';
         items.forEach((item, idx) => {
-            itemsHtml += `<div class="image-item"><img src="${item.url}"><span class="delete-img-btn" onclick="removeSplashItem(${idx})">✖</span></div>`;
+            itemsHtml += `<div class="image-card"><img src="${item.url}" onclick="openLightbox('${item.url}')"><span class="delete-img-btn" onclick="event.stopPropagation(); removeSplashItem(${idx})">✖</span></div>`;
         });
-        const container = document.getElementById('content-splash');
-        container.innerHTML = `
-            <div class="checkbox-row"><input type="checkbox" id="splashEnabled" ${currentData.splash_enabled !== false ? 'checked' : ''}> <label>تفعيل شاشة البداية</label></div>
-            <div class="checkbox-row"><input type="checkbox" id="splashShowSkip" ${currentData.splash_show_skip === true ? 'checked' : ''}> <label>إظهار زر تخطي</label></div>
-            <label>مدة العرض (ثانية)</label><input type="number" id="splashDuration" value="${currentData.splash_duration || 5}">
-            <label>العناصر الموجودة</label>
-            <div id="splashItemsPreview">${itemsHtml}</div>
-            <div class="flex-row"><input type="text" id="newSplashItem" placeholder="رابط الصورة أو الفيديو" style="flex:1"><button onclick="addSplashItem()">➕ إضافة</button></div>
-            <hr>
-            <label><strong>إضافة عدة عناصر دفعة واحدة (كل رابط في سطر)</strong></label>
-            <textarea id="bulkSplashItems" rows="6" class="bulk-textarea" placeholder="https://example.com/1.jpg\nhttps://example.com/video.mp4"></textarea>
-            <button onclick="addBulkSplashItems()">➕ إضافة الكل دفعة واحدة</button>
-            <button onclick="saveSplash()">💾 حفظ</button>
+        document.getElementById('content-splash').innerHTML = `
+            <div class="vertical-group">
+                <div class="checkbox-row"><input type="checkbox" id="splashEnabled" ${currentData.splash_enabled !== false ? 'checked' : ''}> <label>تفعيل شاشة البداية</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="splashShowSkip" ${currentData.splash_show_skip === true ? 'checked' : ''}> <label>إظهار زر تخطي</label></div>
+                <input type="number" id="splashDuration" placeholder="مدة العرض (ثانية)" value="${currentData.splash_duration || 5}">
+                <div class="images-grid">${itemsHtml || 'لا توجد عناصر'}</div>
+                <input type="text" id="newSplashItem" placeholder="رابط صورة أو فيديو مفرد">
+                <button onclick="addSplashItem()">➕ إضافة مفرد</button>
+                <hr>
+                <label><strong>إضافة عدة عناصر دفعة واحدة (كل رابط في سطر)</strong></label>
+                <textarea id="bulkSplashItems" rows="6" class="bulk-textarea" placeholder="https://example.com/1.jpg\nhttps://example.com/video.mp4"></textarea>
+                <button onclick="addBulkSplashItems()">➕ إضافة الكل دفعة واحدة</button>
+                <button onclick="saveSplash()">💾 حفظ</button>
+            </div>
         `;
     }
     window.addSplashItem = function() {
         const url = document.getElementById('newSplashItem').value.trim();
-        if (!url) { showToast('أدخل رابط', true); return; }
+        if(!url) { showToast('أدخل رابط', true); return; }
         const items = currentData.splash_items || [];
         const isVideo = /\.(mp4|webm|mov|ogg|mkv)$/i.test(url);
         items.push({ url, type: isVideo ? 'video' : 'image' });
@@ -317,326 +288,353 @@
     };
     window.addBulkSplashItems = function() {
         const text = document.getElementById('bulkSplashItems').value;
-        if (!text.trim()) { showToast('أدخل الروابط', true); return; }
+        if(!text.trim()) { showToast('أدخل الروابط', true); return; }
         const lines = text.split(/\r?\n/);
         const newItems = [];
-        for (let line of lines) {
+        for(let line of lines) {
             let url = line.trim();
-            if (url && (url.startsWith('http') || url.startsWith('https'))) {
+            if(url && (url.startsWith('http') || url.startsWith('https'))) {
                 const isVideo = /\.(mp4|webm|mov|ogg|mkv)$/i.test(url);
                 newItems.push({ url, type: isVideo ? 'video' : 'image' });
             }
         }
-        if (newItems.length === 0) { showToast('لا توجد روابط صالحة', true); return; }
+        if(newItems.length === 0) { showToast('لا توجد روابط صالحة', true); return; }
         const current = currentData.splash_items || [];
         const all = [...current, ...newItems];
         db.ref(`${DB_PATH}/splash_items`).set(all).then(() => { loadData(); showToast(`تم إضافة ${newItems.length} عنصر`); });
         document.getElementById('bulkSplashItems').value = '';
     };
-    window.removeSplashItem = function(index) {
+    window.removeSplashItem = function(idx) {
         const items = currentData.splash_items || [];
-        items.splice(index, 1);
+        items.splice(idx, 1);
         db.ref(`${DB_PATH}/splash_items`).set(items).then(() => loadData());
     };
     window.saveSplash = function() {
-        const enabled = document.getElementById('splashEnabled').checked;
-        const showSkip = document.getElementById('splashShowSkip').checked;
-        const duration = parseInt(document.getElementById('splashDuration').value) || 5;
-        db.ref(DB_PATH).update({ splash_enabled: enabled, splash_show_skip: showSkip, splash_duration: duration })
-            .then(() => showToast('تم حفظ إعدادات السبلاش')).catch(e => showToast('خطأ: ' + e.message, true));
+        db.ref(DB_PATH).update({
+            splash_enabled: document.getElementById('splashEnabled').checked,
+            splash_show_skip: document.getElementById('splashShowSkip').checked,
+            splash_duration: parseInt(document.getElementById('splashDuration').value) || 5
+        }).then(() => showToast('تم الحفظ'));
     };
 
-    // ========== 4. الألبومات مع إضافة جماعية داخل كل ألبوم ==========
+    // ========== 4. الألبومات (قوائم منسدلة لكل ألبوم) ==========
     function renderAlbums() {
         const albums = currentData.albums || {};
-        let albumsHtml = '';
-        Object.keys(albums).forEach(id => {
-            const album = albums[id];
-            let imgsHtml = '';
-            if (album.imgs) {
-                Object.keys(album.imgs).forEach(imgId => {
-                    const img = album.imgs[imgId];
-                    imgsHtml += `<div class="image-item"><img src="${img.url}"><span class="delete-img-btn" onclick="deleteImageFromAlbum('${id}','${imgId}')">✖</span></div>`;
-                });
-            }
-            albumsHtml += `
-                <div style="border:1px solid #ddd; border-radius:12px; padding:10px; margin-bottom:10px;">
-                    <div class="flex-row"><input type="text" id="albumName_${id}" value="${(album.name || '').replace(/"/g, '&quot;')}" style="flex:2"><button onclick="updateAlbum('${id}')">تحديث</button><button class="btn-red" onclick="deleteAlbum('${id}')">حذف</button></div>
-                    <div id="albumImgs_${id}" class="images-grid" style="display:flex; flex-wrap:wrap; gap:10px;">${imgsHtml}</div>
-                    <div class="flex-row"><input type="text" id="albumImgUrl_${id}" placeholder="رابط صورة جديدة (مفرد)" style="flex:1"><button onclick="addImageToAlbum('${id}')">➕ إضافة صورة مفردة</button></div>
-                    <label><strong>إضافة عدة صور دفعة واحدة:</strong> كل رابط في سطر</label>
-                    <textarea id="bulkAlbumImgs_${id}" rows="4" class="bulk-textarea" placeholder="https://example.com/1.jpg\nhttps://example.com/2.jpg"></textarea>
-                    <button onclick="addBulkImagesToAlbum('${id}')">➕ إضافة جميع الصور دفعة واحدة</button>
+        let html = `<div id="albumsNestedContainer"></div><hr><div class="vertical-group"><input id="newAlbumName" placeholder="اسم الألبوم الجديد"><button onclick="addAlbum()">➕ ألبوم جديد</button></div>`;
+        document.getElementById('content-albums').innerHTML = html;
+        const container = document.getElementById('albumsNestedContainer');
+        container.innerHTML = '';
+        Object.keys(albums).forEach(albumId => {
+            const album = albums[albumId];
+            const div = document.createElement('div');
+            div.className = 'nested-dropdown';
+            div.innerHTML = `
+                <div class="nested-header" onclick="toggleNested('album_${albumId}')">
+                    <span><i class="fas fa-folder"></i> ${(album.name || 'ألبوم').replace(/"/g, '&quot;')}</span>
+                    <span>▼</span>
+                </div>
+                <div class="nested-content" id="nested-album_${albumId}">
+                    <div class="vertical-group">
+                        <input type="text" id="albumName_${albumId}" value="${(album.name || '').replace(/"/g, '&quot;')}" placeholder="اسم الألبوم">
+                        <button onclick="updateAlbumName('${albumId}')">تحديث الاسم</button>
+                        <button class="btn-red" onclick="deleteAlbum('${albumId}')">حذف الألبوم</button>
+                        <hr>
+                        <div class="images-grid" id="albumImgs_${albumId}"></div>
+                        <input type="text" id="albumImgUrl_${albumId}" placeholder="رابط صورة مفردة">
+                        <button onclick="addImageToAlbum('${albumId}')">➕ إضافة صورة مفردة</button>
+                        <label><strong>إضافة عدة صور دفعة واحدة (كل رابط في سطر)</strong></label>
+                        <textarea id="bulkAlbumImgs_${albumId}" rows="6" class="bulk-textarea" placeholder="https://example.com/1.jpg\nhttps://example.com/2.jpg"></textarea>
+                        <button onclick="addBulkImagesToAlbum('${albumId}')">➕ إضافة جميع الصور دفعة واحدة</button>
+                    </div>
                 </div>
             `;
+            container.appendChild(div);
+            const imgsGrid = document.getElementById(`albumImgs_${albumId}`);
+            if(imgsGrid && album.imgs) {
+                Object.keys(album.imgs).forEach(imgId => {
+                    const card = document.createElement('div'); card.className = 'image-card';
+                    card.innerHTML = `<img src="${album.imgs[imgId].url}" onclick="openLightbox('${album.imgs[imgId].url}')"><span class="delete-img-btn" onclick="event.stopPropagation(); deleteImageFromAlbum('${albumId}','${imgId}')">✖</span>`;
+                    imgsGrid.appendChild(card);
+                });
+            }
         });
-        const container = document.getElementById('content-albums');
-        container.innerHTML = `
-            ${albumsHtml}
-            <hr>
-            <div class="flex-row"><input id="newAlbumName" placeholder="اسم الألبوم الجديد" style="flex:2"><button onclick="addNewAlbum()">➕ إضافة ألبوم</button></div>
-        `;
     }
-    window.addNewAlbum = function() {
-        const name = document.getElementById('newAlbumName').value.trim();
-        if (!name) { showToast('أدخل اسم الألبوم', true); return; }
-        db.ref(`${DB_PATH}/albums/${Date.now()}`).set({ name, imgs: {}, views: 0, rating_sum: 0, rating_count: 0 })
-            .then(() => { showToast('تمت الإضافة'); loadData(); });
-        document.getElementById('newAlbumName').value = '';
-    };
-    window.updateAlbum = function(id) {
-        const newName = document.getElementById(`albumName_${id}`).value;
-        db.ref(`${DB_PATH}/albums/${id}/name`).set(newName).then(() => showToast('تم التحديث'));
-    };
-    window.deleteAlbum = function(id) {
-        if (confirm('حذف الألبوم نهائياً؟')) {
-            db.ref(`${DB_PATH}/albums/${id}`).remove().then(() => { showToast('تم الحذف'); loadData(); });
-        }
-    };
-    window.addImageToAlbum = function(albumId) {
-        const url = document.getElementById(`albumImgUrl_${albumId}`).value.trim();
-        if (!url) { showToast('أدخل رابط الصورة', true); return; }
-        db.ref(`${DB_PATH}/albums/${albumId}/imgs`).push({ url }).then(() => { showToast('تمت الإضافة'); loadData(); });
-        document.getElementById(`albumImgUrl_${albumId}`).value = '';
-    };
+    window.addAlbum = function() { const name = document.getElementById('newAlbumName').value.trim(); if(!name) return; db.ref(`${DB_PATH}/albums/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData()); document.getElementById('newAlbumName').value = ''; };
+    window.updateAlbumName = function(id) { db.ref(`${DB_PATH}/albums/${id}/name`).set(document.getElementById(`albumName_${id}`).value).then(() => showToast('تم التحديث')); };
+    window.deleteAlbum = function(id) { if(confirm('حذف الألبوم؟')) db.ref(`${DB_PATH}/albums/${id}`).remove().then(() => loadData()); };
+    window.addImageToAlbum = function(albumId) { const url = document.getElementById(`albumImgUrl_${albumId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/albums/${albumId}/imgs`).push({ url }).then(() => loadData()); document.getElementById(`albumImgUrl_${albumId}`).value = ''; };
     window.addBulkImagesToAlbum = function(albumId) {
         const text = document.getElementById(`bulkAlbumImgs_${albumId}`).value;
-        if (!text.trim()) { showToast('أدخل روابط الصور', true); return; }
+        if(!text.trim()) { showToast('أدخل روابط الصور', true); return; }
         const lines = text.split(/\r?\n/);
         const updates = {};
         let count = 0;
-        for (let line of lines) {
+        for(let line of lines) {
             let url = line.trim();
-            if (url && (url.startsWith('http') || url.startsWith('https'))) {
+            if(url && (url.startsWith('http') || url.startsWith('https'))) {
                 const newKey = Date.now() + '_' + count;
                 updates[`${DB_PATH}/albums/${albumId}/imgs/${newKey}`] = { url };
                 count++;
             }
         }
-        if (count === 0) { showToast('لا توجد روابط صالحة', true); return; }
+        if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
         db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} صورة`); });
         document.getElementById(`bulkAlbumImgs_${albumId}`).value = '';
     };
-    window.deleteImageFromAlbum = function(albumId, imgId) {
-        db.ref(`${DB_PATH}/albums/${albumId}/imgs/${imgId}`).remove().then(() => { showToast('تم الحذف'); loadData(); });
-    };
+    window.deleteImageFromAlbum = function(albumId, imgId) { db.ref(`${DB_PATH}/albums/${albumId}/imgs/${imgId}`).remove().then(() => loadData()); };
 
-    // ========== 5. المتجر مع إضافة جماعية ==========
+    // ========== 5. المتجر (قوائم منسدلة لكل قسم) ==========
     function renderStore() {
-        const categories = currentData.store_categories || {};
-        let catsHtml = '';
-        Object.keys(categories).forEach(id => {
-            const cat = categories[id];
-            let imgsHtml = '';
-            if (cat.imgs) {
-                Object.keys(cat.imgs).forEach(imgId => {
-                    const img = cat.imgs[imgId];
-                    imgsHtml += `<div class="image-item"><img src="${img.url}"><span class="delete-img-btn" onclick="deleteImageFromStoreCat('${id}','${imgId}')">✖</span></div>`;
-                });
-            }
-            catsHtml += `
-                <div style="border:1px solid #ddd; border-radius:12px; padding:10px; margin-bottom:10px;">
-                    <div class="flex-row"><input type="text" id="catName_${id}" value="${(cat.name || '').replace(/"/g, '&quot;')}" style="flex:2"><button onclick="updateStoreCat('${id}')">تحديث</button><button class="btn-red" onclick="deleteStoreCat('${id}')">حذف</button></div>
-                    <div id="catImgs_${id}" class="images-grid" style="display:flex; flex-wrap:wrap; gap:10px;">${imgsHtml}</div>
-                    <div class="flex-row"><input type="text" id="catImgUrl_${id}" placeholder="رابط منتج جديد (مفرد)" style="flex:1"><button onclick="addImageToStoreCat('${id}')">➕ إضافة منتج مفرد</button></div>
-                    <label><strong>إضافة عدة منتجات دفعة واحدة:</strong> كل رابط في سطر</label>
-                    <textarea id="bulkStoreImgs_${id}" rows="4" class="bulk-textarea" placeholder="https://example.com/product1.jpg\nhttps://example.com/product2.jpg"></textarea>
-                    <button onclick="addBulkImagesToStoreCat('${id}')">➕ إضافة جميع المنتجات دفعة واحدة</button>
+        const cats = currentData.store_categories || {};
+        let html = `<div id="storeNestedContainer"></div><hr><div class="vertical-group"><input id="newCatName" placeholder="اسم القسم الجديد"><button onclick="addStoreCat()">➕ إضافة قسم</button></div>`;
+        document.getElementById('content-store').innerHTML = html;
+        const container = document.getElementById('storeNestedContainer');
+        container.innerHTML = '';
+        Object.keys(cats).forEach(catId => {
+            const cat = cats[catId];
+            const div = document.createElement('div');
+            div.className = 'nested-dropdown';
+            div.innerHTML = `
+                <div class="nested-header" onclick="toggleNested('store_${catId}')">
+                    <span><i class="fas fa-tag"></i> ${(cat.name || 'قسم').replace(/"/g, '&quot;')}</span>
+                    <span>▼</span>
+                </div>
+                <div class="nested-content" id="nested-store_${catId}">
+                    <div class="vertical-group">
+                        <input type="text" id="catName_${catId}" value="${(cat.name || '').replace(/"/g, '&quot;')}" placeholder="اسم القسم">
+                        <button onclick="updateStoreCat('${catId}')">تحديث</button>
+                        <button class="btn-red" onclick="deleteStoreCat('${catId}')">حذف القسم</button>
+                        <hr>
+                        <div class="images-grid" id="catImgs_${catId}"></div>
+                        <input type="text" id="catImgUrl_${catId}" placeholder="رابط منتج مفرد">
+                        <button onclick="addStoreProduct('${catId}')">➕ إضافة منتج مفرد</button>
+                        <label><strong>إضافة عدة منتجات دفعة واحدة (كل رابط في سطر)</strong></label>
+                        <textarea id="bulkStoreImgs_${catId}" rows="6" class="bulk-textarea" placeholder="https://example.com/product1.jpg\nhttps://example.com/product2.jpg"></textarea>
+                        <button onclick="addBulkStoreProducts('${catId}')">➕ إضافة جميع المنتجات دفعة واحدة</button>
+                    </div>
                 </div>
             `;
+            container.appendChild(div);
+            const imgsGrid = document.getElementById(`catImgs_${catId}`);
+            if(imgsGrid && cat.imgs) {
+                Object.keys(cat.imgs).forEach(imgId => {
+                    const card = document.createElement('div'); card.className = 'image-card';
+                    card.innerHTML = `<img src="${cat.imgs[imgId].url}" onclick="openLightbox('${cat.imgs[imgId].url}')"><span class="delete-img-btn" onclick="event.stopPropagation(); deleteStoreProduct('${catId}','${imgId}')">✖</span>`;
+                    imgsGrid.appendChild(card);
+                });
+            }
         });
-        const container = document.getElementById('content-store');
-        container.innerHTML = `
-            ${catsHtml}
-            <hr>
-            <div class="flex-row"><input id="newCatName" placeholder="اسم القسم الجديد" style="flex:2"><button onclick="addNewStoreCat()">➕ إضافة قسم</button></div>
-        `;
     }
-    window.addNewStoreCat = function() {
-        const name = document.getElementById('newCatName').value.trim();
-        if (!name) { showToast('أدخل اسم القسم', true); return; }
-        db.ref(`${DB_PATH}/store_categories/${Date.now()}`).set({ name, imgs: {} })
-            .then(() => { showToast('تمت الإضافة'); loadData(); });
-        document.getElementById('newCatName').value = '';
-    };
-    window.updateStoreCat = function(id) {
-        const newName = document.getElementById(`catName_${id}`).value;
-        db.ref(`${DB_PATH}/store_categories/${id}/name`).set(newName).then(() => showToast('تم التحديث'));
-    };
-    window.deleteStoreCat = function(id) {
-        if (confirm('حذف القسم وجميع منتجاته؟')) {
-            db.ref(`${DB_PATH}/store_categories/${id}`).remove().then(() => { showToast('تم الحذف'); loadData(); });
-        }
-    };
-    window.addImageToStoreCat = function(catId) {
-        const url = document.getElementById(`catImgUrl_${catId}`).value.trim();
-        if (!url) { showToast('أدخل رابط المنتج', true); return; }
-        db.ref(`${DB_PATH}/store_categories/${catId}/imgs`).push({ url }).then(() => { showToast('تمت الإضافة'); loadData(); });
-        document.getElementById(`catImgUrl_${catId}`).value = '';
-    };
-    window.addBulkImagesToStoreCat = function(catId) {
+    window.addStoreCat = function() { const name = document.getElementById('newCatName').value.trim(); if(!name) return; db.ref(`${DB_PATH}/store_categories/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData()); document.getElementById('newCatName').value = ''; };
+    window.updateStoreCat = function(id) { db.ref(`${DB_PATH}/store_categories/${id}/name`).set(document.getElementById(`catName_${id}`).value).then(() => showToast('تم التحديث')); };
+    window.deleteStoreCat = function(id) { if(confirm('حذف القسم؟')) db.ref(`${DB_PATH}/store_categories/${id}`).remove().then(() => loadData()); };
+    window.addStoreProduct = function(catId) { const url = document.getElementById(`catImgUrl_${catId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/store_categories/${catId}/imgs`).push({ url }).then(() => loadData()); document.getElementById(`catImgUrl_${catId}`).value = ''; };
+    window.addBulkStoreProducts = function(catId) {
         const text = document.getElementById(`bulkStoreImgs_${catId}`).value;
-        if (!text.trim()) { showToast('أدخل روابط المنتجات', true); return; }
+        if(!text.trim()) { showToast('أدخل روابط المنتجات', true); return; }
         const lines = text.split(/\r?\n/);
         const updates = {};
         let count = 0;
-        for (let line of lines) {
+        for(let line of lines) {
             let url = line.trim();
-            if (url && (url.startsWith('http') || url.startsWith('https'))) {
+            if(url && (url.startsWith('http') || url.startsWith('https'))) {
                 const newKey = Date.now() + '_' + count;
                 updates[`${DB_PATH}/store_categories/${catId}/imgs/${newKey}`] = { url };
                 count++;
             }
         }
-        if (count === 0) { showToast('لا توجد روابط صالحة', true); return; }
+        if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
         db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} منتج`); });
         document.getElementById(`bulkStoreImgs_${catId}`).value = '';
     };
-    window.deleteImageFromStoreCat = function(catId, imgId) {
-        db.ref(`${DB_PATH}/store_categories/${catId}/imgs/${imgId}`).remove().then(() => { showToast('تم الحذف'); loadData(); });
-    };
+    window.deleteStoreProduct = function(catId, imgId) { db.ref(`${DB_PATH}/store_categories/${catId}/imgs/${imgId}`).remove().then(() => loadData()); };
 
-    // ========== 6. الكتالوجات (بدون تعديل) ==========
-    function renderCatalogs() {
-        const catalogs = currentData.catalogs || {};
-        let catalogsHtml = '';
-        Object.keys(catalogs).forEach(id => {
-            const cat = catalogs[id];
-            catalogsHtml += `
-                <div style="border:1px solid #ddd; border-radius:12px; padding:10px; margin-bottom:10px;">
-                    <div class="flex-row"><input type="text" id="catalogName_${id}" value="${(cat.name || '').replace(/"/g, '&quot;')}" style="flex:2"><button onclick="updateCatalogName('${id}')">تحديث</button><button class="btn-red" onclick="deleteCatalog('${id}')">حذف</button></div>
-                    <textarea id="catalogCode_${id}" rows="3" placeholder="كود HTML أو iframe">${(cat.code || '').replace(/"/g, '&quot;')}</textarea>
-                    <button onclick="updateCatalogCode('${id}')">تحديث الكود</button>
-                </div>
-            `;
-        });
-        const container = document.getElementById('content-catalogs');
-        container.innerHTML = `
-            ${catalogsHtml}
-            <hr>
-            <div class="flex-row"><input id="newCatalogName" placeholder="اسم الكتالوج" style="flex:2"><textarea id="newCatalogCode" rows="3" placeholder="كود HTML للكتالوج"></textarea><button onclick="addNewCatalog()">➕ إضافة</button></div>
+    // ========== 6. الروابط الاجتماعية ==========
+    function renderSocialLinks() {
+        const d = currentData;
+        document.getElementById('content-social').innerHTML = `
+            <div class="vertical-group">
+                <label>الروابط الأساسية:</label>
+                <input id="instaUrl" placeholder="انستقرام" value="${(d.insta_url || '').replace(/"/g, '&quot;')}">
+                <input id="tiktokUrl" placeholder="تيك توك" value="${(d.tiktok_url || '').replace(/"/g, '&quot;')}">
+                <input id="snapUrl" placeholder="سناب شات" value="${(d.snap_url || '').replace(/"/g, '&quot;')}">
+                <hr>
+                <label>روابط إضافية (كل رابط بسطر):</label>
+                <div id="extraLinksList"></div>
+                <textarea id="bulkExtraLinks" rows="6" class="bulk-textarea" placeholder="المنصة|الرابط\nفيسبوك|https://facebook.com/..."></textarea>
+                <button onclick="addBulkExtraLinks()">➕ إضافة روابط إضافية دفعة واحدة</button>
+                <button onclick="saveAllSocial()">💾 حفظ الكل</button>
+            </div>
         `;
+        renderExtraLinks();
     }
-    window.addNewCatalog = function() {
-        const name = document.getElementById('newCatalogName').value.trim();
-        const code = document.getElementById('newCatalogCode').value;
-        if (!name) { showToast('أدخل اسم الكتالوج', true); return; }
-        db.ref(`${DB_PATH}/catalogs/${Date.now()}`).set({ name, code })
-            .then(() => { showToast('تمت الإضافة'); loadData(); });
-        document.getElementById('newCatalogName').value = '';
-        document.getElementById('newCatalogCode').value = '';
-    };
-    window.updateCatalogName = function(id) {
-        const newName = document.getElementById(`catalogName_${id}`).value;
-        db.ref(`${DB_PATH}/catalogs/${id}/name`).set(newName).then(() => showToast('تم التحديث'));
-    };
-    window.updateCatalogCode = function(id) {
-        const newCode = document.getElementById(`catalogCode_${id}`).value;
-        db.ref(`${DB_PATH}/catalogs/${id}/code`).set(newCode).then(() => showToast('تم تحديث الكود'));
-    };
-    window.deleteCatalog = function(id) {
-        if (confirm('حذف الكتالوج؟')) {
-            db.ref(`${DB_PATH}/catalogs/${id}`).remove().then(() => { showToast('تم الحذف'); loadData(); });
+    function renderExtraLinks() {
+        const links = currentData.social_links || [];
+        const container = document.getElementById('extraLinksList');
+        if(!container) return;
+        container.innerHTML = '';
+        links.forEach((link, idx) => {
+            const div = document.createElement('div');
+            div.className = 'link-card';
+            div.innerHTML = `
+                <input type="text" id="extra_plat_${idx}" value="${(link.platform || '').replace(/"/g, '&quot;')}" placeholder="المنصة">
+                <input type="text" id="extra_url_${idx}" value="${(link.url || '').replace(/"/g, '&quot;')}" placeholder="الرابط" dir="ltr">
+                <button class="btn-red" onclick="removeExtraLink(${idx})">✖ حذف</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+    window.addBulkExtraLinks = function() {
+        const text = document.getElementById('bulkExtraLinks').value;
+        if(!text.trim()) { showToast('أدخل الروابط', true); return; }
+        const lines = text.split(/\r?\n/);
+        const newLinks = [];
+        for(let line of lines) {
+            line = line.trim();
+            if(!line) continue;
+            const parts = line.split('|');
+            if(parts.length >= 2) {
+                newLinks.push({ platform: parts[0].trim(), url: parts.slice(1).join('|').trim() });
+            } else if(line.startsWith('http')) {
+                newLinks.push({ platform: 'رابط', url: line });
+            }
         }
+        if(newLinks.length === 0) { showToast('لم يتم العثور على روابط صالحة', true); return; }
+        const current = currentData.social_links || [];
+        const all = [...current, ...newLinks];
+        db.ref(`${DB_PATH}/social_links`).set(all).then(() => loadData());
+        document.getElementById('bulkExtraLinks').value = '';
+    };
+    window.removeExtraLink = function(idx) {
+        const current = currentData.social_links || [];
+        current.splice(idx, 1);
+        db.ref(`${DB_PATH}/social_links`).set(current).then(() => loadData());
+    };
+    window.saveAllSocial = function() {
+        const newLinks = [];
+        const items = document.querySelectorAll('#extraLinksList .link-card');
+        for(let i=0; i<items.length; i++) {
+            const plat = document.getElementById(`extra_plat_${i}`);
+            const url = document.getElementById(`extra_url_${i}`);
+            if(plat && url && plat.value.trim()) newLinks.push({ platform: plat.value.trim(), url: url.value.trim() });
+        }
+        const updates = {
+            insta_url: document.getElementById('instaUrl').value,
+            tiktok_url: document.getElementById('tiktokUrl').value,
+            snap_url: document.getElementById('snapUrl').value,
+            social_links: newLinks
+        };
+        db.ref(DB_PATH).update(updates).then(() => { showToast('تم حفظ جميع الروابط'); loadData(); });
     };
 
-    // ========== 7. الشركاء مع إضافة جماعية ==========
+    // ========== 7. الشركاء ==========
     function renderPartners() {
         const partners = currentData.partners || {};
-        let partnersHtml = '';
-        Object.keys(partners).forEach(id => {
-            const p = partners[id];
-            partnersHtml += `
-                <div class="link-item">
-                    <img src="${p.url}" style="width:60px; height:60px; object-fit:cover; border-radius:12px;">
-                    <input type="text" id="partnerUrl_${id}" value="${(p.url || '').replace(/"/g, '&quot;')}" placeholder="رابط الصورة">
-                    <input type="text" id="partnerLink_${id}" value="${(p.link || '').replace(/"/g, '&quot;')}" placeholder="الرابط (اختياري)">
-                    <button onclick="updatePartner('${id}')">تحديث</button>
-                    <button class="btn-red" onclick="deletePartner('${id}')">حذف</button>
+        let rowsHtml = '';
+        Object.keys(partners).forEach(pid => {
+            const p = partners[pid];
+            rowsHtml += `
+                <div class="link-card">
+                    <img src="${p.url}" style="width:60px;height:60px;object-fit:cover;border-radius:10px;align-self:center;">
+                    <input type="text" id="partnerUrl_${pid}" value="${(p.url || '').replace(/"/g, '&quot;')}" placeholder="رابط الصورة" dir="ltr">
+                    <input type="text" id="partnerLink_${pid}" value="${(p.link || '').replace(/"/g, '&quot;')}" placeholder="الرابط (اختياري)" dir="ltr">
+                    <button class="btn-red" onclick="deletePartner('${pid}')">✖ حذف</button>
                 </div>
             `;
         });
-        const container = document.getElementById('content-partners');
-        container.innerHTML = `
-            <div id="partnersList">${partnersHtml || '<div style="padding:20px;text-align:center;color:#999;">لا يوجد شركاء</div>'}</div>
-            <hr>
-            <div class="add-box" style="background:#fef8e7; padding:15px; border-radius:12px; border:1px dashed #b88b4a;">
-                <label><strong>إضافة شركاء دفعة واحدة:</strong> كل سطر: رابط_الصورة|الرابط_الاختياري</label>
+        document.getElementById('content-partners').innerHTML = `
+            <div id="partnersList">${rowsHtml || '<div style="padding:20px;text-align:center;color:#999;">لا يوجد شركاء</div>'}</div>
+            <div class="add-box">
+                <label><strong>إضافة شركاء دفعة واحدة (كل سطر: رابط_الصورة|الرابط_الاختياري)</strong></label>
                 <textarea id="bulkPartners" rows="6" class="bulk-textarea" placeholder="https://example.com/logo1.png|https://site1.com\nhttps://example.com/logo2.png"></textarea>
                 <button onclick="addBulkPartners()">➕ إضافة جميع الشركاء دفعة واحدة</button>
             </div>
-            <div class="flex-row"><input id="newPartnerUrl" placeholder="رابط صورة شريك مفرد" style="flex:2"><input id="newPartnerLink" placeholder="الرابط (اختياري)" style="flex:1"><button onclick="addNewPartner()">➕ إضافة شريك مفرد</button></div>
+            <div class="flex-row"><input id="newPartnerUrl" placeholder="رابط صورة مفرد" style="flex:2"><input id="newPartnerLink" placeholder="الرابط (اختياري)" style="flex:1"><button onclick="addPartner()">➕ إضافة شريك مفرد</button></div>
+            <button onclick="saveAllPartners()" style="margin-top:15px;">💾 حفظ الكل</button>
         `;
     }
-    window.addNewPartner = function() {
-        const url = document.getElementById('newPartnerUrl').value.trim();
-        const link = document.getElementById('newPartnerLink').value.trim();
-        if (!url) { showToast('أدخل رابط الصورة', true); return; }
-        db.ref(`${DB_PATH}/partners/${Date.now()}`).set({ url, link: link || null })
-            .then(() => { showToast('تمت الإضافة'); loadData(); });
-        document.getElementById('newPartnerUrl').value = '';
-        document.getElementById('newPartnerLink').value = '';
-    };
     window.addBulkPartners = function() {
         const text = document.getElementById('bulkPartners').value;
-        if (!text.trim()) { showToast('أدخل بيانات الشركاء', true); return; }
+        if(!text.trim()) { showToast('أدخل بيانات الشركاء', true); return; }
         const lines = text.split(/\r?\n/);
         const updates = {};
         let count = 0;
-        for (let line of lines) {
+        for(let line of lines) {
             line = line.trim();
-            if (!line) continue;
+            if(!line) continue;
             const parts = line.split('|');
             const imgUrl = parts[0].trim();
-            if (!imgUrl || !(imgUrl.startsWith('http'))) continue;
+            if(!imgUrl || !imgUrl.startsWith('http')) continue;
             const linkUrl = parts.length > 1 ? parts[1].trim() : null;
-            const newId = Date.now() + '_' + count;
-            updates[`${DB_PATH}/partners/${newId}`] = { url: imgUrl, link: linkUrl };
+            updates[`${DB_PATH}/partners/${Date.now()}_${count}`] = { url: imgUrl, link: linkUrl };
             count++;
         }
-        if (count === 0) { showToast('لم يتم العثور على روابط صالحة للصور', true); return; }
+        if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
         db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} شريك`); });
         document.getElementById('bulkPartners').value = '';
     };
-    window.updatePartner = function(id) {
-        const url = document.getElementById(`partnerUrl_${id}`).value;
-        const link = document.getElementById(`partnerLink_${id}`).value;
-        db.ref(`${DB_PATH}/partners/${id}`).update({ url, link: link || null })
-            .then(() => showToast('تم التحديث'));
+    window.addPartner = function() {
+        const url = document.getElementById('newPartnerUrl').value.trim();
+        if(!url) { showToast('أدخل رابط الصورة', true); return; }
+        const link = document.getElementById('newPartnerLink').value.trim();
+        db.ref(`${DB_PATH}/partners/${Date.now()}`).set({ url, link: link || null }).then(() => loadData());
+        document.getElementById('newPartnerUrl').value = '';
+        document.getElementById('newPartnerLink').value = '';
     };
-    window.deletePartner = function(id) {
-        if (confirm('حذف الشريك؟')) {
-            db.ref(`${DB_PATH}/partners/${id}`).remove().then(() => { showToast('تم الحذف'); loadData(); });
-        }
-    };
+    window.deletePartner = function(id) { if(confirm('حذف الشريك؟')) db.ref(`${DB_PATH}/partners/${id}`).remove().then(() => loadData()); };
+    window.saveAllPartners = function() { loadData(); showToast('تم الحفظ'); };
 
-    // ========== 8. أوقات العمل (بدون تعديل) ==========
-    function renderSchedule() {
-        const schedule = currentData.work_schedule || {};
-        const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+    // ========== 8. الكتالوجات ==========
+    function renderCatalogs() {
+        const catalogs = currentData.catalogs || {};
         let html = '';
-        for (let i = 0; i <= 6; i++) {
-            const s = schedule[i] || { active: false, s1_s: '09:00', s1_e: '17:00', s2_a: false, s2_s: '', s2_e: '' };
-            html += `
-                <div style="border:1px solid #ddd; border-radius:12px; padding:10px; margin-bottom:10px;">
-                    <div class="checkbox-row"><input type="checkbox" id="dayActive_${i}" ${s.active ? 'checked' : ''}> <strong>${days[i]}</strong></div>
-                    <div class="flex-row"><input type="time" id="s1s_${i}" value="${s.s1_s}"> <span>إلى</span> <input type="time" id="s1e_${i}" value="${s.s1_e}"></div>
-                    <div class="checkbox-row"><input type="checkbox" id="s2a_${i}" ${s.s2_a ? 'checked' : ''} onchange="toggleEvening(${i})"> <label>فترة مسائية</label></div>
-                    <div id="evening_${i}" style="${s.s2_a ? 'display:flex' : 'display:none'}" class="flex-row"><input type="time" id="s2s_${i}" value="${s.s2_s}"> <span>إلى</span> <input type="time" id="s2e_${i}" value="${s.s2_e}"></div>
-                </div>
-            `;
-        }
-        const container = document.getElementById('content-schedule');
-        container.innerHTML = html + `<button onclick="saveSchedule()">💾 حفظ أوقات العمل</button>`;
+        Object.keys(catalogs).forEach(id => {
+            const c = catalogs[id];
+            html += `<div class="link-card">
+                        <input type="text" id="catalogName_${id}" value="${(c.name || '').replace(/"/g, '&quot;')}" placeholder="اسم الكتالوج">
+                        <textarea id="catalogCode_${id}" rows="4" placeholder="كود HTML">${(c.code || '').replace(/"/g, '&quot;')}</textarea>
+                        <button onclick="updateCatalogName('${id}')">تحديث الاسم</button>
+                        <button onclick="updateCatalogCode('${id}')">تحديث الكود</button>
+                        <button class="btn-red" onclick="deleteCatalog('${id}')">حذف</button>
+                    </div>`;
+        });
+        document.getElementById('content-catalogs').innerHTML = html + `
+            <hr>
+            <div class="add-box">
+                <input type="text" id="newCatalogName" placeholder="اسم الكتالوج الجديد">
+                <textarea id="newCatalogCode" rows="4" placeholder="كود HTML"></textarea>
+                <button onclick="addCatalog()">➕ إضافة كتالوج</button>
+            </div>
+        `;
     }
-    window.toggleEvening = function(i) {
-        const div = document.getElementById(`evening_${i}`);
-        div.style.display = document.getElementById(`s2a_${i}`).checked ? 'flex' : 'none';
-    };
+    window.addCatalog = function() { const n=document.getElementById('newCatalogName').value; const c=document.getElementById('newCatalogCode').value; if(!n) return; db.ref(`${DB_PATH}/catalogs/${Date.now()}`).set({name:n, code:c}).then(()=>loadData()); };
+    window.updateCatalogName = function(id) { db.ref(`${DB_PATH}/catalogs/${id}/name`).set(document.getElementById(`catalogName_${id}`).value).then(()=>showToast('تم التحديث')); };
+    window.updateCatalogCode = function(id) { db.ref(`${DB_PATH}/catalogs/${id}/code`).set(document.getElementById(`catalogCode_${id}`).value).then(()=>showToast('تم التحديث')); };
+    window.deleteCatalog = function(id) { if(confirm('حذف الكتالوج؟')) db.ref(`${DB_PATH}/catalogs/${id}`).remove().then(()=>loadData()); };
+
+    // ========== 9. أوقات العمل ==========
+    function renderSchedule() {
+        const sched = currentData.work_schedule || {};
+        let html = '';
+        const days = ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+        for(let i=0; i<=6; i++) {
+            const d = sched[i] || { active: false, s1_s: '09:00', s1_e: '17:00', s2_a: false, s2_s: '', s2_e: '' };
+            html += `<div style="border:1px solid #eee; border-radius:12px; padding:12px; margin-bottom:12px;">
+                        <div class="vertical-group">
+                            <div class="checkbox-row"><input type="checkbox" id="dayActive_${i}" ${d.active ? 'checked' : ''}> <strong>${days[i]}</strong></div>
+                            <div class="flex-row"><input type="time" id="s1s_${i}" value="${d.s1_s}"> إلى <input type="time" id="s1e_${i}" value="${d.s1_e}"></div>
+                            <div class="checkbox-row"><input type="checkbox" id="s2a_${i}" ${d.s2_a ? 'checked' : ''} onchange="toggleEvening(${i})"> فترة مسائية</div>
+                            <div id="evening_${i}" style="${d.s2_a ? 'display:flex' : 'display:none'}" class="flex-row"><input type="time" id="s2s_${i}" value="${d.s2_s}"> إلى <input type="time" id="s2e_${i}" value="${d.s2_e}"></div>
+                        </div>
+                    </div>`;
+        }
+        document.getElementById('content-schedule').innerHTML = html + `<button onclick="saveSchedule()">💾 حفظ أوقات العمل</button>`;
+    }
+    window.toggleEvening = function(i) { const el = document.getElementById(`evening_${i}`); if(el) el.style.display = document.getElementById(`s2a_${i}`).checked ? 'flex' : 'none'; };
     window.saveSchedule = function() {
-        const schedule = {};
-        for (let i = 0; i <= 6; i++) {
-            schedule[i] = {
+        let sch = {};
+        for(let i=0; i<=6; i++) {
+            sch[i] = {
                 active: document.getElementById(`dayActive_${i}`).checked,
                 s1_s: document.getElementById(`s1s_${i}`).value,
                 s1_e: document.getElementById(`s1e_${i}`).value,
@@ -645,19 +643,19 @@
                 s2_e: document.getElementById(`s2e_${i}`).value
             };
         }
-        db.ref(`${DB_PATH}/work_schedule`).set(schedule)
-            .then(() => showToast('تم حفظ أوقات العمل')).catch(e => showToast('خطأ: ' + e.message, true));
+        db.ref(`${DB_PATH}/work_schedule`).set(sch).then(() => showToast('تم الحفظ'));
     };
 
-    // ========== 9. فقاعة الترحيب ==========
+    // ========== 10. فقاعة ترحيب ==========
     function renderPopup() {
         const d = currentData;
-        const container = document.getElementById('content-popup');
-        container.innerHTML = `
-            <div class="checkbox-row"><input type="checkbox" id="popupEnabled" ${d.popup_enabled ? 'checked' : ''}> <label>تفعيل الفقاعة</label></div>
-            <label>نص الفقاعة</label><input id="popupMessage" value="${(d.popup_message || '').replace(/"/g, '&quot;')}">
-            <label>مدة الظهور (ثانية)</label><input type="number" id="popupDuration" value="${d.popup_duration || 8}">
-            <button onclick="savePopup()">💾 حفظ</button>
+        document.getElementById('content-popup').innerHTML = `
+            <div class="vertical-group">
+                <div class="checkbox-row"><input type="checkbox" id="popupEnabled" ${d.popup_enabled ? 'checked' : ''}> <label>تفعيل الفقاعة</label></div>
+                <input id="popupMessage" placeholder="نص الفقاعة" value="${(d.popup_message || '').replace(/"/g, '&quot;')}">
+                <input type="number" id="popupDuration" placeholder="مدة الظهور (ثانية)" value="${d.popup_duration || 8}">
+                <button onclick="savePopup()">💾 حفظ</button>
+            </div>
         `;
     }
     window.savePopup = function() {
@@ -665,93 +663,59 @@
             popup_enabled: document.getElementById('popupEnabled').checked,
             popup_message: document.getElementById('popupMessage').value,
             popup_duration: parseInt(document.getElementById('popupDuration').value) || 8
-        }).then(() => showToast('تم حفظ الفقاعة')).catch(e => showToast('خطأ: ' + e.message, true));
+        }).then(() => showToast('تم الحفظ'));
     };
 
-    // ========== 10. وضع الصيانة ==========
+    // ========== 11. وضع الصيانة ==========
     function renderMaintenance() {
         const d = currentData;
-        let untilTime = '';
-        if (d.maintenance_until && d.maintenance_until > Date.now()) {
-            const diff = d.maintenance_until - Date.now();
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            untilTime = `${h} ساعات ${m} دقائق ${s} ثواني`;
-        }
-        const container = document.getElementById('content-maintenance');
-        container.innerHTML = `
-            <div class="checkbox-row"><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode ? 'checked' : ''}> <label>تفعيل وضع الصيانة</label></div>
-            <label>عنوان الصيانة</label><input id="maintenanceTitle" value="${(d.maintenance_title || '').replace(/"/g, '&quot;')}">
-            <label>رسالة الصيانة</label><textarea id="maintenanceMsg" rows="3">${(d.maintenance_message || '').replace(/"/g, '&quot;')}</textarea>
-            <div class="flex-row"><input type="number" id="hoursInput" placeholder="ساعات" value="0" style="width:80px"><input type="number" id="minutesInput" placeholder="دقائق" value="0" style="width:80px"><input type="number" id="secondsInput" placeholder="ثواني" value="0" style="width:80px"></div>
-            <div id="maintenancePreview" style="background:#f5f5f5; padding:10px; border-radius:12px; margin:10px 0; ${d.maintenance_mode ? 'display:block' : 'display:none'}">
-                <strong>معاينة العد التنازلي:</strong> <span id="countdownPreview">${untilTime || 'غير محدد'}</span>
+        document.getElementById('content-maintenance').innerHTML = `
+            <div class="vertical-group">
+                <div class="checkbox-row"><input type="checkbox" id="maintenanceMode" ${d.maintenance_mode ? 'checked' : ''}> <label>تفعيل وضع الصيانة</label></div>
+                <input id="maintenanceTitle" placeholder="عنوان الصيانة" value="${(d.maintenance_title || '').replace(/"/g, '&quot;')}">
+                <textarea id="maintenanceMsg" rows="3" placeholder="رسالة الصيانة">${(d.maintenance_message || '').replace(/"/g, '&quot;')}</textarea>
+                <div class="flex-row"><input type="number" id="hoursInput" placeholder="ساعات" value="0" style="width:80px"><input type="number" id="minutesInput" placeholder="دقائق" value="0" style="width:80px"><input type="number" id="secondsInput" placeholder="ثواني" value="0" style="width:80px"></div>
+                <button onclick="saveMaintenance()">💾 حفظ</button>
             </div>
-            <button onclick="saveMaintenance()">💾 حفظ</button>
         `;
-        document.getElementById('maintenanceMode').onchange = function() {
-            document.getElementById('maintenancePreview').style.display = this.checked ? 'block' : 'none';
-        };
-        ['hoursInput', 'minutesInput', 'secondsInput'].forEach(id => {
-            document.getElementById(id).oninput = updateMaintenancePreview;
-        });
-    }
-    function updateMaintenancePreview() {
-        const h = parseInt(document.getElementById('hoursInput').value) || 0;
-        const m = parseInt(document.getElementById('minutesInput').value) || 0;
-        const s = parseInt(document.getElementById('secondsInput').value) || 0;
-        const preview = document.getElementById('countdownPreview');
-        if (h === 0 && m === 0 && s === 0) preview.innerText = 'غير محدد';
-        else preview.innerText = `${h} ساعات ${m} دقائق ${s} ثواني`;
     }
     window.saveMaintenance = function() {
         const active = document.getElementById('maintenanceMode').checked;
         let until = null;
-        if (active) {
+        if(active) {
             const h = parseInt(document.getElementById('hoursInput').value) || 0;
             const m = parseInt(document.getElementById('minutesInput').value) || 0;
             const s = parseInt(document.getElementById('secondsInput').value) || 0;
             const totalMs = (h * 3600 + m * 60 + s) * 1000;
-            if (totalMs > 0) until = Date.now() + totalMs;
+            if(totalMs > 0) until = Date.now() + totalMs;
         }
         db.ref(DB_PATH).update({
             maintenance_mode: active,
             maintenance_title: document.getElementById('maintenanceTitle').value,
             maintenance_message: document.getElementById('maintenanceMsg').value,
             maintenance_until: until
-        }).then(() => showToast('تم حفظ إعدادات الصيانة')).catch(e => showToast('خطأ: ' + e.message, true));
+        }).then(() => showToast('تم حفظ الصيانة'));
     };
 
-    // ========== 11. إعدادات الدردشة ==========
-    function renderChatSettings() {
+    // ========== 12. إعدادات الدردشة ==========
+    function renderChat() {
         const d = currentData;
-        const container = document.getElementById('content-chat');
-        container.innerHTML = `
-            <div class="checkbox-row"><input type="checkbox" id="chatEnabled" ${d.chat_enabled !== false ? 'checked' : ''}> <label>تفعيل الدردشة</label></div>
-            <label>رسالة الترحيب</label><input id="chatWelcomeMsg" value="${(d.chat_welcome_msg || 'مرحباً! كيف يمكنني مساعدتك؟').replace(/"/g, '&quot;')}">
-            <label>رسالة عدم الاتصال</label><input id="chatOfflineMsg" value="${(d.chat_offline_msg || 'المشرف غير متصل حالياً، سيتم الرد عند العودة').replace(/"/g, '&quot;')}">
-            <button onclick="saveChatSettings()">💾 حفظ إعدادات الدردشة</button>
+        document.getElementById('content-chat').innerHTML = `
+            <div class="vertical-group">
+                <div class="checkbox-row"><input type="checkbox" id="chatEnabled" ${d.chat_enabled !== false ? 'checked' : ''}> <label>تفعيل الدردشة</label></div>
+                <input id="chatWelcomeMsg" placeholder="رسالة الترحيب" value="${(d.chat_welcome_msg || 'مرحباً! كيف يمكنني مساعدتك؟').replace(/"/g, '&quot;')}">
+                <input id="chatOfflineMsg" placeholder="رسالة عدم الاتصال" value="${(d.chat_offline_msg || 'المشرف غير متصل حالياً').replace(/"/g, '&quot;')}">
+                <button onclick="saveChat()">💾 حفظ</button>
+            </div>
         `;
     }
-    window.saveChatSettings = function() {
+    window.saveChat = function() {
         db.ref(DB_PATH).update({
             chat_enabled: document.getElementById('chatEnabled').checked,
             chat_welcome_msg: document.getElementById('chatWelcomeMsg').value,
             chat_offline_msg: document.getElementById('chatOfflineMsg').value
-        }).then(() => showToast('تم حفظ الإعدادات')).catch(e => showToast('خطأ: ' + e.message, true));
+        }).then(() => showToast('تم الحفظ'));
     };
-
-    function init() {
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                document.getElementById('loginScreen').style.display = 'none';
-                document.getElementById('adminPanel').style.display = 'block';
-                loadData();
-            }
-        });
-    }
-    init();
 </script>
 </body>
 </html>
