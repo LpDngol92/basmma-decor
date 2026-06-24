@@ -403,16 +403,19 @@
     let isBlocked = false;
     let blockReason = "";
 
-    // ========== دالة تحميل الصور مع إعادة المحاولة (تعمل على عنصر img مباشرة) ==========
+    // ========== دالة تحميل الصور الجديدة (بدون استخدام Image object) ==========
     const PLACEHOLDER_SVG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" font-size="20" font-family="Cairo" fill="%23999" text-anchor="middle" dy=".3em"%3Eصورة غير متوفرة%3C/text%3E%3C/svg%3E';
 
-    function loadImageWithRetry(imgElement, src, retries = 5, fallback = PLACEHOLDER_SVG) {
+    function loadImageWithRetry(imgElement, src, maxAttempts = 5) {
         if (!imgElement) return;
         if (!src || src.trim() === '') {
-            imgElement.src = fallback;
+            imgElement.src = PLACEHOLDER_SVG;
             imgElement.style.objectFit = 'contain';
             return;
         }
+
+        // إضافة معلمة عشوائية لتجنب التخزين المؤقت
+        const srcWithCache = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
 
         // تعيين placeholder فوري
         imgElement.src = PLACEHOLDER_SVG;
@@ -420,30 +423,62 @@
         imgElement.style.background = '#f0f0f0';
 
         let attempts = 0;
-        let timer = null;
+        let timeoutId = null;
 
+        // دالة المحاولة
         function attemptLoad() {
-            imgElement.onload = function() {
-                // نجاح التحميل
-                imgElement.style.objectFit = 'cover';
-                imgElement.style.background = 'transparent';
-                clearTimeout(timer);
-            };
+            // تعيين الـ src
+            imgElement.src = srcWithCache;
+
+            // مراقبة التحميل باستخدام onerror (احتياطي)
             imgElement.onerror = function() {
-                if (attempts < retries) {
+                if (attempts < maxAttempts) {
                     attempts++;
-                    const delay = 500 * attempts; // تأخير تصاعدي
-                    timer = setTimeout(attemptLoad, delay);
+                    const delay = 500 * attempts;
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(attemptLoad, delay);
                 } else {
-                    imgElement.src = fallback;
+                    imgElement.src = PLACEHOLDER_SVG;
                     imgElement.style.objectFit = 'contain';
                     imgElement.style.background = '#f0f0f0';
                 }
             };
-            // تعيين src يبدأ التحميل
-            imgElement.src = src;
+
+            // مراقبة النجاح
+            imgElement.onload = function() {
+                clearTimeout(timeoutId);
+                imgElement.style.objectFit = 'cover';
+                imgElement.style.background = 'transparent';
+            };
+
+            // آلية التحقق الإضافية: إذا لم يتم تحميل الصورة خلال 3 ثوان، نعتبر أنها فشلت ونعيد المحاولة
+            const checkLoaded = () => {
+                if (imgElement.complete && imgElement.naturalWidth > 0) {
+                    // تم التحميل بنجاح
+                    clearTimeout(timeoutId);
+                    imgElement.style.objectFit = 'cover';
+                    imgElement.style.background = 'transparent';
+                    return;
+                }
+                // لم يتم التحميل بعد
+                if (attempts < maxAttempts) {
+                    attempts++;
+                    const delay = 500 * attempts;
+                    clearTimeout(timeoutId);
+                    timeoutId = setTimeout(attemptLoad, delay);
+                } else {
+                    imgElement.src = PLACEHOLDER_SVG;
+                    imgElement.style.objectFit = 'contain';
+                    imgElement.style.background = '#f0f0f0';
+                }
+            };
+
+            // نعطي الصورة فرصة للتحميل ثم نتحقق
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(checkLoaded, 3000);
         }
 
+        // بدء المحاولة الأولى
         attemptLoad();
     }
 
@@ -613,6 +648,8 @@
                 media.alt = 'صورة سبلاش';
                 media.onerror = () => { media.src = PLACEHOLDER_SVG; };
                 media.onload = () => { media.classList.add('active'); };
+                // استخدام الدالة الجديدة للتحميل مع إعادة المحاولة
+                loadImageWithRetry(media, item.url);
             }
             media.className = 'story-media';
             if (idx === 0) media.classList.add('active');
@@ -726,7 +763,7 @@
         if (!images || !images.length) return;
         if (sliderInterval) { clearInterval(sliderInterval); sliderInterval = null; isSliderPaused = true; }
         currentImageList = images; currentIndex = index;
-        loadImageWithRetry(imgElement, images[index], 5);
+        loadImageWithRetry(imgElement, images[index]);
         resetTransform();
         updateCounter();
         lightbox.style.display = 'flex';
@@ -738,8 +775,8 @@
     }
 
     function closeLightbox() { lightbox.style.display = 'none'; document.body.style.overflow = ''; unbindLightboxEvents(); resetTransform(); currentAlbumId = null; ratingCard.style.display = 'none'; if (isSliderPaused && window.resumeSlider) { window.resumeSlider(); isSliderPaused = false; } }
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; loadImageWithRetry(imgElement, currentImageList[currentIndex], 5); resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; loadImageWithRetry(imgElement, currentImageList[currentIndex], 5); resetTransform(); updateCounter(); }
+    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; loadImageWithRetry(imgElement, currentImageList[currentIndex]); resetTransform(); updateCounter(); }
+    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; loadImageWithRetry(imgElement, currentImageList[currentIndex]); resetTransform(); updateCounter(); }
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage;
     document.getElementById('lightboxNext').onclick = nextImage;
@@ -765,7 +802,7 @@
             if (index < 0) index = sliderImagesArray.length - 1;
             if (index >= sliderImagesArray.length) index = 0;
             currentSlideIndex = index;
-            loadImageWithRetry(mainImg, sliderImagesArray[currentSlideIndex], 5);
+            loadImageWithRetry(mainImg, sliderImagesArray[currentSlideIndex]);
             bgBlur.style.backgroundImage = `url('${sliderImagesArray[currentSlideIndex]}')`;
             if (resetTimer) restartTimer();
         }
@@ -788,10 +825,9 @@
         });
         html += '</div>';
         container.innerHTML = html;
-        // تطبيق دالة التحميل مع إعادة المحاولة على كل صورة
         container.querySelectorAll('.img-square img').forEach(img => {
             const src = img.getAttribute('src');
-            if (src) loadImageWithRetry(img, src, 5);
+            if (src) loadImageWithRetry(img, src);
         });
         container.querySelectorAll('.card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
@@ -815,7 +851,7 @@
         });
         html += '</div>';
         cont.innerHTML = html;
-        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) loadImageWithRetry(img, src, 5); });
+        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) loadImageWithRetry(img, src); });
         cont.querySelectorAll('.card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
 
@@ -829,7 +865,7 @@
         });
         html += '</div>';
         cont.innerHTML = html;
-        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) loadImageWithRetry(img, src, 5); });
+        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) loadImageWithRetry(img, src); });
         cont.querySelectorAll('.product-card').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); });
     }
 
@@ -874,10 +910,9 @@
                 logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img id="partner_${idx}" src="${p.url}" class="partner-logo" loading="lazy"></div>`;
             });
             track.innerHTML = logos + logos;
-            // تطبيق إعادة المحاولة على صور الشركاء
             track.querySelectorAll('.partner-logo').forEach(img => {
                 const src = img.getAttribute('src');
-                if (src) loadImageWithRetry(img, src, 5);
+                if (src) loadImageWithRetry(img, src);
             });
         } else cont.style.display = 'none';
     }
