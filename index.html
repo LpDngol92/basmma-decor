@@ -403,13 +403,13 @@
     let isBlocked = false;
     let blockReason = "";
 
-    // ========== تحسين تحميل الصور (بدون CORS) ==========
+    // ========== دالة تحميل الصور مع إعادة المحاولة (تعمل على عنصر img مباشرة) ==========
     const PLACEHOLDER_SVG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" font-size="20" font-family="Cairo" fill="%23999" text-anchor="middle" dy=".3em"%3Eصورة غير متوفرة%3C/text%3E%3C/svg%3E';
 
-    function setImageWithRetry(imgElement, src, retries = 5, fallbackUrl = PLACEHOLDER_SVG) {
+    function loadImageWithRetry(imgElement, src, retries = 5, fallback = PLACEHOLDER_SVG) {
         if (!imgElement) return;
         if (!src || src.trim() === '') {
-            imgElement.src = fallbackUrl;
+            imgElement.src = fallback;
             imgElement.style.objectFit = 'contain';
             return;
         }
@@ -417,34 +417,34 @@
         // تعيين placeholder فوري
         imgElement.src = PLACEHOLDER_SVG;
         imgElement.style.objectFit = 'contain';
+        imgElement.style.background = '#f0f0f0';
 
         let attempts = 0;
-        let timeoutId = null;
+        let timer = null;
 
-        const tryLoad = () => {
-            // إنشاء كائن Image للتحقق من التحميل
-            const testImg = new Image();
-            testImg.onload = () => {
-                imgElement.src = src;
+        function attemptLoad() {
+            imgElement.onload = function() {
+                // نجاح التحميل
                 imgElement.style.objectFit = 'cover';
                 imgElement.style.background = 'transparent';
-                clearTimeout(timeoutId);
+                clearTimeout(timer);
             };
-            testImg.onerror = () => {
+            imgElement.onerror = function() {
                 if (attempts < retries) {
                     attempts++;
                     const delay = 500 * attempts; // تأخير تصاعدي
-                    timeoutId = setTimeout(tryLoad, delay);
+                    timer = setTimeout(attemptLoad, delay);
                 } else {
-                    imgElement.src = fallbackUrl;
+                    imgElement.src = fallback;
                     imgElement.style.objectFit = 'contain';
                     imgElement.style.background = '#f0f0f0';
                 }
             };
-            testImg.src = src;
-        };
+            // تعيين src يبدأ التحميل
+            imgElement.src = src;
+        }
 
-        tryLoad();
+        attemptLoad();
     }
 
     // ========== نظام الدردشة (مختصر) ==========
@@ -605,13 +605,14 @@
                 media.playsInline = true;
                 media.preload = 'auto';
                 media.loop = false;
-                // لا نضع crossOrigin للفيديو
                 media.onerror = () => console.warn('خطأ في تحميل الفيديو:', item.url);
+                media.onloadeddata = () => { media.classList.add('active'); };
             } else {
                 media = document.createElement('img');
                 media.src = item.url;
                 media.alt = 'صورة سبلاش';
                 media.onerror = () => { media.src = PLACEHOLDER_SVG; };
+                media.onload = () => { media.classList.add('active'); };
             }
             media.className = 'story-media';
             if (idx === 0) media.classList.add('active');
@@ -725,7 +726,7 @@
         if (!images || !images.length) return;
         if (sliderInterval) { clearInterval(sliderInterval); sliderInterval = null; isSliderPaused = true; }
         currentImageList = images; currentIndex = index;
-        setImageWithRetry(imgElement, images[index], 5);
+        loadImageWithRetry(imgElement, images[index], 5);
         resetTransform();
         updateCounter();
         lightbox.style.display = 'flex';
@@ -737,8 +738,8 @@
     }
 
     function closeLightbox() { lightbox.style.display = 'none'; document.body.style.overflow = ''; unbindLightboxEvents(); resetTransform(); currentAlbumId = null; ratingCard.style.display = 'none'; if (isSliderPaused && window.resumeSlider) { window.resumeSlider(); isSliderPaused = false; } }
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 5); resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 5); resetTransform(); updateCounter(); }
+    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; loadImageWithRetry(imgElement, currentImageList[currentIndex], 5); resetTransform(); updateCounter(); }
+    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; loadImageWithRetry(imgElement, currentImageList[currentIndex], 5); resetTransform(); updateCounter(); }
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage;
     document.getElementById('lightboxNext').onclick = nextImage;
@@ -764,7 +765,7 @@
             if (index < 0) index = sliderImagesArray.length - 1;
             if (index >= sliderImagesArray.length) index = 0;
             currentSlideIndex = index;
-            setImageWithRetry(mainImg, sliderImagesArray[currentSlideIndex], 5);
+            loadImageWithRetry(mainImg, sliderImagesArray[currentSlideIndex], 5);
             bgBlur.style.backgroundImage = `url('${sliderImagesArray[currentSlideIndex]}')`;
             if (resetTimer) restartTimer();
         }
@@ -783,13 +784,14 @@
         let html = '<div class="grid-auto">';
         albums.forEach(alb => {
             let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            html += `<div class="card" data-album="${alb.id}"><div class="img-square"><img ${cover ? `src="${cover}"` : ''} loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+            html += `<div class="card" data-album="${alb.id}"><div class="img-square"><img id="img_${alb.id}" ${cover ? `src="${cover}"` : ''} loading="lazy"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
         });
         html += '</div>';
         container.innerHTML = html;
+        // تطبيق دالة التحميل مع إعادة المحاولة على كل صورة
         container.querySelectorAll('.img-square img').forEach(img => {
             const src = img.getAttribute('src');
-            if (src) setImageWithRetry(img, src, 5);
+            if (src) loadImageWithRetry(img, src, 5);
         });
         container.querySelectorAll('.card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
@@ -809,11 +811,11 @@
             let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
             let avgRating = (alb.rating_sum && alb.rating_count) ? (alb.rating_sum / alb.rating_count).toFixed(1) : '0';
             let views = alb.views || 0;
-            html += `<div class="card" data-album="${alb.id}"><div class="img-square"><img ${cover ? `src="${cover}"` : ''} loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">⭐ ${avgRating} (${alb.rating_count||0}) | 👁️ ${views}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+            html += `<div class="card" data-album="${alb.id}"><div class="img-square"><img id="img_${alb.id}" ${cover ? `src="${cover}"` : ''} loading="lazy"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">⭐ ${avgRating} (${alb.rating_count||0}) | 👁️ ${views}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
         });
         html += '</div>';
         cont.innerHTML = html;
-        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) setImageWithRetry(img, src, 5); });
+        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) loadImageWithRetry(img, src, 5); });
         cont.querySelectorAll('.card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
 
@@ -822,12 +824,12 @@
         let all = getAllStoreProducts();
         if (all.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد منتجات</div>'; return; }
         let html = '<div class="grid-auto">';
-        all.forEach(url => {
-            html += `<div class="product-card" data-product-url="${url}"><div class="img-square"><img src="${url}" loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`;
+        all.forEach((url, idx) => {
+            html += `<div class="product-card" data-product-url="${url}"><div class="img-square"><img id="prod_${idx}" src="${url}" loading="lazy"></div><div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`;
         });
         html += '</div>';
         cont.innerHTML = html;
-        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) setImageWithRetry(img, src, 5); });
+        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) loadImageWithRetry(img, src, 5); });
         cont.querySelectorAll('.product-card').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); });
     }
 
@@ -868,10 +870,15 @@
         if (currentData.partners && Object.keys(currentData.partners).length) {
             cont.style.display = 'block';
             let logos = '';
-            Object.values(currentData.partners).forEach(p => {
-                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';"></div>`;
+            Object.values(currentData.partners).forEach((p, idx) => {
+                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img id="partner_${idx}" src="${p.url}" class="partner-logo" loading="lazy"></div>`;
             });
             track.innerHTML = logos + logos;
+            // تطبيق إعادة المحاولة على صور الشركاء
+            track.querySelectorAll('.partner-logo').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src) loadImageWithRetry(img, src, 5);
+            });
         } else cont.style.display = 'none';
     }
 
