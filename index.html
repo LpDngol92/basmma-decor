@@ -301,7 +301,7 @@
         .popup-bubble { position: fixed; bottom: 20px; right: 20px; max-width: 280px; background: white; border-radius: 28px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; z-index: 10000; border-right: 4px solid var(--primary); animation: slideIn 0.3s ease; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
-        /* إضافة دعم لصور placeholder */
+        /* دعم placeholder للصور */
         .img-placeholder {
             background: #f0f0f0;
             display: flex;
@@ -342,7 +342,7 @@
 <div id="lightbox" class="lightbox">
     <div class="lightbox-container">
         <div class="lightbox-image-wrapper">
-            <img id="lightboxImg" class="lightbox-img" draggable="false" crossorigin="anonymous">
+            <img id="lightboxImg" class="lightbox-img" draggable="false">
         </div>
     </div>
     <div class="lightbox-controls">
@@ -403,10 +403,10 @@
     let isBlocked = false;
     let blockReason = "";
 
-    // ========== تحسين تحميل الصور ==========
+    // ========== تحسين تحميل الصور (بدون CORS) ==========
     const PLACEHOLDER_SVG = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" font-size="20" font-family="Cairo" fill="%23999" text-anchor="middle" dy=".3em"%3Eصورة غير متوفرة%3C/text%3E%3C/svg%3E';
 
-    function setImageWithRetry(imgElement, src, retries = 3, fallbackUrl = PLACEHOLDER_SVG) {
+    function setImageWithRetry(imgElement, src, retries = 5, fallbackUrl = PLACEHOLDER_SVG) {
         if (!imgElement) return;
         if (!src || src.trim() === '') {
             imgElement.src = fallbackUrl;
@@ -414,43 +414,40 @@
             return;
         }
 
-        // تعيين crossorigin للصور الخارجية
-        if (src.startsWith('http') && !src.startsWith(window.location.origin)) {
-            imgElement.crossOrigin = 'anonymous';
-        }
+        // تعيين placeholder فوري
+        imgElement.src = PLACEHOLDER_SVG;
+        imgElement.style.objectFit = 'contain';
 
         let attempts = 0;
+        let timeoutId = null;
+
         const tryLoad = () => {
-            // عرض placeholder فوري أثناء التحميل
-            if (attempts === 0) {
-                imgElement.src = PLACEHOLDER_SVG;
-                imgElement.style.objectFit = 'contain';
-            }
-            // المحاولة الفعلية
-            const loadImg = new Image();
-            loadImg.crossOrigin = imgElement.crossOrigin || 'anonymous';
-            loadImg.onload = () => {
+            // إنشاء كائن Image للتحقق من التحميل
+            const testImg = new Image();
+            testImg.onload = () => {
                 imgElement.src = src;
                 imgElement.style.objectFit = 'cover';
                 imgElement.style.background = 'transparent';
+                clearTimeout(timeoutId);
             };
-            loadImg.onerror = () => {
+            testImg.onerror = () => {
                 if (attempts < retries) {
                     attempts++;
-                    const delay = 500 * attempts;
-                    setTimeout(tryLoad, delay);
+                    const delay = 500 * attempts; // تأخير تصاعدي
+                    timeoutId = setTimeout(tryLoad, delay);
                 } else {
                     imgElement.src = fallbackUrl;
                     imgElement.style.objectFit = 'contain';
                     imgElement.style.background = '#f0f0f0';
                 }
             };
-            loadImg.src = src;
+            testImg.src = src;
         };
+
         tryLoad();
     }
 
-    // ========== نظام الدردشة (مختصر لتوفير المساحة) ==========
+    // ========== نظام الدردشة (مختصر) ==========
     let currentTicketId = null, currentVisitorId = null, currentVisitorName = null, isAdminOnline = false, messageListener = null, isNameRequested = false;
 
     function escapeHtml(text) { if (!text) return ''; const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
@@ -601,8 +598,21 @@
         const container = document.getElementById('storiesContainer');
         items.forEach((item, idx) => {
             let media;
-            if (item.type === 'video' || isVideoUrl(item.url)) { media = document.createElement('video'); media.src = item.url; media.muted = true; media.playsInline = true; media.preload = 'auto'; media.loop = false; media.crossOrigin = 'anonymous'; media.onerror = () => console.warn('خطأ في تحميل الفيديو:', item.url); }
-            else { media = document.createElement('img'); media.src = item.url; media.alt = 'صورة سبلاش'; media.crossOrigin = 'anonymous'; media.onerror = () => { media.src = PLACEHOLDER_SVG; }; }
+            if (item.type === 'video' || isVideoUrl(item.url)) {
+                media = document.createElement('video');
+                media.src = item.url;
+                media.muted = true;
+                media.playsInline = true;
+                media.preload = 'auto';
+                media.loop = false;
+                // لا نضع crossOrigin للفيديو
+                media.onerror = () => console.warn('خطأ في تحميل الفيديو:', item.url);
+            } else {
+                media = document.createElement('img');
+                media.src = item.url;
+                media.alt = 'صورة سبلاش';
+                media.onerror = () => { media.src = PLACEHOLDER_SVG; };
+            }
             media.className = 'story-media';
             if (idx === 0) media.classList.add('active');
             container.appendChild(media);
@@ -715,7 +725,7 @@
         if (!images || !images.length) return;
         if (sliderInterval) { clearInterval(sliderInterval); sliderInterval = null; isSliderPaused = true; }
         currentImageList = images; currentIndex = index;
-        setImageWithRetry(imgElement, images[index], 4);
+        setImageWithRetry(imgElement, images[index], 5);
         resetTransform();
         updateCounter();
         lightbox.style.display = 'flex';
@@ -727,8 +737,8 @@
     }
 
     function closeLightbox() { lightbox.style.display = 'none'; document.body.style.overflow = ''; unbindLightboxEvents(); resetTransform(); currentAlbumId = null; ratingCard.style.display = 'none'; if (isSliderPaused && window.resumeSlider) { window.resumeSlider(); isSliderPaused = false; } }
-    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 4); resetTransform(); updateCounter(); }
-    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 4); resetTransform(); updateCounter(); }
+    function nextImage() { if (!currentImageList.length) return; currentIndex = (currentIndex + 1) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 5); resetTransform(); updateCounter(); }
+    function prevImage() { if (!currentImageList.length) return; currentIndex = (currentIndex - 1 + currentImageList.length) % currentImageList.length; setImageWithRetry(imgElement, currentImageList[currentIndex], 5); resetTransform(); updateCounter(); }
     function sendWhatsapp() { if (!currentImageList.length) return; const url = currentImageList[currentIndex]; window.open(`https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود الاستفسار عن هذا المنتج/التصميم:\n'+url)}`, '_blank'); }
     document.getElementById('lightboxPrev').onclick = prevImage;
     document.getElementById('lightboxNext').onclick = nextImage;
@@ -748,13 +758,13 @@
         autoDuration = (sliderData.duration || 5) * 1000;
         currentSlideIndex = 0;
         let slideInterval, isPaused = false;
-        container.innerHTML = `<div class="hero-slider-beige"><div class="slider-bg-blur" id="sliderBgBlur" style="background-image: url('${sliderImagesArray[0]}')"></div><div class="slider-stage"><div class="slider-image-card" id="sliderMainCard"><img id="sliderMainImg" crossorigin="anonymous"></div></div><div class="slider-nav-buttons"><button id="sliderPrev"><i class="fas fa-chevron-right"></i> السابق</button><button id="sliderNext">التالي <i class="fas fa-chevron-left"></i></button></div><div class="slider-progress-ring" id="sliderProgress">${autoDuration/1000}s</div></div>`;
+        container.innerHTML = `<div class="hero-slider-beige"><div class="slider-bg-blur" id="sliderBgBlur" style="background-image: url('${sliderImagesArray[0]}')"></div><div class="slider-stage"><div class="slider-image-card" id="sliderMainCard"><img id="sliderMainImg"></div></div><div class="slider-nav-buttons"><button id="sliderPrev"><i class="fas fa-chevron-right"></i> السابق</button><button id="sliderNext">التالي <i class="fas fa-chevron-left"></i></button></div><div class="slider-progress-ring" id="sliderProgress">${autoDuration/1000}s</div></div>`;
         const bgBlur = document.getElementById('sliderBgBlur'), mainImg = document.getElementById('sliderMainImg'), prevBtn = document.getElementById('sliderPrev'), nextBtn = document.getElementById('sliderNext'), progressSpan = document.getElementById('sliderProgress'), card = document.getElementById('sliderMainCard');
         function updateSlide(index, resetTimer = true) {
             if (index < 0) index = sliderImagesArray.length - 1;
             if (index >= sliderImagesArray.length) index = 0;
             currentSlideIndex = index;
-            setImageWithRetry(mainImg, sliderImagesArray[currentSlideIndex], 4);
+            setImageWithRetry(mainImg, sliderImagesArray[currentSlideIndex], 5);
             bgBlur.style.backgroundImage = `url('${sliderImagesArray[currentSlideIndex]}')`;
             if (resetTimer) restartTimer();
         }
@@ -773,14 +783,13 @@
         let html = '<div class="grid-auto">';
         albums.forEach(alb => {
             let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
-            html += `<div class="card" data-album="${alb.id}"><div class="img-square"><img ${cover ? `src="${cover}"` : ''} crossorigin="anonymous" loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+            html += `<div class="card" data-album="${alb.id}"><div class="img-square"><img ${cover ? `src="${cover}"` : ''} loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
         });
         html += '</div>';
         container.innerHTML = html;
-        // تحسين تحميل الصور بعد الإضافة
         container.querySelectorAll('.img-square img').forEach(img => {
             const src = img.getAttribute('src');
-            if (src) setImageWithRetry(img, src, 4);
+            if (src) setImageWithRetry(img, src, 5);
         });
         container.querySelectorAll('.card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
@@ -800,11 +809,11 @@
             let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
             let avgRating = (alb.rating_sum && alb.rating_count) ? (alb.rating_sum / alb.rating_count).toFixed(1) : '0';
             let views = alb.views || 0;
-            html += `<div class="card" data-album="${alb.id}"><div class="img-square"><img ${cover ? `src="${cover}"` : ''} crossorigin="anonymous" loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">⭐ ${avgRating} (${alb.rating_count||0}) | 👁️ ${views}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+            html += `<div class="card" data-album="${alb.id}"><div class="img-square"><img ${cover ? `src="${cover}"` : ''} loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><div style="font-size:0.75rem; color:var(--gray); margin-top:4px;">⭐ ${avgRating} (${alb.rating_count||0}) | 👁️ ${views}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
         });
         html += '</div>';
         cont.innerHTML = html;
-        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) setImageWithRetry(img, src, 4); });
+        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) setImageWithRetry(img, src, 5); });
         cont.querySelectorAll('.card').forEach(c => { c.addEventListener('click', () => openAlbum(c.getAttribute('data-album'))); });
     }
 
@@ -814,11 +823,11 @@
         if (all.length === 0) { cont.innerHTML = '<div class="empty-state">لا توجد منتجات</div>'; return; }
         let html = '<div class="grid-auto">';
         all.forEach(url => {
-            html += `<div class="product-card" data-product-url="${url}"><div class="img-square"><img src="${url}" crossorigin="anonymous" loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`;
+            html += `<div class="product-card" data-product-url="${url}"><div class="img-square"><img src="${url}" loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';this.style.objectFit='contain';"></div><div class="product-info"><button class="whatsapp-order" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`;
         });
         html += '</div>';
         cont.innerHTML = html;
-        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) setImageWithRetry(img, src, 4); });
+        cont.querySelectorAll('.img-square img').forEach(img => { const src = img.getAttribute('src'); if (src) setImageWithRetry(img, src, 5); });
         cont.querySelectorAll('.product-card').forEach(card => { card.addEventListener('click', (e) => { if (!e.target.closest('.whatsapp-order')) { const imgUrl = card.getAttribute('data-product-url'); if (imgUrl) openLightbox([imgUrl], 0); } }); });
     }
 
@@ -860,7 +869,7 @@
             cont.style.display = 'block';
             let logos = '';
             Object.values(currentData.partners).forEach(p => {
-                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" crossorigin="anonymous" loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';"></div>`;
+                logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" class="partner-logo" loading="lazy" onerror="this.src='${PLACEHOLDER_SVG}';"></div>`;
             });
             track.innerHTML = logos + logos;
         } else cont.style.display = 'none';
