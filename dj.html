@@ -68,6 +68,8 @@
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
         .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
         .btn-group button { flex: 1; min-width: 120px; }
+        .splash-info-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 12px; margin: 10px 0; }
+        .splash-info-box p { margin: 4px 0; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -141,11 +143,16 @@
     }
 
     function renderStats() {
+        const splashItems = currentData.splash_items || [];
+        const splashMedia = currentData.splash_media_url ? 1 : 0;
+        const splashVideos = currentData.splash_stories_videos || [];
+        const totalSplash = splashItems.length + splashMedia + splashVideos.length;
+        
         document.getElementById('statsContainer').innerHTML = `
             <div class="stat-card"><i class="fas fa-folder"></i><h3>${Object.keys(currentData.albums || {}).length}</h3><p>الألبومات</p></div>
             <div class="stat-card"><i class="fas fa-store"></i><h3>${Object.keys(currentData.store_categories || {}).length}</h3><p>المتجر</p></div>
             <div class="stat-card"><i class="fas fa-link"></i><h3>${(currentData.social_links || []).length}</h3><p>روابط إضافية</p></div>
-            <div class="stat-card"><i class="fas fa-images"></i><h3>${(currentData.splash_items || []).length}</h3><p>صور البداية</p></div>
+            <div class="stat-card"><i class="fas fa-images"></i><h3>${totalSplash}</h3><p>صور البداية</p></div>
         `;
     }
 
@@ -260,45 +267,99 @@
     // ========== 3. شاشة البداية ==========
     function renderSplash() {
         const items = currentData.splash_items || [];
+        const mediaUrl = currentData.splash_media_url || null;
+        const videos = currentData.splash_stories_videos || [];
+        
+        // حساب العدد الإجمالي
+        const totalItems = items.length + (mediaUrl ? 1 : 0) + videos.length;
+        
         let itemsHtml = '';
+        // عرض عناصر splash_items
         items.forEach((item, idx) => {
             itemsHtml += `<div class="image-card"><img src="${item.url}" onclick="openLightbox('${item.url}')"><span class="delete-img-btn" onclick="event.stopPropagation(); removeSplashItem(${idx})">✖</span></div>`;
         });
+        
+        // عرض splash_media_url إذا وجد
+        if(mediaUrl) {
+            itemsHtml += `<div class="image-card" style="border:2px solid #ffc107;"><img src="${mediaUrl}" onclick="openLightbox('${mediaUrl}')"><span class="delete-img-btn" onclick="event.stopPropagation(); clearSplashMedia()">✖</span><div style="position:absolute;bottom:2px;left:2px;background:#ffc107;color:#333;font-size:8px;padding:1px 6px;border-radius:4px;">مفردة</div></div>`;
+        }
+        
+        // عرض splash_stories_videos
+        videos.forEach((video, idx) => {
+            itemsHtml += `<div class="image-card" style="border:2px solid #17a2b8;"><img src="${video}" onclick="openLightbox('${video}')"><span class="delete-img-btn" onclick="event.stopPropagation(); removeSplashVideo(${idx})">✖</span><div style="position:absolute;bottom:2px;left:2px;background:#17a2b8;color:#fff;font-size:8px;padding:1px 6px;border-radius:4px;">فيديو</div></div>`;
+        });
+
         document.getElementById('content-splash').innerHTML = `
             <div class="vertical-group">
                 <div class="checkbox-row"><input type="checkbox" id="splashEnabled" ${currentData.splash_enabled !== false ? 'checked' : ''}> <label>تفعيل شاشة البداية</label></div>
                 <div class="checkbox-row"><input type="checkbox" id="splashShowSkip" ${currentData.splash_show_skip === true ? 'checked' : ''}> <label>إظهار زر تخطي</label></div>
                 <input type="number" id="splashDuration" placeholder="مدة العرض (ثانية)" value="${currentData.splash_duration || 5}">
                 
+                <div class="splash-info-box">
+                    <p><strong>📊 إحصائيات صور البداية:</strong></p>
+                    <p>🖼️ صور متعددة: ${items.length}</p>
+                    <p>🖼️ صورة مفردة: ${mediaUrl ? '✅ موجودة' : '❌ غير موجودة'}</p>
+                    <p>🎬 فيديوهات: ${videos.length}</p>
+                    <p><strong>المجموع الكلي: ${totalItems} عنصر</strong></p>
+                </div>
+                
                 <div class="images-grid">${itemsHtml || 'لا توجد عناصر'}</div>
                 
                 <div class="btn-group">
-                    <button class="btn-danger" onclick="clearAllSplashItems()" style="background:#dc3545;">
-                        <i class="fas fa-trash"></i> مسح صور البداية بالكامل
+                    <button class="btn-danger" onclick="clearAllSplashData()" style="background:#dc3545;font-size:1.1rem;padding:12px;">
+                        <i class="fas fa-trash-alt"></i> 🗑️ مسح جميع صور البداية (${totalItems} عنصر)
                     </button>
                 </div>
                 
                 <hr>
+                <label><strong>إضافة صور متعددة (splash_items)</strong></label>
                 <input type="text" id="newSplashItem" placeholder="رابط صورة أو فيديو مفرد">
                 <button onclick="addSplashItem()">➕ إضافة مفرد</button>
                 <hr>
                 <label><strong>إضافة عدة عناصر دفعة واحدة (كل رابط في سطر)</strong></label>
                 <textarea id="bulkSplashItems" rows="6" class="bulk-textarea" placeholder="https://example.com/1.jpg\nhttps://example.com/video.mp4"></textarea>
                 <button onclick="addBulkSplashItems()">➕ إضافة الكل دفعة واحدة</button>
-                <button onclick="saveSplash()">💾 حفظ</button>
+                <hr>
+                <label><strong>صورة مفردة (splash_media_url) - تحل محل الصور المتعددة</strong></label>
+                <input type="text" id="splashMediaUrl" placeholder="رابط صورة مفردة" value="${(mediaUrl || '').replace(/"/g, '&quot;')}">
+                <button onclick="saveSplashMedia()">💾 حفظ الصورة المفردة</button>
+                <button class="btn-red" onclick="clearSplashMedia()" style="background:#dc3545;">✖ حذف الصورة المفردة</button>
+                <hr>
+                <label><strong>فيديوهات القصص (splash_stories_videos)</strong></label>
+                <input type="text" id="newSplashVideo" placeholder="رابط فيديو">
+                <button onclick="addSplashVideo()">➕ إضافة فيديو</button>
+                <button onclick="saveSplash()">💾 حفظ الإعدادات</button>
             </div>
         `;
     }
     
-    // ===== دالة مسح جميع صور البداية =====
-    window.clearAllSplashItems = function() {
-        if(!confirm('⚠️ هل أنت متأكد من حذف جميع صور شاشة البداية (${(currentData.splash_items || []).length} عنصر)؟')) return;
-        db.ref(`${DB_PATH}/splash_items`).set([]).then(() => {
-            showToast('✅ تم مسح جميع صور البداية');
+    // ===== دالة مسح جميع صور البداية بالكامل =====
+    window.clearAllSplashData = function() {
+        const items = currentData.splash_items || [];
+        const mediaUrl = currentData.splash_media_url ? 1 : 0;
+        const videos = currentData.splash_stories_videos || [];
+        const total = items.length + mediaUrl + videos.length;
+        
+        if(total === 0) {
+            showToast('📭 لا توجد صور لحذفها');
+            return;
+        }
+        
+        if(!confirm(`⚠️ هل أنت متأكد من حذف جميع صور وفيديوهات شاشة البداية بالكامل (${total} عنصر)؟\n\nسوف يتم حذف:\n- ${items.length} صورة متعددة\n- ${mediaUrl ? '1 صورة مفردة' : '0 صورة مفردة'}\n- ${videos.length} فيديو`)) return;
+        
+        // حذف جميع المصادر دفعة واحدة
+        const updates = {};
+        updates[`${DB_PATH}/splash_items`] = [];
+        updates[`${DB_PATH}/splash_media_url`] = null;
+        updates[`${DB_PATH}/splash_stories_videos`] = [];
+        
+        db.ref().update(updates).then(() => {
+            showToast(`✅ تم مسح جميع صور وفيديوهات البداية (${total} عنصر)`);
             loadData();
         }).catch(err => showToast('خطأ: ' + err.message, true));
     };
 
+    // ===== دوال splash_items =====
     window.addSplashItem = function() {
         const url = document.getElementById('newSplashItem').value.trim();
         if(!url) { showToast('أدخل رابط', true); return; }
@@ -331,6 +392,39 @@
         items.splice(idx, 1);
         db.ref(`${DB_PATH}/splash_items`).set(items).then(() => loadData());
     };
+
+    // ===== دوال splash_media_url =====
+    window.saveSplashMedia = function() {
+        const url = document.getElementById('splashMediaUrl').value.trim();
+        if(!url) { showToast('أدخل رابط الصورة', true); return; }
+        db.ref(`${DB_PATH}/splash_media_url`).set(url).then(() => {
+            showToast('✅ تم حفظ الصورة المفردة');
+            loadData();
+        });
+    };
+    window.clearSplashMedia = function() {
+        if(!confirm('⚠️ هل أنت متأكد من حذف الصورة المفردة؟')) return;
+        db.ref(`${DB_PATH}/splash_media_url`).set(null).then(() => {
+            showToast('✅ تم حذف الصورة المفردة');
+            loadData();
+        });
+    };
+
+    // ===== دوال splash_stories_videos =====
+    window.addSplashVideo = function() {
+        const url = document.getElementById('newSplashVideo').value.trim();
+        if(!url) { showToast('أدخل رابط الفيديو', true); return; }
+        const videos = currentData.splash_stories_videos || [];
+        videos.push(url);
+        db.ref(`${DB_PATH}/splash_stories_videos`).set(videos).then(() => loadData());
+        document.getElementById('newSplashVideo').value = '';
+    };
+    window.removeSplashVideo = function(idx) {
+        const videos = currentData.splash_stories_videos || [];
+        videos.splice(idx, 1);
+        db.ref(`${DB_PATH}/splash_stories_videos`).set(videos).then(() => loadData());
+    };
+
     window.saveSplash = function() {
         db.ref(DB_PATH).update({
             splash_enabled: document.getElementById('splashEnabled').checked,
