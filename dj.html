@@ -25,25 +25,21 @@
         .stat-card i { font-size: 24px; color: #b88b4a; }
         .stat-card h3 { font-size: 22px; }
         
-        /* قوائم منسدلة رئيسية */
         .master-dropdown { margin-bottom: 12px; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
         .master-header { background: #b88b4a; color: white; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; font-size: 1rem; }
         .master-header:hover { background: #9e6f38; }
         .master-content { padding: 16px; display: none; background: #fff; border-top: 1px solid #f0e0cc; }
         
-        /* قوائم منسدلة داخلية (للألبومات وأقسام المتجر) */
         .nested-dropdown { margin-bottom: 12px; border: 1px solid #eee; border-radius: 12px; overflow: hidden; }
         .nested-header { background: #f8f9fa; padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; color: #2c3e2f; }
         .nested-header:hover { background: #f0e6d8; }
         .nested-content { padding: 14px; display: none; background: #fefcf8; border-top: 1px solid #eee; }
         
-        /* شبكة الصور */
         .images-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
         .image-card { position: relative; width: 80px; height: 80px; border-radius: 10px; overflow: hidden; border: 1px solid #ddd; background: white; }
         .image-card img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
         .delete-img-btn { position: absolute; top: 2px; right: 2px; background: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
         
-        /* عامودي */
         .vertical-group { display: flex; flex-direction: column; gap: 12px; }
         .vertical-group input, .vertical-group textarea, .vertical-group button { width: 100%; }
         
@@ -58,6 +54,10 @@
         button { background: #b88b4a; color: white; padding: 8px 16px; border: none; border-radius: 30px; cursor: pointer; font-weight: 600; margin: 4px; }
         .btn-red { background: #dc3545; }
         .btn-red:hover { background: #bb2d3b; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #bb2d3b; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-warning:hover { background: #e0a800; }
         hr { margin: 15px 0; }
         .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 40px; display: none; z-index: 9999; }
         .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; cursor: pointer; }
@@ -66,6 +66,8 @@
         .bulk-textarea { font-family: monospace; font-size: 13px; direction: ltr; }
         .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-group button { flex: 1; min-width: 120px; }
     </style>
 </head>
 <body>
@@ -143,6 +145,7 @@
             <div class="stat-card"><i class="fas fa-folder"></i><h3>${Object.keys(currentData.albums || {}).length}</h3><p>الألبومات</p></div>
             <div class="stat-card"><i class="fas fa-store"></i><h3>${Object.keys(currentData.store_categories || {}).length}</h3><p>المتجر</p></div>
             <div class="stat-card"><i class="fas fa-link"></i><h3>${(currentData.social_links || []).length}</h3><p>روابط إضافية</p></div>
+            <div class="stat-card"><i class="fas fa-images"></i><h3>${(currentData.splash_items || []).length}</h3><p>صور البداية</p></div>
         `;
     }
 
@@ -266,7 +269,16 @@
                 <div class="checkbox-row"><input type="checkbox" id="splashEnabled" ${currentData.splash_enabled !== false ? 'checked' : ''}> <label>تفعيل شاشة البداية</label></div>
                 <div class="checkbox-row"><input type="checkbox" id="splashShowSkip" ${currentData.splash_show_skip === true ? 'checked' : ''}> <label>إظهار زر تخطي</label></div>
                 <input type="number" id="splashDuration" placeholder="مدة العرض (ثانية)" value="${currentData.splash_duration || 5}">
+                
                 <div class="images-grid">${itemsHtml || 'لا توجد عناصر'}</div>
+                
+                <div class="btn-group">
+                    <button class="btn-danger" onclick="clearAllSplashItems()" style="background:#dc3545;">
+                        <i class="fas fa-trash"></i> مسح صور البداية بالكامل
+                    </button>
+                </div>
+                
+                <hr>
                 <input type="text" id="newSplashItem" placeholder="رابط صورة أو فيديو مفرد">
                 <button onclick="addSplashItem()">➕ إضافة مفرد</button>
                 <hr>
@@ -277,6 +289,16 @@
             </div>
         `;
     }
+    
+    // ===== دالة مسح جميع صور البداية =====
+    window.clearAllSplashItems = function() {
+        if(!confirm('⚠️ هل أنت متأكد من حذف جميع صور شاشة البداية (${(currentData.splash_items || []).length} عنصر)؟')) return;
+        db.ref(`${DB_PATH}/splash_items`).set([]).then(() => {
+            showToast('✅ تم مسح جميع صور البداية');
+            loadData();
+        }).catch(err => showToast('خطأ: ' + err.message, true));
+    };
+
     window.addSplashItem = function() {
         const url = document.getElementById('newSplashItem').value.trim();
         if(!url) { showToast('أدخل رابط', true); return; }
