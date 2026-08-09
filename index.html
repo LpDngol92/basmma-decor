@@ -2531,7 +2531,7 @@
             let slideInterval,
                 isPaused = false;
             container.innerHTML =
-                `<div class="hero-slider-beige"><div class="slider-bg-blur" id="sliderBgBlur" style="background-image: url('${sliderImagesArray[0]}')"></div><div class="slider-stage"><div class="slider-image-card" id="sliderMainCard"><img id="sliderMainImg"></div></div><div class="slider-nav-buttons"><button id="sliderPrev"><i class="fas fa-chevron-right"></i> السابق</button><button id="sliderNext">التالي <i class="fas fa-chevron-left"></i></button></div><div class="slider-progress-ring" id="sliderProgress">${autoDuration/1000}s</div></div>`;
+                `<div class="hero-slider-beige"><div class="slider-bg-blur" id="sliderBgBlur" style="background-image: url('${sliderImagesArray[0]}')"></div><div class="slider-stage"><div class="slider-image-card" id="sliderMainCard"><img id="sliderMainImg" alt="بصمة غير - أحدث الأعمال"></div></div><div class="slider-nav-buttons"><button id="sliderPrev"><i class="fas fa-chevron-right"></i> السابق</button><button id="sliderNext">التالي <i class="fas fa-chevron-left"></i></button></div><div class="slider-progress-ring" id="sliderProgress">${autoDuration/1000}s</div></div>`;
             const bgBlur = document.getElementById('sliderBgBlur'),
                 mainImg = document.getElementById('sliderMainImg'),
                 prevBtn = document.getElementById('sliderPrev'),
@@ -2588,7 +2588,7 @@
             albums.forEach(alb => {
                 let cover = (alb.imgs && Object.keys(alb.imgs).length) ? Object.values(alb.imgs)[0].url : '';
                 html +=
-                    `<div class="card" data-album="${alb.id}"><div class="img-square"><img id="img_${alb.id}" ${cover ? `src="${cover}"` : ''} loading="lazy"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+                    `<div class="card" data-album="${alb.id}"><div class="img-square"><img id="img_${alb.id}" ${cover ? `src="${cover}"` : ''} alt="${escapeHtml(alb.name || 'ألبوم أعمال بصمة غير')}" loading="lazy"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
             });
             html += '</div>';
             container.innerHTML = html;
@@ -2639,7 +2639,7 @@
                     .toFixed(1) : '0';
                 let views = alb.views || 0;
                 html +=
-                    `<div class="card" data-album="${alb.id}"><div class="img-square"><img id="img_${alb.id}" ${cover ? `src="${cover}"` : ''} loading="lazy"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><div style="font-size:0.7rem;color:var(--gray);margin-top:4px;">⭐ ${avgRating} (${alb.rating_count||0}) | 👁️ ${views}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
+                    `<div class="card" data-album="${alb.id}"><div class="img-square"><img id="img_${alb.id}" ${cover ? `src="${cover}"` : ''} alt="${escapeHtml(alb.name || 'ألبوم أعمال بصمة غير')}" loading="lazy"></div><div class="card-body"><div class="card-title">${alb.name || 'ألبوم'}</div><div style="font-size:0.7rem;color:var(--gray);margin-top:4px;">⭐ ${avgRating} (${alb.rating_count||0}) | 👁️ ${views}</div><small style="color:var(--gray);">${alb.imgs ? Object.keys(alb.imgs).length : 0} صورة</small></div></div>`;
             });
             html += '</div>';
             cont.innerHTML = html;
@@ -2659,7 +2659,7 @@
             let html = '<div class="grid-auto">';
             all.forEach((url, idx) => {
                 html +=
-                    `<div class="product-card" data-product-url="${url}"><div class="img-square"><img id="prod_${idx}" src="${url}" loading="lazy"></div><div class="product-info"><button class="btn btn-whatsapp" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`;
+                    `<div class="product-card" data-product-url="${url}"><div class="img-square"><img id="prod_${idx}" src="${url}" alt="منتج ديكور من بصمة غير" loading="lazy"></div><div class="product-info"><button class="btn btn-whatsapp" onclick="event.stopPropagation(); window.open('https://wa.me/${currentWhatsappNum}?text=${encodeURIComponent('السلام عليكم، أود طلب هذا المنتج:\n'+url)}','_blank')"><i class="fab fa-whatsapp"></i> طلب عبر واتساب</button></div></div>`;
             });
             html += '</div>';
             cont.innerHTML = html;
@@ -2786,7 +2786,7 @@
                 let logos = '';
                 Object.values(currentData.partners).forEach((p, idx) => {
                     logos +=
-                        `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img id="partner_${idx}" src="${p.url}" class="partner-logo" loading="lazy"></div>`;
+                        `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img id="partner_${idx}" src="${p.url}" alt="${escapeHtml(p.name || 'شريك بصمة غير')}" class="partner-logo" loading="lazy"></div>`;
                 });
                 track.innerHTML = logos + logos;
                 track.querySelectorAll('.partner-logo').forEach(img => {
@@ -2797,8 +2797,50 @@
         }
 
         // ================================================================
-        // NAVIGATION
+        // NAVIGATION / ROUTING (Hash-based, deep-linkable)
         // ================================================================
+        const VALID_PAGES = ['home', 'store', 'works', 'catalogs', 'contact'];
+
+        function getHashParts() {
+            const raw = location.hash.replace('#', '');
+            const parts = raw.split('/');
+            const page = VALID_PAGES.includes(parts[0]) ? parts[0] : 'home';
+            const albumId = parts[1] || null;
+            return { page, albumId };
+        }
+
+        function updatePageTitle() {
+            const titles = {
+                home: 'الرئيسية',
+                store: 'المتجر',
+                works: 'أعمالنا',
+                catalogs: 'الكتالوجات',
+                contact: 'اتصل بنا'
+            };
+            const siteName = (currentData && currentData.site_name) ? currentData.site_name : 'بصمة غير';
+            document.title = `${titles[currentPage] || ''} | ${siteName}`;
+        }
+
+        function tryOpenAlbumFromHash(albumId, attemptsLeft = 10) {
+            if (currentData.albums && currentData.albums[albumId]) {
+                openAlbum(albumId);
+            } else if (attemptsLeft > 0) {
+                setTimeout(() => tryOpenAlbumFromHash(albumId, attemptsLeft - 1), 300);
+            }
+        }
+
+        function handleHashChange() {
+            const { page, albumId } = getHashParts();
+            if (page !== currentPage) {
+                currentPage = page;
+                loadPage();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+            if (albumId) tryOpenAlbumFromHash(albumId);
+        }
+
+        window.addEventListener('hashchange', handleHashChange);
+
         function navHandler(e) {
             e.preventDefault();
             const page = this.getAttribute('data-page');
@@ -2817,7 +2859,7 @@
             ];
             let html = '';
             pages.forEach(p => {
-                html += `<a data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`;
+                html += `<a href="#${p.id}" data-page="${p.id}" class="${currentPage === p.id ? 'active' : ''}"><i class="${p.icon}"></i> ${p.name}</a>`;
             });
             container.innerHTML = html;
             container.querySelectorAll('[data-page]').forEach(link => {
@@ -2827,10 +2869,9 @@
         }
 
         function changePage(page) {
-            if (currentPage === page) return;
-            currentPage = page;
-            loadPage();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            const target = VALID_PAGES.includes(page) ? page : 'home';
+            if (location.hash === '#' + target) return;
+            location.hash = target;
         }
 
         function bindHeroButtons() {
@@ -2863,7 +2904,7 @@
                 const sliderTitle = (currentData.home_slider && currentData.home_slider.title) ? currentData.home_slider
                     .title : 'أحدث أعمالنا';
                 main.innerHTML =
-                    `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" data-page="store">تسوق الآن</a><a class="btn btn-outline" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">${sliderTitle}</h2><div id="homeSliderContainer"></div></div>`;
+                    `<div class="hero"><div class="container"><h1>بصمة غير: ديكورات معارض ومحلات تجارية في جدة</h1><p>ديكورات خشب، دواليب عرض، ارفف تخزين، كاونترات استقبال، مكتبات تلفزيون - تصاميم فاخرة</p><div class="btn-group"><a class="btn btn-primary" href="#store" data-page="store">تسوق الآن</a><a class="btn btn-outline" href="#works" data-page="works">شاهد أعمالنا</a><a class="btn btn-outline" href="#catalogs" data-page="catalogs">الكتالوجات</a></div></div></div><div class="container section"><h2 class="section-title">${sliderTitle}</h2><div id="homeSliderContainer"></div></div>`;
                 buildHomeSlider();
             } else if (currentPage === 'store') {
                 main.innerHTML =
@@ -2884,6 +2925,7 @@
             updateFooterData();
             renderNavLinks();
             bindHeroButtons();
+            updatePageTitle();
         }
 
         // ================================================================
@@ -2959,6 +3001,61 @@
             updatePopup();
         }
 
+        // Incremental refresh used for the live listener: only rebuilds the
+        // parts of the page whose underlying data actually changed, so a
+        // rating/view/chat update elsewhere in the database no longer resets
+        // the slider position, scroll position, or an open lightbox for
+        // every visitor currently on the site.
+        function refreshSmart(newData) {
+            const oldData = currentData || {};
+            currentData = newData || {};
+
+            // Cheap & idempotent — safe to run on every tick, no visual reset if unchanged.
+            updateMaintenanceMode();
+            updatePopup();
+
+            if (JSON.stringify(oldData.partners) !== JSON.stringify(currentData.partners)) {
+                renderPartnersMarquee();
+            }
+
+            const footerKeys = ['whatsapp_num', 'site_name', 'location_url', 'insta_url', 'tiktok_url', 'snap_url', 'work_schedule', 'footer_text'];
+            const footerChanged = footerKeys.some(k => JSON.stringify(oldData[k]) !== JSON.stringify(currentData[k]));
+            if (footerChanged) {
+                updateFooterData();
+                updatePageTitle();
+            }
+
+            if (currentPage === 'home') {
+                const sliderChanged = JSON.stringify(oldData.home_slider) !== JSON.stringify(currentData.home_slider);
+                const noSlider = !currentData.home_slider || !currentData.home_slider.enabled;
+                const albumsChanged = JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums);
+                if (sliderChanged || (noSlider && albumsChanged)) {
+                    buildHomeSlider();
+                }
+            } else if (currentPage === 'store') {
+                if (JSON.stringify(oldData.store_categories) !== JSON.stringify(currentData.store_categories)) {
+                    buildAllProductsGrid();
+                }
+            } else if (currentPage === 'works') {
+                if (JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums)) {
+                    buildWorksGrid();
+                }
+            } else if (currentPage === 'catalogs') {
+                if (JSON.stringify(oldData.catalogs) !== JSON.stringify(currentData.catalogs)) {
+                    buildCatalogsPageGrid();
+                }
+            }
+
+            // Keep an open lightbox's rating/views live without closing it.
+            if (currentAlbumId && currentData.albums) {
+                const oldAlbum = oldData.albums ? oldData.albums[currentAlbumId] : null;
+                const newAlbum = currentData.albums[currentAlbumId];
+                if (newAlbum && JSON.stringify(oldAlbum) !== JSON.stringify(newAlbum)) {
+                    updateRatingUI(currentAlbumId);
+                }
+            }
+        }
+
         // ================================================================
         // INIT SPLASH
         // ================================================================
@@ -3004,6 +3101,11 @@
             if (forceHideTimer) clearTimeout(forceHideTimer);
         }
 
+        // Initialize the active page from the URL hash (deep link support)
+        // before the first render, so a shared link like #store or
+        // #works/albumId opens directly to the right place.
+        currentPage = getHashParts().page;
+
         const maxWaitTime = 5000;
         forceHideTimer = setTimeout(() => {
             console.warn('⚠️ Firebase timeout, forcing splash hide');
@@ -3018,6 +3120,11 @@
             initSplash();
             refreshAll();
             initChatSystem();
+            if (!location.hash) {
+                history.replaceState(null, '', '#home');
+            }
+            const initialAlbumId = getHashParts().albumId;
+            if (initialAlbumId) tryOpenAlbumFromHash(initialAlbumId);
         }).catch(err => {
             console.error('❌ Firebase read error:', err);
             clearTimeout(forceHideTimer);
@@ -3029,8 +3136,7 @@
         });
 
         db.ref(DB_PATH).on('value', snap => {
-            if (snap.exists()) { currentData = snap.val();
-                refreshAll(); }
+            if (snap.exists()) { refreshSmart(snap.val()); }
         });
 
         // ================================================================
