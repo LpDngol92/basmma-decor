@@ -70,6 +70,10 @@
         .btn-group button { flex: 1; min-width: 120px; }
         .splash-info-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 12px; margin: 10px 0; }
         .splash-info-box p { margin: 4px 0; font-size: 0.9rem; }
+        #dynamicDropdownsContainer.is-refreshing { opacity: 0.55; pointer-events: none; transition: opacity .15s ease; }
+        #dynamicDropdownsContainer { transition: opacity .15s ease; }
+        .refresh-indicator { position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-40px); background: #333; color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; z-index: 9998; transition: transform .2s ease; }
+        .refresh-indicator.show { transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -93,6 +97,7 @@
 </div>
 
 <div id="toastMsg" class="toast"></div>
+<div id="refreshIndicator" class="refresh-indicator">⏳ جاري التحديث...</div>
 <div id="lightbox" class="lightbox" onclick="closeLightbox()">
     <span class="close">&times;</span>
     <img id="lightboxImg" src="">
@@ -115,12 +120,38 @@
 
     let currentData = {};
 
+    // ===== حالة القوائم المنسدلة (أي قسم/ألبوم مفتوح حالياً) =====
+    // هذا يحل مشكلة إغلاق القوائم عند كل تحديث/حذف
+    let openState = { masters: new Set(), nesteds: new Set() };
+
+    function restoreOpenState() {
+        openState.masters.forEach(id => {
+            const el = document.getElementById(`content-${id}`);
+            if (el) el.style.display = 'block';
+        });
+        openState.nesteds.forEach(id => {
+            const el = document.getElementById(`nested-${id}`);
+            if (el) el.style.display = 'block';
+        });
+    }
+
     function showToast(msg, isError = false) {
         const toast = document.getElementById('toastMsg');
         toast.innerText = msg;
         toast.style.backgroundColor = isError ? '#dc3545' : '#28a745';
         toast.style.display = 'block';
         setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    let refreshIndicatorTimeout = null;
+    function showRefreshIndicator() {
+        const el = document.getElementById('refreshIndicator');
+        clearTimeout(refreshIndicatorTimeout);
+        el.classList.add('show');
+    }
+    function hideRefreshIndicator() {
+        const el = document.getElementById('refreshIndicator');
+        refreshIndicatorTimeout = setTimeout(() => el.classList.remove('show'), 250);
     }
 
     function openLightbox(url) { document.getElementById('lightboxImg').src = url; document.getElementById('lightbox').style.display = 'flex'; }
@@ -134,12 +165,27 @@
     window.doLogout = function() { auth.signOut().then(() => location.reload()); };
     auth.onAuthStateChanged(user => { if(user) { document.getElementById('loginScreen').style.display = 'none'; document.getElementById('adminPanel').style.display = 'block'; loadData(); } });
 
-    function loadData() {
+    // ===== تحديث البيانات بالخلفية بدون إغلاق القوائم المفتوحة أو تحريك الصفحة =====
+    function loadData(silent) {
+        const scrollPos = window.scrollY;
+        const container = document.getElementById('dynamicDropdownsContainer');
+        if (silent && container) container.classList.add('is-refreshing');
+        showRefreshIndicator();
+
         db.ref(DB_PATH).once('value', (snap) => {
             currentData = snap.val() || {};
             renderStats();
             renderDashboard();
-        }).catch(err => showToast('خطأ: ' + err.message, true));
+            restoreOpenState();
+            if (container) container.classList.remove('is-refreshing');
+            hideRefreshIndicator();
+            // نحافظ على مكان تمرير المستخدم بدل ما ترجع الصفحة لفوق
+            window.scrollTo(0, scrollPos);
+        }).catch(err => {
+            if (container) container.classList.remove('is-refreshing');
+            hideRefreshIndicator();
+            showToast('خطأ: ' + err.message, true);
+        });
     }
 
     function renderStats() {
@@ -178,8 +224,19 @@
         document.getElementById('dynamicDropdownsContainer').innerHTML = html;
         sections.forEach(sec => sec.render());
     }
-    window.toggleMaster = function(id) { const el = document.getElementById(`content-${id}`); el.style.display = el.style.display === 'block' ? 'none' : 'block'; };
-    window.toggleNested = function(id) { const el = document.getElementById(`nested-${id}`); if(el) el.style.display = el.style.display === 'block' ? 'none' : 'block'; };
+    window.toggleMaster = function(id) {
+        const el = document.getElementById(`content-${id}`);
+        const willOpen = el.style.display !== 'block';
+        el.style.display = willOpen ? 'block' : 'none';
+        if (willOpen) openState.masters.add(id); else openState.masters.delete(id);
+    };
+    window.toggleNested = function(id) {
+        const el = document.getElementById(`nested-${id}`);
+        if (!el) return;
+        const willOpen = el.style.display !== 'block';
+        el.style.display = willOpen ? 'block' : 'none';
+        if (willOpen) openState.nesteds.add(id); else openState.nesteds.delete(id);
+    };
 
     // ========== 1. الإعدادات العامة ==========
     function renderGeneral() {
@@ -232,7 +289,7 @@
         const url = document.getElementById('newSliderImage').value.trim();
         if(!url) { showToast('أدخل رابط الصورة', true); return; }
         const images = [...(currentData.home_slider?.images || []), { url }];
-        db.ref(`${DB_PATH}/home_slider/images`).set(images).then(() => loadData());
+        db.ref(`${DB_PATH}/home_slider/images`).set(images).then(() => loadData(true));
         document.getElementById('newSliderImage').value = '';
     };
     window.addBulkSliderImages = function() {
@@ -247,13 +304,13 @@
         if(newImages.length === 0) { showToast('لا توجد روابط صالحة', true); return; }
         const current = currentData.home_slider?.images || [];
         const all = [...current, ...newImages];
-        db.ref(`${DB_PATH}/home_slider/images`).set(all).then(() => { loadData(); showToast(`تم إضافة ${newImages.length} صورة`); });
+        db.ref(`${DB_PATH}/home_slider/images`).set(all).then(() => { loadData(true); showToast(`تم إضافة ${newImages.length} صورة`); });
         document.getElementById('bulkSliderImages').value = '';
     };
     window.removeSliderImage = function(idx) {
         const images = [...(currentData.home_slider?.images || [])];
         images.splice(idx, 1);
-        db.ref(`${DB_PATH}/home_slider/images`).set(images).then(() => loadData());
+        db.ref(`${DB_PATH}/home_slider/images`).set(images).then(() => loadData(true));
     };
     window.saveSlider = function() {
         db.ref(`${DB_PATH}/home_slider`).set({
@@ -355,7 +412,7 @@
         
         db.ref().update(updates).then(() => {
             showToast(`✅ تم مسح جميع صور وفيديوهات البداية (${total} عنصر)`);
-            loadData();
+            loadData(true);
         }).catch(err => showToast('خطأ: ' + err.message, true));
     };
 
@@ -366,7 +423,7 @@
         const items = currentData.splash_items || [];
         const isVideo = /\.(mp4|webm|mov|ogg|mkv)$/i.test(url);
         items.push({ url, type: isVideo ? 'video' : 'image' });
-        db.ref(`${DB_PATH}/splash_items`).set(items).then(() => loadData());
+        db.ref(`${DB_PATH}/splash_items`).set(items).then(() => loadData(true));
         document.getElementById('newSplashItem').value = '';
     };
     window.addBulkSplashItems = function() {
@@ -384,13 +441,13 @@
         if(newItems.length === 0) { showToast('لا توجد روابط صالحة', true); return; }
         const current = currentData.splash_items || [];
         const all = [...current, ...newItems];
-        db.ref(`${DB_PATH}/splash_items`).set(all).then(() => { loadData(); showToast(`تم إضافة ${newItems.length} عنصر`); });
+        db.ref(`${DB_PATH}/splash_items`).set(all).then(() => { loadData(true); showToast(`تم إضافة ${newItems.length} عنصر`); });
         document.getElementById('bulkSplashItems').value = '';
     };
     window.removeSplashItem = function(idx) {
         const items = currentData.splash_items || [];
         items.splice(idx, 1);
-        db.ref(`${DB_PATH}/splash_items`).set(items).then(() => loadData());
+        db.ref(`${DB_PATH}/splash_items`).set(items).then(() => loadData(true));
     };
 
     // ===== دوال splash_media_url =====
@@ -399,14 +456,14 @@
         if(!url) { showToast('أدخل رابط الصورة', true); return; }
         db.ref(`${DB_PATH}/splash_media_url`).set(url).then(() => {
             showToast('✅ تم حفظ الصورة المفردة');
-            loadData();
+            loadData(true);
         });
     };
     window.clearSplashMedia = function() {
         if(!confirm('⚠️ هل أنت متأكد من حذف الصورة المفردة؟')) return;
         db.ref(`${DB_PATH}/splash_media_url`).set(null).then(() => {
             showToast('✅ تم حذف الصورة المفردة');
-            loadData();
+            loadData(true);
         });
     };
 
@@ -416,13 +473,13 @@
         if(!url) { showToast('أدخل رابط الفيديو', true); return; }
         const videos = currentData.splash_stories_videos || [];
         videos.push(url);
-        db.ref(`${DB_PATH}/splash_stories_videos`).set(videos).then(() => loadData());
+        db.ref(`${DB_PATH}/splash_stories_videos`).set(videos).then(() => loadData(true));
         document.getElementById('newSplashVideo').value = '';
     };
     window.removeSplashVideo = function(idx) {
         const videos = currentData.splash_stories_videos || [];
         videos.splice(idx, 1);
-        db.ref(`${DB_PATH}/splash_stories_videos`).set(videos).then(() => loadData());
+        db.ref(`${DB_PATH}/splash_stories_videos`).set(videos).then(() => loadData(true));
     };
 
     window.saveSplash = function() {
@@ -475,10 +532,10 @@
             }
         });
     }
-    window.addAlbum = function() { const name = document.getElementById('newAlbumName').value.trim(); if(!name) return; db.ref(`${DB_PATH}/albums/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData()); document.getElementById('newAlbumName').value = ''; };
+    window.addAlbum = function() { const name = document.getElementById('newAlbumName').value.trim(); if(!name) return; db.ref(`${DB_PATH}/albums/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData(true)); document.getElementById('newAlbumName').value = ''; };
     window.updateAlbumName = function(id) { db.ref(`${DB_PATH}/albums/${id}/name`).set(document.getElementById(`albumName_${id}`).value).then(() => showToast('تم التحديث')); };
-    window.deleteAlbum = function(id) { if(confirm('حذف الألبوم؟')) db.ref(`${DB_PATH}/albums/${id}`).remove().then(() => loadData()); };
-    window.addImageToAlbum = function(albumId) { const url = document.getElementById(`albumImgUrl_${albumId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/albums/${albumId}/imgs`).push({ url }).then(() => loadData()); document.getElementById(`albumImgUrl_${albumId}`).value = ''; };
+    window.deleteAlbum = function(id) { if(confirm('حذف الألبوم؟')) db.ref(`${DB_PATH}/albums/${id}`).remove().then(() => loadData(true)); };
+    window.addImageToAlbum = function(albumId) { const url = document.getElementById(`albumImgUrl_${albumId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/albums/${albumId}/imgs`).push({ url }).then(() => loadData(true)); document.getElementById(`albumImgUrl_${albumId}`).value = ''; };
     window.addBulkImagesToAlbum = function(albumId) {
         const text = document.getElementById(`bulkAlbumImgs_${albumId}`).value;
         if(!text.trim()) { showToast('أدخل روابط الصور', true); return; }
@@ -494,10 +551,10 @@
             }
         }
         if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
-        db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} صورة`); });
+        db.ref().update(updates).then(() => { loadData(true); showToast(`تمت إضافة ${count} صورة`); });
         document.getElementById(`bulkAlbumImgs_${albumId}`).value = '';
     };
-    window.deleteImageFromAlbum = function(albumId, imgId) { db.ref(`${DB_PATH}/albums/${albumId}/imgs/${imgId}`).remove().then(() => loadData()); };
+    window.deleteImageFromAlbum = function(albumId, imgId) { db.ref(`${DB_PATH}/albums/${albumId}/imgs/${imgId}`).remove().then(() => loadData(true)); };
 
     // ========== 5. المتجر (قوائم منسدلة لكل قسم) ==========
     function renderStore() {
@@ -541,10 +598,10 @@
             }
         });
     }
-    window.addStoreCat = function() { const name = document.getElementById('newCatName').value.trim(); if(!name) return; db.ref(`${DB_PATH}/store_categories/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData()); document.getElementById('newCatName').value = ''; };
+    window.addStoreCat = function() { const name = document.getElementById('newCatName').value.trim(); if(!name) return; db.ref(`${DB_PATH}/store_categories/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData(true)); document.getElementById('newCatName').value = ''; };
     window.updateStoreCat = function(id) { db.ref(`${DB_PATH}/store_categories/${id}/name`).set(document.getElementById(`catName_${id}`).value).then(() => showToast('تم التحديث')); };
-    window.deleteStoreCat = function(id) { if(confirm('حذف القسم؟')) db.ref(`${DB_PATH}/store_categories/${id}`).remove().then(() => loadData()); };
-    window.addStoreProduct = function(catId) { const url = document.getElementById(`catImgUrl_${catId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/store_categories/${catId}/imgs`).push({ url }).then(() => loadData()); document.getElementById(`catImgUrl_${catId}`).value = ''; };
+    window.deleteStoreCat = function(id) { if(confirm('حذف القسم؟')) db.ref(`${DB_PATH}/store_categories/${id}`).remove().then(() => loadData(true)); };
+    window.addStoreProduct = function(catId) { const url = document.getElementById(`catImgUrl_${catId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/store_categories/${catId}/imgs`).push({ url }).then(() => loadData(true)); document.getElementById(`catImgUrl_${catId}`).value = ''; };
     window.addBulkStoreProducts = function(catId) {
         const text = document.getElementById(`bulkStoreImgs_${catId}`).value;
         if(!text.trim()) { showToast('أدخل روابط المنتجات', true); return; }
@@ -560,10 +617,10 @@
             }
         }
         if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
-        db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} منتج`); });
+        db.ref().update(updates).then(() => { loadData(true); showToast(`تمت إضافة ${count} منتج`); });
         document.getElementById(`bulkStoreImgs_${catId}`).value = '';
     };
-    window.deleteStoreProduct = function(catId, imgId) { db.ref(`${DB_PATH}/store_categories/${catId}/imgs/${imgId}`).remove().then(() => loadData()); };
+    window.deleteStoreProduct = function(catId, imgId) { db.ref(`${DB_PATH}/store_categories/${catId}/imgs/${imgId}`).remove().then(() => loadData(true)); };
 
     // ========== 6. الروابط الاجتماعية ==========
     function renderSocialLinks() {
@@ -618,13 +675,13 @@
         if(newLinks.length === 0) { showToast('لم يتم العثور على روابط صالحة', true); return; }
         const current = currentData.social_links || [];
         const all = [...current, ...newLinks];
-        db.ref(`${DB_PATH}/social_links`).set(all).then(() => loadData());
+        db.ref(`${DB_PATH}/social_links`).set(all).then(() => loadData(true));
         document.getElementById('bulkExtraLinks').value = '';
     };
     window.removeExtraLink = function(idx) {
         const current = currentData.social_links || [];
         current.splice(idx, 1);
-        db.ref(`${DB_PATH}/social_links`).set(current).then(() => loadData());
+        db.ref(`${DB_PATH}/social_links`).set(current).then(() => loadData(true));
     };
     window.saveAllSocial = function() {
         const newLinks = [];
@@ -640,7 +697,7 @@
             snap_url: document.getElementById('snapUrl').value,
             social_links: newLinks
         };
-        db.ref(DB_PATH).update(updates).then(() => { showToast('تم حفظ جميع الروابط'); loadData(); });
+        db.ref(DB_PATH).update(updates).then(() => { showToast('تم حفظ جميع الروابط'); loadData(true); });
     };
 
     // ========== 7. الشركاء ==========
@@ -686,19 +743,19 @@
             count++;
         }
         if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
-        db.ref().update(updates).then(() => { loadData(); showToast(`تمت إضافة ${count} شريك`); });
+        db.ref().update(updates).then(() => { loadData(true); showToast(`تمت إضافة ${count} شريك`); });
         document.getElementById('bulkPartners').value = '';
     };
     window.addPartner = function() {
         const url = document.getElementById('newPartnerUrl').value.trim();
         if(!url) { showToast('أدخل رابط الصورة', true); return; }
         const link = document.getElementById('newPartnerLink').value.trim();
-        db.ref(`${DB_PATH}/partners/${Date.now()}`).set({ url, link: link || null }).then(() => loadData());
+        db.ref(`${DB_PATH}/partners/${Date.now()}`).set({ url, link: link || null }).then(() => loadData(true));
         document.getElementById('newPartnerUrl').value = '';
         document.getElementById('newPartnerLink').value = '';
     };
-    window.deletePartner = function(id) { if(confirm('حذف الشريك؟')) db.ref(`${DB_PATH}/partners/${id}`).remove().then(() => loadData()); };
-    window.saveAllPartners = function() { loadData(); showToast('تم الحفظ'); };
+    window.deletePartner = function(id) { if(confirm('حذف الشريك؟')) db.ref(`${DB_PATH}/partners/${id}`).remove().then(() => loadData(true)); };
+    window.saveAllPartners = function() { loadData(true); showToast('تم الحفظ'); };
 
     // ========== 8. الكتالوجات ==========
     function renderCatalogs() {
@@ -723,10 +780,10 @@
             </div>
         `;
     }
-    window.addCatalog = function() { const n=document.getElementById('newCatalogName').value; const c=document.getElementById('newCatalogCode').value; if(!n) return; db.ref(`${DB_PATH}/catalogs/${Date.now()}`).set({name:n, code:c}).then(()=>loadData()); };
+    window.addCatalog = function() { const n=document.getElementById('newCatalogName').value; const c=document.getElementById('newCatalogCode').value; if(!n) return; db.ref(`${DB_PATH}/catalogs/${Date.now()}`).set({name:n, code:c}).then(()=>loadData(true)); };
     window.updateCatalogName = function(id) { db.ref(`${DB_PATH}/catalogs/${id}/name`).set(document.getElementById(`catalogName_${id}`).value).then(()=>showToast('تم التحديث')); };
     window.updateCatalogCode = function(id) { db.ref(`${DB_PATH}/catalogs/${id}/code`).set(document.getElementById(`catalogCode_${id}`).value).then(()=>showToast('تم التحديث')); };
-    window.deleteCatalog = function(id) { if(confirm('حذف الكتالوج؟')) db.ref(`${DB_PATH}/catalogs/${id}`).remove().then(()=>loadData()); };
+    window.deleteCatalog = function(id) { if(confirm('حذف الكتالوج؟')) db.ref(`${DB_PATH}/catalogs/${id}`).remove().then(()=>loadData(true)); };
 
     // ========== 9. أوقات العمل ==========
     function renderSchedule() {
