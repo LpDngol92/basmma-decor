@@ -432,22 +432,33 @@
                     <div style="width:80px;height:80px;margin:0 auto 12px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.6rem;font-weight:800;overflow:hidden;border:2px solid var(--primary)">${logo ? `<img src="${logo}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : 'ب'}</div>
                     <b>الشعار الحالي</b><br><small style="color:#7a756f">${logo ? 'صورة مخصصة' : 'حرف ب الافتراضي'}</small>
                 </div>
+                <label><b>🏷️ اسم الموقع (بجانب الشعار)</b></label>
+                <input id="siteNameBrand" placeholder="بصمه غير" value="${(d.site_name||'بصمه غير').replace(/"/g,'&quot;')}">
+                <small style="color:#7a756f">هذا هو نفس اسم الموقع الذي يظهر في الهيدر والفوتر</small>
+                <label><b>✍️ العبارة تحت اسم الموقع</b></label>
+                <input id="siteSubtitleInput" placeholder="ATELIER LUXE • JEDDAH" value="${(d.site_subtitle||'ATELIER LUXE • JEDDAH').replace(/"/g,'&quot;')}">
+                <small style="color:#7a756f">تظهر بخط صغير ذهبي تحت الاسم - مثال: للديكور الفاخر • جدة</small>
                 <label><b>🖼️ رابط صورة الشعار (بدل حرف ب)</b></label>
                 <input id="siteLogoUrl" placeholder="https://example.com/logo.png" value="${logo.replace(/"/g,'&quot;')}">
-                <small style="color:#7a756f">ارفع شعارك على أي موقع رفع صور وانسخ الرابط هنا — يظهر فوراً بجانب اسم الموقع بأبعاد 46×46 دائرية فاخرة</small>
-                <div class="flex-row"><button onclick="saveBranding()">💾 حفظ الشعار</button><button class="btn-red" onclick="clearLogo()">🗑️ إزالة والعودة لحرف ب</button></div>
+                <small style="color:#7a756f">ارفع شعارك وانسخ الرابط هنا — يظهر فوراً بجانب الاسم بأبعاد 46×46</small>
+                <div class="flex-row"><button onclick="saveBranding()">💾 حفظ الشعار والاسم</button><button class="btn-red" onclick="clearLogo()">🗑️ إزالة الصورة والعودة لحرف ب</button></div>
                 <hr>
-                <label><b>📍 نص الموقع في الشريط العلوي</b></label>
+                <label><b>📍 نص الموقع في الشريط العلوي (يسار)</b></label>
                 <input id="topbarLocationText" placeholder="جدة - المملكة العربية السعودية" value="${(d.topbar_location_text||'جدة - المملكة العربية السعودية').replace(/"/g,'&quot;')}">
-                <button onclick="saveBranding()">💾 حفظ</button>
+                <label><b>🔖 نص الشارة الذهبية يمين الشريط العلوي</b></label>
+                <input id="topbarBadgeText" placeholder="ديكور خشب - تنفيذ فاخر" value="${(d.topbar_badge_text||'ديكور خشب - تنفيذ فاخر').replace(/"/g,'&quot;')}">
+                <button onclick="saveBranding()">💾 حفظ الشريط العلوي</button>
             </div>
         `;
     }
     window.saveBranding = function(){
         db.ref(DB_PATH).update({
+            site_name: document.getElementById('siteNameBrand').value.trim(),
+            site_subtitle: document.getElementById('siteSubtitleInput').value.trim(),
             site_logo_url: document.getElementById('siteLogoUrl').value.trim(),
-            topbar_location_text: document.getElementById('topbarLocationText').value
-        }).then(()=>{showToast('✅ تم حفظ الشعار'); loadData(true);});
+            topbar_location_text: document.getElementById('topbarLocationText').value.trim(),
+            topbar_badge_text: document.getElementById('topbarBadgeText').value.trim()
+        }).then(()=>{showToast('✅ تم حفظ الهوية'); loadData(true);});
     };
     window.clearLogo = function(){
         document.getElementById('siteLogoUrl').value='';
