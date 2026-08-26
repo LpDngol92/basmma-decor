@@ -56,6 +56,8 @@
         .header-inner{max-width:1280px;margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;align-items:center;gap:16px}
         .logo{display:flex;align-items:center;gap:12px;cursor:pointer}
         .logo-mark{width:46px;height:46px;border-radius:13px;background:linear-gradient(145deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.15rem;box-shadow:var(--shadow-gold);position:relative;overflow:hidden}
+        .logo-mark img{width:100%;height:100%;object-fit:cover;border-radius:13px}
+        .logo-mark.has-img{background:#fff;padding:0;overflow:hidden}
         .logo-mark::after{content:'';position:absolute;inset:0;background:linear-gradient(120deg,transparent 30%,rgba(255,255,255,0.22),transparent 70%);transform:translateX(-100%);animation:shine 4s infinite}
         @keyframes shine{0%{transform:translateX(-100%)}60%,100%{transform:translateX(100%)}}
         .logo-text h1{font-size:1.32rem;font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,#1a1a1a 20%,var(--primary-dark) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
@@ -1306,7 +1308,8 @@
             autoDuration = 5000;
 
         function buildHomeSlider() {
-            const container = document.getElementById('homeSliderContainer');
+            let container = document.getElementById('homeSliderContainer');
+            if(!container) container = document.getElementById('homeSliderInner');
             if (!container) return;
             const sliderData = currentData.home_slider;
             if (!sliderData || !sliderData.enabled || !sliderData.images || sliderData.images.length === 0) {
@@ -1547,6 +1550,22 @@
             const d = currentData;
             currentWhatsappNum = d.whatsapp_num || '966500000000';
             document.getElementById('siteTitle').innerText = d.site_name || 'بصمه غير';
+            // Logo image handling
+            const logoMark = document.querySelector('.logo-mark');
+            if(logoMark){
+                if(d.site_logo_url && d.site_logo_url.trim()!==''){
+                    logoMark.classList.add('has-img');
+                    logoMark.innerHTML = `<img src="${d.site_logo_url}" alt="${(d.site_name||'بصمه غير').replace(/"/g,'&quot;')}" onerror="this.parentElement.innerHTML='ب';this.parentElement.classList.remove('has-img')">`;
+                } else {
+                    logoMark.classList.remove('has-img');
+                    logoMark.innerHTML = 'ب';
+                }
+            }
+            const topLoc = document.getElementById('topbarLocation');
+            if(topLoc){
+                if(d.location_url) topLoc.href = d.location_url;
+                if(d.topbar_location_text) topLoc.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${d.topbar_location_text}`;
+            }
             document.getElementById('footerPhone').innerHTML =
                 `<a href="tel:0541780995" style="color:inherit;">0541780995</a>`;
             document.getElementById('footerWhatsapp').innerHTML =
@@ -1690,13 +1709,50 @@
             const main = document.getElementById('mainContent');
             if (!main) return;
             if (currentPage === 'home') {
-                const sliderTitle = (currentData.home_slider && currentData.home_slider.title) ? currentData.home_slider
-                    .title : 'أحدث أعمالنا';
+                const d = currentData;
+                const badge = d.hero_badge || 'متاحون الآن • رد فوري على واتساب';
+                const hTitle1 = d.hero_title1 || 'نصنع';
+                const hHighlight = d.hero_title_highlight || 'بصمة';
+                const hTitle2 = d.hero_title2 || 'لا تُنسى';
+                const hSuffix = d.hero_title_suffix || 'لمساحتك التجارية';
+                const hDesc = d.hero_desc || 'ديكورات خشب فاخرة، دواليب عرض، أرفف، كاونترات استقبال ومكتبات تلفزيون — تصميم وتنفيذ بإتقان يليق بعلامتك.';
+                const btn1T = d.hero_btn1_text || 'تسوق الآن';
+                const btn1P = d.hero_btn1_page || 'store';
+                const btn2T = d.hero_btn2_text || 'شاهد أعمالنا';
+                const btn2P = d.hero_btn2_page || 'works';
+                const btn3T = d.hero_btn3_text || 'الكتالوجات';
+                const btn3P = d.hero_btn3_page || 'catalogs';
+                const s1V = d.hero_stat1_value || '+500';
+                const s1L = d.hero_stat1_label || 'مشروع منجز';
+                const s1I = d.hero_stat1_icon || 'fas fa-award';
+                const s2V = (d.google_rating ? parseFloat(d.google_rating).toFixed(1) : (d.hero_stat2_value || '4.9')) + (d.google_rating ? '' : '/5');
+                const s2L = d.google_rating ? ('(' + (d.google_count||'--') + ') تقييم قوقل') : (d.hero_stat2_label || 'رضا العملاء');
+                const s2I = d.hero_stat2_icon || 'fas fa-star';
+                const s2Link = d.google_url || '';
+                const s3V = d.hero_stat3_value || '24h';
+                const s3L = d.hero_stat3_label || 'رد سريع';
+                const s3I = d.hero_stat3_icon || 'fas fa-clock';
+                const f1I = d.feature1_icon || 'fas fa-pencil-ruler';
+                const f1T = d.feature1_title || 'تصميم 3D مجاني';
+                const f1D = d.feature1_desc || 'معاينة واقعية قبل التنفيذ';
+                const f2I = d.feature2_icon || 'fas fa-hammer';
+                const f2T = d.feature2_title || 'تنفيذ متقن';
+                const f2D = d.feature2_desc || 'نجارون محترفون بدقة مليمترية';
+                const f3I = d.feature3_icon || 'fas fa-truck';
+                const f3T = d.feature3_title || 'نخدمكم في جميع مناطق المملكة';
+                const f3D = d.feature3_desc || 'توصيل وتركيب احترافي';
+                const f4I = d.feature4_icon || 'fas fa-shield-alt';
+                const f4T = d.feature4_title || 'ضمان سنة';
+                const f4D = d.feature4_desc || 'صيانة ومتابعة ما بعد التسليم';
+                const sliderTitle = (d.home_slider && d.home_slider.title) ? d.home_slider.title : (d.hero_slider_title || 'أحدث أعمالنا');
+                const sliderSub = d.hero_slider_sub || 'مختارات فاخرة من تنفيذنا — اسحب للتصفح أو اضغط للتكبير وطلب عرض سعر فوري عبر واتساب';
                 main.innerHTML =
-                    `<div class="hero"><div class="container"><div class="hero-lux"><div class="hero-copy"><div class="hero-badge"><span></span> متاحون الآن • رد فوري على واتساب</div><h1>نصنع <em>بصمة</em> <u>لا تُنسى</u><br>لمساحتك التجارية</h1><p>ديكورات خشب فاخرة، دواليب عرض، أرفف، كاونترات استقبال ومكتبات تلفزيون — تصميم وتنفيذ بإتقان يليق بعلامتك.</p><div class="btn-group"><a class="btn btn-primary" href="#store" data-page="store"><i class="fas fa-store"></i> تسوق الآن</a><a class="btn btn-outline" href="#works" data-page="works"><i class="fas fa-images"></i> شاهد أعمالنا</a><a class="btn btn-ghost" href="#catalogs" data-page="catalogs"><i class="fas fa-book-open"></i> الكتالوجات</a></div><div class="hero-stats"><div class="hero-stat"><i class="fas fa-award" style="color:var(--primary)"></i><div><b>+500</b><br><span>مشروع منجز</span></div></div><div class="hero-stat"><i class="fas fa-star" style="color:#ffb400"></i><div><b>4.9/5</b><br><span>رضا العملاء</span></div></div><div class="hero-stat"><i class="fas fa-clock" style="color:var(--primary)"></i><div><b>24h</b><br><span>رد سريع</span></div></div></div></div><div class="hero-visual"><div class="hero-frame"><div class="hero-frame-inner"><img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?w=800&q=80" alt="ديكور فاخر" id="heroFallbackImg"></div></div><div class="hero-floating top"><i class="fas fa-couch"></i><div><b>تشطيب فاخر</b><small>خشب طبيعي + MDF عالي</small></div></div><div class="hero-floating bottom"><i class="fas fa-ruler-combined"></i><div><b>مقاسات حسب الطلب</b><small>تصميم 3D مجاني</small></div></div></div></div></div></div>
-                <div style="background:var(--cream);border-top:1px solid var(--border);border-bottom:1px solid var(--border)"><div class="container"><div class="feature-strip"><div class="feature-item"><i class="fas fa-pencil-ruler"></i><b>تصميم 3D مجاني</b><small>معاينة واقعية قبل التنفيذ</small></div><div class="feature-item"><i class="fas fa-hammer"></i><b>تنفيذ متقن</b><small>نجارون محترفون بدقة مليمترية</small></div><div class="feature-item"><i class="fas fa-truck"></i><b>توصيل وتركيب</b><small>جدة ومكة والرياض</small></div><div class="feature-item"><i class="fas fa-shield-alt"></i><b>ضمان سنة</b><small>صيانة ومتابعة ما بعد التسليم</small></div></div></div></div>
-                <div class="container section"><div style="text-align:center;max-width:720px;margin:0 auto 18px"><div class="eyebrow"><i class="fas fa-sparkles"></i> أحدث الأعمال</div><h2 class="section-title" style="margin-bottom:10px">${sliderTitle}</h2><p class="section-sub" style="margin-bottom:22px">مختارات فاخرة من تنفيذنا — اسحب للتصفح أو اضغط للتكبير وطلب عرض سعر فوري عبر واتساب</p></div><div id="homeSliderContainer"></div></div>`;
-                buildHomeSlider();
+                    `<div class="hero"><div class="container"><div class="hero-lux"><div class="hero-copy"><div class="hero-badge"><span></span> ${badge}</div><h1>${hTitle1} <em>${hHighlight}</em> <u>${hTitle2}</u><br>${hSuffix}</h1><p>${hDesc}</p><div class="btn-group"><a class="btn btn-primary" href="#${btn1P}" data-page="${btn1P}"><i class="fas fa-store"></i> ${btn1T}</a><a class="btn btn-outline" href="#${btn2P}" data-page="${btn2P}"><i class="fas fa-images"></i> ${btn2T}</a><a class="btn btn-ghost" href="#${btn3P}" data-page="${btn3P}"><i class="fas fa-book-open"></i> ${btn3T}</a></div><div class="hero-stats"><div class="hero-stat"><i class="${s1I}" style="color:var(--primary)"></i><div><b>${s1V}</b><br><span>${s1L}</span></div></div>${s2Link ? `<a href="${s2Link}" target="_blank" class="hero-stat" style="text-decoration:none">` : `<div class="hero-stat">`}<i class="${s2I}" style="color:#ffb400"></i><div><b>${s2V}</b><br><span>${s2L}</span></div>${s2Link ? `</a>` : `</div>`}<div class="hero-stat"><i class="${s3I}" style="color:var(--primary)"></i><div><b>${s3V}</b><br><span>${s3L}</span></div></div></div></div><div class="hero-visual"><div id="homeSliderContainer" style="width:100%;max-width:440px"></div></div></div></div></div>
+                <div style="background:var(--cream);border-top:1px solid var(--border);border-bottom:1px solid var(--border)"><div class="container"><div class="feature-strip"><div class="feature-item"><i class="${f1I}"></i><b>${f1T}</b><small>${f1D}</small></div><div class="feature-item"><i class="${f2I}"></i><b>${f2T}</b><small>${f2D}</small></div><div class="feature-item"><i class="${f3I}"></i><b>${f3T}</b><small>${f3D}</small></div><div class="feature-item"><i class="${f4I}"></i><b>${f4T}</b><small>${f4D}</small></div></div></div></div>
+                <div class="container section"><div style="text-align:center;max-width:720px;margin:0 auto 18px"><div class="eyebrow"><i class="fas fa-sparkles"></i> ${sliderTitle}</div><h2 class="section-title" style="margin-bottom:10px">${sliderTitle}</h2><p class="section-sub" style="margin-bottom:22px">${sliderSub}</p></div><div id="homeSliderInner" style="display:none"></div></div>`;
+                // نقل محتوى السلايدر للهيرو والباقي للأسفل إذا لزم
+                // نستخدم نفس السلايدر في الهيرو
+buildHomeSlider();
             } else if (currentPage === 'store') {
                 main.innerHTML =
                     `<div class="container section"><div style="text-align:center;max-width:680px;margin:0 auto 10px"><div class="eyebrow"><i class="fas fa-store"></i> المتجر الفاخر</div><h2 class="section-title">جميع المنتجات</h2><p class="section-sub">منتجات جاهزة وتصاميم حسب الطلب — اضغط على أي منتج للتكبير أو اطلبه مباشرة عبر واتساب</p></div><div id="allProductsGrid"></div></div>`;
@@ -1809,14 +1865,17 @@
                 renderPartnersMarquee();
             }
 
-            const footerKeys = ['whatsapp_num', 'site_name', 'location_url', 'insta_url', 'tiktok_url', 'snap_url', 'work_schedule', 'footer_text'];
+            const footerKeys = ['whatsapp_num', 'site_name', 'location_url', 'insta_url', 'tiktok_url', 'snap_url', 'work_schedule', 'footer_text', 'site_logo_url', 'topbar_location_text'];
             const footerChanged = footerKeys.some(k => JSON.stringify(oldData[k]) !== JSON.stringify(currentData[k]));
+            const heroKeys = ['hero_badge','hero_title1','hero_title_highlight','hero_title2','hero_title_suffix','hero_desc','hero_btn1_text','hero_btn1_page','hero_btn2_text','hero_btn2_page','hero_btn3_text','hero_btn3_page','hero_stat1_value','hero_stat1_label','hero_stat2_value','hero_stat2_label','google_rating','google_count','google_url','feature1_title','feature1_desc','feature2_title','feature2_desc','feature3_title','feature3_desc','feature4_title','feature4_desc','hero_slider_title','hero_slider_sub'];
+            const heroChanged = heroKeys.some(k => JSON.stringify(oldData[k]) !== JSON.stringify(currentData[k]));
             if (footerChanged) {
                 updateFooterData();
                 updatePageTitle();
             }
-
-            if (currentPage === 'home') {
+            if (heroChanged && currentPage === 'home') {
+                loadPage();
+            } else if (currentPage === 'home') {
                 const sliderChanged = JSON.stringify(oldData.home_slider) !== JSON.stringify(currentData.home_slider);
                 const noSlider = !currentData.home_slider || !currentData.home_slider.enabled;
                 const albumsChanged = JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums);
