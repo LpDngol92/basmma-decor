@@ -145,6 +145,8 @@
             <div class="sidebar-nav">
                 <div class="nav-label">القائمة الرئيسية</div>
                 <div class="sidebar-link active" onclick="document.getElementById('content-general')?.scrollIntoView({behavior:'smooth',block:'start'}); toggleMaster('general')"><i class="fas fa-cog"></i> الإعدادات العامة</div>
+                <div class="sidebar-link" onclick="toggleMaster('hero');document.getElementById('content-hero')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-palette"></i> واجهة الهيرو</div>
+                <div class="sidebar-link" onclick="toggleMaster('branding');document.getElementById('content-branding')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-crown"></i> الشعار</div>
                 <div class="sidebar-link" onclick="toggleMaster('slider');document.getElementById('content-slider')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-images"></i> السلايدر</div>
                 <div class="sidebar-link" onclick="toggleMaster('splash');document.getElementById('content-splash')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-film"></i> شاشة البداية</div>
                 <div class="sidebar-link" onclick="toggleMaster('albums');document.getElementById('content-albums')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-folder-open"></i> الألبومات</div>
@@ -289,7 +291,9 @@
     function renderDashboard() {
         const sections = [
             { id: 'general', title: '⚙️ الإعدادات العامة', icon: 'fas fa-cog', render: renderGeneral },
-            { id: 'slider', title: '🏠 السلايدر', icon: 'fas fa-images', render: renderSlider },
+            { id: 'hero', title: '🎨 واجهة الهيرو (كل نصوص الصفحة)', icon: 'fas fa-palette', render: renderHero },
+            { id: 'branding', title: '🖼️ الشعار والهوية', icon: 'fas fa-crown', render: renderBranding },
+            { id: 'slider', title: '🏠 السلايدر (داخل الهيرو)', icon: 'fas fa-images', render: renderSlider },
             { id: 'splash', title: '🎬 شاشة البداية', icon: 'fas fa-film', render: renderSplash },
             { id: 'albums', title: '📁 الألبومات (قوائم منسدلة لكل ألبوم)', icon: 'fas fa-folder-open', render: renderAlbums },
             { id: 'store', title: '🛍️ المتجر (قوائم منسدلة لكل قسم)', icon: 'fas fa-store', render: renderStore },
@@ -338,7 +342,119 @@
             </div>
         `;
     }
+
+    // ========== واجهة الهيرو - كل نصوص الصفحة قابلة للتحكم ==========
+    function renderHero() {
+        const d = currentData;
+        document.getElementById('content-hero').innerHTML = `
+            <div class="vertical-group">
+                <div style="background:linear-gradient(135deg,#fff8e1,#fff);border:1px solid #ffe08a;border-radius:12px;padding:12px;margin-bottom:12px">
+                    <b>✦ كل نص تراه في الصفحة الرئيسية أصبح هنا — غيّر أي كلمة وتظهر فوراً</b>
+                    <p style="font-size:.78rem;color:#7a756f;margin-top:6px">السلايدر الآن داخل الهيرو على اليسار بنفس قياس الصورة السابقة</p>
+                </div>
+                <label><b>🏷️ الشارة العلوية (Badge)</b></label>
+                <input id="heroBadge" placeholder="مثال: متاحون الآن • رد فوري" value="${(d.hero_badge||'متاحون الآن • رد فوري على واتساب').replace(/"/g,'&quot;')}">
+                <label><b>📝 عنوان الهيرو</b></label>
+                <div class="flex-row"><input id="heroTitle1" placeholder="سطر 1 - نصنع" value="${(d.hero_title1||'نصنع').replace(/"/g,'&quot;')}" style="flex:1"><input id="heroHighlight" placeholder="كلمة ذهبية - بصمة" value="${(d.hero_title_highlight||'بصمة').replace(/"/g,'&quot;')}" style="flex:1"><input id="heroTitle2" placeholder="سطر 1 تكملة - لا تُنسى" value="${(d.hero_title2||'لا تُنسى').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <input id="heroSuffix" placeholder="سطر 2 - لمساحتك التجارية" value="${(d.hero_title_suffix||'لمساحتك التجارية').replace(/"/g,'&quot;')}">
+                <label><b>📄 وصف الهيرو</b></label>
+                <textarea id="heroDesc" rows="3" placeholder="وصف مختصر تحت العنوان">${(d.hero_desc||'ديكورات خشب فاخرة، دواليب عرض، أرفف، كاونترات استقبال ومكتبات تلفزيون — تصميم وتنفيذ بإتقان يليق بعلامتك.').replace(/"/g,'&quot;')}</textarea>
+                <label><b>🔘 الأزرار الثلاثة (النص + الصفحة)</b></label>
+                <div class="flex-row"><input id="btn1T" placeholder="نص زر1" value="${(d.hero_btn1_text||'تسوق الآن').replace(/"/g,'&quot;')}" style="flex:2"><select id="btn1P" style="flex:1"><option value="store" ${d.hero_btn1_page==='store'||!d.hero_btn1_page?'selected':''}>المتجر</option><option value="works" ${d.hero_btn1_page==='works'?'selected':''}>أعمالنا</option><option value="catalogs" ${d.hero_btn1_page==='catalogs'?'selected':''}>الكتالوجات</option><option value="contact" ${d.hero_btn1_page==='contact'?'selected':''}>اتصل بنا</option></select></div>
+                <div class="flex-row"><input id="btn2T" placeholder="نص زر2" value="${(d.hero_btn2_text||'شاهد أعمالنا').replace(/"/g,'&quot;')}" style="flex:2"><select id="btn2P" style="flex:1"><option value="store" ${d.hero_btn2_page==='store'?'selected':''}>المتجر</option><option value="works" ${d.hero_btn2_page==='works'||!d.hero_btn2_page?'selected':''}>أعمالنا</option><option value="catalogs" ${d.hero_btn2_page==='catalogs'?'selected':''}>الكتالوجات</option><option value="contact" ${d.hero_btn2_page==='contact'?'selected':''}>اتصل بنا</option></select></div>
+                <div class="flex-row"><input id="btn3T" placeholder="نص زر3" value="${(d.hero_btn3_text||'الكتالوجات').replace(/"/g,'&quot;')}" style="flex:2"><select id="btn3P" style="flex:1"><option value="store" ${d.hero_btn3_page==='store'?'selected':''}>المتجر</option><option value="works" ${d.hero_btn3_page==='works'?'selected':''}>أعمالنا</option><option value="catalogs" ${d.hero_btn3_page==='catalogs'||!d.hero_btn3_page?'selected':''}>الكتالوجات</option><option value="contact" ${d.hero_btn3_page==='contact'?'selected':''}>اتصل بنا</option></select></div>
+                <hr>
+                <label><b>📊 الإحصائيات الثلاثة (القيمة + الوصف)</b> <small style="color:#7a756f">الثانية مرتبطة بقوقل ماب تلقائياً إذا أدخلت التقييم</small></label>
+                <div class="flex-row"><input id="s1V" placeholder="القيمة 1" value="${(d.hero_stat1_value||'+500').replace(/"/g,'&quot;')}" style="flex:1"><input id="s1L" placeholder="الوصف 1" value="${(d.hero_stat1_label||'مشروع منجز').replace(/"/g,'&quot;')}" style="flex:1"><input id="s1I" placeholder="أيقونة" value="${(d.hero_stat1_icon||'fas fa-award').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <div class="flex-row"><input id="s3V" placeholder="القيمة 3" value="${(d.hero_stat3_value||'24h').replace(/"/g,'&quot;')}" style="flex:1"><input id="s3L" placeholder="الوصف 3" value="${(d.hero_stat3_label||'رد سريع').replace(/"/g,'&quot;')}" style="flex:1"><input id="s3I" placeholder="أيقونة" value="${(d.hero_stat3_icon||'fas fa-clock').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <div style="background:#f0f7ff;border:1px solid #b3d4ff;border-radius:12px;padding:12px">
+                    <label><b>⭐ تقييم قوقل ماب الرسمي (يظهر بدل رضا العملاء)</b></label>
+                    <div class="flex-row"><input id="googleRating" placeholder="التقييم 4.9" value="${(d.google_rating||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="googleCount" placeholder="العدد 127" value="${(d.google_count||'').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                    <input id="googleUrl" placeholder="رابط قوقل ماب" value="${(d.google_url||'').replace(/"/g,'&quot;')}" style="margin-top:8px">
+                    <small style="color:#5a7ab5">انسخ رابط تقييمك من Google Maps وضعه هنا — سيظهر كـ 4.9 (127) تقييم قوقل مع رابط مباشر</small>
+                </div>
+                <hr>
+                <label><b>✨ شريط المميزات الأربعة تحت الهيرو</b></label>
+                <div class="flex-row"><input id="f1T" placeholder="عنوان 1" value="${(d.feature1_title||'تصميم 3D مجاني').replace(/"/g,'&quot;')}" style="flex:1"><input id="f1D" placeholder="وصف 1" value="${(d.feature1_desc||'معاينة واقعية قبل التنفيذ').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <div class="flex-row"><input id="f2T" placeholder="عنوان 2" value="${(d.feature2_title||'تنفيذ متقن').replace(/"/g,'&quot;')}" style="flex:1"><input id="f2D" placeholder="وصف 2" value="${(d.feature2_desc||'نجارون محترفون بدقة مليمترية').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <div class="flex-row"><input id="f3T" placeholder="عنوان 3" value="${(d.feature3_title||'نخدمكم في جميع مناطق المملكة').replace(/"/g,'&quot;')}" style="flex:1"><input id="f3D" placeholder="وصف 3" value="${(d.feature3_desc||'توصيل وتركيب احترافي').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <div class="flex-row"><input id="f4T" placeholder="عنوان 4" value="${(d.feature4_title||'ضمان سنة').replace(/"/g,'&quot;')}" style="flex:1"><input id="f4D" placeholder="وصف 4" value="${(d.feature4_desc||'صيانة ومتابعة ما بعد التسليم').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <hr>
+                <label><b>🎬 عنوان قسم السلايدر (الآن داخل الهيرو)</b></label>
+                <input id="heroSliderTitle" placeholder="أحدث أعمالنا" value="${(d.hero_slider_title||'أحدث أعمالنا').replace(/"/g,'&quot;')}">
+                <textarea id="heroSliderSub" rows="2" placeholder="وصف السلايدر">${(d.hero_slider_sub||'مختارات فاخرة من تنفيذنا — اسحب للتصفح أو اضغط للتكبير').replace(/"/g,'&quot;')}</textarea>
+                <button onclick="saveHero()">💾 حفظ واجهة الهيرو</button>
+            </div>
+        `;
+    }
+    window.saveHero = function(){
+        db.ref(DB_PATH).update({
+            hero_badge: document.getElementById('heroBadge').value,
+            hero_title1: document.getElementById('heroTitle1').value,
+            hero_title_highlight: document.getElementById('heroHighlight').value,
+            hero_title2: document.getElementById('heroTitle2').value,
+            hero_title_suffix: document.getElementById('heroSuffix').value,
+            hero_desc: document.getElementById('heroDesc').value,
+            hero_btn1_text: document.getElementById('btn1T').value,
+            hero_btn1_page: document.getElementById('btn1P').value,
+            hero_btn2_text: document.getElementById('btn2T').value,
+            hero_btn2_page: document.getElementById('btn2P').value,
+            hero_btn3_text: document.getElementById('btn3T').value,
+            hero_btn3_page: document.getElementById('btn3P').value,
+            hero_stat1_value: document.getElementById('s1V').value,
+            hero_stat1_label: document.getElementById('s1L').value,
+            hero_stat1_icon: document.getElementById('s1I').value,
+            hero_stat3_value: document.getElementById('s3V').value,
+            hero_stat3_label: document.getElementById('s3L').value,
+            hero_stat3_icon: document.getElementById('s3I').value,
+            google_rating: document.getElementById('googleRating').value,
+            google_count: document.getElementById('googleCount').value,
+            google_url: document.getElementById('googleUrl').value,
+            feature1_title: document.getElementById('f1T').value,
+            feature1_desc: document.getElementById('f1D').value,
+            feature2_title: document.getElementById('f2T').value,
+            feature2_desc: document.getElementById('f2D').value,
+            feature3_title: document.getElementById('f3T').value,
+            feature3_desc: document.getElementById('f3D').value,
+            feature4_title: document.getElementById('f4T').value,
+            feature4_desc: document.getElementById('f4D').value,
+            hero_slider_title: document.getElementById('heroSliderTitle').value,
+            hero_slider_sub: document.getElementById('heroSliderSub').value
+        }).then(()=>showToast('✅ تم حفظ واجهة الهيرو - انعكست فوراً على الموقع'));
+    };
+    // ========== الشعار ==========
+    function renderBranding(){
+        const d=currentData;
+        const logo = d.site_logo_url || '';
+        document.getElementById('content-branding').innerHTML = `
+            <div class="vertical-group">
+                <div style="background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center">
+                    <div style="width:80px;height:80px;margin:0 auto 12px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.6rem;font-weight:800;overflow:hidden;border:2px solid var(--primary)">${logo ? `<img src="${logo}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : 'ب'}</div>
+                    <b>الشعار الحالي</b><br><small style="color:#7a756f">${logo ? 'صورة مخصصة' : 'حرف ب الافتراضي'}</small>
+                </div>
+                <label><b>🖼️ رابط صورة الشعار (بدل حرف ب)</b></label>
+                <input id="siteLogoUrl" placeholder="https://example.com/logo.png" value="${logo.replace(/"/g,'&quot;')}">
+                <small style="color:#7a756f">ارفع شعارك على أي موقع رفع صور وانسخ الرابط هنا — يظهر فوراً بجانب اسم الموقع بأبعاد 46×46 دائرية فاخرة</small>
+                <div class="flex-row"><button onclick="saveBranding()">💾 حفظ الشعار</button><button class="btn-red" onclick="clearLogo()">🗑️ إزالة والعودة لحرف ب</button></div>
+                <hr>
+                <label><b>📍 نص الموقع في الشريط العلوي</b></label>
+                <input id="topbarLocationText" placeholder="جدة - المملكة العربية السعودية" value="${(d.topbar_location_text||'جدة - المملكة العربية السعودية').replace(/"/g,'&quot;')}">
+                <button onclick="saveBranding()">💾 حفظ</button>
+            </div>
+        `;
+    }
+    window.saveBranding = function(){
+        db.ref(DB_PATH).update({
+            site_logo_url: document.getElementById('siteLogoUrl').value.trim(),
+            topbar_location_text: document.getElementById('topbarLocationText').value
+        }).then(()=>{showToast('✅ تم حفظ الشعار'); loadData(true);});
+    };
+    window.clearLogo = function(){
+        document.getElementById('siteLogoUrl').value='';
+        saveBranding();
+    };
     window.saveGeneral = function() {
+
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
             whatsapp_num: document.getElementById('whatsappNum').value,
