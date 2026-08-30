@@ -728,7 +728,22 @@ function renderAll(){
 
 // init
 db.ref(DB_PATH).once('value').then(snap=>{ currentData=snap.val()||{}; renderAll(); }).catch(()=>{ renderReviews(); });
-db.ref(DB_PATH).on('value',snap=>{ if(snap.exists()){ currentData=snap.val()||{}; renderAll(); }});
+db.ref(DB_PATH).on('value',snap=>{ if(snap.exists()){ currentData=snap.val()||{}; renderAll(); console.log('🔥 Firebase live update', new Date().toLocaleTimeString()); }});
+// REST polling fallback - يضمن التحديث المباشر حتى لو فشل WebSocket بسبب file://
+setInterval(async ()=>{
+  try{
+    const r=await fetch('https://mydecor-b29bd-default-rtdb.europe-west1.firebasedatabase.app/site_v28.json?'+Date.now());
+    const j=await r.json();
+    if(j && JSON.stringify(j)!==JSON.stringify(currentData)){
+      currentData=j; renderAll(); console.log('🔄 REST polling update');
+    }
+  }catch(e){ console.log('polling error',e); }
+},4000);
+// مؤشر اتصال مباشر
+setTimeout(()=>{
+  const dot=document.querySelector('.dot');
+  if(dot) dot.title='متصل بقاعدة البيانات site_v28 • '+new Date().toLocaleTimeString();
+},1000);
 </script>
 </body>
 </html>
