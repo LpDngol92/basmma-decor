@@ -80,6 +80,13 @@ img{max-width:100%;display:block}
 .float-card{position:absolute;background:#0F1A33;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow);display:flex;gap:10px;align-items:center;animation:float 5s ease-in-out infinite}
 .float-card:nth-child(2){top:8%;left:-12px}.float-card:nth-child(3){bottom:12%;right:-8px;animation-delay:1s}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.partners-marquee{background:rgba(255,255,255,.02);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;overflow:hidden;position:relative}
+.partners-marquee::before{content:'شركاء النجاح';position:absolute;right:0;top:0;bottom:0;display:flex;align-items:center;padding:0 14px;background:var(--gold);color:#0A0F1E;font-weight:900;font-size:12px;z-index:2}
+.marquee-track{display:inline-flex;gap:28px;animation:marqueeFlow 28s linear infinite;padding-right:110px;align-items:center}
+.marquee-track:hover{animation-play-state:paused}
+@keyframes marqueeFlow{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.partner-logo{height:32px;max-width:110px;object-fit:contain;filter:brightness(1.05)}
+.partner-item{background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:999px;padding:6px 14px;display:inline-flex;align-items:center}
 .clients{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:rgba(255,255,255,.02);padding:14px 0}
 .clients__row{display:flex;gap:22px;align-items:center;justify-content:space-between;flex-wrap:wrap;opacity:.9}
 .clients__row span{font-weight:700;color:#cbd5e1;font-size:12px;display:flex;align-items:center;gap:6px}
@@ -276,13 +283,9 @@ img{max-width:100%;display:block}
       </div>
     </div>
   </div>
-  <div class="clients">
-    <div class="container clients__row">
-      <span id="client1"><i class="fa-solid fa-star" style="color:var(--gold2)"></i> تنفيذ فاخر</span>
-      <span id="client2"><i class="fa-solid fa-check-double" style="color:var(--gold2)"></i> تسليم في الوقت</span>
-      <span id="client3"><i class="fa-solid fa-award" style="color:var(--gold2)"></i> خامات درجة أولى</span>
-      <span id="client4"><i class="fa-solid fa-truck-fast" style="color:var(--gold2)"></i> نخدم كل المملكة</span>
-      <span style="color:var(--gold2)">+ شركاء النجاح <span id="partnersCount"></span></span>
+  <div class="partners-marquee" id="partnersMarquee">
+    <div class="marquee-track" id="marqueeTrack">
+      <span style="color:var(--muted);font-size:12px">جاري تحميل شركاء النجاح...</span>
     </div>
   </div>
 </section>
@@ -475,6 +478,26 @@ document.getElementById('heroSliderMini')?.addEventListener('click',()=>{
   if(sliderImages.length) openLightbox(sliderImages, sliderIdx);
 });
 
+
+function renderPartnersMarquee(){
+  const track=document.getElementById('marqueeTrack');
+  const marquee=document.getElementById('partnersMarquee');
+  if(!track) return;
+  const partners = currentData.partners ? Object.values(currentData.partners) : [];
+  if(!partners.length){
+    track.innerHTML='<span style="color:var(--muted);font-size:12px">✦ تنفيذ فاخر &nbsp; • &nbsp; تسليم في الوقت &nbsp; • &nbsp; خامات درجة أولى &nbsp; • &nbsp; نخدم كل المملكة</span>';
+    return;
+  }
+  let html='';
+  partners.forEach(p=>{
+    const url = p.url || p;
+    const link = p.link || '#';
+    html+=`<a href="${link}" target="_blank" class="partner-item"><img src="${url}" alt="شريك" class="partner-logo" onerror="this.style.display='none'"></a>`;
+  });
+  // duplicate for seamless loop
+  track.innerHTML = html + html;
+  if(marquee) marquee.style.display='block';
+}
 function renderProjects(){
   const grid=document.getElementById('projectsGrid');
   if(!grid) return;
@@ -679,7 +702,7 @@ function renderAll(){
   })();
   // social
   const social=document.getElementById('socialLinks'); if(social){ let s=''; if(currentData.insta_url) s+=`<a href="${currentData.insta_url}" target="_blank" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line)"><i class="fa-brands fa-instagram"></i></a>`; if(currentData.tiktok_url) s+=`<a href="${currentData.tiktok_url}" target="_blank" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line)"><i class="fa-brands fa-tiktok"></i></a>`; if(currentData.snap_url) s+=`<a href="${currentData.snap_url}" target="_blank" style="width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line)"><i class="fa-brands fa-snapchat"></i></a>`; social.innerHTML=s; }
-  renderHeroSlider(); renderProjects(); renderReviews();
+  renderHeroSlider(); renderProjects(); renderReviews(); renderPartnersMarquee();
 }
 
 // init
