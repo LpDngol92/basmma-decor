@@ -3,184 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة الادارة </title>
+    <title>لوحة ادارة بصمه غير - NEXUS LUXE | مرتبطة بالكامل</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <style>
-        *{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif}
-        :root{--primary:#c8a165;--primary-dark:#a47e44;--primary-light:#e8d5b0;--cream:#faf8f5;--cream-dark:#f5efe6;--border:rgba(200,161,101,0.16);--ink:#111010;--shadow:0 4px 20px rgba(0,0,0,0.06);--shadow-lg:0 20px 50px rgba(0,0,0,0.10);--shadow-gold:0 10px 28px rgba(200,161,101,0.22);--radius:18px;--radius-sm:12px;--transition:.24s cubic-bezier(.4,0,.2,1)}
-        body{background:var(--cream);color:#1e1c1a;min-height:100vh}
-        /* Login - luxury centered */
-        .login-container{max-width:440px;margin:60px auto;background:#fff;border-radius:28px;padding:32px 28px;text-align:center;box-shadow:var(--shadow-lg);border:1px solid var(--border);position:relative;overflow:hidden}
-        .login-container::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--primary),var(--primary-dark))}
-        .login-container h2{font-size:1.35rem;font-weight:800;color:var(--ink);margin-bottom:6px}
-        .login-container p.sub{color:#7a756f;font-size:.84rem;margin-bottom:18px}
-        .login-badge{display:inline-flex;align-items:center;gap:8px;background:var(--cream);border:1px solid var(--border);padding:6px 12px;border-radius:999px;font-size:.7rem;font-weight:700;color:var(--primary-dark);margin-bottom:16px}
-        .login-container input{width:100%;margin-bottom:12px;padding:12px 16px;border:1.5px solid #e8e2d9;border-radius:14px;background:#fff;transition:var(--transition);font-size:.92rem}
-        .login-container input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(200,161,101,0.12)}
-        .login-container button{width:100%;padding:13px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;border-radius:999px;font-weight:700;cursor:pointer;box-shadow:var(--shadow-gold);transition:var(--transition);font-size:.95rem;margin-top:4px}
-        .login-container button:hover{transform:translateY(-1px);box-shadow:0 16px 32px rgba(200,161,101,0.28)}
-        /* Admin layout */
-        .admin-shell{display:flex;min-height:100vh}
-        .sidebar{width:280px;background:linear-gradient(180deg,#0f0e0e 0%, #1a1816 100%);color:#e8ddd0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;border-left:1px solid rgba(200,161,101,0.12)}
-        .sidebar-brand{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:12px}
-        .brand-mark{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;flex-shrink:0}
-        .brand-text b{display:block;font-size:1.02rem;color:#fff;line-height:1}
-        .brand-text small{font-size:.62rem;letter-spacing:.16em;color:var(--primary-light);font-weight:700;opacity:.9}
-        .sidebar-nav{padding:14px 12px;flex:1}
-        .nav-label{font-size:.62rem;letter-spacing:.14em;color:#8a8480;font-weight:700;padding:14px 10px 6px}
-        .sidebar-link{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;color:#c9c2b8;font-size:.84rem;font-weight:600;transition:var(--transition);cursor:pointer}
-        .sidebar-link:hover{background:rgba(255,255,255,0.06);color:#fff}
-        .sidebar-link.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 6px 20px rgba(0,0,0,0.22)}
-        .sidebar-footer{padding:16px;border-top:1px solid rgba(255,255,255,0.06)}
-        .btn-logout{width:100%;padding:11px;background:rgba(220,53,69,0.12);border:1px solid rgba(220,53,69,0.22);color:#ff8a96;border-radius:12px;font-weight:700;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;gap:8px}
-        .btn-logout:hover{background:#dc3545;color:#fff}
-        .main-area{flex:1;min-width:0;background:var(--cream)}
-        .topbar-admin{background:rgba(255,255,255,0.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--border);padding:14px 24px;position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
-        .topbar-title h1{font-size:1.18rem;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:10px}
-        .topbar-title h1 i{width:36px;height:36px;border-radius:10px;background:var(--primary-soft, #fdf6e8);color:var(--primary-dark);display:inline-flex;align-items:center;justify-content:center;font-size:.9rem;border:1px solid var(--border)}
-        .topbar-title p{font-size:.78rem;color:#7a756f;margin-top:2px}
-        .topbar-actions{display:flex;gap:10px;align-items:center}
-        .chip-live{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);padding:7px 12px;border-radius:999px;font-size:.72rem;font-weight:700;color:#3a3632;box-shadow:var(--shadow)}
-        .chip-live span{width:8px;height:8px;border-radius:50%;background:#28a745;box-shadow:0 0 0 5px rgba(40,167,69,0.14);display:inline-block;animation:pulse 2s infinite}
-        @keyframes pulse{0%{box-shadow:0 0 0 5px rgba(40,167,69,0.14)}50%{box-shadow:0 0 0 8px rgba(40,167,69,0.06)}100%{box-shadow:0 0 0 5px rgba(40,167,69,0.14)}}
-        .content-pad{padding:22px;max-width:1160px;margin:0 auto}
-        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
-        .stat-card{background:#fff;border-radius:18px;padding:18px;text-align:center;box-shadow:var(--shadow);border:1px solid var(--border);position:relative;overflow:hidden;transition:var(--transition)}
-        .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--primary-light));opacity:.95}
-        .stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
-        .stat-card i{width:44px;height:44px;border-radius:12px;background:var(--cream-dark);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;font-size:1.15rem;color:var(--primary-dark);margin-bottom:10px}
-        .stat-card h3{font-size:1.55rem;font-weight:800;color:var(--ink);line-height:1}
-        .stat-card p{font-size:.72rem;color:#7a756f;font-weight:700;margin-top:4px;letter-spacing:.02em}
-        .master-dropdown{margin-bottom:14px;background:#fff;border-radius:18px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border)}
-        .master-header{background:linear-gradient(135deg,#1a1a1a, #2a2520);color:#fff;padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.92rem;transition:var(--transition);position:relative}
-        .master-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--primary),transparent);opacity:.55}
-        .master-header:hover{filter:brightness(1.06)}
-        .master-header i{color:var(--primary-light)}
-        .master-content{padding:18px;display:none;background:#fff;border-top:1px solid var(--border)}
-        .master-dropdown.open .master-content{display:block}
-        .nested-dropdown{margin-bottom:12px;border:1px solid #eee8db;border-radius:14px;overflow:hidden;background:#fff}
-        .nested-header{background:var(--cream);padding:11px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:700;color:#2b2825;font-size:.86rem;transition:var(--transition)}
-        .nested-header:hover{background:#fdf6e8}
-        .nested-content{padding:14px;display:none;background:#fffefb;border-top:1px solid #f0e6d8}
-        .images-grid{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
-        .image-card{position:relative;width:86px;height:86px;border-radius:12px;overflow:hidden;border:1px solid #e9e2d3;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.05);transition:var(--transition)}
-        .image-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-        .image-card img{width:100%;height:100%;object-fit:cover;cursor:pointer}
-        .delete-img-btn{position:absolute;top:4px;right:4px;background:#dc3545;color:#fff;border-radius:50%;width:22px;height:22px;font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;box-shadow:0 2px 8px rgba(220,53,69,0.3)}
-        .vertical-group{display:flex;flex-direction:column;gap:12px}
-        .vertical-group input,.vertical-group textarea{width:100%}
-        .link-card{background:#faf8f5;border:1px solid #efe8d8;border-radius:14px;padding:14px;margin-bottom:12px;display:flex;flex-direction:column;gap:10px}
-        .link-card input,.link-card textarea{width:100%;margin:0}
-        .link-card button{align-self:flex-start}
-        .add-box{background:linear-gradient(135deg,#fffaf0, #fff);border:1px dashed var(--primary);border-radius:14px;padding:16px;margin:16px 0;display:flex;flex-direction:column;gap:10px}
-        .add-box textarea{width:100%;min-height:120px;font-family:monospace;direction:ltr;border-radius:12px}
-        input,textarea,select{width:100%;padding:11px 14px;border:1.5px solid #e9e2d3;border-radius:12px;background:#fff;transition:var(--transition);font-size:.88rem}
-        input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(200,161,101,0.12)}
-        button{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;padding:10px 18px;border:none;border-radius:999px;cursor:pointer;font-weight:700;transition:var(--transition);box-shadow:var(--shadow-gold);font-size:.84rem}
-        button:hover{transform:translateY(-1px);box-shadow:0 10px 22px rgba(200,161,101,0.24)}
-        .btn-red{background:#dc3545;box-shadow:none}
-        .btn-red:hover{background:#bb2d3b}
-        .btn-danger{background:#dc3545}
-        .btn-danger:hover{background:#bb2d3b}
-        .btn-warning{background:#ffc107;color:#1a1a1a;box-shadow:none}
-        .btn-warning:hover{background:#e0a800}
-        .btn-ghost{background:#fff;color:var(--primary-dark);border:1px solid var(--border);box-shadow:none}
-        hr{margin:16px 0;border:none;border-top:1px solid var(--border)}
-        .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#111010;color:#fff;padding:11px 20px;border-radius:999px;display:none;z-index:9999;box-shadow:var(--shadow-lg);border:1px solid rgba(200,161,101,0.18);font-size:.84rem}
-        .lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.92);z-index:10000;justify-content:center;align-items:center;cursor:pointer}
-        .lightbox img{max-width:90%;max-height:90%;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.08)}
-        .lightbox .close{position:absolute;top:20px;left:30px;color:#fff;font-size:36px;cursor:pointer}
-        .bulk-textarea{font-family:monospace;font-size:13px;direction:ltr}
-        .flex-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-        .checkbox-row{display:flex;align-items:center;gap:10px;margin:10px 0;background:var(--cream);border:1px solid var(--border);padding:10px 12px;border-radius:12px}
-        .checkbox-row input{width:18px;height:18px;accent-color:var(--primary)}
-        .btn-group{display:flex;gap:10px;flex-wrap:wrap}
-        .btn-group button{flex:1;min-width:120px}
-        .splash-info-box{background:linear-gradient(135deg,#fff8e1,#fff);border:1px solid #ffe08a;border-radius:12px;padding:14px;margin:14px 0}
-        .splash-info-box p{margin:4px 0;font-size:.86rem}
-        #dynamicDropdownsContainer.is-refreshing{opacity:0.55;pointer-events:none;transition:opacity .15s ease}
-        #dynamicDropdownsContainer{transition:opacity .15s ease}
-        .refresh-indicator{position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-40px);background:#111010;color:#fff;padding:8px 16px;border-radius:999px;font-size:12px;z-index:9998;transition:transform .2s ease;box-shadow:var(--shadow-lg);border:1px solid rgba(200,161,101,0.18)}
-        .refresh-indicator.show{transform:translateX(-50%) translateY(0)}
-        /* Responsive */
-        @media(max-width:980px){
-            .admin-shell{flex-direction:column}
-            .sidebar{width:100%;height:auto;position:relative}
-            .sidebar-nav{display:flex;flex-wrap:wrap;gap:6px}
-            .nav-label{width:100%}
-            .stats-grid{grid-template-columns:repeat(2,1fr)}
-            .topbar-admin{position:relative}
-        }
-        @media(max-width:600px){
-            .content-pad{padding:14px}
-            .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px}
-            .stat-card{padding:14px}
-            .topbar-admin{padding:12px 14px}
-        }
-</style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background: #f0f2f5; padding: 15px; }
+        .login-container { max-width: 400px; margin: 80px auto; background: white; border-radius: 24px; padding: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .login-container input { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ddd; border-radius: 12px; }
+        .login-container button { width: 100%; padding: 12px; background: #b88b4a; color: white; border: none; border-radius: 30px; font-weight: bold; cursor: pointer; }
+        
+        .admin-container { max-width: 1100px; margin: 0 auto; }
+        .header { background: white; border-radius: 16px; padding: 15px 20px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .header h1 { color: #b88b4a; font-size: 1.2rem; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .stat-card { background: white; border-radius: 14px; padding: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+        .stat-card i { font-size: 24px; color: #b88b4a; }
+        .stat-card h3 { font-size: 22px; }
+        
+        .master-dropdown { margin-bottom: 12px; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .master-header { background: #b88b4a; color: white; padding: 12px 16px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; font-size: 1rem; }
+        .master-header:hover { background: #9e6f38; }
+        .master-content { padding: 16px; display: none; background: #fff; border-top: 1px solid #f0e0cc; }
+        
+        .nested-dropdown { margin-bottom: 12px; border: 1px solid #eee; border-radius: 12px; overflow: hidden; }
+        .nested-header { background: #f8f9fa; padding: 10px 14px; cursor: pointer; display: flex; justify-content: space-between; font-weight: 600; color: #2c3e2f; }
+        .nested-header:hover { background: #f0e6d8; }
+        .nested-content { padding: 14px; display: none; background: #fefcf8; border-top: 1px solid #eee; }
+        
+        .images-grid { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0; }
+        .image-card { position: relative; width: 80px; height: 80px; border-radius: 10px; overflow: hidden; border: 1px solid #ddd; background: white; }
+        .image-card img { width: 100%; height: 100%; object-fit: cover; cursor: pointer; }
+        .delete-img-btn { position: absolute; top: 2px; right: 2px; background: #dc3545; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; }
+        
+        .vertical-group { display: flex; flex-direction: column; gap: 12px; }
+        .vertical-group input, .vertical-group textarea, .vertical-group button { width: 100%; }
+        
+        .link-card { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 14px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+        .link-card input, .link-card textarea { width: 100%; margin: 0; }
+        .link-card button { align-self: flex-start; }
+        
+        .add-box { background: #fef8e7; border: 1px dashed #b88b4a; border-radius: 12px; padding: 15px; margin: 15px 0; display: flex; flex-direction: column; gap: 10px; }
+        .add-box textarea { width: 100%; min-height: 120px; font-family: monospace; direction: ltr; }
+        
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 10px; }
+        button { background: #b88b4a; color: white; padding: 8px 16px; border: none; border-radius: 30px; cursor: pointer; font-weight: 600; margin: 4px; }
+        .btn-red { background: #dc3545; }
+        .btn-red:hover { background: #bb2d3b; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-danger:hover { background: #bb2d3b; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn-warning:hover { background: #e0a800; }
+        hr { margin: 15px 0; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 40px; display: none; z-index: 9999; }
+        .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 10000; justify-content: center; align-items: center; cursor: pointer; }
+        .lightbox img { max-width: 90%; max-height: 90%; border-radius: 16px; }
+        .lightbox .close { position: absolute; top: 20px; left: 30px; color: white; font-size: 40px; cursor: pointer; }
+        .bulk-textarea { font-family: monospace; font-size: 13px; direction: ltr; }
+        .flex-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .checkbox-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-group button { flex: 1; min-width: 120px; }
+        .splash-info-box { background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 12px; margin: 10px 0; }
+        .splash-info-box p { margin: 4px 0; font-size: 0.9rem; }
+        #dynamicDropdownsContainer.is-refreshing { opacity: 0.55; pointer-events: none; transition: opacity .15s ease; }
+        #dynamicDropdownsContainer { transition: opacity .15s ease; }
+        .refresh-indicator { position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-40px); background: #333; color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; z-index: 9998; transition: transform .2s ease; }
+        .refresh-indicator.show { transform: translateX(-50%) translateY(0); }
+    </style>
 </head>
 <body>
 
 <div id="loginScreen" class="login-container">
-    <div class="login-badge">✦ لوحة التحكم • بصمه غير</div>
-    <h2>🔐 دخول لوحة التحكم</h2>
-    <p class="sub">مرحباً بك — سجّل دخولك لإدارة موقعك الفاخر</p>
+    <h2 style="margin-bottom:20px;">🔐 دخول لوحة التحكم</h2>
     <input type="email" id="loginEmail" placeholder="البريد الإلكتروني">
     <input type="password" id="loginPassword" placeholder="كلمة المرور">
-    <button onclick="doLogin()">دخول آمن →</button>
-    <p style="margin-top:14px;font-size:.7rem;color:#8a8480">محمي بتشفير Firebase Authentication</p>
+    <button onclick="doLogin()">دخول</button>
 </div>
 
 <div id="adminPanel" style="display:none;">
-    <div class="admin-shell">
-        <aside class="sidebar">
-            <div class="sidebar-brand">
-                <div class="brand-mark">ب</div>
-                <div class="brand-text"><b>بصمه غير</b><small>ADMIN ATELIER</small></div>
-            </div>
-            <div class="sidebar-nav">
-                <div class="nav-label">القائمة الرئيسية</div>
-                <div class="sidebar-link active" onclick="document.getElementById('content-general')?.scrollIntoView({behavior:'smooth',block:'start'}); toggleMaster('general')"><i class="fas fa-cog"></i> الإعدادات العامة</div>
-                <div class="sidebar-link" onclick="toggleMaster('hero');document.getElementById('content-hero')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-palette"></i> واجهة الهيرو</div>
-                <div class="sidebar-link" onclick="toggleMaster('branding');document.getElementById('content-branding')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-crown"></i> الشعار</div>
-                <div class="sidebar-link" onclick="toggleMaster('slider');document.getElementById('content-slider')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-images"></i> السلايدر</div>
-                <div class="sidebar-link" onclick="toggleMaster('splash');document.getElementById('content-splash')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-film"></i> شاشة البداية</div>
-                <div class="sidebar-link" onclick="toggleMaster('albums');document.getElementById('content-albums')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-folder-open"></i> الألبومات</div>
-                <div class="sidebar-link" onclick="toggleMaster('store');document.getElementById('content-store')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-store"></i> المتجر</div>
-                <div class="nav-label">المحتوى</div>
-                <div class="sidebar-link" onclick="toggleMaster('social');document.getElementById('content-social')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-link"></i> الروابط</div>
-                <div class="sidebar-link" onclick="toggleMaster('partners');document.getElementById('content-partners')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-handshake"></i> الشركاء</div>
-                <div class="sidebar-link" onclick="toggleMaster('catalogs');document.getElementById('content-catalogs')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-book"></i> الكتالوجات</div>
-                <div class="sidebar-link" onclick="toggleMaster('chat');document.getElementById('content-chat')?.scrollIntoView({behavior:'smooth'})"><i class="fas fa-comments"></i> الدردشة</div>
-            </div>
-            <div class="sidebar-footer">
-                <button onclick="doLogout()" class="btn-logout"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</button>
-                <p style="text-align:center;font-size:.64rem;color:#6d6862;margin-top:10px">© 2025 بصمه غير • v2 Luxury</p>
-            </div>
-        </aside>
-        <div class="main-area">
-            <div class="topbar-admin">
-                <div class="topbar-title">
-                    <h1><i class="fas fa-crown"></i> لوحة التحكم الفاخرة</h1>
-                    <p>إدارة شاملة — إضافة جماعية، معاينة فورية، وحفظ تلقائي مع Firebase</p>
-                </div>
-                <div class="topbar-actions">
-                    <span class="chip-live"><span></span> متصل بـ Firebase</span>
-                    <button onclick="doLogout()" class="btn-red" style="padding:8px 14px;border-radius:999px;font-size:.78rem">🚪 خروج</button>
-                </div>
-            </div>
-            <div class="content-pad">
-                                <div class="stats-grid" id="statsContainer"></div>
-                <div id="dynamicDropdownsContainer"></div>
-            </div>
+    <div class="admin-container">
+        <div class="header">
+            <h1>⚙️ بصمه غير - NEXUS LUXE - لوحة التحكم المرتبطة + إضافة جماعية</h1>
+            <button onclick="doLogout()" class="btn-red">🚪 خروج</button>
         </div>
+        <div class="stats-grid" id="statsContainer"></div>
+        <div id="dynamicDropdownsContainer"></div>
     </div>
 </div>
-<div id="toastMsg"<div id="toastMsg" class="toast"></div>
+
+<div id="toastMsg" class="toast"></div>
 <div id="refreshIndicator" class="refresh-indicator">⏳ جاري التحديث...</div>
 <div id="lightbox" class="lightbox" onclick="closeLightbox()">
     <span class="close">&times;</span>
@@ -288,10 +204,9 @@
 
     function renderDashboard() {
         const sections = [
+            { id: 'fullcontrol', title: '🎛️ التحكم الكامل بكل حرف (100%)', icon: 'fas fa-sliders-h', render: renderFullControl },
             { id: 'general', title: '⚙️ الإعدادات العامة', icon: 'fas fa-cog', render: renderGeneral },
-            { id: 'hero', title: '🎨 واجهة الهيرو (كل نصوص الصفحة)', icon: 'fas fa-palette', render: renderHero },
-            { id: 'branding', title: '🖼️ الشعار والهوية', icon: 'fas fa-crown', render: renderBranding },
-            { id: 'slider', title: '🏠 السلايدر (داخل الهيرو)', icon: 'fas fa-images', render: renderSlider },
+            { id: 'slider', title: '🏠 السلايدر', icon: 'fas fa-images', render: renderSlider },
             { id: 'splash', title: '🎬 شاشة البداية', icon: 'fas fa-film', render: renderSplash },
             { id: 'albums', title: '📁 الألبومات (قوائم منسدلة لكل ألبوم)', icon: 'fas fa-folder-open', render: renderAlbums },
             { id: 'store', title: '🛍️ المتجر (قوائم منسدلة لكل قسم)', icon: 'fas fa-store', render: renderStore },
@@ -314,8 +229,6 @@
         const el = document.getElementById(`content-${id}`);
         const willOpen = el.style.display !== 'block';
         el.style.display = willOpen ? 'block' : 'none';
-        const parent = el.closest('.master-dropdown');
-        if(parent){ if(willOpen) parent.classList.add('open'); else parent.classList.remove('open'); }
         if (willOpen) openState.masters.add(id); else openState.masters.delete(id);
     };
     window.toggleNested = function(id) {
@@ -326,6 +239,60 @@
         if (willOpen) openState.nesteds.add(id); else openState.nesteds.delete(id);
     };
 
+    // ========== 0. التحكم الكامل 100% ==========
+    function renderFullControl(){
+        const d=currentData;
+        document.getElementById('content-fullcontrol').innerHTML=`
+            <div class="vertical-group">
+                <h3 style="color:#b88b4a;margin-bottom:6px">🏠 الهيرو</h3>
+                <input id="fc_hero_badge" placeholder="شارة الهيرو" value="${(d.hero_badge||'').replace(/"/g,'&quot;')}">
+                <div class="flex-row"><input id="fc_hero_title1" placeholder="عنوان 1 (نصنع)" value="${(d.hero_title1||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_hero_highlight" placeholder="كلمة مميزة (بصمة)" value="${(d.hero_title_highlight||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_hero_title2" placeholder="عنوان 2 (لا تُنسى)" value="${(d.hero_title2||'').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <input id="fc_hero_suffix" placeholder="سطر ثاني (لمساحتك التجارية)" value="${(d.hero_title_suffix||'').replace(/"/g,'&quot;')}">
+                <textarea id="fc_hero_desc" rows="2" placeholder="وصف الهيرو">${(d.hero_desc||'').replace(/"/g,'&quot;')}</textarea>
+                <input id="fc_hero_slider_title" placeholder="عنوان السلايدر" value="${(d.hero_slider_title||'').replace(/"/g,'&quot;')}">
+                <div class="flex-row"><input id="fc_topbar_badge" placeholder="شارة التوب بار" value="${(d.topbar_badge_text||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_topbar_loc" placeholder="نص الموقع بالتوب بار" value="${(d.topbar_location_text||'').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <div class="flex-row"><input id="fc_dash_stat1" placeholder="إحصائية الداشبورد (+500)" value="${(d.dash_stat1||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_about_stat1" placeholder="إحصائية من نحن 1" value="${(d.about_stat1||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_about_stat2" placeholder="إحصائية من نحن 2" value="${(d.about_stat2||'').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <hr>
+                <h3 style="color:#b88b4a">🛠️ الخدمات</h3>
+                <input id="fc_services_title" placeholder="عنوان الخدمات" value="${(d.services_title||'').replace(/"/g,'&quot;')}">
+                <textarea id="fc_services_sub" rows="2" placeholder="وصف الخدمات">${(d.services_sub||'').replace(/"/g,'&quot;')}</textarea>
+                <div class="flex-row"><input id="fc_svc1" placeholder="خدمة 1" value="${(d.svc1_title||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_svc2" placeholder="خدمة 2" value="${(d.svc2_title||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_svc3" placeholder="خدمة 3" value="${(d.svc3_title||'').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <div class="flex-row"><input id="fc_svc4" placeholder="خدمة 4" value="${(d.svc4_title||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_svc5" placeholder="خدمة 5" value="${(d.svc5_title||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="fc_svc6" placeholder="خدمة 6" value="${(d.svc6_title||'').replace(/"/g,'&quot;')}" style="flex:1"></div>
+                <hr>
+                <h3 style="color:#b88b4a">👥 من نحن</h3>
+                <input id="fc_about_title" placeholder="عنوان من نحن" value="${(d.about_title||'').replace(/"/g,'&quot;')}">
+                <textarea id="fc_about_desc" rows="2" placeholder="وصف من نحن">${(d.about_desc||'').replace(/"/g,'&quot;')}</textarea>
+                <div style="background:rgba(200,164,106,.10);border:1px solid rgba(200,164,106,.22);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--gold2);margin-bottom:8px"><i class="fa-solid fa-star"></i> التقييمات الآن تظهر بشكل دوّار في مربع الهيرو الفاخر (كل 3.5 ثانية) — تدار من قسم التقييمات/ Google</div><button onclick="saveFullControl()">💾 حفظ كل النصوص (100%)</button>
+                <small style="color:#888">كل حقل يتحكم بحرف مباشرة في الموقع بدون كود</small>
+            </div>
+        `;
+    }
+    window.saveFullControl=function(){
+        db.ref(DB_PATH).update({
+            hero_badge: document.getElementById('fc_hero_badge').value,
+            hero_title1: document.getElementById('fc_hero_title1').value,
+            hero_title_highlight: document.getElementById('fc_hero_highlight').value,
+            hero_title2: document.getElementById('fc_hero_title2').value,
+            hero_title_suffix: document.getElementById('fc_hero_suffix').value,
+            hero_desc: document.getElementById('fc_hero_desc').value,
+            hero_slider_title: document.getElementById('fc_hero_slider_title').value,
+            topbar_badge_text: document.getElementById('fc_topbar_badge').value,
+            topbar_location_text: document.getElementById('fc_topbar_loc').value,
+            dash_stat1: document.getElementById('fc_dash_stat1').value,
+            about_stat1: document.getElementById('fc_about_stat1').value,
+            about_stat2: document.getElementById('fc_about_stat2').value,
+            services_title: document.getElementById('fc_services_title').value,
+            services_sub: document.getElementById('fc_services_sub').value,
+            svc1_title: document.getElementById('fc_svc1').value,
+            svc2_title: document.getElementById('fc_svc2').value,
+            svc3_title: document.getElementById('fc_svc3').value,
+            svc4_title: document.getElementById('fc_svc4').value,
+            svc5_title: document.getElementById('fc_svc5').value,
+            svc6_title: document.getElementById('fc_svc6').value,
+            about_title: document.getElementById('fc_about_title').value,
+            about_desc: document.getElementById('fc_about_desc').value
+        }).then(()=>showToast('✅ تم حفظ كل النصوص - تحكم 100%'));
+    };
     // ========== 1. الإعدادات العامة ==========
     function renderGeneral() {
         const d = currentData;
@@ -340,130 +307,7 @@
             </div>
         `;
     }
-
-    // ========== واجهة الهيرو - كل نصوص الصفحة قابلة للتحكم ==========
-    function renderHero() {
-        const d = currentData;
-        document.getElementById('content-hero').innerHTML = `
-            <div class="vertical-group">
-                <div style="background:linear-gradient(135deg,#fff8e1,#fff);border:1px solid #ffe08a;border-radius:12px;padding:12px;margin-bottom:12px">
-                    <b>✦ كل نص تراه في الصفحة الرئيسية أصبح هنا — غيّر أي كلمة وتظهر فوراً</b>
-                    <p style="font-size:.78rem;color:#7a756f;margin-top:6px">السلايدر الآن داخل الهيرو على اليسار بنفس قياس الصورة السابقة</p>
-                </div>
-                <label><b>🏷️ الشارة العلوية (Badge)</b></label>
-                <input id="heroBadge" placeholder="مثال: متاحون الآن • رد فوري" value="${(d.hero_badge||'متاحون الآن • رد فوري على واتساب').replace(/"/g,'&quot;')}">
-                <label><b>📝 عنوان الهيرو</b></label>
-                <div class="flex-row"><input id="heroTitle1" placeholder="سطر 1 - نصنع" value="${(d.hero_title1||'نصنع').replace(/"/g,'&quot;')}" style="flex:1"><input id="heroHighlight" placeholder="كلمة ذهبية - بصمة" value="${(d.hero_title_highlight||'بصمة').replace(/"/g,'&quot;')}" style="flex:1"><input id="heroTitle2" placeholder="سطر 1 تكملة - لا تُنسى" value="${(d.hero_title2||'لا تُنسى').replace(/"/g,'&quot;')}" style="flex:1"></div>
-                <input id="heroSuffix" placeholder="سطر 2 - لمساحتك التجارية" value="${(d.hero_title_suffix||'لمساحتك التجارية').replace(/"/g,'&quot;')}">
-                <label><b>📄 وصف الهيرو</b></label>
-                <textarea id="heroDesc" rows="3" placeholder="وصف مختصر تحت العنوان">${(d.hero_desc||'ديكورات خشب فاخرة، دواليب عرض، أرفف، كاونترات استقبال ومكتبات تلفزيون — تصميم وتنفيذ بإتقان يليق بعلامتك.').replace(/"/g,'&quot;')}</textarea>
-                <label><b>🔘 الأزرار الثلاثة (النص + الصفحة)</b></label>
-                <div class="flex-row"><input id="btn1T" placeholder="نص زر1" value="${(d.hero_btn1_text||'تسوق الآن').replace(/"/g,'&quot;')}" style="flex:2"><select id="btn1P" style="flex:1"><option value="store" ${d.hero_btn1_page==='store'||!d.hero_btn1_page?'selected':''}>المتجر</option><option value="works" ${d.hero_btn1_page==='works'?'selected':''}>أعمالنا</option><option value="catalogs" ${d.hero_btn1_page==='catalogs'?'selected':''}>الكتالوجات</option><option value="contact" ${d.hero_btn1_page==='contact'?'selected':''}>اتصل بنا</option></select></div>
-                <div class="flex-row"><input id="btn2T" placeholder="نص زر2" value="${(d.hero_btn2_text||'شاهد أعمالنا').replace(/"/g,'&quot;')}" style="flex:2"><select id="btn2P" style="flex:1"><option value="store" ${d.hero_btn2_page==='store'?'selected':''}>المتجر</option><option value="works" ${d.hero_btn2_page==='works'||!d.hero_btn2_page?'selected':''}>أعمالنا</option><option value="catalogs" ${d.hero_btn2_page==='catalogs'?'selected':''}>الكتالوجات</option><option value="contact" ${d.hero_btn2_page==='contact'?'selected':''}>اتصل بنا</option></select></div>
-                <div class="flex-row"><input id="btn3T" placeholder="نص زر3" value="${(d.hero_btn3_text||'الكتالوجات').replace(/"/g,'&quot;')}" style="flex:2"><select id="btn3P" style="flex:1"><option value="store" ${d.hero_btn3_page==='store'?'selected':''}>المتجر</option><option value="works" ${d.hero_btn3_page==='works'?'selected':''}>أعمالنا</option><option value="catalogs" ${d.hero_btn3_page==='catalogs'||!d.hero_btn3_page?'selected':''}>الكتالوجات</option><option value="contact" ${d.hero_btn3_page==='contact'?'selected':''}>اتصل بنا</option></select></div>
-                <hr>
-                <label><b>📊 الإحصائيات الثلاثة (القيمة + الوصف)</b> <small style="color:#7a756f">الثانية مرتبطة بقوقل ماب تلقائياً إذا أدخلت التقييم</small></label>
-                <div class="flex-row"><input id="s1V" placeholder="القيمة 1" value="${(d.hero_stat1_value||'+500').replace(/"/g,'&quot;')}" style="flex:1"><input id="s1L" placeholder="الوصف 1" value="${(d.hero_stat1_label||'مشروع منجز').replace(/"/g,'&quot;')}" style="flex:1"><input id="s1I" placeholder="أيقونة" value="${(d.hero_stat1_icon||'fas fa-award').replace(/"/g,'&quot;')}" style="flex:1"></div>
-                <div class="flex-row"><input id="s3V" placeholder="القيمة 3" value="${(d.hero_stat3_value||'24h').replace(/"/g,'&quot;')}" style="flex:1"><input id="s3L" placeholder="الوصف 3" value="${(d.hero_stat3_label||'رد سريع').replace(/"/g,'&quot;')}" style="flex:1"><input id="s3I" placeholder="أيقونة" value="${(d.hero_stat3_icon||'fas fa-clock').replace(/"/g,'&quot;')}" style="flex:1"></div>
-                <div style="background:#f0f7ff;border:1px solid #b3d4ff;border-radius:12px;padding:12px">
-                    <label><b>⭐ تقييم قوقل ماب الرسمي (يظهر بدل رضا العملاء)</b></label>
-                    <div class="flex-row"><input id="googleRating" placeholder="التقييم 4.9" value="${(d.google_rating||'').replace(/"/g,'&quot;')}" style="flex:1"><input id="googleCount" placeholder="العدد 127" value="${(d.google_count||'').replace(/"/g,'&quot;')}" style="flex:1"></div>
-                    <input id="googleUrl" placeholder="رابط قوقل ماب" value="${(d.google_url||'').replace(/"/g,'&quot;')}" style="margin-top:8px">
-                    <small style="color:#5a7ab5">انسخ رابط تقييمك من Google Maps وضعه هنا — سيظهر كـ 4.9 (127) تقييم قوقل مع رابط مباشر</small>
-                </div>
-                <hr>
-                <label><b>✨ شريط المميزات الأربعة تحت الهيرو</b></label>
-                <div class="flex-row"><input id="f1T" placeholder="عنوان 1" value="${(d.feature1_title||'تصميم 3D مجاني').replace(/"/g,'&quot;')}" style="flex:1"><input id="f1D" placeholder="وصف 1" value="${(d.feature1_desc||'معاينة واقعية قبل التنفيذ').replace(/"/g,'&quot;')}" style="flex:1"></div>
-                <div class="flex-row"><input id="f2T" placeholder="عنوان 2" value="${(d.feature2_title||'تنفيذ متقن').replace(/"/g,'&quot;')}" style="flex:1"><input id="f2D" placeholder="وصف 2" value="${(d.feature2_desc||'نجارون محترفون بدقة مليمترية').replace(/"/g,'&quot;')}" style="flex:1"></div>
-                <div class="flex-row"><input id="f3T" placeholder="عنوان 3" value="${(d.feature3_title||'نخدمكم في جميع مناطق المملكة').replace(/"/g,'&quot;')}" style="flex:1"><input id="f3D" placeholder="وصف 3" value="${(d.feature3_desc||'توصيل وتركيب احترافي').replace(/"/g,'&quot;')}" style="flex:1"></div>
-                <div class="flex-row"><input id="f4T" placeholder="عنوان 4" value="${(d.feature4_title||'ضمان سنة').replace(/"/g,'&quot;')}" style="flex:1"><input id="f4D" placeholder="وصف 4" value="${(d.feature4_desc||'صيانة ومتابعة ما بعد التسليم').replace(/"/g,'&quot;')}" style="flex:1"></div>
-                <hr>
-                <label><b>🎬 عنوان قسم السلايدر (الآن داخل الهيرو)</b></label>
-                <input id="heroSliderTitle" placeholder="أحدث أعمالنا" value="${(d.hero_slider_title||'أحدث أعمالنا').replace(/"/g,'&quot;')}">
-                <textarea id="heroSliderSub" rows="2" placeholder="وصف السلايدر">${(d.hero_slider_sub||'مختارات فاخرة من تنفيذنا — اسحب للتصفح أو اضغط للتكبير').replace(/"/g,'&quot;')}</textarea>
-                <button onclick="saveHero()">💾 حفظ واجهة الهيرو</button>
-            </div>
-        `;
-    }
-    window.saveHero = function(){
-        db.ref(DB_PATH).update({
-            hero_badge: document.getElementById('heroBadge').value,
-            hero_title1: document.getElementById('heroTitle1').value,
-            hero_title_highlight: document.getElementById('heroHighlight').value,
-            hero_title2: document.getElementById('heroTitle2').value,
-            hero_title_suffix: document.getElementById('heroSuffix').value,
-            hero_desc: document.getElementById('heroDesc').value,
-            hero_btn1_text: document.getElementById('btn1T').value,
-            hero_btn1_page: document.getElementById('btn1P').value,
-            hero_btn2_text: document.getElementById('btn2T').value,
-            hero_btn2_page: document.getElementById('btn2P').value,
-            hero_btn3_text: document.getElementById('btn3T').value,
-            hero_btn3_page: document.getElementById('btn3P').value,
-            hero_stat1_value: document.getElementById('s1V').value,
-            hero_stat1_label: document.getElementById('s1L').value,
-            hero_stat1_icon: document.getElementById('s1I').value,
-            hero_stat3_value: document.getElementById('s3V').value,
-            hero_stat3_label: document.getElementById('s3L').value,
-            hero_stat3_icon: document.getElementById('s3I').value,
-            google_rating: document.getElementById('googleRating').value,
-            google_count: document.getElementById('googleCount').value,
-            google_url: document.getElementById('googleUrl').value,
-            feature1_title: document.getElementById('f1T').value,
-            feature1_desc: document.getElementById('f1D').value,
-            feature2_title: document.getElementById('f2T').value,
-            feature2_desc: document.getElementById('f2D').value,
-            feature3_title: document.getElementById('f3T').value,
-            feature3_desc: document.getElementById('f3D').value,
-            feature4_title: document.getElementById('f4T').value,
-            feature4_desc: document.getElementById('f4D').value,
-            hero_slider_title: document.getElementById('heroSliderTitle').value,
-            hero_slider_sub: document.getElementById('heroSliderSub').value
-        }).then(()=>showToast('✅ تم حفظ واجهة الهيرو - انعكست فوراً على الموقع'));
-    };
-    // ========== الشعار ==========
-    function renderBranding(){
-        const d=currentData;
-        const logo = d.site_logo_url || '';
-        document.getElementById('content-branding').innerHTML = `
-            <div class="vertical-group">
-                <div style="background:var(--cream);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center">
-                    <div style="width:80px;height:80px;margin:0 auto 12px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.6rem;font-weight:800;overflow:hidden;border:2px solid var(--primary)">${logo ? `<img src="${logo}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : 'ب'}</div>
-                    <b>الشعار الحالي</b><br><small style="color:#7a756f">${logo ? 'صورة مخصصة' : 'حرف ب الافتراضي'}</small>
-                </div>
-                <label><b>🏷️ اسم الموقع (بجانب الشعار)</b></label>
-                <input id="siteNameBrand" placeholder="بصمه غير" value="${(d.site_name||'بصمه غير').replace(/"/g,'&quot;')}">
-                <small style="color:#7a756f">هذا هو نفس اسم الموقع الذي يظهر في الهيدر والفوتر</small>
-                <label><b>✍️ العبارة تحت اسم الموقع</b></label>
-                <input id="siteSubtitleInput" placeholder="ATELIER LUXE • JEDDAH" value="${(d.site_subtitle||'ATELIER LUXE • JEDDAH').replace(/"/g,'&quot;')}">
-                <small style="color:#7a756f">تظهر بخط صغير ذهبي تحت الاسم - مثال: للديكور الفاخر • جدة</small>
-                <label><b>🖼️ رابط صورة الشعار (بدل حرف ب)</b></label>
-                <input id="siteLogoUrl" placeholder="https://example.com/logo.png" value="${logo.replace(/"/g,'&quot;')}">
-                <small style="color:#7a756f">ارفع شعارك وانسخ الرابط هنا — يظهر فوراً بجانب الاسم بأبعاد 46×46</small>
-                <div class="flex-row"><button onclick="saveBranding()">💾 حفظ الشعار والاسم</button><button class="btn-red" onclick="clearLogo()">🗑️ إزالة الصورة والعودة لحرف ب</button></div>
-                <hr>
-                <label><b>📍 نص الموقع في الشريط العلوي (يسار)</b></label>
-                <input id="topbarLocationText" placeholder="جدة - المملكة العربية السعودية" value="${(d.topbar_location_text||'جدة - المملكة العربية السعودية').replace(/"/g,'&quot;')}">
-                <label><b>🔖 نص الشارة الذهبية يمين الشريط العلوي</b></label>
-                <input id="topbarBadgeText" placeholder="ديكور خشب - تنفيذ فاخر" value="${(d.topbar_badge_text||'ديكور خشب - تنفيذ فاخر').replace(/"/g,'&quot;')}">
-                <button onclick="saveBranding()">💾 حفظ الشريط العلوي</button>
-            </div>
-        `;
-    }
-    window.saveBranding = function(){
-        db.ref(DB_PATH).update({
-            site_name: document.getElementById('siteNameBrand').value.trim(),
-            site_subtitle: document.getElementById('siteSubtitleInput').value.trim(),
-            site_logo_url: document.getElementById('siteLogoUrl').value.trim(),
-            topbar_location_text: document.getElementById('topbarLocationText').value.trim(),
-            topbar_badge_text: document.getElementById('topbarBadgeText').value.trim()
-        }).then(()=>{showToast('✅ تم حفظ الهوية'); loadData(true);});
-    };
-    window.clearLogo = function(){
-        document.getElementById('siteLogoUrl').value='';
-        saveBranding();
-    };
     window.saveGeneral = function() {
-
         db.ref(DB_PATH).update({
             site_name: document.getElementById('siteName').value,
             whatsapp_num: document.getElementById('whatsappNum').value,
