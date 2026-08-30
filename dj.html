@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة ادارة بصمه غير - NEXUS LUXE | مرتبطة بالكامل</title>
+    <title>لوحة الادارة </title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -88,7 +88,7 @@
 <div id="adminPanel" style="display:none;">
     <div class="admin-container">
         <div class="header">
-            <h1>⚙️ بصمه غير - NEXUS LUXE - لوحة التحكم المرتبطة + إضافة جماعية</h1>
+            <h1>⚙️ بصمة غير - قوائم منسدلة + إضافة جماعية</h1>
             <button onclick="doLogout()" class="btn-red">🚪 خروج</button>
         </div>
         <div class="stats-grid" id="statsContainer"></div>
@@ -204,7 +204,6 @@
 
     function renderDashboard() {
         const sections = [
-            { id: 'fullcontrol', title: '🎛️ التحكم الكامل بكل حرف (100%)', icon: 'fas fa-sliders-h', render: renderFullControl },
             { id: 'general', title: '⚙️ الإعدادات العامة', icon: 'fas fa-cog', render: renderGeneral },
             { id: 'slider', title: '🏠 السلايدر', icon: 'fas fa-images', render: renderSlider },
             { id: 'splash', title: '🎬 شاشة البداية', icon: 'fas fa-film', render: renderSplash },
@@ -224,8 +223,6 @@
         });
         document.getElementById('dynamicDropdownsContainer').innerHTML = html;
         sections.forEach(sec => sec.render());
-        // افتح التحكم الكامل تلقائياً عشان المستخدم يشوف الـ 6 كروت مباشرة
-        setTimeout(()=>{ const el=document.getElementById('content-fullcontrol'); if(el) el.style.display='block'; openState.masters.add('fullcontrol'); },300);
     }
     window.toggleMaster = function(id) {
         const el = document.getElementById(`content-${id}`);
@@ -241,263 +238,6 @@
         if (willOpen) openState.nesteds.add(id); else openState.nesteds.delete(id);
     };
 
-    // ========== 0. التحكم الكامل 100% ==========
-    // ========== 0. التحكم الكامل 100% - إعادة بناء واضحة ==========
-    function renderFullControl(){
-        const d=currentData;
-        const val = (k,def='') => ((d[k]||def)+'').replace(/"/g,'&quot;');
-        const esc = (t) => (t||'').replace(/"/g,'&quot;');
-        document.getElementById('content-fullcontrol').innerHTML=`
-            <div style="display:grid;gap:14px">
-                <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:12px;padding:10px 14px;font-size:13px;color:#664d03;display:flex;gap:8px;align-items:center"><i class="fas fa-lightbulb" style="color:#b88b4a"></i> كل حقل هنا يتحكم بحرف مباشر في الموقع — احفظ وشوف النتيجة فوراً في الموقع النكسس</div>
-
-                <!-- الشعار والهوية -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-crown"></i> 1) الشعار والهوية</h3>
-                    <label style="font-weight:700;font-size:.82rem">اسم الموقع (يظهر في الهيدر والشعار)</label>
-                    <input id="fc_site_name" placeholder="مثال: بصمه غير" value="${val('site_name','بصمه غير')}">
-                    <label style="font-weight:700;font-size:.82rem">السطر الصغير تحت الاسم (ATELIER LUXE...)</label>
-                    <input id="fc_site_subtitle" placeholder="ATELIER LUXE • JEDDAH" value="${val('site_subtitle','ATELIER LUXE • JEDDAH')}">
-                    <label style="font-weight:700;font-size:.82rem">رابط شعار الموقع (صورة) - اتركه فارغ ليظهر حرف ب</label>
-                    <input id="fc_site_logo" placeholder="https://...png" value="${val('site_logo_url','')}" dir="ltr">
-                    <label style="font-weight:700;font-size:.82rem">رابط أيقونة تبويب المتصفح (Favicon) - يظهر بدل الكرة الأرضية</label>
-                    <input id="fc_favicon" placeholder="https://...png - نفس الشعار أو رابط آخر" value="${val('favicon_url', val('site_logo_url',''))}" dir="ltr">
-                    <small style="color:#888">إذا تركته فارغ سيستخدم الشعار تلقائياً كأيقونة تبويب</small>
-                    ${d.site_logo_url?`<div style="margin-top:8px"><img src="${d.site_logo_url}" style="height:42px;border-radius:10px;border:1px solid #eee"></div>`:''}
-                </div>
-
-                <!-- التوب بار -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-bars"></i> 2) الشريط العلوي (التوب بار)</h3>
-                    <label style="font-weight:700;font-size:.82rem">الحالة (متاحون الآن...)</label>
-                    <input id="fc_topbar_status" placeholder="متاحون الآن • رد فوري" value="${val('topbar_status','متاحون الآن • رد فوري')}">
-                    <label style="font-weight:700;font-size:.82rem">شارة التوب بار (ديكور خشب...)</label>
-                    <input id="fc_topbar_badge" placeholder="✦ ديكور خشب - تنفيذ فاخر" value="${val('topbar_badge_text','ديكور خشب - تنفيذ فاخر')}">
-                    <label style="font-weight:700;font-size:.82rem">نص الموقع (جدة...)</label>
-                    <input id="fc_topbar_loc" placeholder="جدة - المملكة العربية السعودية" value="${val('topbar_location_text','جدة - المملكة العربية السعودية')}">
-                    <label style="font-weight:700;font-size:.82rem">رقم الهاتف / واتساب (يظهر في التوب بار والتواصل)</label>
-                    <input id="fc_whatsapp" placeholder="0541780995" value="${val('whatsapp_num','0541780995')}" dir="ltr">
-                </div>
-
-                <!-- الفقاعتين العائمتين -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-comment-dots"></i> الفقاعتان العائمتان فوق التقييمات (في الهيرو)</h3>
-                    <label style="font-weight:700;font-size:.82rem">الفقاعة 1 - العنوان</label>
-                    <input id="fc_float1_title" placeholder="مثال: تنفيذ متقن" value="${val('float1_title','تنفيذ متقن')}">
-                    <label style="font-weight:700;font-size:.82rem">الفقاعة 1 - الوصف الصغير</label>
-                    <input id="fc_float1_sub" placeholder="مثال: دقة مليمترية" value="${val('float1_sub','دقة مليمترية')}">
-                    <label style="font-weight:700;font-size:.82rem">الفقاعة 1 - الأيقونة (Font Awesome class)</label>
-                    <input id="fc_float1_icon" placeholder="fa-solid fa-hammer" value="${val('float1_icon','fa-solid fa-hammer')}" dir="ltr">
-                    <label style="font-weight:700;font-size:.82rem">الفقاعة 2 - العنوان</label>
-                    <input id="fc_float2_title" placeholder="مثال: ضمان 3 اشهر" value="${val('float2_title','ضمان 3 اشهر')}">
-                    <label style="font-weight:700;font-size:.82rem">الفقاعة 2 - الوصف الصغير</label>
-                    <input id="fc_float2_sub" placeholder="مثال: متابعة ما بعد التسليم" value="${val('float2_sub','متابعة ما بعد التسليم')}">
-                    <label style="font-weight:700;font-size:.82rem">الفقاعة 2 - الأيقونة</label>
-                    <input id="fc_float2_icon" placeholder="fa-solid fa-shield-halved" value="${val('float2_icon','fa-solid fa-shield-halved')}" dir="ltr">
-                    <small style="color:#888">استخدم أيقونات Font Awesome — مثال: fa-solid fa-star</small>
-                </div>
-
-                <!-- الهيرو -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-star"></i> 3) الهيرو (الواجهة الرئيسية)</h3>
-                    <label style="font-weight:700;font-size:.82rem">شارة الهيرو (فوق العنوان)</label>
-                    <input id="fc_hero_badge" placeholder="متاحون الآن • رد فوري على واتساب" value="${val('hero_badge','متاحون الآن • رد فوري على واتساب')}">
-                    <label style="font-weight:700;font-size:.82rem">العنوان مقسم (3 حقول) — يظهر ك: [نصنع] [بصمة] [لا تُنسى]</label>
-                    <div class="flex-row"><input id="fc_hero_title1" placeholder="الجزء 1: نصنع" value="${val('hero_title1','نصنع')}" style="flex:1"><input id="fc_hero_highlight" placeholder="المميز: بصمة" value="${val('hero_title_highlight','بصمة')}" style="flex:1"><input id="fc_hero_title2" placeholder="الجزء 2: لا تُنسى" value="${val('hero_title2','لا تُنسى')}" style="flex:1"></div>
-                    <label style="font-weight:700;font-size:.82rem">السطر الثاني للعنوان</label>
-                    <input id="fc_hero_suffix" placeholder="لمساحتك التجارية" value="${val('hero_title_suffix','لمساحتك التجارية')}">
-                    <label style="font-weight:700;font-size:.82rem">وصف الهيرو</label>
-                    <textarea id="fc_hero_desc" rows="2" placeholder="ديكورات خشب فاخرة...">${esc(d.hero_desc||'ديكورات خشب فاخرة، دواليب عرض، أرفف، كاونترات استقبال ومكتبات تلفزيون — تصميم وتنفيذ بإتقان يليق بعلامتك.')}</textarea>
-                    <label style="font-weight:700;font-size:.82rem">أزرار الهيرو</label>
-                    <div class="flex-row"><input id="fc_hero_btn1" placeholder="زر ذهبي: اطلب عرض سعر فوري" value="${val('hero_btn1_text','اطلب عرض سعر فوري')}" style="flex:1"><input id="fc_hero_btn2" placeholder="زر ثانوي: شاهد أعمالنا" value="${val('hero_btn2_text','شاهد أعمالنا')}" style="flex:1"></div>
-                    <label style="font-weight:700;font-size:.82rem">إحصائيات الهيرو (تحت الأزرار)</label>
-                    <div class="flex-row"><input id="fc_stat1" placeholder="إحصائية 1: +500" value="${val('dash_stat1','+500')}" style="flex:1"><input id="fc_stat1_label" placeholder="تسميتها: مشروع منجز" value="${val('stat1_label','مشروع منجز')}" style="flex:1"><input id="fc_stat3_val" placeholder="قيمة: 24h" value="${val('stat3_value','24h')}" style="flex:1"><input id="fc_stat3_label" placeholder="تسميتها: رد سريع" value="${val('stat3_label','رد سريع')}" style="flex:1"></div>
-                    <label style="font-weight:700;font-size:.82rem">عنوان السلايدر (الآن داخل من نحن)</label>
-                    <input id="fc_hero_slider_title" placeholder="أحدث تنفيذاتنا" value="${val('hero_slider_title','أحدث تنفيذاتنا')}">
-                </div>
-
-                <!-- الشريط المتحرك -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-running"></i> 4) شريط العملاء المتحرك</h3>
-                    <div class="flex-row"><input id="fc_client1" placeholder="شريط 1: تنفيذ فاخر" value="${val('client1_text','تنفيذ فاخر')}" style="flex:1"><input id="fc_client2" placeholder="شريط 2: تسليم في الوقت" value="${val('client2_text','تسليم في الوقت')}" style="flex:1"></div>
-                    <div class="flex-row"><input id="fc_client3" placeholder="شريط 3: خامات درجة أولى" value="${val('client3_text','خامات درجة أولى')}" style="flex:1"><input id="fc_client4" placeholder="شريط 4: نخدم كل المملكة" value="${val('client4_text','نخدم كل المملكة')}" style="flex:1"></div>
-                </div>
-
-                <!-- الخدمات -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-th-large"></i> 5) قسم الخدمات (6 كروت)</h3>
-                    <label style="font-weight:700;font-size:.82rem">عنوان القسم</label>
-                    <input id="fc_services_title" placeholder="كل ما تحتاجه — في مكان واحد" value="${val('services_title','كل ما تحتاجه — في مكان واحد')}">
-                    <label style="font-weight:700;font-size:.82rem">وصف القسم</label>
-                    <textarea id="fc_services_sub" rows="2" placeholder="تصميم، تنفيذ...">${esc(d.services_sub||'تصميم، تنفيذ، وتشطيب فاخر بمعايير عالمية لكن بروح عربية أصيلة.')}</textarea>
-                    <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:8px 10px;font-size:12px;color:#5d4037;margin-bottom:6px"><i class="fas fa-eye"></i> كل كرت هنا يظهر مباشرة في قسم <strong>خدماتنا (6 كروت)</strong> <strong>وفي القائمة المنسدلة (أول 4 كروت)</strong> — عدل واحفظ</div>
-                ${(()=>{const defaults=[null,
-                        {t:'تصميم 3D',d:'معاينة واقعية قبل التنفيذ لتتخذ قرارك بثقة.',b:'اطلب تصميمك',i:'fa-solid fa-pencil-ruler'},
-                        {t:'تنفيذ خشب متقن',d:'نجارون محترفون، خامات فاخرة، وتشطيب يليق بعلامتك.',b:'احجز معاينة',i:'fa-solid fa-hammer'},
-                        {t:'تجهيز معارض ومحلات',d:'دواليب، أرفف، كاونترات استقبال ومكتبات تلفزيون.',b:'شاهد الأعمال',i:'fa-solid fa-store'},
-                        {t:'توصيل وتركيب',d:'نخدمك في جميع مناطق المملكة بتركيب احترافي.',b:'تواصل الآن',i:'fa-solid fa-truck-fast'},
-                        {t:'أفكار إبداعية',d:'حلول ذكية لاستغلال المساحات وإبراز منتجاتك.',b:'استلهم فكرتك',i:'fa-solid fa-palette'},
-                        {t:'ضمان وصيانة',d:'ضمان 3 اشهر ومتابعة ما بعد التسليم لراحة بالك.',b:'تعرف أكثر',i:'fa-solid fa-shield-halved'}
-                    ]; return [1,2,3,4,5,6].map(i=>`
-                    <div style="background:#fefcf8;border:2px solid #b88b4a;border-radius:12px;padding:12px;margin-top:10px">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px"><span style="background:#b88b4a;color:white;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:900;font-size:12px">${i}</span><strong style="font-size:.9rem;color:#5d4037">كرت خدمة ${i} — ${defaults[i].t}</strong><span style="margin-right:auto;font-size:11px;color:#b88b4a">● يظهر في الموقع</span></div>
-                        <label style="font-weight:700;font-size:.78rem;color:#333">عنوان الكرت ${i} — يظهر كعنوان كبير</label>
-                        <input id="fc_svc${i}" placeholder="${defaults[i].t}" value="${val('svc'+i+'_title', defaults[i].t)}">
-                        <label style="font-weight:700;font-size:.78rem;color:#333">وصف الكرت ${i} — يظهر تحته</label>
-                        <textarea id="fc_svc${i}_desc" rows="2" placeholder="${defaults[i].d}">${esc(d['svc'+i+'_desc']|| defaults[i].d)}</textarea>
-                        <label style="font-weight:700;font-size:.78rem;color:#333">نص زر الكرت ${i}</label>
-                        <input id="fc_svc${i}_btn" placeholder="${defaults[i].b}" value="${val('svc'+i+'_btn', defaults[i].b)}">
-                        <label style="font-weight:700;font-size:.78rem;color:#333">أيقونة الكرت ${i} (Font Awesome)</label>
-                        <input id="fc_svc${i}_icon" placeholder="${defaults[i].i}" value="${val('svc'+i+'_icon', defaults[i].i)}" dir="ltr">
-                    </div>`).join('')})()}
-                </div>
-
-                <!-- من نحن -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-users"></i> 6) من نحن (والسلايدر المتحرك داخله)</h3>
-                    <label style="font-weight:700;font-size:.82rem">عنوان من نحن</label>
-                    <input id="fc_about_title" placeholder="لسنا مجرد نجارين — نحن شركاء نجاحك" value="${val('about_title','لسنا مجرد نجارين — نحن شركاء نجاحك')}">
-                    <label style="font-weight:700;font-size:.82rem">وصف من نحن</label>
-                    <textarea id="fc_about_desc" rows="2" placeholder="في بصمه غير نحوّل...">${esc(d.about_desc||'في بصمه غير نحوّل أفكارك إلى واقع فاخر. كل مشروع يمر بـ 4 مراحل: تصميم 3D، اختيار خامات، تنفيذ دقيق، وتركيب احترافي مع ضمان.')}</textarea>
-                    <label style="font-weight:700;font-size:.82rem">4 مميزات (علامات الصح)</label>
-                    <div class="flex-row"><input id="fc_check1" placeholder="ميزة 1: تنفيذ بدقة مليمترية" value="${val('check1_text','تنفيذ بدقة مليمترية')}" style="flex:1"><input id="fc_check2" placeholder="ميزة 2: خامات خشب فاخرة" value="${val('check2_text','خامات خشب فاخرة')}" style="flex:1"></div>
-                    <div class="flex-row"><input id="fc_check3" placeholder="ميزة 3: تسليم في الوقت المحدد" value="${val('check3_text','تسليم في الوقت المحدد')}" style="flex:1"><input id="fc_check4" placeholder="ميزة 4: ضمان ما بعد التسليم" value="${val('check4_text','ضمان ما بعد التسليم')}" style="flex:1"></div>
-                    <label style="font-weight:700;font-size:.82rem">إحصائيات داخل مربع السلايدر</label>
-                    <div class="flex-row"><input id="fc_about_stat1" placeholder="إحصائية 1: +500" value="${val('about_stat1','+500')}" style="flex:1"><input id="fc_about_stat2" placeholder="إحصائية 2: 4.9 ★" value="${val('about_stat2','4.9 ★')}" style="flex:1"></div>
-                </div>
-
-                <!-- الإحصائيات -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-chart-bar"></i> 7) شريط الإحصائيات (4 أرقام)</h3>
-                    <div class="flex-row"><input id="fc_statBig1" placeholder="رقم 1: +500" value="${val('statBig1','+500')}" style="flex:1"><input id="fc_statBig1_label" placeholder="تسميتها: مشروع منجز" value="${val('statBig1_label','مشروع منجز')}" style="flex:1"></div>
-                    <div class="flex-row"><input id="fc_statBig3" placeholder="رقم 3: 100%" value="${val('statBig3','100%')}" style="flex:1"><input id="fc_statBig3_label" placeholder="تسميتها: التزام بالموعد" value="${val('statBig3_label','التزام بالموعد')}" style="flex:1"></div>
-                    <div class="flex-row"><input id="fc_statBig4" placeholder="رقم 4: 1 سنة" value="${val('statBig4','1 سنة')}" style="flex:1"><input id="fc_statBig4_label" placeholder="تسميتها: ضمان شامل" value="${val('statBig4_label','ضمان شامل')}" style="flex:1"></div>
-                    <small style="color:#888">الإحصائية الثانية (تقييم Google) تظهر تلقائياً من google_rating</small>
-                </div>
-
-                <!-- الأعمال وتواصل وفوتر والخريطة -->
-                <div style="background:white;border:1px solid #eee;border-radius:14px;padding:14px">
-                    <h3 style="color:#b88b4a;margin-bottom:10px"><i class="fas fa-briefcase"></i> 8) الأعمال وتواصل وفوتر والخريطة</h3>
-                    <label style="font-weight:700;font-size:.82rem">عنوان الأعمال</label>
-                    <input id="fc_portfolio_title" placeholder="محفظة أعمال تتحدث عن نفسها" value="${val('portfolio_title','محفظة أعمال تتحدث عن نفسها')}">
-                    <label style="font-weight:700;font-size:.82rem">وصف الأعمال</label>
-                    <textarea id="fc_portfolio_sub" rows="2" placeholder="ألبومات حقيقية...">${esc(d.portfolio_sub||'ألبومات حقيقية من تنفيذنا — اضغط على أي ألبوم لعرض كل الصور والتقييم.')}</textarea>
-                    <input id="fc_portfolio_btn" placeholder="زر الأعمال: اطلب عرض سعر مشابه" value="${val('portfolio_btn','اطلب عرض سعر مشابه')}">
-                    <hr>
-                    <label style="font-weight:700;font-size:.82rem">قسم تواصل</label>
-                    <input id="fc_contact_title" placeholder="جاهز لمشروعك القادم؟" value="${val('contact_title','جاهز لمشروعك القادم؟')}">
-                    <textarea id="fc_contact_sub" rows="2" placeholder="نرد خلال دقائق...">${esc(d.contact_sub||'نرد خلال دقائق — اختر وسيلتك المفضلة')}</textarea>
-                    <div class="flex-row"><input id="fc_contact_phone_label" placeholder="عنوان: اتصل بنا" value="${val('contact_phone_label','اتصل بنا')}" style="flex:1"><input id="fc_contact_phone_value" placeholder="قيمة: 0541780995 — يومياً 9ص-10م" value="${val('contact_phone_value','0541780995 — يومياً 9ص-10م')}" style="flex:1"></div>
-                    <div class="flex-row"><input id="fc_contact_wa_label" placeholder="عنوان: واتساب فوري" value="${val('contact_wa_label','واتساب فوري')}" style="flex:1"><input id="fc_contact_wa_value" placeholder="قيمة: رد خلال 5 دقائق" value="${val('contact_wa_value','رد خلال 5 دقائق')}" style="flex:1"></div>
-                    <div class="flex-row"><input id="fc_contact_loc_label" placeholder="عنوان: الموقع" value="${val('contact_loc_label','الموقع')}" style="flex:1"><input id="fc_contact_loc_value" placeholder="قيمة: جدة - المملكة العربية السعودية" value="${val('contact_loc_value','جدة - المملكة العربية السعودية')}" style="flex:1"></div>
-                    <hr>
-                    <label style="font-weight:700;font-size:.82rem">القائمة العلوية</label>
-                    <div class="flex-row"><input id="fc_nav_home" placeholder="الرئيسية" value="${val('nav_home','الرئيسية')}" style="flex:1"><input id="fc_nav_works" placeholder="أعمالنا" value="${val('nav_works','أعمالنا')}" style="flex:1"><input id="fc_nav_about" placeholder="من نحن" value="${val('nav_about','من نحن')}" style="flex:1"><input id="fc_nav_contact" placeholder="تواصل" value="${val('nav_contact','تواصل')}" style="flex:1"></div>
-                    <input id="fc_nav_cta_btn" placeholder="زر القائمة: أعمالنا" value="${val('nav_cta_btn','أعمالنا')}">
-                    <hr>
-                    <label style="font-weight:700;font-size:.82rem">الفوتر و الخريطة</label>
-                    <textarea id="fc_footer_desc" rows="2" placeholder="وصف الفوتر">${esc(d.footer_desc||'استوديو تصميم وتنفيذ ديكورات معارض ومحلات تجارية بجدة — خشب، دواليب، أرفف، كاونترات بتشطيب فاخر.')}</textarea>
-                    <input id="fc_map_embed" placeholder="رابط الخريطة (goo.gl أو google.com/maps)" value="${val('map_embed_url', d.location_url||d.google_url||'')}" dir="ltr">
-                    <small style="color:#888">الرابط القصير سيتحول تلقائياً لخريطة مضمنة</small>
-                </div>
-
-                <div style="background:#e8f5e9;border:1px solid #a5d6a7;border-radius:12px;padding:12px;display:flex;gap:8px;align-items:center;font-size:13px;color:#2e7d32"><i class="fas fa-info-circle"></i> التقييمات الدوّارة في الهيرو تُدار من قسم التقييمات / Google — والسلايدر من قسم السلايدر</div>
-                <button onclick="saveFullControl()" style="width:100%;padding:14px;font-size:16px;background:#b88b4a;border-radius:12px"><i class="fas fa-save"></i> 💾 حفظ كل النصوص والشعارات (100%)</button>
-            </div>
-        `;
-    }
-    window.saveFullControl=function(){
-        // تحقق من تسجيل الدخول
-        if(!auth.currentUser){ showToast('⚠️ يجب تسجيل الدخول أولاً',true); return; }
-        const btn=event?.target; if(btn){ const orig=btn.innerHTML; btn.innerHTML='⏳ جاري الحفظ...'; btn.disabled=true; setTimeout(()=>{btn.innerHTML=orig; btn.disabled=false;},2000); }
-        try{
-        db.ref(DB_PATH).update({
-                        site_name: document.getElementById('fc_site_name')?.value || '',
-            site_subtitle: document.getElementById('fc_site_subtitle')?.value || '',
-            site_logo_url: document.getElementById('fc_site_logo')?.value || '',
-            whatsapp_num: document.getElementById('fc_whatsapp')?.value || '',
-            hero_badge: document.getElementById('fc_hero_badge')?.value || '',
-            hero_title1: document.getElementById('fc_hero_title1')?.value || '',
-            hero_title_highlight: document.getElementById('fc_hero_highlight')?.value || '',
-            hero_title2: document.getElementById('fc_hero_title2')?.value || '',
-            hero_title_suffix: document.getElementById('fc_hero_suffix')?.value || '',
-            hero_desc: document.getElementById('fc_hero_desc')?.value || '',
-            hero_slider_title: document.getElementById('fc_hero_slider_title')?.value || '',
-            topbar_badge_text: document.getElementById('fc_topbar_badge')?.value || '',
-            topbar_location_text: document.getElementById('fc_topbar_loc')?.value || '',
-            dash_stat1: document.getElementById('fc_dash_stat1')?.value || '',
-            about_stat1: document.getElementById('fc_about_stat1')?.value || '',
-            about_stat2: document.getElementById('fc_about_stat2')?.value || '',
-            services_title: document.getElementById('fc_services_title')?.value || '',
-            services_sub: document.getElementById('fc_services_sub')?.value || '',
-            svc1_title: document.getElementById('fc_svc1')?.value || '',
-            svc2_title: document.getElementById('fc_svc2')?.value || '',
-            svc3_title: document.getElementById('fc_svc3')?.value || '',
-            svc4_title: document.getElementById('fc_svc4')?.value || '',
-            svc5_title: document.getElementById('fc_svc5')?.value || '',
-            svc6_title: document.getElementById('fc_svc6')?.value || '',
-            svc1_icon: document.getElementById('fc_svc1_icon')?.value || '',
-            svc2_icon: document.getElementById('fc_svc2_icon')?.value || '',
-            svc3_icon: document.getElementById('fc_svc3_icon')?.value || '',
-            svc4_icon: document.getElementById('fc_svc4_icon')?.value || '',
-            svc5_icon: document.getElementById('fc_svc5_icon')?.value || '',
-            svc6_icon: document.getElementById('fc_svc6_icon')?.value || '',
-            about_title: document.getElementById('fc_about_title')?.value || '',
-            about_desc: document.getElementById('fc_about_desc')?.value || '',
-            check1_text: document.getElementById('fc_check1')?.value || '',
-            check2_text: document.getElementById('fc_check2')?.value || '',
-            check3_text: document.getElementById('fc_check3')?.value || '',
-            check4_text: document.getElementById('fc_check4')?.value || '',
-            topbar_status: document.getElementById('fc_topbar_status')?.value || '',
-            hero_btn1_text: document.getElementById('fc_hero_btn1')?.value || '',
-            hero_btn2_text: document.getElementById('fc_hero_btn2')?.value || '',
-            stat1_label: document.getElementById('fc_stat1_label')?.value || '',
-            stat3_value: document.getElementById('fc_stat3_val')?.value || '',
-            stat3_label: document.getElementById('fc_stat3_label')?.value || '',
-            client1_text: document.getElementById('fc_client1')?.value || '',
-            client2_text: document.getElementById('fc_client2')?.value || '',
-            client3_text: document.getElementById('fc_client3')?.value || '',
-            client4_text: document.getElementById('fc_client4')?.value || '',
-            svc1_desc: document.getElementById('fc_svc1_desc')?.value || '',
-            svc2_desc: document.getElementById('fc_svc2_desc')?.value || '',
-            svc3_desc: document.getElementById('fc_svc3_desc')?.value || '',
-            svc4_desc: document.getElementById('fc_svc4_desc')?.value || '',
-            svc5_desc: document.getElementById('fc_svc5_desc')?.value || '',
-            svc6_desc: document.getElementById('fc_svc6_desc')?.value || '',
-            portfolio_title: document.getElementById('fc_portfolio_title')?.value || '',
-            portfolio_sub: document.getElementById('fc_portfolio_sub')?.value || '',
-            statBig1: document.getElementById('fc_statBig1')?.value || '',
-            statBig1_label: document.getElementById('fc_statBig1_label')?.value || '',
-            statBig3: document.getElementById('fc_statBig3')?.value || '',
-            statBig3_label: document.getElementById('fc_statBig3_label')?.value || '',
-            statBig4: document.getElementById('fc_statBig4')?.value || '',
-            statBig4_label: document.getElementById('fc_statBig4_label')?.value || '',
-            contact_title: document.getElementById('fc_contact_title')?.value || '',
-            contact_sub: document.getElementById('fc_contact_sub')?.value || '',
-            footer_desc: document.getElementById('fc_footer_desc')?.value || '',
-            nav_home: document.getElementById('fc_nav_home')?.value || '',
-            nav_works: document.getElementById('fc_nav_works')?.value || '',
-            nav_about: document.getElementById('fc_nav_about')?.value || '',
-            nav_contact: document.getElementById('fc_nav_contact')?.value || '',
-            nav_cta_btn: document.getElementById('fc_nav_cta_btn')?.value || '',
-            svc1_btn: document.getElementById('fc_svc1_btn')?.value || '',
-            svc2_btn: document.getElementById('fc_svc2_btn')?.value || '',
-            svc3_btn: document.getElementById('fc_svc3_btn')?.value || '',
-            svc4_btn: document.getElementById('fc_svc4_btn')?.value || '',
-            svc5_btn: document.getElementById('fc_svc5_btn')?.value || '',
-            svc6_btn: document.getElementById('fc_svc6_btn')?.value || '',
-            portfolio_btn: document.getElementById('fc_portfolio_btn')?.value || '',
-            contact_phone_label: document.getElementById('fc_contact_phone_label')?.value || '',
-            contact_phone_value: document.getElementById('fc_contact_phone_value')?.value || '',
-            contact_wa_label: document.getElementById('fc_contact_wa_label')?.value || '',
-            contact_wa_value: document.getElementById('fc_contact_wa_value')?.value || '',
-            contact_loc_label: document.getElementById('fc_contact_loc_label')?.value || '',
-            contact_loc_value: document.getElementById('fc_contact_loc_value')?.value || '',
-            map_embed_url: document.getElementById('fc_map_embed')?.value || '',
-            location_url: document.getElementById('fc_map_embed')?.value || ''
-        }).then(()=>{ showToast('✅ تم حفظ كل النصوص - تحدث مباشرة في الموقع'); console.log('saved', new Date()); }).catch(e=>{ showToast('❌ خطأ: '+e.message,true); console.error(e); });
-        }catch(e){ showToast('❌ خطأ: '+e.message,true); console.error(e); }
-    };
     // ========== 1. الإعدادات العامة ==========
     function renderGeneral() {
         const d = currentData;
