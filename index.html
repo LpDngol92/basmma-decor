@@ -358,6 +358,17 @@
             .store-modal-info{padding:18px}
         }
 
+
+        /* ============ STORE CLOSED OVERLAY V2.2 (blocks page, tabs stay clickable) ============ */
+        .store-closed-overlay{position:fixed;inset:0;z-index:950;display:none;align-items:center;justify-content:center;background:rgba(250,248,245,0.97);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:20px}
+        .store-closed-overlay.visible{display:flex;animation:storeFadeIn .28s ease}
+        .store-closed-card{background:#fff;border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow-lg);max-width:480px;width:100%;text-align:center;padding:44px 28px;animation:storePop .3s cubic-bezier(.4,0,.2,1)}
+        .store-closed-icon{font-size:3.4rem;margin-bottom:12px}
+        .store-closed-title{font-size:1.25rem;font-weight:800;color:#1a1a1a;margin-bottom:8px}
+        .store-closed-msg{font-size:.95rem;color:#5a554f;line-height:1.9;white-space:pre-line}
+        .store-closed-wa{margin-top:20px;background:linear-gradient(135deg,#25D366,#1da851);color:#fff;font-weight:800;font-size:.88rem;padding:12px 26px;border-radius:999px;display:inline-flex;align-items:center;gap:8px;box-shadow:0 10px 26px rgba(37,211,102,0.28);transition:var(--transition)}
+        .store-closed-wa:hover{transform:translateY(-2px)}
+
 </style>
 </head>
 <body>
@@ -407,6 +418,9 @@
     <!-- ========== MAIN ========== -->
     <main id="mainContent"></main>
 
+    <!-- ========== STORE CLOSED OVERLAY (V2.2) ========== -->
+    <div id="storeClosedOverlay" class="store-closed-overlay"></div>
+
     <!-- ========== FOOTER ========== -->
         <footer class="footer">
         <div class="container">
@@ -448,7 +462,7 @@
     </footer>
 
     
-    <!-- ========== STORE QUICK VIEW (V2) ========== -->
+    <!-- ========== STORE OVERLAY V2.2 ========== -->
     <div id="storeModal" class="store-modal" onclick="if(event.target===this) closeStoreModal()">
         <div class="store-modal-box">
             <button class="store-modal-close" onclick="closeStoreModal()"><i class="fas fa-times"></i></button>
@@ -1741,9 +1755,28 @@
                     'data-album'))); });
         }
 
+        // 🚪 هل المتجر مغلق؟ (يقبل true / "true" / 1 — حماية من أي صيغة حفظ)
+        function isStoreClosed() {
+            if (!currentData) return false;
+            const v = currentData.store_closed;
+            return v === true || v === 'true' || v === 1 || v === '1';
+        }
         function buildAllProductsGrid() {
             const cont = document.getElementById('allProductsGrid');
             if (!cont) return;
+            // 🚪 بوابة إغلاق المتجر — تُدار من لوحة الإدارة (زر فتح/إغلاق + رسالة)
+            if (isStoreClosed()) {
+                const closedMsg = currentData.store_closed_message || '🛍️ قريباً — نجهز لكم تشكيلة جديدة';
+                cont.innerHTML = `<div class="empty-state" style="padding:70px 20px">
+                    <div style="font-size:3rem;margin-bottom:12px">🛍️</div>
+                    <div style="font-size:1.15rem;font-weight:800;color:#1a1a1a;margin-bottom:8px">المتجر مغلق حالياً</div>
+                    <div style="font-size:.95rem;color:#5a554f;max-width:480px;margin:0 auto">${escapeHtml(closedMsg)}</div>
+                    <br><a class="btn btn-whatsapp" href="https://wa.me/${currentWhatsappNum}" target="_blank" style="display:inline-flex"><i class="fab fa-whatsapp"></i> تواصل واتساب</a>
+                </div>`;
+                storeProductsCache = [];
+                return;
+            }
+            try { console.log('[STORE] closed =', currentData.store_closed); } catch(e) {}
             storeProductsCache = getAllStoreProductsRich();
             const cats = getStoreCategoriesList();
             // حفظ الفلتر الحالي إن وجد، وإلا إعادة تعيين عند تغير الأقسام
@@ -1778,6 +1811,8 @@
         }
 
         function renderStoreProducts() {
+            // حماية مزدوجة: لو أُغلق المتجر أثناء العرض، اعرض رسالة الإغلاق فوراً
+            if (isStoreClosed()) { buildAllProductsGrid(); return; }
             const wrap = document.getElementById('storeGridInner');
             if (!wrap) return;
             const arr = getFilteredStoreProducts();
@@ -2083,6 +2118,22 @@
         // ================================================================
         // LOAD PAGE
         // ================================================================
+        // 🛡️ طبقة إغلاق المتجر V2.2 — تحجب كامل الصفحة (التبويبات تبقى شغالة لأن الهيدر فوقها)
+        function updateStoreClosedOverlay() {
+            const ov = document.getElementById('storeClosedOverlay');
+            if (!ov) return;
+            let show = false;
+            try { show = (currentPage === 'store' && typeof isStoreClosed === 'function' && isStoreClosed()); } catch(e) { show = false; }
+            if (!show) { ov.classList.remove('visible'); ov.innerHTML = ''; return; }
+            const msg = (currentData && currentData.store_closed_message) ? currentData.store_closed_message : 'قريباً — نجهز لكم تشكيلة جديدة';
+            ov.innerHTML =
+                `<div class="store-closed-card"><div class="store-closed-icon">🛍️</div>`
+                + `<div class="store-closed-title">المتجر مغلق حالياً</div>`
+                + `<div class="store-closed-msg">${escapeHtml(msg)}</div>`
+                + `<br><a class="store-closed-wa" href="https://wa.me/${currentWhatsappNum}" target="_blank"><i class="fab fa-whatsapp"></i> تواصل واتساب</a></div>`;
+            ov.classList.add('visible');
+            try { console.log('[STORE-OVERLAY] visible, msg =', msg); } catch(e) {}
+        }
         function loadPage() {
             const main = document.getElementById('mainContent');
             if (!main) return;
@@ -2151,6 +2202,7 @@ buildHomeSlider();
             renderNavLinks();
             bindHeroButtons();
             updatePageTitle();
+            updateStoreClosedOverlay();
         }
 
         // ================================================================
@@ -2234,6 +2286,7 @@ buildHomeSlider();
         function refreshSmart(newData) {
             const oldData = currentData || {};
             currentData = newData || {};
+            try { updateStoreClosedOverlay(); } catch(e) {}
 
             // Cheap & idempotent — safe to run on every tick, no visual reset if unchanged.
             updateMaintenanceMode();
@@ -2261,7 +2314,7 @@ buildHomeSlider();
                     buildHomeSlider();
                 }
             } else if (currentPage === 'store') {
-                if (JSON.stringify(oldData.store_categories) !== JSON.stringify(currentData.store_categories) || JSON.stringify(oldData.store_products) !== JSON.stringify(currentData.store_products)) {
+                if (JSON.stringify(oldData.store_categories) !== JSON.stringify(currentData.store_categories) || JSON.stringify(oldData.store_products) !== JSON.stringify(currentData.store_products) || oldData.store_closed !== currentData.store_closed || oldData.store_closed_message !== currentData.store_closed_message) {
                     buildAllProductsGrid();
                 }
             } else if (currentPage === 'works') {
