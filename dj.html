@@ -75,7 +75,7 @@
         .refresh-indicator { position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-40px); background: #333; color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; z-index: 9998; transition: transform .2s ease; }
         .refresh-indicator.show { transform: translateX(-50%) translateY(0); }
     
-        /* ============ STORE ADMIN V2 (full control + open/close) ============ */
+        /* ============ STORE ADMIN V2.1 (full control + open/close - closed-fix) ============ */
         .store-admin-status{display:flex;justify-content:space-between;align-items:center;gap:12px;border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid #eee}
         .store-admin-status.open{background:#e9f7ef;border-color:#bfe6cd}
         .store-admin-status.closed{background:#fdecea;border-color:#f5c6cb}
@@ -606,14 +606,15 @@
         let html = `
             <div class="store-admin-status ${closed ? 'closed' : 'open'}">
                 <div><b>${closed ? '🔴 المتجر مغلق الآن' : '🟢 المتجر مفتوح الآن'}</b>
-                <small>${closed ? 'الزوار يرون رسالة الإغلاق فقط ولا يرون أي منتج' : 'الزوار يرون كل المنتجات ويقدرون يطلبون عبر واتساب'}</small></div>
+                <small>${closed ? 'الزوار يرون رسالة الإغلاق فقط ولا يرون أي منتج' : 'الزوار يرون كل المنتجات ويقدرون يطلبون عبر واتساب'}</small>
+                <small style="color:#999">القيمة المحفوظة في القاعدة الآن: <b>${closed ? 'مغلق 🔴' : 'مفتوح 🟢'}</b></small></div>
                 <label class="switch" title="فتح / إغلاق المتجر"><input type="checkbox" id="storeClosedToggle" ${closed ? 'checked' : ''} onchange="saveStoreStatus()"><span></span></label>
             </div>
             <div class="vertical-group">
                 <label><strong>✏️ رسالة الإغلاق — تظهر للزوار عند إغلاق المتجر (مثال: قريبا)</strong></label>
                 <textarea id="storeClosedMsg" rows="2" placeholder="مثال: 🛍️ قريبا — نجهز لكم تشكيلة جديدة">${escA(closedMsg)}</textarea>
                 <button onclick="saveStoreStatus()">💾 حفظ حالة المتجر والرسالة</button>
-                <small style="color:#666">💡 الإغلاق خاص بقسم المتجر فقط (مثل الصيانة) — باقي الموقع يعمل طبيعي. الزر أعلاه = إغلاق فوري.</small>
+                <small style="color:#666">💡 الإغلاق خاص بقسم المتجر فقط (مثل الصيانة) — باقي الموقع يعمل طبيعي. الزر أعلاه = إغلاق فوري.<br>⚠️ مهم: افتح ملف الموقع الجديد (الموقع-المتجر-الجديد) وليس القديم، وحدّث الصفحة بـ Ctrl+F5 بعد الحفظ لترى النتيجة كزائر.</small>
             </div>
             <hr>
             <div class="store-stats-row"><div class="mini-stat">📁 الأقسام: ${Object.keys(cats).length}</div><div class="mini-stat">📦 المنتجات: ${totalProducts}</div></div>
@@ -692,7 +693,11 @@
         const msgEl = document.getElementById('storeClosedMsg');
         const msg = msgEl ? msgEl.value.trim() : '';
         db.ref(DB_PATH).update({ store_closed: closed, store_closed_message: msg })
-            .then(() => showToast(closed ? '🔴 تم إغلاق المتجر — الزوار يرون الرسالة فقط' : '🟢 المتجر مفتوح الآن'));
+            .then(() => {
+                showToast(closed ? '🔴 تم إغلاق المتجر — الزوار يرون الرسالة فقط' : '🟢 المتجر مفتوح الآن — الزوار يرون المنتجات');
+                loadData(true); // إعادة تحميل فورية من القاعدة للتأكد أن الحفظ تم فعلاً
+            })
+            .catch(() => showToast('❌ فشل الحفظ — تحقق من الاتصال', true));
     };
     // --- الأقسام ---
     window.addStoreCat = function() { const name = document.getElementById('newCatName').value.trim(); if(!name) { showToast('أدخل اسم القسم', true); return; } db.ref(`${DB_PATH}/store_categories/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData(true)); document.getElementById('newCatName').value = ''; };
