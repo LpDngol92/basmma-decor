@@ -74,6 +74,32 @@
         #dynamicDropdownsContainer { transition: opacity .15s ease; }
         .refresh-indicator { position: fixed; top: 14px; left: 50%; transform: translateX(-50%) translateY(-40px); background: #333; color: #fff; padding: 6px 16px; border-radius: 20px; font-size: 12px; z-index: 9998; transition: transform .2s ease; }
         .refresh-indicator.show { transform: translateX(-50%) translateY(0); }
+    
+        /* ============ STORE ADMIN V2 (full control + open/close) ============ */
+        .store-admin-status{display:flex;justify-content:space-between;align-items:center;gap:12px;border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid #eee}
+        .store-admin-status.open{background:#e9f7ef;border-color:#bfe6cd}
+        .store-admin-status.closed{background:#fdecea;border-color:#f5c6cb}
+        .store-admin-status b{font-size:.95rem}
+        .store-admin-status small{display:block;color:#666;font-size:.75rem}
+        .switch{position:relative;width:52px;height:28px;flex-shrink:0;display:inline-block}
+        .switch input{opacity:0;width:0;height:0}
+        .switch span{position:absolute;inset:0;background:#ccc;border-radius:999px;transition:.25s;cursor:pointer}
+        .switch span:before{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:3px;right:3px;transition:.25s;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+        .switch input:checked + span{background:#dc3545}
+        .switch input:checked + span:before{transform:translateX(-24px)}
+        .store-stats-row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+        .store-stats-row .mini-stat{background:#f8f9fa;border:1px solid #eee;border-radius:10px;padding:8px 14px;font-size:.82rem;font-weight:700}
+        .prod-card{background:#fff;border:1px solid #e9ecef;border-radius:12px;padding:12px;margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap}
+        .prod-thumb{width:110px;height:110px;border-radius:10px;object-fit:cover;border:1px solid #ddd;background:#f5f5f5;cursor:pointer;flex-shrink:0}
+        .prod-fields{flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px}
+        .prod-fields input,.prod-fields textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:8px;font-size:.82rem}
+        .prod-fields textarea{min-height:52px;resize:vertical}
+        .prod-row2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+        @media(max-width:600px){.prod-row2{grid-template-columns:1fr 1fr}}
+        .prod-btns{display:flex;gap:8px;flex-wrap:wrap}
+        .btn-green{background:#28a745}.btn-green:hover{background:#218838}
+        .add-prod-box{background:#f0faf3;border:1px dashed #28a745;border-radius:12px;padding:14px;margin-top:10px;display:flex;flex-direction:column;gap:8px}
+
     </style>
 </head>
 <body>
@@ -196,7 +222,7 @@
         
         document.getElementById('statsContainer').innerHTML = `
             <div class="stat-card"><i class="fas fa-folder"></i><h3>${Object.keys(currentData.albums || {}).length}</h3><p>الألبومات</p></div>
-            <div class="stat-card"><i class="fas fa-store"></i><h3>${Object.keys(currentData.store_categories || {}).length}</h3><p>المتجر</p></div>
+            <div class="stat-card"><i class="fas fa-store"></i><h3>${Object.keys(currentData.store_categories || {}).length} / ${Object.values(currentData.store_categories || {}).reduce((n,c)=>n+(c.imgs?Object.keys(c.imgs).length:0),0)}</h3><p>أقسام / منتجات المتجر</p></div>
             <div class="stat-card"><i class="fas fa-link"></i><h3>${(currentData.social_links || []).length}</h3><p>روابط إضافية</p></div>
             <div class="stat-card"><i class="fas fa-images"></i><h3>${totalSplash}</h3><p>صور البداية</p></div>
         `;
@@ -208,7 +234,7 @@
             { id: 'slider', title: '🏠 السلايدر', icon: 'fas fa-images', render: renderSlider },
             { id: 'splash', title: '🎬 شاشة البداية', icon: 'fas fa-film', render: renderSplash },
             { id: 'albums', title: '📁 الألبومات (قوائم منسدلة لكل ألبوم)', icon: 'fas fa-folder-open', render: renderAlbums },
-            { id: 'store', title: '🛍️ المتجر (قوائم منسدلة لكل قسم)', icon: 'fas fa-store', render: renderStore },
+            { id: 'store', title: '🛍️ المتجر (تحكم كامل + فتح/إغلاق)', icon: 'fas fa-store', render: renderStore },
             { id: 'social', title: '🔗 الروابط الاجتماعية (أساسية + إضافية)', icon: 'fas fa-link', render: renderSocialLinks },
             { id: 'partners', title: '🤝 الشركاء', icon: 'fas fa-handshake', render: renderPartners },
             { id: 'catalogs', title: '📚 الكتالوجات', icon: 'fas fa-book', render: renderCatalogs },
@@ -557,51 +583,149 @@
     window.deleteImageFromAlbum = function(albumId, imgId) { db.ref(`${DB_PATH}/albums/${albumId}/imgs/${imgId}`).remove().then(() => loadData(true)); };
 
     // ========== 5. المتجر (قوائم منسدلة لكل قسم) ==========
+    // ========== 5. المتجر (تحكم كامل + فتح/إغلاق) ==========
+    // مخطط قاعدة البيانات (ارتباط مباشر — نفس المسارات التي يقرأ منها الموقع):
+    //   site_v28/store_closed = true/false  (إغلاق قسم المتجر فقط مثل الصيانة)
+    //   site_v28/store_closed_message = "نص الرسالة للزوار (مثال: قريبا)"
+    //   site_v28/store_categories/{catId} = { name, imgs: {...} }
+    //   site_v28/store_categories/{catId}/imgs/{imgId} = { url, name, desc, price, oldPrice, badge }
+    function escA(v) { return String(v === undefined || v === null ? '' : v).replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+    function numOrStr(v) {
+        v = String(v === undefined || v === null ? '' : v).trim();
+        if (v === '') return '';
+        if (/^[0-9]+(\.[0-9]+)?$/.test(v)) return parseFloat(v);
+        return v;
+    }
     function renderStore() {
-        const cats = currentData.store_categories || {};
-        let html = `<div id="storeNestedContainer"></div><hr><div class="vertical-group"><input id="newCatName" placeholder="اسم القسم الجديد"><button onclick="addStoreCat()">➕ إضافة قسم</button></div>`;
+        const d = currentData;
+        const cats = d.store_categories || {};
+        const closed = d.store_closed === true;
+        const closedMsg = d.store_closed_message || '';
+        let totalProducts = 0;
+        Object.keys(cats).forEach(cid => { if (cats[cid].imgs) totalProducts += Object.keys(cats[cid].imgs).length; });
+        let html = `
+            <div class="store-admin-status ${closed ? 'closed' : 'open'}">
+                <div><b>${closed ? '🔴 المتجر مغلق الآن' : '🟢 المتجر مفتوح الآن'}</b>
+                <small>${closed ? 'الزوار يرون رسالة الإغلاق فقط ولا يرون أي منتج' : 'الزوار يرون كل المنتجات ويقدرون يطلبون عبر واتساب'}</small></div>
+                <label class="switch" title="فتح / إغلاق المتجر"><input type="checkbox" id="storeClosedToggle" ${closed ? 'checked' : ''} onchange="saveStoreStatus()"><span></span></label>
+            </div>
+            <div class="vertical-group">
+                <label><strong>✏️ رسالة الإغلاق — تظهر للزوار عند إغلاق المتجر (مثال: قريبا)</strong></label>
+                <textarea id="storeClosedMsg" rows="2" placeholder="مثال: 🛍️ قريبا — نجهز لكم تشكيلة جديدة">${escA(closedMsg)}</textarea>
+                <button onclick="saveStoreStatus()">💾 حفظ حالة المتجر والرسالة</button>
+                <small style="color:#666">💡 الإغلاق خاص بقسم المتجر فقط (مثل الصيانة) — باقي الموقع يعمل طبيعي. الزر أعلاه = إغلاق فوري.</small>
+            </div>
+            <hr>
+            <div class="store-stats-row"><div class="mini-stat">📁 الأقسام: ${Object.keys(cats).length}</div><div class="mini-stat">📦 المنتجات: ${totalProducts}</div></div>
+            <div id="storeNestedContainer"></div><hr>
+            <div class="vertical-group"><input id="newCatName" placeholder="اسم القسم الجديد"><button onclick="addStoreCat()">➕ إضافة قسم</button></div>`;
         document.getElementById('content-store').innerHTML = html;
         const container = document.getElementById('storeNestedContainer');
         container.innerHTML = '';
         Object.keys(cats).forEach(catId => {
-            const cat = cats[catId];
+            const cat = cats[catId] || {};
+            const count = cat.imgs ? Object.keys(cat.imgs).length : 0;
             const div = document.createElement('div');
             div.className = 'nested-dropdown';
             div.innerHTML = `
                 <div class="nested-header" onclick="toggleNested('store_${catId}')">
-                    <span><i class="fas fa-tag"></i> ${(cat.name || 'قسم').replace(/"/g, '&quot;')}</span>
+                    <span><i class="fas fa-tag"></i> ${escA(cat.name || 'قسم')} <small style="color:#888">(${count} منتج)</small></span>
                     <span>▼</span>
                 </div>
                 <div class="nested-content" id="nested-store_${catId}">
                     <div class="vertical-group">
-                        <input type="text" id="catName_${catId}" value="${(cat.name || '').replace(/"/g, '&quot;')}" placeholder="اسم القسم">
-                        <button onclick="updateStoreCat('${catId}')">تحديث</button>
-                        <button class="btn-red" onclick="deleteStoreCat('${catId}')">حذف القسم</button>
-                        <hr>
-                        <div class="images-grid" id="catImgs_${catId}"></div>
-                        <input type="text" id="catImgUrl_${catId}" placeholder="رابط منتج مفرد">
-                        <button onclick="addStoreProduct('${catId}')">➕ إضافة منتج مفرد</button>
-                        <label><strong>إضافة عدة منتجات دفعة واحدة (كل رابط في سطر)</strong></label>
-                        <textarea id="bulkStoreImgs_${catId}" rows="6" class="bulk-textarea" placeholder="https://example.com/product1.jpg\nhttps://example.com/product2.jpg"></textarea>
-                        <button onclick="addBulkStoreProducts('${catId}')">➕ إضافة جميع المنتجات دفعة واحدة</button>
+                        <input type="text" id="catName_${catId}" value="${escA(cat.name || '')}" placeholder="اسم القسم">
+                        <div class="prod-btns"><button onclick="updateStoreCat('${catId}')">💾 تحديث اسم القسم</button>
+                        <button class="btn-red" onclick="deleteStoreCat('${catId}')">🗑️ حذف القسم بكل منتجاته</button></div>
+                        <hr><label><strong>📦 منتجات هذا القسم (${count})</strong></label>
+                        <div id="storeProds_${catId}"></div>
+                        <div class="add-prod-box">
+                            <label><strong>➕ إضافة منتج جديد (صورة + وصف + سعر)</strong></label>
+                            <input type="text" id="pUrl_${catId}" placeholder="🔗 رابط الصورة * (إلزامي)" dir="ltr">
+                            <input type="text" id="pName_${catId}" placeholder="📌 اسم المنتج (مثال: رف خشبي فاخر)">
+                            <textarea id="pDesc_${catId}" placeholder="📝 وصف المنتج (الخامة، المقاس، التفاصيل...)"></textarea>
+                            <div class="prod-row2">
+                                <input type="text" id="pPrice_${catId}" placeholder="💰 السعر (مثال: 1200)">
+                                <input type="text" id="pOld_${catId}" placeholder="💸 قبل الخصم (اختياري)">
+                                <input type="text" id="pBadge_${catId}" placeholder="🏷️ شارة (جديد/حصري)">
+                            </div>
+                            <button class="btn-green" onclick="addStoreProductFull('${catId}')">➕ إضافة المنتج للقاعدة</button>
+                        </div>
+                        <label style="margin-top:10px"><strong>⚡ إضافة عدة صور دفعة واحدة (كل رابط في سطر — تُنشأ منتجات بلا وصف ثم تعدلها)</strong></label>
+                        <textarea id="bulkStoreImgs_${catId}" rows="4" class="bulk-textarea" placeholder="https://example.com/product1.jpg\nhttps://example.com/product2.jpg"></textarea>
+                        <button onclick="addBulkStoreProducts('${catId}')">➕ إضافة دفعة واحدة</button>
                     </div>
                 </div>
             `;
             container.appendChild(div);
-            const imgsGrid = document.getElementById(`catImgs_${catId}`);
-            if(imgsGrid && cat.imgs) {
+            const listEl = document.getElementById(`storeProds_${catId}`);
+            if (listEl && cat.imgs) {
                 Object.keys(cat.imgs).forEach(imgId => {
-                    const card = document.createElement('div'); card.className = 'image-card';
-                    card.innerHTML = `<img src="${cat.imgs[imgId].url}" onclick="openLightbox('${cat.imgs[imgId].url}')"><span class="delete-img-btn" onclick="event.stopPropagation(); deleteStoreProduct('${catId}','${imgId}')">✖</span>`;
-                    imgsGrid.appendChild(card);
+                    const p = cat.imgs[imgId] || {};
+                    const card = document.createElement('div');
+                    card.className = 'prod-card';
+                    card.innerHTML = `
+                        <img class="prod-thumb" src="${escA(p.url || '')}" onclick="openLightbox('${escA(p.url || '')}')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 fill=%22%23eee%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2212%22 text-anchor=%22middle%22 dy=%22.3em%22%3Eلا صورة%3C/text%3E%3C/svg%3E'">
+                        <div class="prod-fields">
+                            <input type="text" id="eUrl_${catId}_${imgId}" value="${escA(p.url || '')}" placeholder="🔗 رابط الصورة" dir="ltr">
+                            <input type="text" id="eName_${catId}_${imgId}" value="${escA(p.name || '')}" placeholder="📌 اسم المنتج">
+                            <textarea id="eDesc_${catId}_${imgId}" placeholder="📝 الوصف">${escA(p.desc || '')}</textarea>
+                            <div class="prod-row2">
+                                <input type="text" id="ePrice_${catId}_${imgId}" value="${escA(p.price === undefined || p.price === null ? '' : p.price)}" placeholder="💰 السعر">
+                                <input type="text" id="eOld_${catId}_${imgId}" value="${escA(p.oldPrice === undefined || p.oldPrice === null ? '' : p.oldPrice)}" placeholder="💸 قبل الخصم">
+                                <input type="text" id="eBadge_${catId}_${imgId}" value="${escA(p.badge || '')}" placeholder="🏷️ شارة">
+                            </div>
+                            <div class="prod-btns">
+                                <button class="btn-green" onclick="updateStoreProduct('${catId}','${imgId}')">💾 حفظ التعديل</button>
+                                <button onclick="openLightbox(document.getElementById('eUrl_${catId}_${imgId}').value)">👁️ معاينة</button>
+                                <button class="btn-red" onclick="deleteStoreProduct('${catId}','${imgId}')">🗑️ حذف</button>
+                            </div>
+                        </div>`;
+                    listEl.appendChild(card);
                 });
             }
         });
     }
-    window.addStoreCat = function() { const name = document.getElementById('newCatName').value.trim(); if(!name) return; db.ref(`${DB_PATH}/store_categories/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData(true)); document.getElementById('newCatName').value = ''; };
+    // --- حالة المتجر (فتح/إغلاق + رسالة) — حفظ مباشر في قاعدة البيانات ---
+    window.saveStoreStatus = function() {
+        const closed = document.getElementById('storeClosedToggle') ? document.getElementById('storeClosedToggle').checked : false;
+        const msgEl = document.getElementById('storeClosedMsg');
+        const msg = msgEl ? msgEl.value.trim() : '';
+        db.ref(DB_PATH).update({ store_closed: closed, store_closed_message: msg })
+            .then(() => showToast(closed ? '🔴 تم إغلاق المتجر — الزوار يرون الرسالة فقط' : '🟢 المتجر مفتوح الآن'));
+    };
+    // --- الأقسام ---
+    window.addStoreCat = function() { const name = document.getElementById('newCatName').value.trim(); if(!name) { showToast('أدخل اسم القسم', true); return; } db.ref(`${DB_PATH}/store_categories/${Date.now()}`).set({ name, imgs: {} }).then(() => loadData(true)); document.getElementById('newCatName').value = ''; };
     window.updateStoreCat = function(id) { db.ref(`${DB_PATH}/store_categories/${id}/name`).set(document.getElementById(`catName_${id}`).value).then(() => showToast('تم التحديث')); };
-    window.deleteStoreCat = function(id) { if(confirm('حذف القسم؟')) db.ref(`${DB_PATH}/store_categories/${id}`).remove().then(() => loadData(true)); };
-    window.addStoreProduct = function(catId) { const url = document.getElementById(`catImgUrl_${catId}`).value.trim(); if(!url) return; db.ref(`${DB_PATH}/store_categories/${catId}/imgs`).push({ url }).then(() => loadData(true)); document.getElementById(`catImgUrl_${catId}`).value = ''; };
+    window.deleteStoreCat = function(id) { if(confirm('حذف القسم بكل منتجاته؟')) db.ref(`${DB_PATH}/store_categories/${id}`).remove().then(() => loadData(true)); };
+    // --- المنتجات (صورة + اسم + وصف + سعر + قبل الخصم + شارة) ---
+    window.addStoreProductFull = function(catId) {
+        const url = document.getElementById(`pUrl_${catId}`).value.trim();
+        if(!url) { showToast('رابط الصورة إلزامي', true); return; }
+        const obj = {
+            url,
+            name: document.getElementById(`pName_${catId}`).value.trim(),
+            desc: document.getElementById(`pDesc_${catId}`).value.trim(),
+            price: numOrStr(document.getElementById(`pPrice_${catId}`).value),
+            oldPrice: numOrStr(document.getElementById(`pOld_${catId}`).value),
+            badge: document.getElementById(`pBadge_${catId}`).value.trim()
+        };
+        db.ref(`${DB_PATH}/store_categories/${catId}/imgs`).push(obj).then(() => { loadData(true); showToast('✅ تمت إضافة المنتج — ظهر الآن في الموقع مباشرة'); });
+    };
+    // توافق: الزر القديم (رابط فقط) — يُنشئ منتجاً بلا وصف ثم تعدّله من الحقول
+    window.addStoreProduct = function(catId) { const url = document.getElementById(`catImgUrl_${catId}`) ? document.getElementById(`catImgUrl_${catId}`).value.trim() : ''; if(!url) { showToast('أدخل رابط الصورة', true); return; } db.ref(`${DB_PATH}/store_categories/${catId}/imgs`).push({ url, name: '', desc: '', price: '', oldPrice: '', badge: '' }).then(() => loadData(true)); };
+    window.updateStoreProduct = function(catId, imgId) {
+        const obj = {
+            url: document.getElementById(`eUrl_${catId}_${imgId}`).value.trim(),
+            name: document.getElementById(`eName_${catId}_${imgId}`).value.trim(),
+            desc: document.getElementById(`eDesc_${catId}_${imgId}`).value.trim(),
+            price: numOrStr(document.getElementById(`ePrice_${catId}_${imgId}`).value),
+            oldPrice: numOrStr(document.getElementById(`eOld_${catId}_${imgId}`).value),
+            badge: document.getElementById(`eBadge_${catId}_${imgId}`).value.trim()
+        };
+        if(!obj.url) { showToast('رابط الصورة إلزامي', true); return; }
+        db.ref(`${DB_PATH}/store_categories/${catId}/imgs/${imgId}`).update(obj).then(() => showToast('✅ تم حفظ المنتج — تحدّث في الموقع مباشرة'));
+    };
     window.addBulkStoreProducts = function(catId) {
         const text = document.getElementById(`bulkStoreImgs_${catId}`).value;
         if(!text.trim()) { showToast('أدخل روابط المنتجات', true); return; }
@@ -610,17 +734,17 @@
         let count = 0;
         for(let line of lines) {
             let url = line.trim();
-            if(url && (url.startsWith('http') || url.startsWith('https'))) {
+            if(url && (url.startsWith('http://') || url.startsWith('https://'))) {
                 const newKey = Date.now() + '_' + count;
-                updates[`${DB_PATH}/store_categories/${catId}/imgs/${newKey}`] = { url };
+                updates[`${DB_PATH}/store_categories/${catId}/imgs/${newKey}`] = { url, name: '', desc: '', price: '', oldPrice: '', badge: '' };
                 count++;
             }
         }
         if(count === 0) { showToast('لا توجد روابط صالحة', true); return; }
-        db.ref().update(updates).then(() => { loadData(true); showToast(`تمت إضافة ${count} منتج`); });
+        db.ref().update(updates).then(() => { loadData(true); showToast(`تمت إضافة ${count} منتج — عدّل الاسم والوصف والسعر لكل واحد`); });
         document.getElementById(`bulkStoreImgs_${catId}`).value = '';
     };
-    window.deleteStoreProduct = function(catId, imgId) { db.ref(`${DB_PATH}/store_categories/${catId}/imgs/${imgId}`).remove().then(() => loadData(true)); };
+    window.deleteStoreProduct = function(catId, imgId) { if(confirm('حذف هذا المنتج نهائياً؟')) db.ref(`${DB_PATH}/store_categories/${catId}/imgs/${imgId}`).remove().then(() => loadData(true)); };
 
     // ========== 6. الروابط الاجتماعية ==========
     function renderSocialLinks() {
