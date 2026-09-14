@@ -155,7 +155,7 @@
         .shelf-veil{position:absolute;inset:0;background:linear-gradient(0deg,rgba(12,9,5,.88) 0%,rgba(12,9,5,.15) 55%,rgba(12,9,5,.25) 100%)}
         .shelf-body{position:absolute;right:0;left:0;bottom:0;padding:20px;color:var(--cream)}
         .shelf-idx{font-family:var(--display);font-weight:900;font-size:.7rem;color:var(--brass);letter-spacing:.14em;margin-bottom:6px}
-        .shelf-name{font-family:var(--display);font-weight:900;font-size:1.25rem;line-height:1.25;text-shadow:0 2px 14px rgba(0,0,0,.5)}
+        .shelf-name{font-family:var(--display);font-weight:900;font-size:1.25rem;line-height:1.25;text-shadow:0 2px 14px rgba(0,0,0,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .shelf-meta{display:flex;align-items:center;gap:10px;margin-top:8px;max-height:0;opacity:0;overflow:hidden;transition:.5s}
         .shelf-panel:hover .shelf-meta{max-height:60px;opacity:1}
         .shelf-count{font-size:.68rem;font-weight:800;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);padding:3px 11px;border-radius:var(--r-pill);backdrop-filter:blur(6px)}
@@ -190,12 +190,19 @@
         .ar-wa i{color:var(--wa)}
         .ar-wa:hover{background:#000}
 
-        /* ============ QUOTE BAND ============ */
-        .quote{background:var(--paper2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:74px 0;position:relative;overflow:hidden;margin-top:60px}
-        .quote::before{content:'”';position:absolute;top:-46px;right:4%;font-family:var(--display);font-size:24rem;color:rgba(192,138,62,.12);line-height:1;pointer-events:none}
-        .quote blockquote{position:relative;z-index:2;max-width:820px;margin:0 auto;text-align:center;font-family:var(--display);font-weight:800;font-size:clamp(1.15rem,2.7vw,1.85rem);line-height:1.75;letter-spacing:-.01em;color:var(--ink)}
-        .quote figcaption{display:flex;align-items:center;justify-content:center;gap:12px;margin-top:26px;color:var(--brass-ink);font-weight:800;font-size:.82rem}
-        .quote figcaption::before,.quote figcaption::after{content:'';width:44px;height:1.5px;background:var(--brass)}
+        /* ============ QUOTE COVER — غلاف حقيقي للنبذة ============ */
+        .quote{position:relative;background:var(--espresso);padding:96px 0;overflow:hidden;margin-top:70px}
+        .quote-bg{position:absolute;inset:0;background-size:cover;background-position:center;transform:scale(1.08);filter:blur(10px) saturate(.85) brightness(.9)}
+        .quote-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,12,7,.86),rgba(15,12,7,.93))}
+        .quote-frame{position:absolute;inset:30px;border:1px solid rgba(192,138,62,.30);border-radius:30px;pointer-events:none}
+        .quote-in{position:relative;z-index:2;max-width:840px;margin:0 auto;text-align:center;padding:0 30px}
+        .quote-label{display:inline-flex;align-items:center;gap:12px;font-size:.68rem;font-weight:800;letter-spacing:.22em;color:#e0b570;margin-bottom:22px}
+        .quote-label::before,.quote-label::after{content:'';width:34px;height:1.5px;background:linear-gradient(90deg,transparent,#e0b570)}
+        .quote-label::after{background:linear-gradient(270deg,transparent,#e0b570)}
+        .quote blockquote{font-family:var(--display);font-weight:800;font-size:clamp(1.15rem,2.8vw,1.95rem);line-height:1.85;letter-spacing:-.01em;color:var(--cream);text-shadow:0 2px 22px rgba(0,0,0,.4)}
+        .quote figcaption{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:28px;color:#cfa055;font-weight:800;font-size:.85rem}
+        .quote figcaption .q-dia{width:7px;height:7px;background:#cfa055;transform:rotate(45deg);border-radius:1px}
+        @media(max-width:640px){.quote{padding:64px 0}.quote-frame{inset:14px;border-radius:20px}}
 
         /* ============ COLLAGE — جدار البولارويد ============ */
         .collage{display:flex;flex-wrap:wrap;justify-content:center;gap:34px;padding:20px 0 10px}
@@ -232,9 +239,10 @@
         .marquee-track{display:inline-flex;gap:26px;animation:marqueeFlow 38s linear infinite;padding-right:150px}
         @keyframes marqueeFlow{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
         .marquee-track:hover{animation-play-state:paused}
-        .partner-item{background:#fff;border-radius:var(--r-pill);padding:7px 20px;box-shadow:0 2px 10px rgba(19,16,11,.06);border:1px solid var(--line);display:inline-flex;align-items:center;cursor:pointer;transition:var(--ease)}
+        .partner-item{background:#fff;border-radius:var(--r-pill);padding:6px 18px;box-shadow:0 2px 10px rgba(19,16,11,.06);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;min-width:130px;min-height:52px;cursor:pointer;transition:var(--ease)}
         .partner-item:hover{transform:translateY(-3px);border-color:var(--brass)}
-        .partner-logo{height:38px;max-width:110px;object-fit:contain}
+        .partner-logo{height:42px;max-width:120px;width:auto;object-fit:contain;background:transparent}
+        .partner-fallback{font-size:.75rem;font-weight:800;color:var(--brand-ink);padding:8px 10px}
 
         /* ============ STORE PAGE — ريل جانبي + masonry ============ */
         .store-wrap{display:grid;grid-template-columns:262px 1fr;gap:26px;align-items:start}
@@ -505,30 +513,49 @@
         @media(max-width:900px){
             .hsearch{display:none}
             .hdr-nav{display:none}
+            body{padding-bottom:76px}
+            .dock{display:flex}
         }
         @media(max-width:768px){
-            body{padding-bottom:74px}
-            .dock{display:flex}
             .container{padding:0 16px}
             .hdr-in{padding:10px 14px;gap:10px}
             .hd-badge,.hd-util{display:none}
-            .vh{min-height:calc(92svh - 64px)}
-            .vh-in{padding:48px 0 92px}
-            .vh-ghost{font-size:38vh}
-            .chapter{padding:60px 0 22px}
+            .vh{min-height:calc(94svh - 62px)}
+            .vh-in{padding:46px 0 86px}
+            .vh-ghost{font-size:36vh;left:-10%}
+            .chapter{padding:58px 0 22px}
             .band-item{font-size:1rem}
-            .chat-window{left:8px;width:calc(100vw - 16px);height:56vh;max-height:440px;bottom:86px}
-            .chat-toggle-btn{width:51px;height:51px;font-size:19px;bottom:88px;left:16px}
-            .popup-bubble{bottom:84px;right:12px}
-            .toast{bottom:96px}
+            .chat-window{left:8px;width:calc(100vw - 16px);height:56vh;max-height:440px;bottom:88px}
+            .chat-toggle-btn{width:51px;height:51px;font-size:19px;bottom:92px;left:16px}
+            .popup-bubble{bottom:92px;right:12px}
+            .toast{bottom:100px}
             .ar-card{flex:0 0 168px}
             .contact-grid{grid-template-columns:1fr 1fr}
-            .quote{padding:54px 0}
+            .store-toolbar{top:70px}
+            .rail{top:70px}
         }
         @media(max-width:520px){
+            .masonry{column-count:2;column-gap:11px}
+            .pc{margin-bottom:11px;border-radius:16px}
+            .store-body{padding:12px}
+            .store-name{font-size:.8rem}
+            .store-price{font-size:1rem}
+            .store-view span{display:none}
             .btn{padding:12px 20px;font-size:.83rem}
             .vh-photo span{display:none}
             .vh-scroll{display:none}
+            .vh-dots{display:none}
+            .shelf{height:270px;gap:8px}
+            .shelf-panel{flex:0 0 165px}
+            .shelf-panel:hover{flex:0 0 165px}
+            .collage{gap:20px}
+            .pola{width:min(260px,84vw);padding:9px 9px 42px}
+            .quote-in{padding:0 18px}
+            .ctaband-in{padding:36px 24px}
+            .feat-row{grid-template-columns:40px 1fr;grid-template-rows:auto auto;gap:6px 12px}
+            .feat-ix{grid-row:span 2}
+            .feat-ic{grid-row:span 2;width:46px;height:46px}
+            .feat-ic-none{display:none}
         }
     </style>
 </head>
@@ -771,33 +798,28 @@
         function observeReveal() { document.querySelectorAll('.rv:not(.in)').forEach(el => revealObserver.observe(el)); }
 
         // ================================================================
-        // IMAGE LOADER (نفس المنطق المستقر)
+        // IMAGE LOADER v2 — خفيف: بدون cache-buster (المتصفح يكاش الصور)
+        // إعادة محاولة عند الفشل + placeholder فقط عند اليأس
         // ================================================================
-        function loadImageWithRetry(imgElement, src, maxAttempts = 5) {
+        function loadImageWithRetry(imgElement, src, maxAttempts = 2) {
             if (!imgElement) return;
-            if (!src || src.trim() === '') { imgElement.src = PLACEHOLDER_SVG; imgElement.style.objectFit = 'contain'; return; }
-            const srcWithCache = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
-            imgElement.src = PLACEHOLDER_SVG;
-            imgElement.style.objectFit = 'contain';
-            imgElement.style.background = '#efe8da';
-            let attempts = 0;
-            let timeoutId = null;
-            function attemptLoad() {
-                imgElement.src = srcWithCache;
-                imgElement.onerror = function () {
-                    if (attempts < maxAttempts) { attempts++; clearTimeout(timeoutId); timeoutId = setTimeout(attemptLoad, 500 * attempts); }
-                    else { imgElement.src = PLACEHOLDER_SVG; imgElement.style.objectFit = 'contain'; }
-                };
-                imgElement.onload = function () { clearTimeout(timeoutId); imgElement.style.objectFit = 'cover'; imgElement.style.background = 'transparent'; };
-                const checkLoaded = () => {
-                    if (imgElement.complete && imgElement.naturalWidth > 0) { clearTimeout(timeoutId); imgElement.style.objectFit = 'cover'; imgElement.style.background = 'transparent'; return; }
-                    if (attempts < maxAttempts) { attempts++; clearTimeout(timeoutId); timeoutId = setTimeout(attemptLoad, 500 * attempts); }
-                    else { imgElement.src = PLACEHOLDER_SVG; imgElement.style.objectFit = 'contain'; }
-                };
-                clearTimeout(timeoutId);
-                timeoutId = setTimeout(checkLoaded, 3000);
-            }
-            attemptLoad();
+            if (!src || src.trim() === '') { imgElement.src = PLACEHOLDER_SVG; return; }
+            if (imgElement.dataset.loadedSrc === src) return;
+            if (!imgElement.getAttribute('referrerpolicy')) imgElement.setAttribute('referrerpolicy', 'no-referrer');
+            imgElement.decoding = 'async';
+            imgElement.dataset.loadedSrc = src;
+            imgElement.onerror = function () {
+                const n = (parseInt(imgElement.dataset.tries || '0', 10)) + 1;
+                if (n <= maxAttempts) {
+                    imgElement.dataset.tries = n;
+                    delete imgElement.dataset.loadedSrc;
+                    setTimeout(function () { imgElement.src = src; }, 700 * n);
+                } else {
+                    imgElement.onerror = null;
+                    imgElement.src = PLACEHOLDER_SVG;
+                }
+            };
+            imgElement.src = src;
         }
 
         // ================================================================
@@ -839,23 +861,23 @@
                 let mediaElement;
                 if (item.type === 'video' || isVideoUrl(item.url)) {
                     mediaElement = document.createElement('video');
-                    mediaElement.src = item.url;
+                    mediaElement.dataset.src = item.url;
                     mediaElement.muted = true;
                     mediaElement.playsInline = true;
-                    mediaElement.preload = 'auto';
+                    mediaElement.preload = 'none';
                     mediaElement.className = 'story-media';
-                    mediaElement.onerror = () => { mediaElement.src = PLACEHOLDER_SVG; mediaElement.style.objectFit = 'contain'; };
                     mediaElement.onloadeddata = () => { mediaElement.play().catch(() => { }); };
                 } else {
                     mediaElement = document.createElement('img');
                     mediaElement.className = 'story-media';
                     mediaElement.alt = 'صورة';
-                    mediaElement.onerror = () => { mediaElement.src = PLACEHOLDER_SVG; mediaElement.style.objectFit = 'contain'; };
-                    loadImageWithRetry(mediaElement, item.url);
+                    mediaElement.dataset.src = item.url;
                 }
                 mediaWrapper.appendChild(mediaElement);
                 wrapper.appendChild(mediaWrapper);
             });
+            preloadStory(currentStoryIdx);
+            preloadStory(currentStoryIdx + 1);
             const progressBar = document.getElementById('storyProgressBar');
             for (let i = 0; i < items.length; i++) {
                 const seg = document.createElement('div');
@@ -878,10 +900,23 @@
             startCurrentStoryItem(durationSec * 1000);
             splashAutoCloseTimer = setTimeout(() => { if (storyPlaying) closeSplash(); }, items.length * durationSec * 1000 + 2000);
         }
+        // تحميل تدريجي لعناصر شاشة البداية: الحالي + التالي فقط (خفيف وسريع)
+        function preloadStory(idx) {
+            const wraps = document.querySelectorAll('.story-media-wrapper');
+            const el = wraps[idx];
+            if (!el) return;
+            const img = el.querySelector('img[data-src]');
+            if (img) { const s = img.dataset.src; img.removeAttribute('data-src'); loadImageWithRetry(img, s); }
+            const vid = el.querySelector('video[data-src]');
+            if (vid) { vid.src = vid.dataset.src; vid.removeAttribute('data-src'); vid.preload = 'auto'; try { vid.load(); } catch (e) { } }
+        }
+
         function startCurrentStoryItem(durationMs) {
             if (storyTimer) clearInterval(storyTimer);
             const counterSpan = document.getElementById('storyCounter');
             if (counterSpan) counterSpan.innerText = `${currentStoryIdx + 1} / ${currentStoryItems.length}`;
+            preloadStory(currentStoryIdx);
+            preloadStory(currentStoryIdx + 1);
             document.querySelectorAll('.story-media-wrapper').forEach((el, idx) => {
                 if (idx === currentStoryIdx) {
                     el.classList.add('active');
@@ -1382,21 +1417,33 @@
             const dots = document.getElementById('heroDots');
             if (!bg) return;
             if (heroTimer) { clearInterval(heroTimer); heroTimer = null; }
-            if (!heroImgs.length) { bg.innerHTML = ''; if (dots) dots.innerHTML = ''; return; }
-            bg.innerHTML = heroImgs.map((u, i) => `<div class="vh-slide${i === 0 ? ' on' : ''}"><img src="${u}" alt=""></div>`).join('');
-            bg.querySelectorAll('img').forEach(img => {
-                const src = img.getAttribute('src');
-                if (src) loadImageWithRetry(img, src);
-            });
+            if (!heroImgs.length) { bg.innerHTML = ''; if (dots) dots.innerHTML = ''; setQuoteCover(''); return; }
+            bg.innerHTML = heroImgs.map((u, i) => `<div class="vh-slide${i === 0 ? ' on' : ''}"><img ${i === 0 ? `src="${u}"` : `data-src="${u}"`} alt=""></div>`).join('');
+            loadImageWithRetry(bg.querySelector('img'), heroImgs[0]);
             if (dots) dots.innerHTML = heroImgs.map((u, i) => `<button class="${i === 0 ? 'on' : ''}" onclick="setHero(${i})" aria-label="صورة ${i + 1}"></button>`).join('');
-            heroTimer = setInterval(() => { if (!heroPaused) setHero((heroIdx + 1) % heroImgs.length); }, 6000);
+            ensureHeroLoaded(1);
+            setQuoteCover(heroImgs[0]);
+            heroTimer = setInterval(() => { if (!heroPaused) setHero((heroIdx + 1) % heroImgs.length, true); }, 6000);
+        }
+        function ensureHeroLoaded(i) {
+            const imgs = document.querySelectorAll('#heroBg .vh-slide img');
+            if (!imgs.length) return;
+            const el = imgs[i % imgs.length];
+            if (el && el.dataset.src) { const s = el.dataset.src; el.removeAttribute('data-src'); loadImageWithRetry(el, s); }
         }
         window.setHero = function (i) {
             if (!heroImgs.length) return;
             heroIdx = i;
+            ensureHeroLoaded(i);
+            ensureHeroLoaded(i + 1);
             document.querySelectorAll('.vh-slide').forEach((el, idx) => el.classList.toggle('on', idx === i));
             document.querySelectorAll('#heroDots button').forEach((el, idx) => el.classList.toggle('on', idx === i));
         };
+        function setQuoteCover(url) {
+            const qb = document.getElementById('quoteBg');
+            if (!qb) return;
+            qb.style.backgroundImage = url ? `url("${url}")` : 'none';
+        }
         function pauseHero() { heroPaused = true; }
         function resumeHero() { heroPaused = false; }
         window.heroOpenCurrent = function () {
@@ -1967,10 +2014,16 @@
                         ${chapterHead('02', t('home_ch2_title', 'وصل حديثاً'), t('home_ch2_sub', 'أحدث ما أضفناه للمعرض — اسحب يميناً للتنقل'), '<a class="ch-more" href="#store" data-page="store">عرض المتجر <i class="fas fa-arrow-left"></i></a>')}
                         <div class="rv" id="homeArrivals"></div>
                     </div></section>
-                    <div class="quote"><div class="container">
-                        <blockquote>${escapeHtml(quote)}</blockquote>
-                        <figcaption>${escapeHtml(t('site_name', 'بصمه غير'))}</figcaption>
-                    </div></div>
+                    <div class="quote">
+                        <div class="quote-bg" id="quoteBg"></div>
+                        <div class="quote-veil"></div>
+                        <div class="quote-frame"></div>
+                        <div class="quote-in">
+                            <span class="quote-label">${escapeHtml(t('quote_label', 'نبذتنا'))}</span>
+                            <blockquote>${escapeHtml(quote)}</blockquote>
+                            <figcaption><span class="q-dia"></span>${escapeHtml(t('site_name', 'بصمه غير'))}<span class="q-dia"></span></figcaption>
+                        </div>
+                    </div>
                     <section class="chapter"><div class="container">
                         ${chapterHead('03', t('home_ch3_title', 'من معرض أعمالنا'), t('home_ch3_sub', 'لقطات من مشاريع منفذة — كل بطاقة تفتح ألبوم كاملاً بقيم وتقييمات حقيقية'), '<a class="ch-more" href="#works" data-page="works">كل الألبومات <i class="fas fa-arrow-left"></i></a>')}
                         <div class="collage rv" id="homeCollage"></div>
@@ -2137,18 +2190,33 @@
         function renderPartnersMarquee() {
             const cont = document.getElementById('partnersMarquee'), track = document.getElementById('marqueeTrack');
             if (!cont || !track) return;
-            if (currentData.partners && Object.keys(currentData.partners).length) {
-                cont.style.display = 'block';
-                let logos = '';
-                Object.values(currentData.partners).forEach((p, idx) => {
-                    logos += `<div class="partner-item" onclick="window.open('${p.link || '#'}', '_blank')"><img src="${p.url}" alt="${escapeHtml(p.name || 'شريك بصمه غير')}" class="partner-logo" loading="lazy"></div>`;
-                });
-                track.innerHTML = logos + logos;
-                track.querySelectorAll('.partner-logo').forEach(img => {
-                    const src = img.getAttribute('src');
-                    if (src) loadImageWithRetry(img, src);
-                });
-            } else cont.style.display = 'none';
+            const list = currentData.partners ? Object.values(currentData.partners).filter(p => p && p.url) : [];
+            if (!list.length) { cont.style.display = 'none'; track.innerHTML = ''; return; }
+            cont.style.display = 'block';
+            track.innerHTML = '';
+            const buildSet = () => list.map(p => {
+                const item = document.createElement('div');
+                item.className = 'partner-item';
+                item.title = p.name || 'شريك';
+                if (p.link) item.addEventListener('click', () => window.open(p.link, '_blank'));
+                const img = document.createElement('img');
+                img.className = 'partner-logo';
+                img.alt = p.name || 'شريك بصمه غير';
+                img.loading = 'lazy';
+                img.decoding = 'async';
+                img.referrerPolicy = 'no-referrer';
+                img.onerror = () => {
+                    const fb = document.createElement('span');
+                    fb.className = 'partner-fallback';
+                    fb.textContent = (p.name || 'شريك').slice(0, 18);
+                    img.replaceWith(fb);
+                };
+                loadImageWithRetry(img, encodeURI(String(p.url).trim()));
+                item.appendChild(img);
+                return item;
+            });
+            buildSet().forEach(n => track.appendChild(n));
+            buildSet().forEach(n => track.appendChild(n));
         }
 
         // ================================================================
