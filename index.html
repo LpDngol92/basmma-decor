@@ -405,7 +405,7 @@
         @media(max-width:768px){.store-modal-grid{grid-template-columns:1fr}.store-modal-img img{max-height:44vh}.store-modal-info{padding:18px}}
 
         /* ============ STORE CLOSED ============ */
-        .store-closed-overlay{position:fixed;inset:0;z-index:950;display:none;align-items:center;justify-content:center;background:rgba(251,248,241,.97);backdrop-filter:blur(8px);padding:20px}
+        .store-closed-overlay{position:fixed;inset:0;z-index:950;display:none;align-items:center;justify-content:center;background:rgba(251,248,241,.97);backdrop-filter:blur(8px);padding:20px;overflow:auto}
         .store-closed-overlay.visible{display:flex;animation:ovFade .28s ease}
         .store-closed-card{background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:var(--sh-lg);max-width:480px;width:100%;text-align:center;padding:46px 30px;animation:popUp .3s cubic-bezier(.34,1.4,.64,1)}
         .store-closed-icon{font-size:3.4rem;margin-bottom:12px}
@@ -1364,7 +1364,16 @@
         document.getElementById('lightboxClose').onclick = closeLightbox;
         waBtn.onclick = sendWhatsapp;
         lightbox.addEventListener('click', (e) => { if (e.target === lightbox || e.target.classList.contains('lightbox-container')) closeLightbox(); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { const m = document.getElementById('storeModal'); if (m && m.classList.contains('open')) closeStoreModal(); } });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const m = document.getElementById('storeModal');
+                const cm = document.getElementById('catalogModal');
+                if (m && m.classList.contains('open')) closeStoreModal();
+                else if (cm && cm.style.display === 'flex') closeCatalogModal();
+                else if (lightbox.style.display === 'flex') closeLightbox();
+                else if (document.body.style.overflow === 'hidden') document.body.style.overflow = '';
+            }
+        });
 
         // ================================================================
         // ALBUMS HELPERS
@@ -1973,6 +1982,7 @@
         function loadPage() {
             const main = document.getElementById('mainContent');
             if (!main) return;
+            if (document.body.style.overflow === 'hidden') document.body.style.overflow = '';
             if (currentPage === 'home') {
                 const badge = t('hero_badge', 'متاحون الآن • رد فوري على واتساب');
                 const hTitle1 = t('hero_title1', 'نصنع'), hHighlight = t('hero_title_highlight', 'بصمة'), hTitle2 = t('hero_title2', 'لا تُنسى'), hSuffix = t('hero_title_suffix', 'لمساحتك التجارية');
@@ -2082,6 +2092,7 @@
             updatePageTitle();
             updateChromeTexts();
             updateStoreClosedOverlay();
+            updateMaintenanceMode();
             observeReveal();
         }
 
