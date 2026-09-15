@@ -602,13 +602,11 @@
 
         const PLACEHOLDER_SVG =
             'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"%3E%3Crect width="400" height="400" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" font-size="20" font-family="Cairo" fill="%23999" text-anchor="middle" dy=".3em"%3Eصورة غير متوفرة%3C/text%3E%3C/svg%3E';
-        const PLACEHOLDER_LOADING =
-            'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23f6f4ef%22/%3E%3Ccircle cx=%22200%22 cy=%22180%22 r=%2226%22 fill=%22none%22 stroke=%22%23c8a165%22 stroke-width=%227%22 stroke-dasharray=%22118 58%22 stroke-linecap=%22round%22%3E%3CanimateTransform attributeName=%22transform%22 type=%22rotate%22 from=%220 200 180%22 to=%22360 200 180%22 dur=%221s%22 repeatCount=%22indefinite%22/%3E%3C/circle%3E%3Ctext x=%2250%25%22 y=%2263%25%22 font-size=%2222%22 font-family=%22Cairo%22 fill=%22%23998a6d%22 text-anchor=%22middle%22 dy=%22.3em%22%3Eجارٍ التحميل...%3C/text%3E%3C/svg%3E';
 
         // ================================================================
         // IMAGE LOADER
         // ================================================================
-        function loadImageWithRetry(imgElement, src, maxAttempts = 2) {
+        function loadImageWithRetry(imgElement, src, maxAttempts = 5) {
             if (!imgElement) return;
             if (!src || src.trim() === '') {
                 imgElement.src = PLACEHOLDER_SVG;
@@ -616,9 +614,9 @@
                 return;
             }
 
-            imgElement.setAttribute('decoding', 'async');
+            const srcWithCache = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
 
-            imgElement.src = PLACEHOLDER_LOADING;
+            imgElement.src = PLACEHOLDER_SVG;
             imgElement.style.objectFit = 'contain';
             imgElement.style.background = '#f0f0f0';
 
@@ -626,7 +624,7 @@
             let timeoutId = null;
 
             function attemptLoad() {
-                imgElement.src = attempts === 0 ? src : src + (src.includes('?') ? '&' : '?') + '_r=' + attempts;
+                imgElement.src = srcWithCache;
 
                 imgElement.onerror = function() {
                     if (attempts < maxAttempts) {
@@ -667,7 +665,7 @@
                 };
 
                 clearTimeout(timeoutId);
-                timeoutId = setTimeout(checkLoaded, 9000);
+                timeoutId = setTimeout(checkLoaded, 3000);
             }
 
             attemptLoad();
@@ -1448,7 +1446,7 @@
             let slideInterval,
                 isPaused = false;
             container.innerHTML =
-                `<div class="hero-slider-beige"><div class="slider-bg-blur" id="sliderBgBlur" style="background-image: url('${sliderImagesArray[0]}')"></div><div class="slider-stage"><div class="slider-image-card" id="sliderMainCard"><img id="sliderMainImg" fetchpriority="high" decoding="async" alt="بصمه غير - أحدث الأعمال"></div></div><div class="slider-nav-buttons"><button id="sliderPrev"><i class="fas fa-chevron-right"></i> السابق</button><button id="sliderNext">التالي <i class="fas fa-chevron-left"></i></button></div><div class="slider-progress-ring" id="sliderProgress">${autoDuration/1000}s</div></div>`;
+                `<div class="hero-slider-beige"><div class="slider-bg-blur" id="sliderBgBlur" style="background-image: url('${sliderImagesArray[0]}')"></div><div class="slider-stage"><div class="slider-image-card" id="sliderMainCard"><img id="sliderMainImg" alt="بصمه غير - أحدث الأعمال"></div></div><div class="slider-nav-buttons"><button id="sliderPrev"><i class="fas fa-chevron-right"></i> السابق</button><button id="sliderNext">التالي <i class="fas fa-chevron-left"></i></button></div><div class="slider-progress-ring" id="sliderProgress">${autoDuration/1000}s</div></div>`;
             const bgBlur = document.getElementById('sliderBgBlur'),
                 mainImg = document.getElementById('sliderMainImg'),
                 prevBtn = document.getElementById('sliderPrev'),
