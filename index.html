@@ -543,6 +543,19 @@
             .feat-ic{grid-row:span 2;width:46px;height:46px}
             .feat-ic-none{display:none}
         }
+    
+        /* 404 — صفحة المسار غير موجود */
+        .notfound{position:fixed;inset:0;z-index:99999;background:var(--paper);display:flex;align-items:center;justify-content:center;padding:20px}
+        .nf-card{text-align:center;max-width:420px;width:100%;background:var(--paper3);border:1px solid var(--line);border-radius:24px;padding:36px 28px;box-shadow:var(--sh-lg)}
+        .nf-anim{height:56px;overflow:hidden;position:relative;margin-bottom:18px;background:var(--paper2);border:1px solid var(--line);border-radius:14px}
+        .nf-track{position:relative;height:100%}
+        .nf-runner{position:absolute;top:50%;transform:translateY(-50%);left:-40px;font-size:26px;animation:nfRun 1.6s linear infinite}
+        .nf-flag{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.7}
+        @keyframes nfRun{0%{left:-40px}100%{left:calc(100% + 10px)}}
+        .nf-card h2{font-family:var(--display);font-weight:300;font-size:1.5rem;margin-bottom:6px}
+        .nf-card p{color:var(--muted);font-size:.88rem;line-height:1.7}
+        .nf-count{font-family:var(--display);font-size:2.4rem;font-weight:700;color:var(--brass);margin:14px 0 18px;letter-spacing:.04em}
+
     </style>
 <style>
 /* BENTO LIGHT — شبكة عالمية فاتحة */
@@ -794,6 +807,16 @@
         <div class="chat-input-area" id="chatInputArea">
             <input type="text" id="chatInput" class="chat-input" placeholder="اكتب رسالتك...">
             <button id="chatSendBtn" class="chat-send-btn"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+    <!-- 404 -->
+    <div id="notFound" class="notfound" style="display:none">
+        <div class="nf-card">
+            <div class="nf-anim"><div class="nf-track"><span class="nf-runner">🏃‍♂️</span><span class="nf-flag">🏁</span></div></div>
+            <h2>أوبس… ضعت؟</h2>
+            <p>هذا المسار غير موجود — نرجعك للمكان الصح</p>
+            <div class="nf-count" id="nfCount">3</div>
+            <a class="btn btn-brass" onclick="goHomeFrom404()" style="cursor:pointer">العودة للرئيسية الآن</a>
         </div>
     </div>
 <script>
@@ -2401,11 +2424,39 @@
         // ================================================================
         // NAVIGATION / ROUTING + DOCK
         // ================================================================
+
+        // 404 helpers
+        let nfTimer=null;
+        function showNotFound(){
+            const el=document.getElementById("notFound");
+            if(!el) return;
+            el.style.display="flex";
+            document.body.style.overflow="hidden";
+            let c=3;
+            const cnt=document.getElementById("nfCount");
+            if(cnt) cnt.textContent=c;
+            if(nfTimer) clearInterval(nfTimer);
+            nfTimer=setInterval(()=>{
+                c--;
+                if(cnt) cnt.textContent=c;
+                if(c<=0){ clearInterval(nfTimer); goHomeFrom404(); }
+            },1000);
+        }
+        function goHomeFrom404(){
+            if(nfTimer) clearInterval(nfTimer);
+            const el=document.getElementById("notFound");
+            if(el) el.style.display="none";
+            document.body.style.overflow="";
+            location.hash="#home";
+            currentPage="home";
+            loadPage();
+            window.scrollTo({top:0,behavior:"smooth"});
+        }
         const VALID_PAGES = ['home', 'store', 'works', 'catalogs', 'contact'];
         function getHashParts() {
             const raw = location.hash.replace('#', '');
             const parts = raw.split('/');
-            const page = VALID_PAGES.includes(parts[0]) ? parts[0] : 'home';
+            const page = parts[0] || 'home';
             const albumId = parts[1] || null;
             return { page, albumId };
         }
@@ -2419,12 +2470,27 @@
         }
         function handleHashChange() {
             const { page, albumId } = getHashParts();
-            if (page !== currentPage) {
-                currentPage = page;
-                loadPage();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            if(page && !VALID_PAGES.includes(page)){
+                showNotFound();
+                return;
             }
-            if (albumId) tryOpenAlbumFromHash(albumId);
+            if(location.protocol.startsWith('http') && location.pathname !== '/' && location.pathname !== '/index.html' && !location.pathname.endsWith('.txt') && !location.pathname.endsWith('.html')){
+                const last = location.pathname.split('/').pop();
+                if(last && !VALID_PAGES.includes(last) && last.length>1){
+                    showNotFound();
+                    return;
+                }
+            }
+            const go = () => {
+                if (page !== currentPage) {
+                    currentPage = page;
+                    loadPage();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                if (albumId) tryOpenAlbumFromHash(albumId);
+            };
+            if (page !== currentPage && document.startViewTransition) document.startViewTransition(() => go());
+            else go();
         }
         window.addEventListener('hashchange', handleHashChange);
         function navHandler(e) {
@@ -2620,6 +2686,10 @@
         }
 
         currentPage = getHashParts().page;
+        // if opened directly on invalid hash/path — show 404 immediately
+        if(currentPage && !VALID_PAGES.includes(currentPage)){
+            setTimeout(()=>showNotFound(), 400);
+        }
         const maxWaitTime = 5000;
         forceHideTimer = setTimeout(() => {
             console.warn('⚠️ Firebase timeout, forcing splash hide');
