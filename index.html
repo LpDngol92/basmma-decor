@@ -549,21 +549,19 @@
         .nf-card{text-align:center;max-width:420px;width:100%;background:var(--paper3);border:1px solid var(--line);border-radius:24px;padding:36px 28px;box-shadow:var(--sh-lg)}
         .nf-anim{height:56px;overflow:hidden;position:relative;margin-bottom:18px;background:var(--paper2);border:1px solid var(--line);border-radius:14px}
         .nf-track{position:relative;height:100%}
-        .nf-track::before{content:"";position:absolute;top:50%;left:14px;right:44px;height:2px;background:repeating-linear-gradient(90deg,var(--line) 0 10px,transparent 10px 18px);opacity:.7;transform:translateY(-50%)}
-        .nf-runner{position:absolute;top:50%;left:calc(100% + 40px);font-size:26px;animation:nfRun 1.8s cubic-bezier(.45,.05,.55,.95) infinite;transform:translateY(-50%) scaleX(-1);filter:drop-shadow(0 4px 6px rgba(0,0,0,.12))}
-        .nf-runner::after{content:"";position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);width:20px;height:5px;background:rgba(0,0,0,.18);border-radius:50%;filter:blur(2px)}
-        .nf-flag{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.8;animation:flagWave .7s ease-in-out infinite alternate}
-        @keyframes flagWave{from{transform:translateY(-50%) rotate(-6deg)}to{transform:translateY(-50%) rotate(6deg)}}
-        @keyframes nfRun{
-            0%{left:calc(100% + 40px);transform:translateY(-50%) scaleX(-1)}
-            12%{transform:translateY(-62%) scaleX(-1)}
-            24%{transform:translateY(-48%) scaleX(-1)}
-            36%{transform:translateY(-62%) scaleX(-1)}
-            48%{transform:translateY(-48%) scaleX(-1)}
-            60%{transform:translateY(-62%) scaleX(-1)}
-            72%{transform:translateY(-48%) scaleX(-1)}
-            84%{transform:translateY(-62%) scaleX(-1)}
-            100%{left:-50px;transform:translateY(-50%) scaleX(-1)}
+        .nf-track::before{display:none}
+        .rope{position:absolute;top:50%;left:22%;right:38px;height:3px;background:linear-gradient(90deg,var(--line2),var(--brass));border-radius:2px;transform:translateY(-50%);animation:ropeTension .9s ease-in-out infinite alternate;transform-origin:left}
+        .puller{position:absolute;top:50%;left:18%;font-size:26px;transform:translateY(-50%) scaleX(-1);animation:tug .9s ease-in-out infinite alternate;filter:drop-shadow(0 3px 6px rgba(0,0,0,.12))}
+        .puller::after{content:"";position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);width:18px;height:4px;background:rgba(0,0,0,.14);border-radius:50%;filter:blur(2px)}
+        .nf-flag{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;opacity:.85;animation:flagWave .9s ease-in-out infinite alternate}
+        @keyframes flagWave{from{transform:translateY(-50%) rotate(-4deg)}to{transform:translateY(-50%) rotate(4deg)}}
+        @keyframes tug{
+            0%{transform:translateY(-50%) scaleX(-1) translateX(0) rotate(-1.5deg)}
+            100%{transform:translateY(-50%) scaleX(-1) translateX(-9px) rotate(1.5deg)}
+        }
+        @keyframes ropeTension{
+            0%{transform:translateY(-50%) scaleX(1)}
+            100%{transform:translateY(-50%) scaleX(1.015)}
         }
         .nf-card h2{font-family:var(--display);font-weight:300;font-size:1.5rem;margin-bottom:6px}
         .nf-card p{color:var(--muted);font-size:.88rem;line-height:1.7}
@@ -825,7 +823,7 @@
     <!-- 404 -->
     <div id="notFound" class="notfound" style="display:none">
         <div class="nf-card">
-            <div class="nf-anim"><div class="nf-track"><span class="nf-runner">🏃‍♂️</span><span class="nf-flag">🏁</span></div></div>
+            <div class="nf-anim"><div class="nf-track"><div class="rope"></div><span class="puller">🧍‍♂️</span><span class="nf-flag">🚩</span></div></div>
             <h2>أوبس… ضعت؟</h2>
             <p>هذا المسار غير موجود — نرجعك للمكان الصح</p>
             <div class="nf-count" id="nfCount">3</div>
@@ -2487,12 +2485,9 @@
                 showNotFound();
                 return;
             }
-            if(location.protocol.startsWith('http') && location.pathname !== '/' && location.pathname !== '/index.html' && !location.pathname.endsWith('.txt') && !location.pathname.endsWith('.html')){
-                const last = location.pathname.split('/').pop();
-                if(last && !VALID_PAGES.includes(last) && last.length>1){
-                    showNotFound();
-                    return;
-                }
+            if(location.protocol.startsWith('http') && location.pathname !== '/' && location.pathname !== '/index.html' && location.pathname !== '/404.html'){
+                showNotFound();
+                return;
             }
             const go = () => {
                 if (page !== currentPage) {
@@ -2702,11 +2697,8 @@
         // if opened directly on invalid hash/path — show 404 immediately
         if(currentPage && !VALID_PAGES.includes(currentPage)){
             setTimeout(()=>showNotFound(), 400);
-        } else if(location.protocol.startsWith('http') && location.pathname !== '/' && location.pathname !== '/index.html' && !location.pathname.endsWith('.txt') && !location.pathname.endsWith('.html')){
-            const _last = location.pathname.split('/').pop();
-            if(_last && !VALID_PAGES.includes(_last) && _last.length>1){
-                setTimeout(()=>showNotFound(), 400);
-            }
+        } else if(location.protocol.startsWith('http') && location.pathname !== '/' && location.pathname !== '/index.html' && location.pathname !== '/404.html'){
+            setTimeout(()=>showNotFound(), 400);
         }
         const maxWaitTime = 5000;
         forceHideTimer = setTimeout(() => {
