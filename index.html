@@ -539,6 +539,10 @@
         .map-stats-bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;justify-content:center}
         .map-stat-pill{font-size:.71rem;font-weight:800;background:var(--brass-soft);border:1px solid var(--line2);color:var(--brass-ink);padding:5px 12px;border-radius:var(--r-pill)}
 
+
+        .hero-map-wrap .map-svg-real{width:100%;height:auto;display:block}
+        .vh.hero-with-map{overflow:visible}
+
         /* ============ RESPONSIVE ============ */
         @media(max-width:900px){
             .hsearch{display:none}
@@ -668,7 +672,6 @@
         <a href="#home" data-page="home" class="active"><i class="fas fa-house"></i><span>الرئيسية</span></a>
         <a href="#store" data-page="store"><i class="fas fa-bag-shopping"></i><span>المتجر</span></a>
         <a href="#works" data-page="works"><i class="fas fa-camera-retro"></i><span>أعمالنا</span></a>
-        <a href="#map" data-page="map"><i class="fas fa-map-location-dot"></i><span>الخريطة</span></a>
         <a href="#catalogs" data-page="catalogs"><i class="fas fa-book-open"></i><span>كتالوجات</span></a>
         <a href="#contact" data-page="contact"><i class="fas fa-phone"></i><span>تواصل</span></a>
     </nav>
@@ -1636,8 +1639,7 @@
                 '',
                 '📌 المنتج: ' + (p.name || 'منتج'),
                 '📂 القسم: ' + (p.catName || 'عام'),
-                '💰 السعر: ' + priceTxt,
-            ];
+                '💰 السعر: ' + priceTxt];
             if (p.desc) lines.push('📝 الوصف: ' + p.desc);
             lines.push('');
             lines.push('🖼️ رابط الصورة:');
@@ -2047,7 +2049,10 @@
                 const f4T = t('feature4_title', 'ضمان سنة'), f4D = t('feature4_desc', 'صيانة ومتابعة ما بعد التسليم'), f4I = t('feature4_icon', 'fas fa-shield-alt');
                 main.innerHTML = `
                     <section class="vh">
-                        <div class="vh-bg" id="heroBg"></div>
+                        <div class="hero-map-wrap" id="heroMapWrap" style="position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg,#fdfbf7 0%,#f5efe3 100%);overflow:hidden;padding:18px">
+                            <div id="heroMapCanvas" style="width:100%;max-width:900px;height:100%;max-height:560px;display:grid;place-items:center"></div>
+                            <div id="heroMapClosed" style="display:none;position:absolute;inset:0;background:rgba(243,236,223,.92);display:none;place-items:center;backdrop-filter:blur(2px)"><span style="background:#fff;border:1px solid var(--line);padding:10px 22px;border-radius:999px;font-weight:800;color:var(--muted);box-shadow:var(--sh)">مغلق مؤقتاً</span></div>
+                        </div>
                         <div class="vh-veil"></div>
                         <div class="vh-ghost">ب</div>
                         <div class="vh-in"><div class="container">
@@ -2115,7 +2120,7 @@
                 renderHomeShelf();
                 renderHomeArrivals();
                 renderHomeCollage();
-                try{ const teaser = buildHomeMapTeaser(); const mainEl=document.getElementById('mainContent'); if(mainEl && teaser){ const tmp=document.createElement('div'); tmp.innerHTML=teaser; while(tmp.firstChild) mainEl.appendChild(tmp.firstChild); observeReveal(); } }catch(e){ console.error('map teaser',e); }
+
             } else if (currentPage === 'store') {
                 main.innerHTML = `<div class="container section" style="padding-top:40px">${secHead(t('store_eyebrow', 'المتجر'), t('store_title', 'جميع المنتجات'), t('store_sub', 'اختر قسماً من اليمين أو ابحث مباشرة — الطلب عبر واتساب يصلنا بتفاصيل المنتج كاملة'))}<div class="store-wrap"><aside class="rail" id="storeRail"></aside><div id="allProductsGrid"></div></div></div>`;
                 buildAllProductsGrid();
@@ -2125,9 +2130,6 @@
             } else if (currentPage === 'catalogs') {
                 main.innerHTML = `<div class="container section" style="padding-top:40px">${secHead(t('catalogs_eyebrow', 'كتالوجات'), t('catalogs_title', 'الكتالوجات'), t('catalogs_sub', 'كتالوجات تفاعلية بملء الشاشة — أفكار، مقاسات، وخامات لإلهام مشروعك'))}<div id="catalogsPageGrid"></div></div>`;
                 buildCatalogsPageGrid();
-            } else if (currentPage === 'map') {
-                main.innerHTML = buildMapPage();
-                setTimeout(()=>{ initMapPage(); observeReveal(); }, 80);
             } else if (currentPage === 'contact') {
                 main.innerHTML = `<div class="container section" style="padding-top:40px">${secHead(t('contact_eyebrow', 'تواصل'), t('contact_title', 'اتصل بنا'), t('contact_sub', 'نرد خلال دقائق — اختر وسيلتك المفضلة أو زرنا في جدة'))}<div id="contactInner"></div></div>`;
                 buildContactPage();
@@ -2314,7 +2316,7 @@
         // ================================================================
         // NAVIGATION / ROUTING + DOCK
         // ================================================================
-        const VALID_PAGES = ['home', 'store', 'works', 'catalogs', 'contact', 'map'];
+        const VALID_PAGES = ['home', 'store', 'works', 'catalogs', 'contact'];
         function getHashParts() {
             const raw = location.hash.replace('#', '');
             const parts = raw.split('/');
@@ -2323,7 +2325,7 @@
             return { page, albumId };
         }
         function updatePageTitle() {
-            const titles = { home: 'الرئيسية', store: t('store_title', 'المتجر'), works: t('works_title', 'أعمالنا'), catalogs: t('catalogs_title', 'الكتالوجات'), map: t('map_title', 'خريطة الأعمال'), contact: t('contact_title', 'اتصل بنا') };
+            const titles = { home: 'الرئيسية', store: t('store_title', 'المتجر'), works: t('works_title', 'أعمالنا'), catalogs: t('catalogs_title', 'الكتالوجات'), contact: t('contact_title', 'اتصل بنا') };
             document.title = `${titles[currentPage] || ''} | ${t('site_name', 'بصمه غير')}`;
         }
         function tryOpenAlbumFromHash(albumId, attemptsLeft = 10) {
@@ -2348,7 +2350,6 @@
         function navNames() {
             return {
                 home: t('nav_home', 'الرئيسية'),
-                map: t('nav_map', 'خريطة الأعمال'),
                 store: t('nav_store', 'المتجر'),
                 works: t('nav_works', 'أعمالنا'),
                 catalogs: t('nav_catalogs', 'الكتالوجات'),
@@ -2358,7 +2359,7 @@
         function renderNavLinks() {
             const container = document.getElementById('navLinks');
             if (!container) return;
-            const icons = { home: 'fas fa-house', store: 'fas fa-bag-shopping', works: 'fas fa-camera-retro', catalogs: 'fas fa-book-open', map: 'fas fa-map-location-dot', contact: 'fas fa-phone' };
+            const icons = { home: 'fas fa-house', store: 'fas fa-bag-shopping', works: 'fas fa-camera-retro', catalogs: 'fas fa-book-open', contact: 'fas fa-phone' };
             const names = navNames();
             container.innerHTML = VALID_PAGES.map(p => `<a href="#${p}" data-page="${p}" class="${currentPage === p ? 'active' : ''}"><i class="${icons[p]}"></i> ${escapeHtml(names[p])}</a>`).join('');
             container.querySelectorAll('[data-page]').forEach(link => {
@@ -2423,8 +2424,7 @@
             { id:'nuayriyah', name:'النعيرية', region:'الشرقية', x:652.0, y:245.5 },
             { id:'buqayq', name:'بقيق', region:'الشرقية', x:705.9, y:319.5 },
             { id:'zulm', name:'ظلم', region:'مكة المكرمة', x:364.0, y:474.7 },
-            { id:'laith', name:'الليث', region:'مكة المكرمة', x:277.3, y:597.7 },
-        ];
+            { id:'laith', name:'الليث', region:'مكة المكرمة', x:277.3, y:597.7 }];
         const SAUDI_OUTLINE_D = "M 34.8 154.8 L 85.6 162.4 L 105.3 147.6 L 116.2 130.3 L 151.0 123.7 L 158.6 107.6 L 173.6 99.4 L 128.2 51.4 L 219.6 27.2 L 228.3 20.0 L 283.2 33.0 L 351.2 66.7 L 479.9 163.3 L 564.8 167.2 L 605.4 171.8 L 616.8 194.7 L 649.1 193.5 L 667.0 234.9 L 689.4 245.9 L 697.2 262.8 L 728.3 283.0 L 731.1 302.8 L 726.5 318.8 L 732.3 334.9 L 745.4 348.4 L 751.5 364.2 L 758.3 376.0 L 772.1 385.5 L 784.8 382.1 L 793.5 400.4 L 795.2 411.5 L 812.7 460.2 L 949.9 484.5 L 959.1 474.3 L 980.0 508.4 L 949.6 604.5 L 812.7 652.5 L 681.1 671.0 L 638.5 692.6 L 605.8 743.1 L 584.5 751.1 L 573.0 735.0 L 555.6 737.4 L 511.4 732.6 L 503.1 727.8 L 450.4 728.9 L 438.0 733.3 L 419.3 720.8 L 407.2 744.4 L 411.9 764.7 L 391.8 780.0 L 385.9 759.5 L 372.1 745.0 L 368.6 725.8 L 345.0 708.6 L 320.7 668.3 L 307.8 629.2 L 276.3 596.1 L 255.9 588.2 L 225.7 542.4 L 220.4 509.0 L 222.4 480.5 L 196.2 427.2 L 174.8 408.4 L 150.1 398.5 L 135.1 371.0 L 137.6 360.1 L 124.9 335.2 L 111.6 324.5 L 93.8 288.7 L 66.0 249.9 L 42.7 216.9 L 20.0 217.2 L 27.1 190.8 L 29.1 174.0 L 34.8 154.8 Z";
         function isMapClosed(){ return currentData && currentData.map_enabled === false; }
         function getMapProjects(){
@@ -2624,10 +2624,8 @@
                 <div class="container">
                     <div class="ch-head">
                         <div class="ch-num">05</div>
-                        <div><div class="ch-title">خريطة أعمالنا</div><div class="ch-sub">اضغط على أي مدينة في الخريطة لاستعراض مشاريعنا المنفذة فيها — ${total} مشروع في ${Object.values(counts).filter(v=>v>0).length} مدن • الأكثر: ${topCities}</div></div>
-                        <a class="ch-more" href="#map" data-page="map">استكشاف الخريطة <i class="fas fa-arrow-left"></i></a>
-                    </div>
-                    <div class="map-wrap" style="cursor:pointer" onclick="changePage('map')">
+                        <div><div class="ch-title">خريطة أعمالنا</div><div class="ch-sub">اضغط على أي مدينة في الخريطة لاستعراض مشاريعنا المنفذة فيها — ${total} مشروع في ${Object.values(counts).filter(v=>v>0).length} مدن • الأكثر: ${topCities}</div></div></div>
+                    <div class="map-wrap" style="cursor:pointer" onclick="changePage()">
                         <div class="map-canvas" style="min-height:460px">
                             ${buildSaudiMapSVG(counts)}
                             <div style="position:absolute;top:14px;right:14px;background:var(--espresso);color:#fff;padding:7px 14px;border-radius:var(--r-pill);font-size:.72rem;font-weight:800"><i class="fas fa-map"></i> ${total} مشروع</div>
@@ -2639,6 +2637,25 @@
                     </div>
                 </div>
             </section>`;
+        }
+
+
+        function renderHeroMap(){
+            const wrap = document.getElementById('heroMapWrap');
+            const canvas = document.getElementById('heroMapCanvas');
+            const closedBox = document.getElementById('heroMapClosed');
+            if(!wrap || !canvas) return;
+            if(isMapClosed()){
+                wrap.style.display='none';
+                return;
+            }
+            wrap.style.display='grid';
+            if(closedBox) closedBox.style.display='none';
+            canvas.style.display='grid';
+            const counts = getRegionCounts();
+            canvas.innerHTML = buildSaudiMapSVG(counts);
+            // make hero map interactive - ensure pins clickable
+            // add legend small inside hero?
         }
 
         function changePage(page) {
@@ -2749,13 +2766,12 @@
                 else {
                     if (JSON.stringify(oldData.home_slider) !== JSON.stringify(currentData.home_slider)) initHeroRotator();
                     if (storeSliceChanged) { renderHomeShelf(); renderHomeArrivals(); }
+                    if (JSON.stringify(oldData.map_projects) !== JSON.stringify(currentData.map_projects)) { try{ renderHeroMap(); }catch(e){} }
                     if (JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums)) renderHomeCollage();
                 }
             } else if (currentPage === 'store') {
                 if (storeSliceChanged) buildAllProductsGrid();
                 else if (pageTextChanged) loadPage();
-            } else if (currentPage === 'map') {
-                if (JSON.stringify(oldData.map_projects) !== JSON.stringify(currentData.map_projects)) loadPage();
             } else if (currentPage === 'works') {
                 if (JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums)) buildWorksGrid();
                 else if (pageTextChanged) loadPage();
