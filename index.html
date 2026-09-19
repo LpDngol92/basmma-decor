@@ -602,6 +602,23 @@
         .hero-map-hint i{color:#e8bd7d}
         @media(max-width:768px){#heroMapCanvas .city-pin text.lbl{font-size:7px} .hero-map-title{flex-direction:column;align-items:flex-start;top:14px} .hero-map-title .hmt-stats{flex-wrap:wrap}}
 
+
+        #heroMapCanvas .city-pin text.lbl{display:none}
+        .map-beside-labels{position:absolute;inset:0;pointer-events:none;z-index:2}
+        .map-beside-item{position:absolute;display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e7ddca;border-radius:999px;padding:6px 12px 6px 6px;box-shadow:0 6px 18px rgba(19,16,11,.08);pointer-events:all;cursor:pointer;transition:all .2s;white-space:nowrap;animation:cardBlink 2.8s ease-in-out infinite}
+        .map-beside-item:hover{transform:scale(1.04);border-color:#c08a3e;box-shadow:0 10px 24px rgba(19,16,11,.14)}
+        .map-beside-item.right{right:8px;left:auto;transform:translateY(-50%);}
+        .map-beside-item.right:hover{transform:translateY(-50%) scale(1.04);}
+        .map-beside-item.left{left:8px;right:auto;transform:translateY(-50%);}
+        .map-beside-item.left:hover{transform:translateY(-50%) scale(1.04);}
+        .map-beside-item .dot{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#13100b,#2a1e0f);color:#e8bd7d;display:grid;place-items:center;font-weight:900;font-size:.72rem;flex-shrink:0;border:1px solid #e8bd7d}
+        .map-beside-item b{font-family:var(--display);font-size:.78rem;color:#13100b}
+        .map-beside-item small{font-size:.68rem;color:#7c7362;font-weight:700}
+        .map-beside-line{position:absolute;pointer-events:none;z-index:1}
+        .map-beside-line path{fill:none;stroke:#c08a3e;stroke-width:1.3;stroke-dasharray:5 5;opacity:.7;animation:lineDash 1.8s linear infinite}
+        @keyframes cardBlink{0%,100%{box-shadow:0 6px 18px rgba(19,16,11,.08);border-color:#e7ddca}50%{box-shadow:0 8px 22px rgba(192,138,62,.18);border-color:#e8bd7d}}
+        @keyframes lineDash{to{stroke-dashoffset:-10}}
+
         /* ============ RESPONSIVE ============ */
         @media(max-width:900px){
             .hsearch{display:none}
@@ -2508,9 +2525,11 @@
         }
         function buildSaudiMapSVG(counts){
             function norm(s){ return String(s||'').trim().toLowerCase(); }
+            // SVG map without city names
             let svg = `<div class="map-viewport" id="mapViewport" style="width:100%;height:100%;overflow:hidden;cursor:grab;touch-action:none;position:relative"><svg viewBox="0 0 1000 800" class="map-svg-real zoomed-out" id="mapSvgReal" role="img" aria-label="خريطة المملكة">`;
             svg += `<path d="${SAUDI_OUTLINE_D}" class="map-outline"/>`;
             if(typeof SAUDI_REGIONS_D!=="undefined" && SAUDI_REGIONS_D) svg += `<path d="${SAUDI_REGIONS_D}" class="map-regions" style="fill:none;stroke:rgba(192,138,62,.14);stroke-width:0.7;stroke-dasharray:5 6;pointer-events:none"/>`;
+            // Draw pins without labels
             SAUDI_CITIES.forEach((c,i)=>{
                 const cnt = counts[norm(c.id)]||0;
                 const has = cnt>0;
@@ -2519,10 +2538,39 @@
                 if(has) svg += `<circle class="outer" cx="${c.x}" cy="${c.y}" r="18" style="animation-delay:${(i*0.13)%2}s"/>`;
                 svg += `<circle class="main" cx="${c.x}" cy="${c.y}" r="${has?11:7.5}"/>`;
                 if(has) svg += `<text x="${c.x}" y="${c.y+3}" class="count">${cnt}</text>`;
-                svg += `<text x="${c.x}" y="${c.y+22}" class="lbl">${c.name}</text>`;
                 svg += `</g>`;
             });
-            svg += `</svg></div>`;
+            svg += `</svg>`;
+            // Beside labels with lines for cities with projects
+            const citiesWith = SAUDI_CITIES.filter(c=> (counts[norm(c.id)]||0)>0);
+            if(citiesWith.length){
+                // Sort by y to avoid overlap
+                citiesWith.sort((a,b)=> a.y - b.y);
+                svg += `<div class="map-beside-labels" id="mapBesideLabels">`;
+                svg += `<svg class="map-beside-line" viewBox="0 0 1000 800" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none">`;
+                citiesWith.forEach((c, idx)=>{
+                    const cnt = counts[norm(c.id)]||0;
+                    const isRight = c.x < 500;
+                    // Label anchored to nearest side: right side cities pull to right edge, left to left edge
+                    const lx = isRight ? 940 : 60;
+                    const ly = 120 + idx * 52;
+                    // Clamp ly inside
+                    const clampedLy = Math.max(40, Math.min(760, ly));
+                    svg += `<path d="M ${c.x} ${c.y} C ${c.x + (isRight? 40 : -40)} ${c.y}, ${lx + (isRight? -30 : 30)} ${clampedLy}, ${lx} ${clampedLy}" style="animation-delay:${(idx*0.2)%1}s" />`;
+                });
+                svg += `</svg>`;
+                citiesWith.forEach((c, idx)=>{
+                    const cnt = counts[norm(c.id)]||0;
+                    const isRight = c.x < 500;
+                    const ly = 120 + idx * 52;
+                    const clampedLy = Math.max(40, Math.min(760, ly));
+                    const sideClass = isRight ? 'right' : 'left';
+                    const delay = (idx*0.35)%2;
+                    svg += `<div class="map-beside-item ${sideClass}" style="top:${(clampedLy/800*100).toFixed(2)}%;animation-delay:${delay}s" onclick="openRegion('${c.id}')" title="اضغط لعرض مشاريع ${c.name}"><span class="dot">${cnt}</span><div style="display:flex;flex-direction:column;align-items:flex-start;line-height:1"><b>${c.name}</b><small>${cnt} مشروع</small></div><i class="fas ${isRight?'fa-chevron-left':'fa-chevron-right'}" style="color:#c08a3e;font-size:.6rem;margin:0 4px"></i></div>`;
+                });
+                svg += `</div>`;
+            }
+            svg += `</div>`;
             svg += `<div class="map-zoom-controls" style="position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:6px;z-index:3"><button class="map-zoom-btn" onclick="mapZoom(0.2)" title="تكبير"><i class="fas fa-plus"></i></button><button class="map-zoom-btn" onclick="mapZoom(-0.2)" title="تصغير"><i class="fas fa-minus"></i></button><button class="map-zoom-btn" onclick="mapReset()" title="إعادة"><i class="fas fa-expand"></i></button></div>`;
             return svg;
         }
