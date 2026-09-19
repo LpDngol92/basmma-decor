@@ -178,7 +178,7 @@ input[type=checkbox]{width:18px;height:18px;accent-color:var(--brand);flex-shrin
   <form class="login-card" onsubmit="doLogin();return false">
     <div class="login-mark">ب</div>
     <h2>لوحة تحكم بصمة غير</h2>
-    <p>تحكم كامل بالموقع والمتجر والنصوص — إصدار 4.0 — مع خريطة المشاريع</p>
+    <p>تحكم كامل بالموقع والمتجر والنصوص — إصدار 3.0</p>
     <div class="fld"><input type="email" id="loginEmail" placeholder="البريد الإلكتروني" required></div>
     <div class="fld"><input type="password" id="loginPassword" placeholder="كلمة المرور" required></div>
     <button type="submit" class="btn login-btn"><i class="fas fa-right-to-bracket"></i> دخول</button>
@@ -387,7 +387,7 @@ const SECTIONS = [
   { id:'catalogs',    name:'الكتالوجات',     icon:'fas fa-book-open',     desc:'كتالوجات HTML التفاعلية',         render: renderCatalogs },
   { id:'schedule',    name:'أوقات العمل',    icon:'fas fa-clock',         desc:'الفترات الصباحية والمسائية',      render: renderSchedule },
   { id:'popup',       name:'فقاعة الترحيب',  icon:'fas fa-comment-dots',  desc:'الرسالة المنبثبة للزوار',         render: renderPopup },
-  { id:'map',        name:'خريطة المشاريع', icon:'fas fa-map-location-dot', desc:'إضافة مشاريع حسب المنطقة', render: renderMap },
+  { id:'map',        name:'خريطة المشاريع', icon:'fas fa-map-location-dot', desc:'إضافة مشاريع حسب المدينة', render: renderMap },
   { id:'maintenance', name:'وضع الصيانة',    icon:'fas fa-shield-halved', desc:'إغلاق الموقع مؤقتاً مع عدّاد',    render: renderMaintenance },
   { id:'chat',        name:'الدردشة',        icon:'fas fa-comments',      desc:'تفعيل ورسائل الدردشة المباشرة',  render: renderChat },
 ];
@@ -451,7 +451,6 @@ function loadData(silent){
 }
 
 
-/* ================= MAP — خريطة المشاريع ================= */
 const MAP_CITIES = [
   {id:'riyadh', name:'الرياض', region:'الرياض' },
   {id:'kharj', name:'الخرج', region:'الرياض' },
@@ -505,20 +504,23 @@ const MAP_CITIES = [
   {id:'zulm', name:'ظلم', region:'مكة المكرمة' },
   {id:'laith', name:'الليث', region:'مكة المكرمة' },
 ];
+
 function isMapEnabled(){ return currentData.map_enabled !== false; }
 function toggleMapEnabled(){
-  const newVal = !isMapEnabled();
-  db.ref(`${DB_PATH}/map_enabled`).set(newVal).then(()=>{ showToast(newVal?'✅ تم فتح خريطة الأعمال':'🔒 تم إغلاق خريطة الأعمال'); loadData(true); });
+  const v=!isMapEnabled();
+  db.ref(`${DB_PATH}/map_enabled`).set(v).then(()=>{ showToast(v?'✅ تم فتح الخريطة':'🔒 تم إغلاق الخريطة'); loadData(true); });
 }
+
+/* ================= MAP — خريطة المدن ================= */
 function renderMap(){
   const raw = currentData.map_projects || {};
   const list = Array.isArray(raw) ? raw : Object.keys(raw).map(k=> ({_id:k, ...raw[k]}));
-  // counts
-  const counts={}; MAP_CITIES.forEach(r=> counts[r.id]=0); list.forEach(p=>{ if(p.region) counts[p.region]=(counts[p.region]||0)+1; });
+  const counts={}; MAP_CITIES.forEach(c=> counts[c.id]=0); list.forEach(p=>{ const key=p.region||p.city; if(key && counts[key]!==undefined) counts[key]++; });
   const total=list.length;
-  const regionsHtml = MAP_CITIES.map(r=> `<span class="map-reg-pill" style="display:inline-flex;align-items:center;gap:6px;background:${counts[r.id]>0?'var(--brand-soft)':'#fff'};border:1px solid var(--line);padding:5px 12px;border-radius:99px;font-size:.74rem;font-weight:700">${r.name} <b style="background:${counts[r.id]>0?'var(--brand)':'var(--line)'};color:${counts[r.id]>0?'#fff':'var(--muted)'};padding:1px 8px;border-radius:99px;font-size:.68rem">${counts[r.id]||0}</b></span>`).join(' ');
+  const enabled = isMapEnabled();
+  const regionsHtml = MAP_CITIES.map(c=> `<span style="display:inline-flex;align-items:center;gap:6px;background:${counts[c.id]>0?'var(--brand-soft)':'#fff'};border:1px solid var(--line);padding:5px 12px;border-radius:99px;font-size:.74rem;font-weight:700">${c.name} <b style="background:${counts[c.id]>0?'var(--brand)':'var(--line)'};color:${counts[c.id]>0?'#fff':'var(--muted)'};padding:1px 8px;border-radius:99px;font-size:.68rem">${counts[c.id]||0}</b></span>`).join(' ');
   const cards = list.length ? list.map(p=>{
-    const regionName = (MAP_CITIES.find(r=>r.id===p.region)||{}).name || p.region || '—';
+    const cityName = (MAP_CITIES.find(c=>c.id===p.region||c.id===p.city)||{}).name || p.region || p.city || '—';
     const cover = p.cover || (p.images&&p.images[0]) || '';
     const imgs = (p.images||[]).length;
     return `<div class="prod-card">
@@ -526,12 +528,12 @@ function renderMap(){
       <div class="prod-fields">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <b style="flex:1">${escA(p.name||'بدون اسم')}</b>
-          <span style="background:var(--brand-soft);border:1px solid #efe2cd;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:700"><i class="fas fa-map-pin" style="color:var(--brand)"></i> ${escA(regionName)}</span>
+          <span style="background:var(--brand-soft);border:1px solid #efe2cd;padding:3px 10px;border-radius:99px;font-size:.7rem;font-weight:700"><i class="fas fa-map-pin" style="color:var(--brand)"></i> ${escA(cityName)}</span>
           <span style="background:var(--bg);border:1px solid var(--line);padding:3px 10px;border-radius:99px;font-size:.7rem">${imgs} صورة</span>
         </div>
         <div class="prod-row3">
           <div class="fld"><label>اسم المشروع</label><input id="map_name_${p._id}" value="${escA(p.name||'')}" placeholder="مثال: معرض العطور - الرياض بارك"></div>
-          <div class="fld"><label>المنطقة</label><select id="map_region_${p._id}">${MAP_CITIES.map(r=> `<option value="${r.id}" ${p.region===r.id?'selected':''}>${r.name}</option>`).join('')}</select></div>
+          <div class="fld"><label>المدينة</label><select id="map_region_${p._id}">${(()=>{let g={}; MAP_CITIES.forEach(c=>{(g[c.region]=g[c.region]||[]).push(c)}); let cur=p.region||p.city; return Object.keys(g).map(reg=> `<optgroup label="${reg}">${g[reg].map(c=> `<option value="${c.id}" ${cur===c.id?'selected':''}>${c.name}</option>`).join('')}</optgroup>`).join('')})()}</select></div>
           <div class="fld"><label>صورة الغلاف</label><input id="map_cover_${p._id}" value="${escA(p.cover||'')}" dir="ltr" placeholder="https://..."></div>
         </div>
         <div class="fld"><label>روابط الصور (كل رابط في سطر)</label><textarea id="map_images_${p._id}" rows="2" class="mono" dir="ltr">${escA((p.images||[]).join('\n'))}</textarea></div>
@@ -545,35 +547,34 @@ function renderMap(){
   }).join('') : '<div class="empty">لا توجد مشاريع بعد — أضف أول مشروع بالأسفل</div>';
 
   document.getElementById('body-map').innerHTML = `
-    <div class="status-band ${isMapEnabled()?'open':'closed'}" style="margin-bottom:14px">
-      <div><b>${isMapEnabled()?'🟢 خريطة الأعمال مفتوحة':'🔴 خريطة الأعمال مغلقة'}</b><small>${isMapEnabled()?'الزوار يرون الخريطة':'الزوار لا يرون الخريطة'}</small></div>
-      <button class="btn sm ${isMapEnabled()?'red':'green'}" onclick="toggleMapEnabled()"><i class="fas ${isMapEnabled()?'fa-eye-slash':'fa-eye'}"></i> ${isMapEnabled()?'إغلاق الخريطة':'فتح الخريطة'}</button>
+    <div class="status-band ${enabled?'open':'closed'}" style="margin-bottom:14px">
+      <div><b>${enabled?'🟢 خريطة الأعمال مفتوحة':'🔴 خريطة الأعمال مغلقة'}</b><small>${enabled?'الزوار يرون الخريطة ويستعرضون المدن':'الزوار لا يرون الخريطة — تظهر رسالة مغلقة'}</small></div>
+      <button class="btn sm ${enabled?'red':'green'}" onclick="toggleMapEnabled()"><i class="fas ${enabled?'fa-eye-slash':'fa-eye'}"></i> ${enabled?'إغلاق الخريطة':'فتح الخريطة'}</button>
     </div>
+    <div class="hint" style="margin-bottom:14px">💡 إغلاق الخريطة يخفيها من الرئيسية ومن صفحة #map بدون حذف البيانات.</div>
     <div class="stats">
       <div class="stat"><div class="ico" style="background:#faf3e9;color:#b0722a"><i class="fas fa-map-location-dot"></i></div><div><b>${total}</b><span>إجمالي المشاريع على الخريطة</span></div></div>
-      <div class="stat"><div class="ico" style="background:#e9f7ef;color:#15803d"><i class="fas fa-layer-group"></i></div><div><b>${Object.values(counts).filter(v=>v>0).length} / 13</b><span>مناطق مغطاة</span></div></div>
+      <div class="stat"><div class="ico" style="background:#e9f7ef;color:#15803d"><i class="fas fa-layer-group"></i></div><div><b>${Object.values(counts).filter(v=>v>0).length} / ${MAP_CITIES.length}</b><span>مدن مغطاة</span></div></div>
       <div class="stat"><div class="ico" style="background:#e8effd;color:#2563eb"><i class="fas fa-images"></i></div><div><b>${list.reduce((s,p)=> s + ((p.images||[]).length||0),0)}</b><span>إجمالي الصور</span></div></div>
     </div>
     <div class="card">
-      <div class="card-head"><h3><i class="fas fa-chart-simple"></i> توزيع المشاريع حسب المنطقة</h3></div>
+      <div class="card-head"><h3><i class="fas fa-chart-simple"></i> توزيع المشاريع حسب المدينة</h3></div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">${regionsHtml}</div>
-      <div class="hint">كل رقم يظهر على الخريطة في الموقع. اضغط على المنطقة في الخريطة لعرض مشاريعها.</div>
     </div>
     <div class="card">
       <div class="card-head"><h3><i class="fas fa-plus"></i> إضافة مشروع جديد للخريطة</h3></div>
       <div class="grid2">
         <div class="fld"><label>اسم المشروع *</label><input id="newMapName" placeholder="مثال: ستاند شركة X - معرض الرياض"></div>
-        <div class="fld"><label>المنطقة *</label><select id="newMapRegion">${(()=>{let g={}; MAP_CITIES.forEach(c=>{(g[c.region]=g[c.region]||[]).push(c)}); return Object.keys(g).map(reg=> `<optgroup label="${reg}">${g[reg].map(c=> `<option value="${c.id}">${c.name}</option>`).join('')}</optgroup>`).join('')})()}</select></div>
+        <div class="fld"><label>المدينة *</label><select id="newMapRegion">${(()=>{let g={}; MAP_CITIES.forEach(c=>{(g[c.region]=g[c.region]||[]).push(c)}); return Object.keys(g).map(reg=> `<optgroup label="${reg}">${g[reg].map(c=> `<option value="${c.id}">${c.name}</option>`).join('')}</optgroup>`).join('')})()}</select></div>
       </div>
       <div class="grid2" style="margin-top:10px">
-        <div class="fld"><label>صورة الغلاف (رابط)</label><input id="newMapCover" dir="ltr" placeholder="https://... (اختياري — سيتم استخدام أول صورة كغلاف إذا ترك فارغ)"></div>
-        <div class="fld"><label>روابط الصور — كل رابط في سطر *</label><textarea id="newMapImages" rows="3" class="mono" dir="ltr" placeholder="https://example.com/1.jpg&#10;https://example.com/2.jpg"></textarea></div>
+        <div class="fld"><label>صورة الغلاف (رابط)</label><input id="newMapCover" dir="ltr" placeholder="https://... (اختياري)"></div>
+        <div class="fld"><label>روابط الصور — كل رابط في سطر *</label><textarea id="newMapImages" rows="3" class="mono" dir="ltr" placeholder="https://example.com/1.jpg\nhttps://example.com/2.jpg"></textarea></div>
       </div>
       <div class="btn-row" style="margin-top:12px">
         <button class="btn" onclick="addMapProject()"><i class="fas fa-plus"></i> إضافة المشروع</button>
-        <button class="btn ghost" onclick="addMapProjectBulk()"><i class="fas fa-layer-group"></i> إضافة سريعة (paste)</button>
       </div>
-      <div class="hint">💡 التسلسل: <b>الخريطة → المنطقة → قائمة المشاريع (بالاسم) → الضغط على الاسم يفتح معرض الصور</b>. كل مشروع يظهر باسمه تحت منطقته.</div>
+      <div class="hint">💡 التسلسل: <b>الخريطة → المدينة → قائمة المشاريع (بالاسم) → الضغط على الاسم يفتح معرض الصور</b></div>
     </div>
     <div class="card">
       <div class="card-head"><h3><i class="fas fa-list"></i> كل المشاريع (${total})</h3><small>اضغط حفظ بعد التعديل</small></div>
@@ -590,7 +591,7 @@ window.addMapProject = function(){
   const images = imgsTxt.split(/\r?\n/).map(s=>s.trim()).filter(s=> s.startsWith('http'));
   if(!images.length){ showToast('أدخل رابط صورة واحدة على الأقل', true); return; }
   const data={ name, region, cover: cover||images[0], images, createdAt: Date.now() };
-  db.ref(`${DB_PATH}/map_projects`).push(data).then(()=>{ showToast('✅ تمت إضافة المشروع — ظهر على الخريطة فوراً'); loadData(true); }).catch(e=> showToast(e.message,true));
+  db.ref(`${DB_PATH}/map_projects`).push(data).then(()=>{ showToast('✅ تمت إضافة المشروع'); loadData(true); }).catch(e=> showToast(e.message,true));
 };
 window.saveMapProject = function(id){
   const name=document.getElementById('map_name_'+id).value.trim();
@@ -608,12 +609,6 @@ window.deleteMapProject = function(id){
 window.previewMapProject = function(id){
   const raw=currentData.map_projects||{}; const p=raw[id]; if(!p) return;
   const cover=p.cover|| (p.images&&p.images[0])||''; if(cover) openLightbox(cover);
-};
-window.addMapProjectBulk = function(){
-  const txt=prompt('الصق روابط الصور (كل رابط في سطر) وسيتم إنشاء مشروع واحد يجمعها:');
-  if(!txt) return;
-  document.getElementById('newMapImages').value = txt;
-  showToast('تم لصق الروابط — اضغط إضافة المشروع');
 };
 
 /* ================= 1. OVERVIEW ================= */
