@@ -583,6 +583,22 @@
         .map-outline{fill:#0f0a04;stroke:#3a2a0f;stroke-width:1.6;filter:drop-shadow(0 8px 18px rgba(0,0,0,.7));}
         .map-regions{filter:drop-shadow(0 1px 2px rgba(0,0,0,.4));}
 
+
+        /* Zoom/Pan controls */
+        .map-zoom-controls{position:absolute;top:12px;left:12px;display:flex;flex-direction:column;gap:6px;z-index:3}
+        .map-zoom-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.92);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.12);transition:.2s;color:var(--ink);font-size:.9rem}
+        .map-zoom-btn:hover{background:#fff;transform:scale(1.05);border-color:var(--brass)}
+        .map-zoom-btn:active{transform:scale(.96)}
+        .map-viewport{width:100%;height:100%;overflow:hidden;cursor:grab;touch-action:none;position:relative}
+        .map-viewport:active{cursor:grabbing}
+        .map-viewport .map-svg-real{transform-origin:center;transition:transform .15s ease;will-change:transform}
+        .city-pin text.lbl{transition:opacity .2s, font-size .2s}
+        /* Hide overlapping labels when zoomed out - show only has-projects or on hover */
+        .map-svg-real.zoomed-out .city-pin:not(.has-projects) text.lbl{opacity:0;pointer-events:none}
+        .map-svg-real.zoomed-out .city-pin.has-projects text.lbl{opacity:1}
+        .map-svg-real:not(.zoomed-out) .city-pin text.lbl{opacity:1}
+        @media(max-width:768px){.city-pin text.lbl{font-size:8px}}
+
         /* ============ RESPONSIVE ============ */
         @media(max-width:900px){
             .hsearch{display:none}
@@ -2142,7 +2158,7 @@
                 buildCatalogsPageGrid();
             } else if (currentPage === 'store') {
                 main.innerHTML = buildMapPage();
-                setTimeout(()=>{ initMapPage(); observeReveal(); }, 80);
+                setTimeout(()=>{ initMapPage(); initMapPanZoom(); observeReveal(); }, 80);
             } else if (currentPage === 'contact') {
                 main.innerHTML = `<div class="container section" style="padding-top:40px">${secHead(t('contact_eyebrow', 'تواصل'), t('contact_title', 'اتصل بنا'), t('contact_sub', 'نرد خلال دقائق — اختر وسيلتك المفضلة أو زرنا في جدة'))}<div id="contactInner"></div></div>`;
                 buildContactPage();
@@ -2489,23 +2505,106 @@
         }
         function buildSaudiMapSVG(counts){
             function norm(s){ return String(s||'').trim().toLowerCase(); }
-            let svg = `<svg viewBox="0 0 1000 800" class="map-svg-real" role="img" aria-label="خريطة المملكة">`;
+            let svg = `<div class="map-viewport" id="mapViewport"><svg viewBox="0 0 1000 800" class="map-svg-real zoomed-out" id="mapSvgReal" role="img" aria-label="خريطة المملكة">`;
             svg += `<path d="${SAUDI_OUTLINE_D}" class="map-outline"/>`;
             if(typeof SAUDI_REGIONS_D!=="undefined" && SAUDI_REGIONS_D) svg += `<path d="${SAUDI_REGIONS_D}" class="map-regions" style="fill:none;stroke:rgba(224,181,112,.25);stroke-width:0.9;stroke-dasharray:3 4;pointer-events:none"/>`;
-                        SAUDI_CITIES.forEach((c,i)=>{
+            SAUDI_CITIES.forEach((c,i)=>{
                 const cnt = counts[norm(c.id)]||0;
                 const has = cnt>0;
                 const cls = has ? 'city-pin has-projects' : 'city-pin';
                 const delay = has ? (i*0.17)%2.2 : 0;
-                svg += `<g class="${cls}" data-city="${c.id}" id="pin-${c.id}" onclick="openRegion('${c.id}')" style="${has?`animation-delay:${delay}s`:''}">`;
+                svg += `<g class="${cls}" data-city="${c.id}" id="pin-${c.id}" onclick="openRegion('${c.id}')">`;
                 svg += `<circle class="main" cx="${c.x}" cy="${c.y}" r="${has?14:9}" ${has?`style="animation-delay:${delay}s"`:''}/>`;
                 if(has) svg += `<text x="${c.x}" y="${c.y+3.2}" class="count">${cnt}</text>`;
                 svg += `<text x="${c.x}" y="${c.y+26}" class="lbl">${c.name}</text>`;
                 svg += `</g>`;
             });
-            svg += `</svg>`;
+            svg += `</svg></div>`;
+            svg += `<div class="map-zoom-controls"><button class="map-zoom-btn" onclick="mapZoom(0.2)" title="تكبير"><i class="fas fa-plus"></i></button><button class="map-zoom-btn" onclick="mapZoom(-0.2)" title="تصغير"><i class="fas fa-minus"></i></button><button class="map-zoom-btn" onclick="mapReset()" title="إعادة"><i class="fas fa-expand"></i></button></div>`;
+            svg += `<div style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.55);color:#fff;padding:5px 10px;border-radius:999px;font-size:.66rem;pointer-events:none;z-index:2"><i class="fas fa-search-plus"></i> عجلة للتكبير • اسحب للتحريك</div>`;
             return svg;
         }
+        let mapScale=1, mapTx=0, mapTy=0, mapIsPanning=false, mapStartX=0, mapStartY=0;
+        function mapZoom(delta){
+            let ns = Math.min(3, Math.max(0.8, mapScale + delta));
+            if(ns===mapScale) return;
+            mapScale=ns;
+            updateMapTransform();
+        }
+        function mapReset(){ mapScale=1; mapTx=0; mapTy=0; updateMapTransform(); }
+        function updateMapTransform(){
+            const svg=document.getElementById('mapSvgReal');
+            const vp=document.getElementById('mapViewport');
+            if(!svg) return;
+            svg.style.transform=`translate(${mapTx}px, ${mapTy}px) scale(${mapScale})`;
+            if(mapScale>1.25) svg.classList.remove('zoomed-out');
+            else svg.classList.add('zoomed-out');
+        }
+        function initMapPanZoom(){
+            const vp=document.getElementById('mapViewport');
+            const svg=document.getElementById('mapSvgReal');
+            if(!vp||!svg) return;
+            // Mouse wheel zoom
+            vp.addEventListener('wheel', (e)=>{
+                e.preventDefault();
+                const delta = e.deltaY>0 ? -0.12 : 0.12;
+                // zoom towards mouse position - simple
+                mapZoom(delta);
+            }, {passive:false});
+            // Drag pan
+            vp.addEventListener('mousedown', (e)=>{
+                if(mapScale<=1) return;
+                mapIsPanning=true;
+                mapStartX=e.clientX - mapTx;
+                mapStartY=e.clientY - mapTy;
+                vp.style.cursor='grabbing';
+            });
+            window.addEventListener('mousemove', (e)=>{
+                if(!mapIsPanning) return;
+                mapTx=e.clientX - mapStartX;
+                mapTy=e.clientY - mapStartY;
+                // clamp
+                const max=200*mapScale;
+                mapTx=Math.max(-max, Math.min(max, mapTx));
+                mapTy=Math.max(-max, Math.min(max, mapTy));
+                updateMapTransform();
+            });
+            window.addEventListener('mouseup', ()=>{ mapIsPanning=false; if(vp) vp.style.cursor='grab'; });
+            // Touch pinch + pan
+            let lastDist=0;
+            vp.addEventListener('touchstart', (e)=>{
+                if(e.touches.length===2){
+                    lastDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+                } else if(e.touches.length===1 && mapScale>1){
+                    mapIsPanning=true;
+                    mapStartX=e.touches[0].clientX - mapTx;
+                    mapStartY=e.touches[0].clientY - mapTy;
+                }
+            }, {passive:false});
+            vp.addEventListener('touchmove', (e)=>{
+                if(e.touches.length===2){
+                    e.preventDefault();
+                    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+                    if(lastDist){
+                        const delta=(d-lastDist)*0.008;
+                        mapZoom(delta);
+                    }
+                    lastDist=d;
+                } else if(e.touches.length===1 && mapIsPanning){
+                    e.preventDefault();
+                    mapTx=e.touches[0].clientX - mapStartX;
+                    mapTy=e.touches[0].clientY - mapStartY;
+                    updateMapTransform();
+                }
+            }, {passive:false});
+            vp.addEventListener('touchend', (e)=>{
+                if(e.touches.length<2) lastDist=0;
+                if(e.touches.length===0) mapIsPanning=false;
+            });
+        }
+        // Auto init after map renders
+        const _origRenderHeroMap = typeof renderHeroMap==='function' ? renderHeroMap : null;
+        const _origInitMapPage = typeof initMapPage==='function' ? initMapPage : null;
         function buildRegionModal(){
             return `<div id="regionModal" class="region-modal" onclick="if(event.target===this) closeRegionModal()">
                 <div class="region-modal-box">
@@ -2637,7 +2736,7 @@
             }
             const c=document.getElementById('heroMapCanvas'); if(!c) return;
             if(typeof isMapClosed==='function' && isMapClosed()){c.innerHTML=`<div style='display:grid;place-items:center;height:380px;color:#f3ecdf'><b>مغلقة ستعود قريباً</b></div>`; return; }
-            const counts=getRegionCounts(); c.innerHTML=buildSaudiMapSVG(counts);
+            const counts=getRegionCounts(); c.innerHTML=buildSaudiMapSVG(counts); setTimeout(initMapPanZoom, 80);
         }
         function changePage(page) {
             const target = VALID_PAGES.includes(page) ? page : 'home';
