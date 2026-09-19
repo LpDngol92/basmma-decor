@@ -452,30 +452,68 @@ function loadData(silent){
 
 
 /* ================= MAP — خريطة المشاريع ================= */
-const MAP_REGIONS = [
-  {id:'riyadh', name:'الرياض'},
-  {id:'makkah', name:'مكة المكرمة'},
-  {id:'madinah', name:'المدينة المنورة'},
-  {id:'qassim', name:'القصيم'},
-  {id:'eastern', name:'الشرقية'},
-  {id:'asir', name:'عسير'},
-  {id:'tabuk', name:'تبوك'},
-  {id:'hail', name:'حائل'},
-  {id:'jazan', name:'جازان'},
-  {id:'najran', name:'نجران'},
-  {id:'baha', name:'الباحة'},
-  {id:'jawf', name:'الجوف'},
-  {id:'northern', name:'الحدود الشمالية'},
+const MAP_CITIES = [
+  {id:'riyadh', name:'الرياض', region:'الرياض' },
+  {id:'kharj', name:'الخرج', region:'الرياض' },
+  {id:'dawadmi', name:'الدوادمي', region:'الرياض' },
+  {id:'majmah', name:'المجمعة', region:'الرياض' },
+  {id:'zulfi', name:'الزلفي', region:'الرياض' },
+  {id:'wadi_dawasir', name:'وادي الدواسر', region:'الرياض' },
+  {id:'jeddah', name:'جدة', region:'مكة المكرمة' },
+  {id:'makkah', name:'مكة المكرمة', region:'مكة المكرمة' },
+  {id:'taif', name:'الطائف', region:'مكة المكرمة' },
+  {id:'rabigh', name:'رابغ', region:'مكة المكرمة' },
+  {id:'qunfudhah', name:'القنفذة', region:'مكة المكرمة' },
+  {id:'madinah', name:'المدينة المنورة', region:'المدينة المنورة' },
+  {id:'yanbu', name:'ينبع', region:'المدينة المنورة' },
+  {id:'ula', name:'العلا', region:'المدينة المنورة' },
+  {id:'buraidah', name:'بريدة', region:'القصيم' },
+  {id:'unaizah', name:'عنيزة', region:'القصيم' },
+  {id:'rass', name:'الرس', region:'القصيم' },
+  {id:'dammam', name:'الدمام', region:'الشرقية' },
+  {id:'khobar', name:'الخبر', region:'الشرقية' },
+  {id:'dhahran', name:'الظهران', region:'الشرقية' },
+  {id:'jubail', name:'الجبيل', region:'الشرقية' },
+  {id:'ahsa', name:'الأحساء', region:'الشرقية' },
+  {id:'hafar', name:'حفر الباطن', region:'الشرقية' },
+  {id:'qatif', name:'القطيف', region:'الشرقية' },
+  {id:'abha', name:'أبها', region:'عسير' },
+  {id:'khamis', name:'خميس مشيط', region:'عسير' },
+  {id:'bisha', name:'بيشة', region:'عسير' },
+  {id:'mohayil', name:'محايل عسير', region:'عسير' },
+  {id:'tabuk', name:'تبوك', region:'تبوك' },
+  {id:'duba', name:'ضباء', region:'تبوك' },
+  {id:'wajh', name:'الوجه', region:'تبوك' },
+  {id:'hail', name:'حائل', region:'حائل' },
+  {id:'bقع', name:'بقعاء', region:'حائل' },
+  {id:'jazan', name:'جازان', region:'جازان' },
+  {id:'sabia', name:'صبيا', region:'جازان' },
+  {id:'abuarish', name:'أبو عريش', region:'جازان' },
+  {id:'najran', name:'نجران', region:'نجران' },
+  {id:'sharurah', name:'شرورة', region:'نجران' },
+  {id:'baha', name:'الباحة', region:'الباحة' },
+  {id:'baljurashi', name:'بلجرشي', region:'الباحة' },
+  {id:'sakaka', name:'سكاكا', region:'الجوف' },
+  {id:'qurayyat', name:'القريات', region:'الجوف' },
+  {id:'dumat', name:'دومة الجندل', region:'الجوف' },
+  {id:'arar', name:'عرعر', region:'الحدود الشمالية' },
+  {id:'rafha', name:'رفحاء', region:'الحدود الشمالية' },
+  {id:'turaif', name:'طريف', region:'الحدود الشمالية' },
+  {id:'khafji', name:'الخفجي', region:'الشرقية' },
+  {id:'nuayriyah', name:'النعيرية', region:'الشرقية' },
+  {id:'buqayq', name:'بقيق', region:'الشرقية' },
+  {id:'zulm', name:'ظلم', region:'مكة المكرمة' },
+  {id:'laith', name:'الليث', region:'مكة المكرمة' },
 ];
 function renderMap(){
   const raw = currentData.map_projects || {};
   const list = Array.isArray(raw) ? raw : Object.keys(raw).map(k=> ({_id:k, ...raw[k]}));
   // counts
-  const counts={}; MAP_REGIONS.forEach(r=> counts[r.id]=0); list.forEach(p=>{ if(p.region) counts[p.region]=(counts[p.region]||0)+1; });
+  const counts={}; MAP_CITIES.forEach(r=> counts[r.id]=0); list.forEach(p=>{ if(p.region) counts[p.region]=(counts[p.region]||0)+1; });
   const total=list.length;
-  const regionsHtml = MAP_REGIONS.map(r=> `<span class="map-reg-pill" style="display:inline-flex;align-items:center;gap:6px;background:${counts[r.id]>0?'var(--brand-soft)':'#fff'};border:1px solid var(--line);padding:5px 12px;border-radius:99px;font-size:.74rem;font-weight:700">${r.name} <b style="background:${counts[r.id]>0?'var(--brand)':'var(--line)'};color:${counts[r.id]>0?'#fff':'var(--muted)'};padding:1px 8px;border-radius:99px;font-size:.68rem">${counts[r.id]||0}</b></span>`).join(' ');
+  const regionsHtml = MAP_CITIES.map(r=> `<span class="map-reg-pill" style="display:inline-flex;align-items:center;gap:6px;background:${counts[r.id]>0?'var(--brand-soft)':'#fff'};border:1px solid var(--line);padding:5px 12px;border-radius:99px;font-size:.74rem;font-weight:700">${r.name} <b style="background:${counts[r.id]>0?'var(--brand)':'var(--line)'};color:${counts[r.id]>0?'#fff':'var(--muted)'};padding:1px 8px;border-radius:99px;font-size:.68rem">${counts[r.id]||0}</b></span>`).join(' ');
   const cards = list.length ? list.map(p=>{
-    const regionName = (MAP_REGIONS.find(r=>r.id===p.region)||{}).name || p.region || '—';
+    const regionName = (MAP_CITIES.find(r=>r.id===p.region)||{}).name || p.region || '—';
     const cover = p.cover || (p.images&&p.images[0]) || '';
     const imgs = (p.images||[]).length;
     return `<div class="prod-card">
@@ -488,7 +526,7 @@ function renderMap(){
         </div>
         <div class="prod-row3">
           <div class="fld"><label>اسم المشروع</label><input id="map_name_${p._id}" value="${escA(p.name||'')}" placeholder="مثال: معرض العطور - الرياض بارك"></div>
-          <div class="fld"><label>المنطقة</label><select id="map_region_${p._id}">${MAP_REGIONS.map(r=> `<option value="${r.id}" ${p.region===r.id?'selected':''}>${r.name}</option>`).join('')}</select></div>
+          <div class="fld"><label>المنطقة</label><select id="map_region_${p._id}">${MAP_CITIES.map(r=> `<option value="${r.id}" ${p.region===r.id?'selected':''}>${r.name}</option>`).join('')}</select></div>
           <div class="fld"><label>صورة الغلاف</label><input id="map_cover_${p._id}" value="${escA(p.cover||'')}" dir="ltr" placeholder="https://..."></div>
         </div>
         <div class="fld"><label>روابط الصور (كل رابط في سطر)</label><textarea id="map_images_${p._id}" rows="2" class="mono" dir="ltr">${escA((p.images||[]).join('\n'))}</textarea></div>
@@ -516,7 +554,7 @@ function renderMap(){
       <div class="card-head"><h3><i class="fas fa-plus"></i> إضافة مشروع جديد للخريطة</h3></div>
       <div class="grid2">
         <div class="fld"><label>اسم المشروع *</label><input id="newMapName" placeholder="مثال: ستاند شركة X - معرض الرياض"></div>
-        <div class="fld"><label>المنطقة *</label><select id="newMapRegion">${MAP_REGIONS.map(r=> `<option value="${r.id}">${r.name}</option>`).join('')}</select></div>
+        <div class="fld"><label>المنطقة *</label><select id="newMapRegion">${(()=>{let g={}; MAP_CITIES.forEach(c=>{(g[c.region]=g[c.region]||[]).push(c)}); return Object.keys(g).map(reg=> `<optgroup label="${reg}">${g[reg].map(c=> `<option value="${c.id}">${c.name}</option>`).join('')}</optgroup>`).join('')})()}</select></div>
       </div>
       <div class="grid2" style="margin-top:10px">
         <div class="fld"><label>صورة الغلاف (رابط)</label><input id="newMapCover" dir="ltr" placeholder="https://... (اختياري — سيتم استخدام أول صورة كغلاف إذا ترك فارغ)"></div>
