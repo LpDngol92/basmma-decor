@@ -507,12 +507,13 @@
         .map-canvas{position:relative;width:100%;background:linear-gradient(180deg,#fdfbf7 0%,#f5efe3 100%);border-radius:20px;overflow:hidden;border:1px solid var(--line);min-height:560px;display:grid;place-items:center;padding:12px}
         .map-svg-real{width:100%;height:auto;max-width:900px;display:block}
         .map-outline{fill:#f3ecdf;stroke:#d8cdb8;stroke-width:2.2;stroke-linejoin:round;filter:drop-shadow(0 8px 20px rgba(19,16,11,.08))}
-        .city-pin{cursor:pointer;transition:.25s}
-        .city-pin circle.main{fill:#fff;stroke:var(--brass);stroke-width:2.2;filter:drop-shadow(0 2px 8px rgba(192,138,62,.35));transition:.25s}
+        .city-pin{cursor:pointer}
+        .city-pin circle.main{fill:#fff;stroke:var(--brass);stroke-width:2.2;filter:drop-shadow(0 2px 8px rgba(192,138,62,.35));transition:fill .2s, stroke .2s, r .2s;transform-origin:center;transform-box:fill-box;vector-effect:non-scaling-stroke}
         .city-pin.has-projects circle.main{fill:var(--brass);stroke:#fff;stroke-width:2}
-        .city-pin:hover circle.main{transform:scale(1.15);filter:drop-shadow(0 6px 16px rgba(192,138,62,.5))}
-        .city-pin.active circle.main{fill:var(--espresso);stroke:var(--brass);stroke-width:2.5;filter:drop-shadow(0 8px 20px rgba(19,16,11,.3))}
-        .city-pin text.lbl{font-family:var(--display);font-weight:800;font-size:10px;fill:#2b2418;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:3;stroke-linejoin:round;pointer-events:none}
+        .city-pin:hover circle.main{fill:#e8bd7d;stroke:#fff;r:13}
+        .city-pin.has-projects:hover circle.main{fill:#c08a3e;r:15}
+        .city-pin.active circle.main{fill:var(--espresso);stroke:var(--brass);stroke-width:2.5;filter:drop-shadow(0 8px 20px rgba(19,16,11,.3));r:14}
+        .city-pin text.lbl{font-family:var(--display);font-weight:800;font-size:9.5px;fill:#2b2418;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:3.5;stroke-linejoin:round;pointer-events:none;dominant-baseline:middle}
         .city-pin.has-projects text.count{font-family:var(--display);font-weight:1000;font-size:9px;fill:#fff;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
         .city-pin.active text.lbl{fill:var(--brass-ink)}
         .map-legend-real{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
@@ -2428,6 +2429,7 @@
             { id:'zulm', name:'ظلم', region:'مكة المكرمة', x:364.0, y:474.7 },
             { id:'laith', name:'الليث', region:'مكة المكرمة', x:277.3, y:597.7 },
         ];
+        function isMapClosed(){ return currentData && currentData.map_enabled === false; }
         const SAUDI_OUTLINE_D = "M 34.8 154.8 L 85.6 162.4 L 105.3 147.6 L 116.2 130.3 L 151.0 123.7 L 158.6 107.6 L 173.6 99.4 L 128.2 51.4 L 219.6 27.2 L 228.3 20.0 L 283.2 33.0 L 351.2 66.7 L 479.9 163.3 L 564.8 167.2 L 605.4 171.8 L 616.8 194.7 L 649.1 193.5 L 667.0 234.9 L 689.4 245.9 L 697.2 262.8 L 728.3 283.0 L 731.1 302.8 L 726.5 318.8 L 732.3 334.9 L 745.4 348.4 L 751.5 364.2 L 758.3 376.0 L 772.1 385.5 L 784.8 382.1 L 793.5 400.4 L 795.2 411.5 L 812.7 460.2 L 949.9 484.5 L 959.1 474.3 L 980.0 508.4 L 949.6 604.5 L 812.7 652.5 L 681.1 671.0 L 638.5 692.6 L 605.8 743.1 L 584.5 751.1 L 573.0 735.0 L 555.6 737.4 L 511.4 732.6 L 503.1 727.8 L 450.4 728.9 L 438.0 733.3 L 419.3 720.8 L 407.2 744.4 L 411.9 764.7 L 391.8 780.0 L 385.9 759.5 L 372.1 745.0 L 368.6 725.8 L 345.0 708.6 L 320.7 668.3 L 307.8 629.2 L 276.3 596.1 L 255.9 588.2 L 225.7 542.4 L 220.4 509.0 L 222.4 480.5 L 196.2 427.2 L 174.8 408.4 L 150.1 398.5 L 135.1 371.0 L 137.6 360.1 L 124.9 335.2 L 111.6 324.5 L 93.8 288.7 L 66.0 249.9 L 42.7 216.9 L 20.0 217.2 L 27.1 190.8 L 29.1 174.0 L 34.8 154.8 Z";
         function getMapProjects(){
             const raw = currentData.map_projects || currentData.map_regions || {};
@@ -2447,6 +2449,7 @@
         function buildMapPage(){
             const counts = getRegionCounts();
             const total = getMapProjects().length;
+            if(isMapClosed()){ return `<div class="container"><div class="map-empty" style="border-radius:22px;padding:50px 24px"><i class="fas fa-eye-slash" style="font-size:2rem;color:var(--line2)"></i><h3 style="font-family:var(--display);margin-top:12px">خريطة الأعمال مغلقة حالياً</h3><p style="color:var(--muted);margin-top:6px">سيتم إعادة فتحها قريباً</p></div></div>`; }
             const citiesWithProjects = Object.values(counts).filter(v=>v>0).length;
             const title = t('map_eyebrow','خريطة تفاعلية');
             const hTitle = t('map_title','خريطة أعمالنا حول المملكة');
@@ -2538,7 +2541,7 @@
                 </div>`).join('')}
             </div>`;
         }
-        function highlightMapRegions(regionId){
+        function highlightMapRegions(cityId){
             document.querySelectorAll('.city-pin').forEach(el=> el.classList.remove('active'));
             document.querySelectorAll('.city-pin').forEach(el=> el.classList.remove('active'));
             if(regionId){
@@ -2548,20 +2551,22 @@
                 if(row) row.classList.add('active');
             }
         }
-        function openRegion(regionId){
-            activeRegionId = regionId;
-            const region = SAUDI_CITIES.find(r=>r.id===regionId);
-            if(!region) return;
-            highlightMapRegions(regionId);
-            const projects = getProjectsByRegion(regionId);
+        let _lastCityId = null;
+        function openRegion(cityId){
+            activeRegionId = cityId;
+            _lastCityId = cityId;
+            const city = SAUDI_CITIES.find(r=>r.id===cityId);
+            if(!city) return;
+            highlightMapRegions(cityId);
+            const projects = getProjectsByRegion(cityId);
             const body = document.getElementById('regionModalBody');
             const modal = document.getElementById('regionModal');
             const titleSpan = document.querySelector('#regionModalTitle span');
-            if(titleSpan) titleSpan.innerText = region.name;
+            if(titleSpan) titleSpan.innerText = city.name;
             const countEl = document.getElementById('regionModalCount');
             if(countEl) countEl.innerText = projects.length + ' مشروع';
             if(!projects.length){
-                body.innerHTML = `<div class="map-empty"><i class="fas fa-inbox" style="font-size:1.5rem"></i><p>لا توجد مشاريع في ${region.name} بعد</p><small>سيتم عرض المشاريع هنا فور إضافتها من لوحة التحكم</small></div>`;
+                body.innerHTML = `<div class="map-empty"><i class="fas fa-inbox" style="font-size:1.5rem"></i><p>لا توجد مشاريع في ${city.name} بعد</p><small>سيتم عرض المشاريع هنا فور إضافتها من لوحة التحكم</small></div>`;
             } else {
                 body.innerHTML = projects.map(p=>{
                     const img = p.cover || (p.images&&p.images[0]) || PLACEHOLDER_SVG;
@@ -2590,6 +2595,12 @@
             if(!p) return;
             const imgs = (p.images && p.images.length ? p.images : (p.cover?[p.cover]:[]));
             if(!imgs.length){ showToast('لا توجد صور لهذا المشروع'); return; }
+            // اغلاق قائمة المدينة فوراً - ما تبقى معلقة
+            const _modal = document.getElementById('regionModal');
+            if(_modal) _modal.classList.remove('open');
+            // حفظ المدينة للرجوع
+            const cityName = (SAUDI_CITIES.find(r=>r.id===p.region)||{}).name || p.region;
+            window._mapBackCity = _lastCityId;
             currentImageList = imgs;
             currentIndex = 0;
             currentAlbumId = 'map_'+projectId;
@@ -2603,9 +2614,43 @@
                 if(counter) counter.innerText = `1 / ${imgs.length}`;
             }
             const waBtn=document.getElementById('lightboxWhatsappBtn');
-            if(waBtn) waBtn.onclick = ()=> window.open(waLink() + '?text=' + encodeURIComponent('مرحبا، استفسار عن مشروع: ' + (p.name||'') + ' - منطقة: ' + ((SAUDI_CITIES.find(r=>r.id===p.region)||{}).name||p.region)), '_blank');
+            if(waBtn) waBtn.onclick = ()=> window.open(waLink() + '?text=' + encodeURIComponent('مرحبا، استفسار عن مشروع: ' + (p.name||'') + ' - مدينة: ' + cityName), '_blank');
+            // زر الرجوع للقائمة
+            let backBtn = document.getElementById('mapBackToListBtn');
+            if(!backBtn){
+                const ctr = document.querySelector('.lightbox-controls');
+                if(ctr){
+                    backBtn = document.createElement('button');
+                    backBtn.id='mapBackToListBtn';
+                    backBtn.innerHTML='<i class="fas fa-arrow-right"></i> رجوع للقائمة';
+                    backBtn.style.cssText='background:var(--brass);color:#fff;border:1px solid var(--brass-ink)';
+                    backBtn.onclick = returnToCityList;
+                    ctr.insertBefore(backBtn, ctr.firstChild);
+                }
+            }
+            if(backBtn) backBtn.style.display='inline-flex';
         }
+        function returnToCityList(){
+            // اغلاق اللايت بوكس
+            const lb=document.getElementById('lightbox');
+            if(lb) lb.style.display='none';
+            document.body.style.overflow='';
+            // إخفاء زر الرجوع مؤقتاً
+            const bb=document.getElementById('mapBackToListBtn');
+            if(bb) bb.style.display='none';
+            // إعادة فتح قائمة المدينة
+            if(window._mapBackCity) setTimeout(()=> openRegion(window._mapBackCity), 120);
+        }
+        // عند الإغلاق العادي للايت بوكس اخفي زر الرجوع
+        (function(){
+            const origClose = window.closeLightbox || null;
+            const obs = document.getElementById('lightboxClose');
+            if(obs) obs.addEventListener('click', ()=>{ const bb=document.getElementById('mapBackToListBtn'); if(bb) bb.style.display='none'; });
+            document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ const bb=document.getElementById('mapBackToListBtn'); if(bb) bb.style.display='none'; }});
+        })();
         function buildHomeMapTeaser(){
+            if(isMapClosed()) return ''; // مخفية إذا مغلقة من الإدارة
+
             const counts=getRegionCounts();
             const total=getMapProjects().length;
             if(total===0) return `<section class="map-section rv"><div class="container"><div class="map-empty" style="border-radius:22px"><i class="fas fa-map-location-dot" style="font-size:1.8rem;color:var(--brass)"></i><h3 style="font-family:var(--display);margin-top:10px">خريطة أعمالنا قريباً</h3><p>سيتم عرض مشاريعنا على خريطة المملكة التفاعلية</p></div></div></section>`;
