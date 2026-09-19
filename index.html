@@ -540,6 +540,25 @@
         #heroSection{position:relative;overflow:hidden;background:radial-gradient(1200px 600px at 70% 20%, #2a1e0f 0%, #0f0a04 55%, #050301 100%);display:grid;place-items:center;padding:18px 12px;border-bottom:1px solid #2a1e0f}
         #heroMapWrap{position:relative;width:100%;max-width:920px;margin:0 auto;display:grid;place-items:center;background:transparent;padding:0;border:none;box-shadow:none}
         #heroMapCanvas{width:100%;max-width:840px;display:grid;place-items:center;filter:drop-shadow(0 20px 40px rgba(0,0,0,.45))}
+        #heroMapCanvas .map-svg-real{width:100%;height:auto;display:block;position:relative;z-index:1;pointer-events:all}
+        #heroMapCanvas .map-outline{fill:rgba(255,255,255,.06);stroke:rgba(224,181,112,.35);stroke-width:1.8;stroke-linejoin:round}
+        #heroMapCanvas .city-pin{cursor:pointer;transition:transform .2s;pointer-events:all}
+        #heroMapCanvas .city-pin circle.main{fill:rgba(255,255,255,.85);pointer-events:all;stroke:rgba(224,181,112,.9);stroke-width:1.6;transition:all .25s;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+        #heroMapCanvas .city-pin.has-projects circle.main{fill:#e8bd7d;stroke:#fff;stroke-width:2;filter:drop-shadow(0 0 12px rgba(232,189,125,.9)) drop-shadow(0 0 22px rgba(192,138,62,.6));animation:cityGlow 2.2s ease-in-out infinite}
+        #heroMapCanvas .city-pin.has-projects:hover circle.main{fill:#fff;stroke:#e8bd7d;filter:drop-shadow(0 0 18px rgba(255,255,255,.9))}
+        #heroMapCanvas .city-pin text.lbl{font-family:var(--display);font-weight:800;font-size:8.5px;fill:#f3ecdf;text-anchor:middle;paint-order:stroke;stroke:#0f0a04;stroke-width:3;pointer-events:none;opacity:.92}
+        #heroMapCanvas .city-pin.has-projects text.lbl{fill:#fff;opacity:1}
+        #heroMapCanvas .city-pin.has-projects text.count{font-family:var(--display);font-weight:1000;font-size:10px;fill:#0f0a04;text-anchor:middle;dominant-baseline:middle;pointer-events:none}
+        @keyframes cityGlow{0%,100%{filter:drop-shadow(0 0 10px rgba(232,189,125,.7))}50%{filter:drop-shadow(0 0 18px rgba(232,189,125,1)) drop-shadow(0 0 30px rgba(192,138,62,.5))}}
+        .hero-map-title{position:absolute;top:18px;right:50%;transform:translateX(50%);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px);color:#f3ecdf;padding:7px 16px;border-radius:999px;font-size:.72rem;font-weight:800;letter-spacing:.02em;display:flex;align-items:center;gap:8px;pointer-events:none;z-index:2}
+        .hero-map-title i{color:#e8bd7d}
+        .hero-map-hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:rgba(255,255,255,.75);padding:6px 14px;border-radius:999px;font-size:.68rem;border:1px solid rgba(255,255,255,.1);pointer-events:none;z-index:2}
+
+
+        /* Hero Map — فاخر مع إضاءة */
+        #heroSection{position:relative;overflow:hidden;background:radial-gradient(1200px 600px at 70% 20%, #2a1e0f 0%, #0f0a04 55%, #050301 100%);display:grid;place-items:center;padding:18px 12px;border-bottom:1px solid #2a1e0f}
+        #heroMapWrap{position:relative;width:100%;max-width:920px;margin:0 auto;display:grid;place-items:center;background:transparent;padding:0;border:none;box-shadow:none}
+        #heroMapCanvas{width:100%;max-width:840px;display:grid;place-items:center;filter:drop-shadow(0 20px 40px rgba(0,0,0,.45))}
         #heroMapCanvas .map-svg-real{width:100%;height:auto;display:block}
         #heroMapCanvas .map-outline{fill:rgba(255,255,255,.06);stroke:rgba(224,181,112,.35);stroke-width:1.8;stroke-linejoin:round}
         #heroMapCanvas .city-pin{cursor:pointer;transition:transform .2s}
@@ -2601,7 +2620,17 @@
             document.addEventListener('keydown', (e)=>{ if(e.key==='Escape'){ const bb=document.getElementById('mapBackToListBtn'); if(bb) bb.style.display='none'; }});
         })();
 
-        function renderHeroMap(){ const c=document.getElementById('heroMapCanvas'); if(!c) return; if(isMapClosed()){c.innerHTML=`<div style='display:grid;place-items:center;height:400px;color:#f3ecdf'><b>مغلقة ستعود قريباً</b></div>`; return;} const counts=getRegionCounts(); c.innerHTML=buildSaudiMapSVG(counts); }
+        function renderHeroMap(){
+            let modal = document.getElementById('regionModal');
+            if(!modal && typeof buildRegionModal==='function'){
+                const tmp=document.createElement('div');
+                tmp.innerHTML=buildRegionModal();
+                document.body.appendChild(tmp.firstElementChild);
+            }
+            const c=document.getElementById('heroMapCanvas'); if(!c) return;
+            if(typeof isMapClosed==='function' && isMapClosed()){c.innerHTML=`<div style='display:grid;place-items:center;height:380px;color:#f3ecdf'><b>مغلقة ستعود قريباً</b></div>`; return; }
+            const counts=getRegionCounts(); c.innerHTML=buildSaudiMapSVG(counts);
+        }
         function changePage(page) {
             const target = VALID_PAGES.includes(page) ? page : 'home';
             if (location.hash === '#' + target) { loadPage(); return; }
