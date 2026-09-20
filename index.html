@@ -1489,11 +1489,17 @@
         function stopAboutCycle() { if (aboutTimer) { clearInterval(aboutTimer); aboutTimer = null; } }
         function buildAboutPool() {
             const pool = [];
-            const add = u => { if (u && pool.indexOf(u) === -1) pool.push(u); };
-            collectHeroImgs().forEach(add);
-            getAlbumsList().forEach(a => { Object.values(a.imgs || {}).slice(0, 2).forEach(im => add(im && im.url)); });
-            if (pool.length < 14) getAllStoreProductsRich().slice(0, 14).forEach(p => add(p.url));
+            const add = u => { if (u && typeof u==='string' && u.trim() && pool.indexOf(u) === -1) pool.push(u); };
+            try{ collectHeroImgs().forEach(add); }catch(e){}
+            try{ getAlbumsList().forEach(a => { Object.values(a.imgs || {}).slice(0, 2).forEach(im => add(im && im.url)); }); }catch(e){}
+            try{ if (pool.length < 14) getAllStoreProductsRich().slice(0, 14).forEach(p => add(p.url)); }catch(e){}
+            try{ if (pool.length < 10) getMapProjects().slice(0, 10).forEach(p => { add(p.cover); if(p.images) p.images.slice(0,1).forEach(add); }); }catch(e){}
+            try{ if (pool.length < 8 && currentData.about_image) add(currentData.about_image); }catch(e){}
+            try{ if (pool.length < 8 && currentData.home_about_image) add(currentData.home_about_image); }catch(e){}
+            // Fallback to placeholder if still empty - ensure aboutMedia shows something
+            if(!pool.length) add(PLACEHOLDER_SVG);
             aboutPool = pool;
+            console.log('aboutPool built', pool.length);
         }
         function aboutShuffle() { aboutBag = [...aboutPool].sort(() => Math.random() - .5); }
         function aboutNext() {
@@ -2482,9 +2488,8 @@
   if(!projects.length){
     body.innerHTML='<div class="map-empty"><p>\u0644\u0627 \u064a\u0648\u062c\u062f \u0645\u0634\u0627\u0631\u064a\u0639 \u0641\u064a '+city.name+' \u062d\u0627\u0644\u064a\u0627</p></div>';
   } else {
-    body.innerHTML=projects.map(function(pr){
-      var img=pr.cover||(pr.images&&pr.images[0])||PLACEHOLDER_SVG;
-      return '<div class="map-project-card" onclick="openMapProject(\''+pr._id+'\')"><img src="'+escapeHtml(img)+'"><div><b>'+escapeHtml(pr.name||'\u0645\u0634\u0631\u0648\u0639')+'</b><small style="display:block;color:#7c7362;font-size:.78rem;margin-top:2px">'+escapeHtml(pr.city||pr.region||city.name)+'</small></div><span class="go"><i class="fas fa-images"></i></span></div>';
+        body.innerHTML=projects.map(function(pr){
+      return '<div class="map-project-card" onclick="openMapProject(\''+pr._id+'\')" style="padding:16px 18px; display:flex; align-items:center; justify-content:space-between; background:#fff; border:1px solid #e7ddca; border-radius:12px; cursor:pointer; transition:.2s"><b style="font-size:.95rem; color:#241d14">'+escapeHtml(pr.name||'\u0645\u0634\u0631\u0648\u0639')+'</b><span style="color:var(--brass); font-size:.85rem"><i class="fas fa-chevron-left"></i></span></div>';
     }).join('');
   }
   modal.classList.add('open');
