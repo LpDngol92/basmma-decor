@@ -1527,7 +1527,13 @@
         function startAboutCycle() {
             stopAboutCycle();
             buildAboutPool();
-            if (aboutPool.length > 1) { aboutShuffle(); aboutNext(); }
+            console.log('startAboutCycle pool', aboutPool.length);
+            if (aboutPool.length === 0) {
+                // Retry after data loads
+                setTimeout(function(){ buildAboutPool(); if(aboutPool.length>0){ aboutShuffle(); aboutNext(); } }, 1200);
+                return;
+            }
+            if (aboutPool.length > 0) { aboutShuffle(); aboutNext(); }
             else if (aboutPool.length === 1) setAboutCover(aboutPool[0]);
             else setAboutCover('');
         }
@@ -2640,11 +2646,14 @@
             const storeSliceChanged = JSON.stringify(oldData.store_categories) !== JSON.stringify(currentData.store_categories) || JSON.stringify(oldData.store_products) !== JSON.stringify(currentData.store_products) || oldData.store_closed !== currentData.store_closed || oldData.store_closed_message !== currentData.store_closed_message;
 
             if (currentPage === 'home') {
-                if (heroChanged) { loadPage(); }
+                if (heroChanged) { loadPage(); setTimeout(function(){ try{ startAboutCycle(); }catch(e){} }, 400); }
                 else {
                     if (JSON.stringify(oldData.home_slider) !== JSON.stringify(currentData.home_slider)) initHeroRotator();
                     if (storeSliceChanged) { renderHomeShelf(); renderHomeArrivals(); }
-                    if (JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums)) renderHomeCollage();
+                    if (JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums)) { renderHomeCollage(); try{ startAboutCycle(); }catch(e){} }
+                    if (JSON.stringify(oldData.map_projects) !== JSON.stringify(currentData.map_projects)) { try{ startAboutCycle(); }catch(e){} if (document.getElementById('heroMapCanvas')) { try{ renderHeroMap(); }catch(e){} } }
+                    // Fallback: always ensure aboutPool has images after data change
+                    try{ if(!aboutPool || !aboutPool.length) startAboutCycle(); }catch(e){}
                 }
             } else if (currentPage === 'store') {
                 if (storeSliceChanged) buildAllProductsGrid();
