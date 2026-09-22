@@ -551,18 +551,14 @@
 .city-pin circle.main{ fill:#ffffff !important; stroke:#c08a3e !important; stroke-width:1.55 !important; }
 .city-pin text.lbl{ fill:#ffffff !important; stroke:#000 !important; stroke-width:4px !important; paint-order:stroke fill !important; font-weight:700 !important; font-size:11px !important; text-anchor:middle !important; }
 .city-pin text.count{ fill:#c08a3e !important; font-weight:900 !important; font-size:9.5px !important; text-anchor:middle !important; }
-.city-pin:hover circle.main{ stroke-width:2.2 !important; }
 .region-pin circle.main{ r:14; }
 .sub-pin circle.main.sub{ r:9.5; }
-.sub-pin text.lbl.sub{ font-size:9px !important; }
 .region-modal{ position:fixed; inset:0; background:rgba(0,0,0,.88); backdrop-filter:blur(10px); z-index:9997; display:none; align-items:center; justify-content:center; padding:20px; }
 .region-modal.open{ display:flex; }
 .region-modal-box{ background:#fff; width:100%; max-width:900px; max-height:92vh; border-radius:20px; overflow:hidden; display:flex; flex-direction:column; }
 .region-modal-head{ background:#0a0a0a; color:#fff; padding:16px 18px; display:flex; justify-content:space-between; align-items:center; }
-.region-modal-head h3 small{ background:var(--brass); color:#fff; padding:4px 10px; border-radius:999px; }
 .region-modal-body{ flex:1; overflow-y:auto; padding:18px; background:#fbf8f1; display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
 .region-modal-foot{ padding:12px 18px; background:#fff; border-top:1px solid #e7ddca; display:flex; justify-content:center; }
-.region-modal-foot button{ background:#0a0a0a; color:#fff; padding:10px 22px; border-radius:999px; font-weight:700; }
 .city-pin text.lbl, .city-pin text.count{ pointer-events:all; cursor:pointer; }
 @keyframes pinWhiteIn{ 0%{opacity:0;transform:scale(.72)} 100%{opacity:1;transform:scale(1)} }
 .city-pin{ animation: pinWhiteIn .48s both; }
@@ -1478,14 +1474,10 @@
         function stopAboutCycle() { if (aboutTimer) { clearInterval(aboutTimer); aboutTimer = null; } }
         function buildAboutPool() {
             const pool = [];
-            const add = u => { if (u && typeof u==='string' && u.trim() && pool.indexOf(u) === -1) pool.push(u); };
-            try{ collectHeroImgs().forEach(add); }catch(e){}
-            try{ getAlbumsList().forEach(a => { Object.values(a.imgs || {}).slice(0, 2).forEach(im => add(im && im.url)); }); }catch(e){}
-            try{ if (pool.length < 14) getAllStoreProductsRich().slice(0, 14).forEach(p => add(p.url)); }catch(e){}
-            try{ if (pool.length < 10) getMapProjects().slice(0, 10).forEach(p => { add(p.cover); if(p.images) p.images.slice(0,1).forEach(add); }); }catch(e){}
-            try{ if (pool.length < 8 && currentData.about_image) add(currentData.about_image); }catch(e){}
-            try{ if (pool.length < 8 && currentData.home_about_image) add(currentData.home_about_image); }catch(e){}
-            if(!pool.length) add(PLACEHOLDER_SVG);
+            const add = u => { if (u && pool.indexOf(u) === -1) pool.push(u); };
+            collectHeroImgs().forEach(add);
+            getAlbumsList().forEach(a => { Object.values(a.imgs || {}).slice(0, 2).forEach(im => add(im && im.url)); });
+            if (pool.length < 14) getAllStoreProductsRich().slice(0, 14).forEach(p => add(p.url));
             aboutPool = pool;
         }
         function aboutShuffle() { aboutBag = [...aboutPool].sort(() => Math.random() - .5); }
@@ -1514,13 +1506,9 @@
         function startAboutCycle() {
             stopAboutCycle();
             buildAboutPool();
-            if (aboutPool.length === 0) {
-                setTimeout(function(){ buildAboutPool(); if(aboutPool.length>0){ aboutShuffle(); aboutNext(); } }, 1200);
-                aboutPool = [PLACEHOLDER_SVG];
-                aboutShuffle(); aboutNext();
-                return;
-            }
-            if (aboutPool.length > 0) { aboutShuffle(); aboutNext(); }
+            if (aboutPool.length > 1) { aboutShuffle(); aboutNext(); }
+            else if (aboutPool.length === 1) setAboutCover(aboutPool[0]);
+            else setAboutCover('');
         }
         document.addEventListener('visibilitychange', () => {
             if (document.hidden) stopAboutCycle();
@@ -2646,13 +2634,11 @@
             const storeSliceChanged = JSON.stringify(oldData.store_categories) !== JSON.stringify(currentData.store_categories) || JSON.stringify(oldData.store_products) !== JSON.stringify(currentData.store_products) || oldData.store_closed !== currentData.store_closed || oldData.store_closed_message !== currentData.store_closed_message;
 
             if (currentPage === 'home') {
-                if (heroChanged) { loadPage(); setTimeout(function(){ try{ startAboutCycle(); }catch(e){} }, 400); }
+                if (heroChanged) { loadPage(); }
                 else {
                     if (JSON.stringify(oldData.home_slider) !== JSON.stringify(currentData.home_slider)) initHeroRotator();
                     if (storeSliceChanged) { renderHomeShelf(); renderHomeArrivals(); }
-                    if (JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums)) { renderHomeCollage(); try{ startAboutCycle(); }catch(e){} }
-                    if (JSON.stringify(oldData.map_projects) !== JSON.stringify(currentData.map_projects)) { try{ startAboutCycle(); }catch(e){} if (document.getElementById('heroMapCanvas')) { try{ renderHeroMap(); }catch(e){} } }
-                    try{ if(!aboutPool || !aboutPool.length) startAboutCycle(); }catch(e){}
+                    if (JSON.stringify(oldData.albums) !== JSON.stringify(currentData.albums)) renderHomeCollage();
                 }
             } else if (currentPage === 'store') {
                 if (storeSliceChanged) buildAllProductsGrid();
